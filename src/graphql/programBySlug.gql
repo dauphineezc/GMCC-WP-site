@@ -1,0 +1,115 @@
+query ProgramBySlug($slug: ID!) {
+  program(id: $slug, idType: SLUG) {
+    title
+    slug
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+        mediaDetails { width height }
+      }
+    }
+    programFields {
+      summary
+      longDescription
+      offeringType
+      ageRange { min max }
+      skillLevel
+      duration
+      priceFrom
+      benefits
+      membershipRequirements
+      whatToBring
+      instructors
+      registrationSystem
+      externalSchedule {
+        activityCode
+        sectionCodes
+        deepLink
+        nextStartDate
+      }
+
+      # Taxonomies are AcfTermNodeConnection => use nodes
+      center      { nodes { name slug } }
+      programArea { nodes { name slug } }
+      audience    { nodes { name slug } }
+      session     { nodes { name slug } }
+
+      # Media Gallery (each image is AcfMediaItemConnectionEdge)
+      mediaGallery {
+        image1 {
+          node {
+            sourceUrl
+            altText
+            mediaDetails { width height }
+          }
+        }
+        image2 {
+          node {
+            sourceUrl
+            altText
+            mediaDetails { width height }
+          }
+        }
+        image3 {
+          node {
+            sourceUrl
+            altText
+            mediaDetails { width height }
+          }
+        }
+        image4 {
+          node {
+            sourceUrl
+            altText
+            mediaDetails { width height }
+          }
+        }
+      }
+
+      # Attachments (each file field is AcfMediaItemConnectionEdge)
+      attachments {
+        attachment1 {
+          attachment1Label
+          attachment1File {
+            node {
+              mediaItemUrl
+            }
+          }
+        }
+        attachment2 {
+          attachment2Label
+          attachment2File {
+            node {
+              mediaItemUrl
+            }
+          }
+        }
+        attachment3 {
+          attachment3Label
+          attachment3File {
+            node {
+              mediaItemUrl
+            }
+          }
+        }
+        attachment4 {
+          attachment4Label
+          attachment4File {
+            node {
+              mediaItemUrl
+            }
+          }
+        }
+        attachment5 {
+          attachment5Label
+          attachment5File {
+            node {
+              mediaItemUrl
+            }
+          }
+        }
+      }
+    }
+  }
+}

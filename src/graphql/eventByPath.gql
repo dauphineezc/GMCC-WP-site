@@ -1,0 +1,21 @@
+query EventBySlug($slug: ID!) {
+  event(id: $slug, idType: SLUG) {
+    title
+    slug
+    featuredImage { node { sourceUrl altText } }
+    content(format: RENDERED)
+    eventFields {
+      summary
+      start
+      end
+      locationName
+      cost
+      registrationLink
+      taxonomies { audience programArea center season eventType }
+      contact
+      seo { title description canonical }
+      governance { owner status reviewDate contentCategory }
+      canonicalUrl
+    }
+  }
+}
