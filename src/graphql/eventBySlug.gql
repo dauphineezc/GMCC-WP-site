@@ -1,0 +1,41 @@
+query EventBySlug($slug: ID!) {
+  event(id: $slug, idType: SLUG) {
+    title
+    slug
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+        mediaDetails { width height }
+      }
+    }
+    eventFields {
+      summary
+      longDescription
+      startDateTime
+      endDateTime
+      cost
+      registrationLink
+      eventType
+      locationOverride
+
+      center {
+        nodes { name slug }
+      }
+      programArea {
+        nodes { name slug }
+      }
+      audience {
+        nodes { name slug }
+      }
+      season {
+        nodes { name slug }
+      }
+
+      contactName
+      contactEmail
+      contactPhone
+    }
+  }
+}
+`;
