@@ -3,20 +3,27 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Brand colors */
+  --gmcc-navy: #003A70;
+  --gmcc-navy-dark: #0f2847;
+  --gmcc-teal: #0085ad;
+  --gmcc-teal-light: #7dd3dc;
+  --gmcc-blue-light: #d4e8f2;
+  --gmcc-green: #4C8B2B;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-gmcc-navy: var(--gmcc-navy);
+  --color-gmcc-navy-dark: var(--gmcc-navy-dark);
+  --color-gmcc-teal: var(--gmcc-teal);
+  --color-gmcc-teal-light: var(--gmcc-teal-light);
+  --color-gmcc-blue-light: var(--gmcc-blue-light);
+  --color-gmcc-green: var(--gmcc-green);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

@@ -146,13 +146,13 @@ function mapMembership(wp: MembershipWP): Membership {
 }
 
 type MembershipCenterPageProps = {
-  params: {
+  params: Promise<{
     center: string; // center CPT slug, e.g. "tennis-center"
-  };
+  }>;
 };
 
 export default async function MembershipCenterPage({ params }: MembershipCenterPageProps) {
-  const centerSlug = params.center;
+  const { center: centerSlug } = await params;
 
   const data = await wpFetch<any>(MEMBERSHIPS_FOR_CENTER_QUERY, { centerSlug });
 

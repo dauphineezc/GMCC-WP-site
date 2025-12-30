@@ -70,11 +70,11 @@ const MEMBERSHIP_BY_SLUG_QUERY = `
 `;
 
 type MembershipPageProps = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export default async function MembershipPage({ params }: MembershipPageProps) {
-  const { slug } = params;
+  const { slug } = await params;
 
   const data = await wpFetch<any>(MEMBERSHIP_BY_SLUG_QUERY, { slug });
   const membership = data?.membership;

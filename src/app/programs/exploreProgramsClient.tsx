@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 type ProgramWP = any;
 
@@ -120,17 +121,128 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [all]);
 
+  // --- Read URL search params ---
+  const searchParams = useSearchParams();
+
+  // Helper to find slug by name (case-insensitive)
+  const findSlugByName = (options: { slug: string; name: string }[], name: string) => {
+    const lower = name.toLowerCase();
+    const match = options.find(o => o.name.toLowerCase() === lower || o.slug.toLowerCase() === lower);
+    return match?.slug;
+  };
+
+  // Parse initial values from URL
+  const initialFilters = useMemo(() => {
+    const programAreaParam = searchParams.get("programArea");
+    const audienceParam = searchParams.get("audience");
+    const offeringTypeParam = searchParams.get("offeringType");
+    const centerParam = searchParams.get("center");
+    const skillLevelParam = searchParams.get("skillLevel");
+
+    // programArea param uses names like "Aquatics", need to convert to slugs
+    const programAreaSlugs: string[] = [];
+    if (programAreaParam) {
+      programAreaParam.split(",").forEach(name => {
+        const slug = findSlugByName(programAreaOptions, name.trim());
+        if (slug) programAreaSlugs.push(slug);
+      });
+    }
+
+    // audience param can be comma-separated slugs or names
+    const audienceSlugs: string[] = [];
+    if (audienceParam) {
+      audienceParam.split(",").forEach(val => {
+        const trimmed = val.trim();
+        // Check if it's already a slug
+        const existingSlug = audienceOptions.find(a => a.slug === trimmed);
+        if (existingSlug) {
+          audienceSlugs.push(trimmed);
+        } else {
+          // Try to find by name
+          const slug = findSlugByName(audienceOptions, trimmed);
+          if (slug) audienceSlugs.push(slug);
+        }
+      });
+    }
+
+    // offeringType uses exact values (they're ACF select values, not taxonomy)
+    const offeringTypeValues: string[] = [];
+    if (offeringTypeParam) {
+      offeringTypeParam.split(",").forEach(val => {
+        const trimmed = val.trim();
+        // Case-insensitive match against available options
+        const match = offeringTypeOptions.find(o => o.toLowerCase() === trimmed.toLowerCase());
+        if (match) offeringTypeValues.push(match);
+      });
+    }
+
+    // center param - can be slug
+    const centerSlugs: string[] = [];
+    if (centerParam) {
+      centerParam.split(",").forEach(val => {
+        const trimmed = val.trim();
+        const match = centerOptions.find(c => c.slug === trimmed || c.title.toLowerCase() === trimmed.toLowerCase());
+        if (match) centerSlugs.push(match.slug);
+      });
+    }
+
+    // skillLevel - exact match
+    const skillLevelValues: string[] = [];
+    if (skillLevelParam) {
+      skillLevelParam.split(",").forEach(val => {
+        const trimmed = val.trim();
+        const match = skillLevelOptions.find(s => s.toLowerCase() === trimmed.toLowerCase());
+        if (match) skillLevelValues.push(match);
+      });
+    }
+
+    return {
+      programAreas: programAreaSlugs,
+      audience: audienceSlugs,
+      offeringTypes: offeringTypeValues,
+      centers: centerSlugs,
+      skillLevels: skillLevelValues,
+    };
+  }, [searchParams, programAreaOptions, audienceOptions, offeringTypeOptions, centerOptions, skillLevelOptions]);
+
   // --- filter state ---
   const [search, setSearch] = useState("");
-  const [offeringTypes, setOfferingTypes] = useState<string[]>([]);
-  const [centers, setCenters] = useState<string[]>([]);
-  const [programAreas, setProgramAreas] = useState<string[]>([]);
-  const [skillLevels, setSkillLevels] = useState<string[]>([]);
+  const [offeringTypes, setOfferingTypes] = useState<string[]>(initialFilters.offeringTypes);
+  const [centers, setCenters] = useState<string[]>(initialFilters.centers);
+  const [programAreas, setProgramAreas] = useState<string[]>(initialFilters.programAreas);
+  const [skillLevels, setSkillLevels] = useState<string[]>(initialFilters.skillLevels);
   const [memberships, setMemberships] = useState<string[]>([]); 
-  const [audience, setAudience] = useState<string[]>([]);
+  const [audience, setAudience] = useState<string[]>(initialFilters.audience);
+
+  // Sync state when URL params change (e.g., navigating from navbar)
+  useEffect(() => {
+    setOfferingTypes(initialFilters.offeringTypes);
+    setCenters(initialFilters.centers);
+    setProgramAreas(initialFilters.programAreas);
+    setSkillLevels(initialFilters.skillLevels);
+    setAudience(initialFilters.audience);
+    
+    // Auto-open dropdowns that have active filters
+    const toOpen = new Set<string>();
+    if (initialFilters.offeringTypes.length) toOpen.add("offeringType");
+    if (initialFilters.centers.length) toOpen.add("centers");
+    if (initialFilters.programAreas.length) toOpen.add("programAreas");
+    if (initialFilters.skillLevels.length) toOpen.add("skillLevels");
+    if (initialFilters.audience.length) toOpen.add("audience");
+    if (toOpen.size > 0) setOpenDropdowns(toOpen);
+  }, [initialFilters]);
   
   // --- dropdown state ---
-  const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(new Set());
+  const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(() => {
+    // Initialize with dropdowns that have active filters from URL
+    const toOpen = new Set<string>();
+    if (initialFilters.offeringTypes.length) toOpen.add("offeringType");
+    if (initialFilters.centers.length) toOpen.add("centers");
+    if (initialFilters.programAreas.length) toOpen.add("programAreas");
+    if (initialFilters.skillLevels.length) toOpen.add("skillLevels");
+    if (initialFilters.audience.length) toOpen.add("audience");
+    return toOpen;
+  });
   
   const toggleDropdown = (key: string) => {
     setOpenDropdowns(prev => {
@@ -450,7 +562,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Results</h2>
-            <div className="text-sm text-neutral-600">{filtered.length} programs</div>
+            <div className="text-sm text-neutral-600">{filtered.length === 1 ? `${filtered.length} program` : `${filtered.length} programs`}</div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -458,7 +570,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
               <a
                 key={p.slug}
                 href={`/programs/${p.slug}`}
-                className="group rounded-2xl border border-neutral-200 bg-white overflow-hidden shadow-sm hover:shadow-md hover:border-emerald-500/60 transition"
+                className="group rounded-2xl border border-neutral-200 bg-white overflow-hidden shadow-md hover:shadow-lg hover:border-emerald-500 translate-y-1"
               >
                 {p.heroUrl && (
                   // eslint-disable-next-line @next/next/no-img-element

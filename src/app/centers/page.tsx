@@ -14,11 +14,6 @@ const EXPLORE_CENTERS_QUERY = `
         }
         centersFields {
           address
-          map {
-            lat
-            lng
-            zoom
-          }
           contactInfo {
             contactPhone
             contactEmail

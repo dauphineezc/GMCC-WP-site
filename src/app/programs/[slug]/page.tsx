@@ -109,11 +109,11 @@ const PROGRAM_BY_SLUG_QUERY = `
 `;
 
 type ProgramPageProps = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export default async function ProgramPage({ params }: ProgramPageProps) {
-  const { slug } = params;
+  const { slug } = await params;
 
   const data = await wpFetch<any>(PROGRAM_BY_SLUG_QUERY, { slug });
   const wp = data?.program;
