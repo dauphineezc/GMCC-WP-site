@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { NavItem } from "@/lib/nav/tree";
 import ProgramsMegaMenu from "@/components/nav/programsMegaMenu";
 import StandardDropdown from "@/components/nav/standardDropdown";
@@ -12,6 +12,24 @@ import MobileMenu from "@/components/nav/mobileMenu";
 export default function Navbar({ items }: { items: NavItem[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      // Use hysteresis to prevent flickering at threshold
+      // Shrink when past 60px, expand only when back below 20px
+      if (scrollY > 60) {
+        setIsScrolled(true);
+      } else if (scrollY < 20) {
+        setIsScrolled(false);
+      }
+      // Between 20-60px, keep current state (don't change)
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Separate Home from other nav items
   const homeItem = items.find((item) => item.label.toLowerCase() === "home");
@@ -22,11 +40,19 @@ export default function Navbar({ items }: { items: NavItem[] }) {
   const hasOpenDropdown = openItem && openItem.children.length > 0;
 
   return (
-    <header 
-      className="relative bg-white"
-      onMouseLeave={() => setOpenId(null)}
-    >
-      <div className="mx-auto flex max-w-7xl items-center px-4 py-3">
+    <>
+      {/* Spacer - fixed at shrunken navbar height, expanded navbar overlaps content */}
+      <div className="hidden lg:block h-[56px]" />
+      
+      <header 
+        className={`relative bg-white lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:z-50 transition-all duration-300 ${
+          isScrolled ? "shadow-sm" : ""
+        }`}
+        onMouseLeave={() => setOpenId(null)}
+      >
+        <div className={`mx-auto flex max-w-7xl items-center px-4 transition-all duration-300 ${
+          isScrolled ? "py-1" : "py-3"
+        }`}>
         {/* Logo - left aligned */}
         <Link href="/" className="shrink-0 mr-auto" title="Home Page" aria-label="Home Page">
           <Image
@@ -34,7 +60,9 @@ export default function Navbar({ items }: { items: NavItem[] }) {
             alt="Greater Midland"
             width={220}
             height={96}
-            className="h-16 lg:h-[96px] w-auto"
+            className={`w-auto transition-all duration-300 ${
+              isScrolled ? "h-10 lg:h-12" : "h-16 lg:h-[96px]"
+            }`}
             priority
           />
         </Link>
@@ -53,7 +81,10 @@ export default function Navbar({ items }: { items: NavItem[] }) {
                 >
                   <Link
                     href={top.href}
-                    className={`rounded px-5 py-2 text-[22px] font-medium transition-colors inline-block ${
+                    onClick={() => setOpenId(null)}
+                    className={`rounded px-5 py-2 font-medium transition-all duration-300 inline-block ${
+                      isScrolled ? "text-base" : "text-[22px]"
+                    } ${
                       open 
                         ? "bg-gmcc-blue-light text-gmcc-navy" 
                         : "text-gmcc-navy hover:bg-gmcc-blue-light/50"
@@ -90,9 +121,12 @@ export default function Navbar({ items }: { items: NavItem[] }) {
           </svg>
         </button>
       </div>
-      
+
       {/* Gradient line */}
-      <div className="h-1 w-full bg-gradient-to-r from-gmcc-teal-light via-gmcc-teal to-gmcc-teal-light" />
+      <div className="h-0.5 w-full bg-gradient-to-r from-gmcc-teal-light via-gmcc-teal to-gmcc-teal-light"/>
+      
+      {/* Gradient shadow overlay - positioned over content below */}
+      <div className="absolute left-0 right-0 top-full h-8 bg-gradient-to-b from-neutral-500/30 via-neutral-500/10 to-transparent pointer-events-none z-40" />
 
       {/* Desktop full-width dropdown panel */}
       {hasOpenDropdown && (
@@ -100,9 +134,9 @@ export default function Navbar({ items }: { items: NavItem[] }) {
           <div className="mx-auto max-w-7xl px-6 py-10">
             <div className="flex justify-center">
               {isMegaMenu(openItem) ? (
-                <ProgramsMegaMenu item={openItem} />
+                <ProgramsMegaMenu item={openItem} onClose={() => setOpenId(null)} />
               ) : (
-                <StandardDropdown item={openItem} />
+                <StandardDropdown item={openItem} onClose={() => setOpenId(null)} />
               )}
             </div>
           </div>
@@ -116,6 +150,7 @@ export default function Navbar({ items }: { items: NavItem[] }) {
         onClose={() => setMobileMenuOpen(false)}
       />
     </header>
+    </>
   );
 }
 

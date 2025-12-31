@@ -13,7 +13,7 @@ function normalizeWpUrlToPath(url: string) {
     return sp.toString();
   }
   
-  // Your current “test” program filter rules (label-based for now)
+  // “test” program filter rules (label-based for now)
   const PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
     "Aquatics": "/programs?" + buildQuery({ programArea: "Aquatics" }),
     "Child Swim Lessons": "/programs?" + buildQuery({ programArea: "Aquatics", audience: "youth" }),
@@ -32,7 +32,7 @@ function normalizeWpUrlToPath(url: string) {
     label: string;
     centerMap: Map<string, string>;
   }) {
-    // 1) Programs filter overrides (based on your desired behavior)
+    // 1) Programs filter overrides (based on desired behavior)
     const programOverride = PROGRAM_FILTER_BY_LABEL[label];
     if (programOverride) return programOverride;
   

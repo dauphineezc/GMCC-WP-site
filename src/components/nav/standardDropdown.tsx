@@ -3,13 +3,19 @@ import { getIconPath } from "@/lib/nav/getIconPath";
 import Link from "next/link";
 import Image from "next/image";
 
-function StandardDropdown({ item }: { item: NavItem }) {
+type StandardDropdownProps = {
+  item: NavItem;
+  onClose?: () => void;
+};
+
+function StandardDropdown({ item, onClose }: StandardDropdownProps) {
   return (
     <div className="flex gap-20">
       {item.children.map((child) => (
         <Link
           key={child.id}
           href={child.href}
+          onClick={onClose}
           className="group flex flex-col items-center text-center min-w-[120px]"
         >
           <div className="w-[72px] h-[72px] flex items-center justify-center">

@@ -21,6 +21,9 @@ const EXPLORE_CENTERS_QUERY = `
           amenities {
             nodes { name slug }
           }
+          accessibilityAmenities {
+            nodes { name slug }
+          }
         }
       }
     }

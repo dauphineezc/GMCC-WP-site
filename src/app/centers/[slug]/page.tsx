@@ -1,7 +1,43 @@
 // src/app/centers/[slug]/page.tsx
 import { wpFetch } from "@/lib/wp";
 import CenterTabs from "./centerTabs";
-import ImageCarousel from "./imageCarousel";
+import ImageCarousel from "../../../components/imageCarousel";
+import AmenitiesCarousel from "../../../components/amenitiesCarousel";
+
+const AMENITY_BY_SLUG_QUERY = `
+  query AmenityBySlug($slug: ID!) {
+    amenity(id: $slug, idType: SLUG) {
+      name
+      slug
+      amenityImages {
+        amenityImage {
+          node {
+            sourceUrl
+            altText
+          }
+        }
+      }
+    }
+  }
+`;
+
+const ACCESSIBILITY_AMENITY_BY_SLUG_QUERY = `
+  query AccessibilityAmenityBySlug($slug: ID!) {
+    accessibilityAmenity(id: $slug, idType: SLUG) {
+      name
+      slug
+      description
+      amenityImages {
+        amenityImage {
+          node {
+            sourceUrl
+            altText
+          }
+        }
+      }
+    }
+  }
+`;
 
 const CENTER_BY_SLUG_QUERY = `
   query CenterBySlug($slug: ID!) {
@@ -24,6 +60,13 @@ const CENTER_BY_SLUG_QUERY = `
         socialLinks
 
         amenities {
+          nodes {
+            name
+            slug
+          }
+        }
+
+        accessibilityAmenities {
           nodes {
             name
             slug
@@ -236,8 +279,70 @@ export default async function CenterPage(props: CenterPageProps) {
     }
   }
 
+  const amenityNodes = f.amenities?.nodes ?? [];
   const amenityNames =
-    f.amenities?.nodes?.map((n: any) => n?.name).filter(Boolean) ?? [];
+    amenityNodes.map((n: any) => n?.name).filter(Boolean) ?? [];
+
+  // Fetch amenity images for carousel
+  const amenitySlugs = amenityNodes.map((n: any) => n?.slug).filter(Boolean);
+  const amenityImagePromises = amenitySlugs.map((amenitySlug: string) =>
+    wpFetch<any>(AMENITY_BY_SLUG_QUERY, { slug: amenitySlug })
+  );
+  const amenityResults = await Promise.all(amenityImagePromises);
+
+  // Filter to only include amenities with images
+  const amenitiesWithImages: Array<{
+    name: string;
+    slug: string;
+    image: { sourceUrl: string; altText: string | null };
+  }> = [];
+
+  for (const result of amenityResults) {
+    const amenity = result?.amenity;
+    const imageNode = amenity?.amenityImages?.amenityImage?.node;
+    if (amenity && imageNode?.sourceUrl) {
+      amenitiesWithImages.push({
+        name: amenity.name,
+        slug: amenity.slug,
+        image: {
+          sourceUrl: imageNode.sourceUrl,
+          altText: imageNode.altText ?? null,
+        },
+      });
+    }
+  }
+
+  // Fetch accessibility amenity images for carousel
+  const accessibilityAmenityNodes = f.accessibilityAmenities?.nodes ?? [];
+  const accessibilityAmenitySlugs = accessibilityAmenityNodes.map((n: any) => n?.slug).filter(Boolean);
+  const accessibilityAmenityImagePromises = accessibilityAmenitySlugs.map((amenitySlug: string) =>
+    wpFetch<any>(ACCESSIBILITY_AMENITY_BY_SLUG_QUERY, { slug: amenitySlug })
+  );
+  const accessibilityAmenityResults = await Promise.all(accessibilityAmenityImagePromises);
+
+  // Filter to only include accessibility amenities with images
+  const accessibilityAmenitiesWithImages: Array<{
+    name: string;
+    slug: string;
+    description?: string | null;
+    image: { sourceUrl: string; altText: string | null };
+  }> = [];
+
+  for (const result of accessibilityAmenityResults) {
+    const amenity = result?.accessibilityAmenity;
+    const imageNode = amenity?.amenityImages?.amenityImage?.node;
+    if (amenity && imageNode?.sourceUrl) {
+      accessibilityAmenitiesWithImages.push({
+        name: amenity.name,
+        slug: amenity.slug,
+        description: amenity.description ?? null,
+        image: {
+          sourceUrl: imageNode.sourceUrl,
+          altText: imageNode.altText ?? null,
+        },
+      });
+    }
+  }
 
   const featuredPrograms = f.featuredPrograms?.nodes ?? [];
   const policies = f.policiesFaqs?.nodes ?? [];
@@ -321,25 +426,28 @@ export default async function CenterPage(props: CenterPageProps) {
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 space-y-8">
-
-      {/* HERO IMAGE CAROUSEL */}
+    <main>
+      {/* HERO IMAGE CAROUSEL - Full Width */}
       {carouselImages.length > 0 ? (
-        <ImageCarousel images={carouselImages} />
+        <div className="w-full">
+          <ImageCarousel images={carouselImages} />
+        </div>
       ) : center.featuredImage?.node?.sourceUrl ? (
         // Fallback to featured image if no carousel images
         // eslint-disable-next-line @next/next/no-img-element
-        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50">
+        <div className="w-full">
           <img
             src={center.featuredImage.node.sourceUrl}
             alt={center.featuredImage.node.altText ?? ""}
-            className="h-72 w-full object-cover sm:h-80"
+            className="h-72 w-full object-cover sm:h-96"
           />
         </div>
       ) : null}
 
-      {/* HERO */}
-      <section className="space-y-4">
+      {/* Content Container */}
+      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+        {/* HERO */}
+        <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -390,6 +498,16 @@ export default async function CenterPage(props: CenterPageProps) {
                     <article className="prose prose-sm max-w-none sm:prose-base">
                       <p className="whitespace-pre-line">{f.longDescription}</p>
                     </article>
+                  )}
+
+                  {/* Amenities Carousel */}
+                  {amenitiesWithImages.length > 0 && (
+                    <AmenitiesCarousel amenities={amenitiesWithImages} title="Amenities" />
+                  )}
+
+                  {/* Accessibility Amenities Carousel */}
+                  {accessibilityAmenitiesWithImages.length > 0 && (
+                    <AmenitiesCarousel amenities={accessibilityAmenitiesWithImages} title="Accessibility Features" />
                   )}
 
                   {/* Policies & FAQs / Announcements */}
@@ -679,11 +797,88 @@ export default async function CenterPage(props: CenterPageProps) {
                     </div>
                   )}
 
+                  {/* Benefits */}
+                  <h2 className="text-xl font-bold text-gmcc-navy mb-3">Facility</h2>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <h3 className="text-md font-semibold text-gmcc-navy">Get access to the Community Center's brand new facility, built with your comfort and convenience in mind:</h3>
+                      <ul className="list-disc pl-5 text-base text-neutral-700">
+                        <li>Double gymnasium</li>
+                        <li>24/7 Fitness Center</li>
+                        <li>Courts</li>
+                        <li>Swimming Pools</li>
+                        <li>Indoor Track</li>
+                        <li>Fitness Studios</li>
+                        <li>Family Activity Areas</li>
+                        <li>Secure Childcare Rooms</li>
+                      </ul>
+                    </div>
+                    <div className="space-y-2">
+                      {amenitiesWithImages.length > 0 && (
+                        <AmenitiesCarousel amenities={amenitiesWithImages} title="" />
+                      )}
+                    </div>
+                  </div>
+
+                  <h2 className="text-xl font-bold text-gmcc-navy mb-3">For Families</h2>
+                  <h3 className="text-md font-semibold text-gmcc-navy">Find fitness and entertainment for the whole family:</h3>
+                  <div className="grid gap-4 md:grid-cols-[1fr_1.5fr] items-stretch">
+                    <div className="flex flex-col gap-2">
+                      <img src="/JungleGymPhoto.png" alt="Jungle Gym" className="w-full flex-1 object-cover rounded-md" />
+                      <img src="/ChildCarePhoto.png" alt="Child Care" className="w-full flex-1 object-cover rounded-md" />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="text-md font-semibold text-neutral-700">The Zone</h4>
+                      <p className="text-sm text-neutral-700">A supervised hangout for kids ages 6–12, led by a certified K–12 teacher. Kids can get homework help, try STEM projects, play games, or enjoy 
+                        the Nintendo Switch and Nex Playground. Free for Center Plus Family and All Access Family members. Parents must remain on the property.</p>
+
+                      <h4 className="text-md font-semibold text-neutral-700">Child Watch</h4>
+                      <p className="text-sm text-neutral-700">PA safe, fun space for kids (ages 3 months–9 years) while parents enjoy the Community Center. Staff lead play, crafts, and age-appropriate 
+                        activities that keep little ones engaged. Each visit is up to 90 minutes, and parents must stay on-site. Free for Center Plus Family and All 
+                        Access Family members, with drop-in rates available.</p>
+
+                      <h4 className="text-md font-semibold text-neutral-700">Jungle Gym</h4>
+                      <p className="text-sm text-neutral-700">Parent-child playtime for ages under 6, featuring padded floors, balance beams, and soft gym equipment. Kids can climb, tumble, and explore 
+                        while building coordination and confidence. Free for Center Plus Family and All Access Family members, with drop-in options available.</p>
+
+                      <h4 className="text-md font-semibold text-neutral-700">Family Fun Nights</h4>
+                      <p className="text-sm text-neutral-700">Bring everyone together for games, crafts, themed activities, and a photo booth. Each event is a little different and perfect for all ages. 
+                        Free for members; $7 per non-member participant.</p>
+                    </div>
+                  </div>
+
+                  <h2 className="text-xl font-bold text-gmcc-navy mb-3">For Individuals</h2>
+                  <h3 className="text-md font-semibold text-gmcc-navy">For teens, seniors, and everyone in between, see what the Community Center offers you:</h3>
+                  <div className="grid gap-4 md:grid-cols-[1.5fr_1fr] items-stretch">
+                    <div className="space-y-2">
+                      <h4 className="text-md font-semibold text-neutral-700">Group Fitness Classes</h4>
+                      <p className="text-sm text-neutral-700">Classes make it easy to stay motivated with options for every level—strength, cardio, cycling, yoga, dance, and more. Led by certified instructors, 
+                        classes are designed to energize, challenge, and build community. Free with All Access Membership.</p>
+
+                      <h4 className="text-md font-semibold text-neutral-700">Strength & Weight Training</h4>
+                      <p className="text-sm text-neutral-700">Our strength and weight training areas feature free weights, squat racks, cable machines, benches, and functional training equipment. Whether you're 
+                        new to lifting or building a serious routine, you'll find everything you need to get stronger and train effectively.</p>
+
+                      <h4 className="text-md font-semibold text-neutral-700">Cardio Training</h4>
+                      <p className="text-sm text-neutral-700">The cardio deck includes treadmills, ellipticals, and more! Perfect for warm-ups, endurance work, or full training sessions. Machines offer a variety 
+                        of programs and resistance levels so you can go at your own pace.</p>
+
+                      <h4 className="text-md font-semibold text-neutral-700">Personal Training</h4>
+                      <p className="text-sm text-neutral-700">Our goal is to inspire and enable individuals of all ages and fitness levels to reach their health and wellness goals through personalized training 
+                        programs that foster long-term success and well-being. All our trainers are highly educated and certified and offer flexible schedules. Let them help you reach your goals! </p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <img src="/GroupFitnessPhoto.png" alt="Group Fitness Classes" className="w-full flex-1 object-cover rounded-md" />
+                      <img src="/PersonalTrainingPhoto.png" alt="Personal Training" className="w-full flex-1 object-cover rounded-md" />
+                    </div>
+                  </div>
+
+
                   {/* Testimonials */}
                   {centerTestimonials.length > 0 && (
                     <div className="space-y-4">
-                      <h2 className="text-lg font-semibold text-neutral-900">
-                        What Members Say
+                      <h2 className="text-xl font-bold text-gmcc-navy mb-3">
+                        Don't just take our word for it, see what our members have to say:
                       </h2>
                       <div className="grid gap-4 md:grid-cols-2">
                         {centerTestimonials.map((t: any) => {
@@ -725,10 +920,8 @@ export default async function CenterPage(props: CenterPageProps) {
                     </div>
                   )}
 
+                  {/* <h2 className="text-xl font-bold text-gmcc-navy mb-3">Membership Options</h2>
                   <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                    <h2 className="text-base font-semibold text-neutral-900 mb-3">
-                      Membership Options
-                    </h2>
                     {centerMemberships.length > 0 ? (
                       <div className="space-y-3">
                         <ul className="space-y-2">
@@ -750,24 +943,33 @@ export default async function CenterPage(props: CenterPageProps) {
                         Membership information coming soon.
                       </p>
                     )}
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* RIGHT SIDEBAR - STICKY */}
                 <aside className="lg:sticky lg:top-6 h-fit">
                   {/* Call to Action */}
-                  <div className="rounded-2xl border border-neutral-200 bg-emerald-50 p-6">
-                    <h2 className="text-lg font-semibold text-neutral-900 mb-2">
+                  <div className="rounded-2xl border border-neutral-200 bg-gmcc-blue-light/30 p-6 max-w-xs text-center">
+                    <h2 className="text-xl font-bold text-gmcc-navy mb-2 text-left">
                       Ready to Join?
                     </h2>
-                    <p className="text-sm text-neutral-700 mb-4">
+                    <p className="text-sm text-neutral-700 mb-4 text-left">
                       Explore all membership options, compare pricing, and find the perfect fit for you or your family.
                     </p>
                     <a
                       href={`/membership/center/${slug}`}
-                      className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-6 py-3 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+                      className="button-primary"
                     >
-                      View All Membership Options
+                      View Membership Options
+                    </a>
+                    <p className="text-sm text-neutral-700 mt-4 mb-4 text-left">
+                      Not sure yet? Schedule a free tour!
+                    </p>
+                    <a
+                      href={`/membership/center/${slug}`}
+                      className="button-secondary"
+                    >
+                      Schedule a Tour
                     </a>
                   </div>
                 </aside>
@@ -776,6 +978,7 @@ export default async function CenterPage(props: CenterPageProps) {
           },
         ]}
       />
+      </div>
     </main>
   );
 }

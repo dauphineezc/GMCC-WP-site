@@ -23,7 +23,7 @@ export default function MobileMenu({ items, isOpen, onClose }: MobileMenuProps) 
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 lg:fixed ${
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}

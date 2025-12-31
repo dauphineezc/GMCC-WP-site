@@ -39,3 +39,32 @@ body {
 .wp-block-image img { height: auto; }
 /* Make embeds and iframes responsive-ish */
 .prose :where(iframe, embed, object) { width: 100%; aspect-ratio: 16 / 9; }
+
+
+.button-primary {
+  @apply bg-gmcc-navy text-white px-4 py-2 rounded-md outline outline-2 outline-gmcc-navy hover:bg-gmcc-navy/80 transition-colors;
+}
+
+.button-secondary {
+  @apply bg-white text-gmcc-navy px-4 py-2 rounded-md outline outline-2 outline-gmcc-navy hover:bg-gmcc-blue-light/50 transition-colors;
+}
+
+.button-tertiary {
+  @apply bg-gmcc-green text-white px-4 py-2 rounded-md outline outline-2 outline-gmcc-green hover:bg-gmcc-green/80 transition-colors;
+}
+
+h1 {
+  @apply text-3xl font-bold text-gmcc-navy;
+}
+
+h2 {
+  @apply text-xl font-bold text-gmcc-navy;
+}
+
+h3 {
+  @apply text-base font-bold text-gmcc-navy;
+}
+
+p {
+  @apply text-sm text-neutral-700;
+}
