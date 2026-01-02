@@ -123,7 +123,9 @@ export default function Navbar({ items }: { items: NavItem[] }) {
       </div>
 
       {/* Gradient line */}
-      <div className="h-0.5 w-full bg-gradient-to-r from-gmcc-teal-light via-gmcc-teal to-gmcc-teal-light"/>
+      <div className={`w-full bg-gradient-to-r from-gmcc-teal-light via-gmcc-teal to-gmcc-teal-light transition-all duration-300 ${
+        isScrolled ? "h-0.75" : "h-1"
+      }`}/>
       
       {/* Gradient shadow overlay - positioned over content below */}
       <div className="absolute left-0 right-0 top-full h-8 bg-gradient-to-b from-neutral-500/30 via-neutral-500/10 to-transparent pointer-events-none z-40" />

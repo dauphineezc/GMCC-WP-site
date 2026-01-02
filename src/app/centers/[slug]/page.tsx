@@ -1,43 +1,13 @@
 // src/app/centers/[slug]/page.tsx
 import { wpFetch } from "@/lib/wp";
+import {
+  fetchAmenitiesWithImages,
+  fetchAccessibilityAmenitiesWithImages,
+  extractAmenitySlugs,
+} from "@/lib/amenities";
 import CenterTabs from "./centerTabs";
 import ImageCarousel from "../../../components/imageCarousel";
 import AmenitiesCarousel from "../../../components/amenitiesCarousel";
-
-const AMENITY_BY_SLUG_QUERY = `
-  query AmenityBySlug($slug: ID!) {
-    amenity(id: $slug, idType: SLUG) {
-      name
-      slug
-      amenityImages {
-        amenityImage {
-          node {
-            sourceUrl
-            altText
-          }
-        }
-      }
-    }
-  }
-`;
-
-const ACCESSIBILITY_AMENITY_BY_SLUG_QUERY = `
-  query AccessibilityAmenityBySlug($slug: ID!) {
-    accessibilityAmenity(id: $slug, idType: SLUG) {
-      name
-      slug
-      description
-      amenityImages {
-        amenityImage {
-          node {
-            sourceUrl
-            altText
-          }
-        }
-      }
-    }
-  }
-`;
 
 const CENTER_BY_SLUG_QUERY = `
   query CenterBySlug($slug: ID!) {
@@ -283,66 +253,14 @@ export default async function CenterPage(props: CenterPageProps) {
   const amenityNames =
     amenityNodes.map((n: any) => n?.name).filter(Boolean) ?? [];
 
-  // Fetch amenity images for carousel
-  const amenitySlugs = amenityNodes.map((n: any) => n?.slug).filter(Boolean);
-  const amenityImagePromises = amenitySlugs.map((amenitySlug: string) =>
-    wpFetch<any>(AMENITY_BY_SLUG_QUERY, { slug: amenitySlug })
-  );
-  const amenityResults = await Promise.all(amenityImagePromises);
+  // Fetch amenity images for carousel using shared utility
+  const amenitySlugs = extractAmenitySlugs(amenityNodes);
+  const amenitiesWithImages = await fetchAmenitiesWithImages(amenitySlugs);
 
-  // Filter to only include amenities with images
-  const amenitiesWithImages: Array<{
-    name: string;
-    slug: string;
-    image: { sourceUrl: string; altText: string | null };
-  }> = [];
-
-  for (const result of amenityResults) {
-    const amenity = result?.amenity;
-    const imageNode = amenity?.amenityImages?.amenityImage?.node;
-    if (amenity && imageNode?.sourceUrl) {
-      amenitiesWithImages.push({
-        name: amenity.name,
-        slug: amenity.slug,
-        image: {
-          sourceUrl: imageNode.sourceUrl,
-          altText: imageNode.altText ?? null,
-        },
-      });
-    }
-  }
-
-  // Fetch accessibility amenity images for carousel
+  // Fetch accessibility amenity images for carousel using shared utility
   const accessibilityAmenityNodes = f.accessibilityAmenities?.nodes ?? [];
-  const accessibilityAmenitySlugs = accessibilityAmenityNodes.map((n: any) => n?.slug).filter(Boolean);
-  const accessibilityAmenityImagePromises = accessibilityAmenitySlugs.map((amenitySlug: string) =>
-    wpFetch<any>(ACCESSIBILITY_AMENITY_BY_SLUG_QUERY, { slug: amenitySlug })
-  );
-  const accessibilityAmenityResults = await Promise.all(accessibilityAmenityImagePromises);
-
-  // Filter to only include accessibility amenities with images
-  const accessibilityAmenitiesWithImages: Array<{
-    name: string;
-    slug: string;
-    description?: string | null;
-    image: { sourceUrl: string; altText: string | null };
-  }> = [];
-
-  for (const result of accessibilityAmenityResults) {
-    const amenity = result?.accessibilityAmenity;
-    const imageNode = amenity?.amenityImages?.amenityImage?.node;
-    if (amenity && imageNode?.sourceUrl) {
-      accessibilityAmenitiesWithImages.push({
-        name: amenity.name,
-        slug: amenity.slug,
-        description: amenity.description ?? null,
-        image: {
-          sourceUrl: imageNode.sourceUrl,
-          altText: imageNode.altText ?? null,
-        },
-      });
-    }
-  }
+  const accessibilityAmenitySlugs = extractAmenitySlugs(accessibilityAmenityNodes);
+  const accessibilityAmenitiesWithImages = await fetchAccessibilityAmenitiesWithImages(accessibilityAmenitySlugs);
 
   const featuredPrograms = f.featuredPrograms?.nodes ?? [];
   const policies = f.policiesFaqs?.nodes ?? [];
@@ -824,8 +742,8 @@ export default async function CenterPage(props: CenterPageProps) {
                   <h3 className="text-md font-semibold text-gmcc-navy">Find fitness and entertainment for the whole family:</h3>
                   <div className="grid gap-4 md:grid-cols-[1fr_1.5fr] items-stretch">
                     <div className="flex flex-col gap-2">
-                      <img src="/JungleGymPhoto.png" alt="Jungle Gym" className="w-full flex-1 object-cover rounded-md" />
-                      <img src="/ChildCarePhoto.png" alt="Child Care" className="w-full flex-1 object-cover rounded-md" />
+                      <img src="/images/JungleGymPhoto.png" alt="Jungle Gym" className="w-full flex-1 object-cover rounded-md" />
+                      <img src="/images/ChildCarePhoto.png" alt="Child Care" className="w-full flex-1 object-cover rounded-md" />
                     </div>
                     <div className="space-y-2">
                       <h4 className="text-md font-semibold text-neutral-700">The Zone</h4>
@@ -868,8 +786,8 @@ export default async function CenterPage(props: CenterPageProps) {
                         programs that foster long-term success and well-being. All our trainers are highly educated and certified and offer flexible schedules. Let them help you reach your goals! </p>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <img src="/GroupFitnessPhoto.png" alt="Group Fitness Classes" className="w-full flex-1 object-cover rounded-md" />
-                      <img src="/PersonalTrainingPhoto.png" alt="Personal Training" className="w-full flex-1 object-cover rounded-md" />
+                      <img src="/images/GroupFitnessPhoto.png" alt="Group Fitness Classes" className="w-full flex-1 object-cover rounded-md" />
+                      <img src="/images/PersonalTrainingPhoto.png" alt="Personal Training" className="w-full flex-1 object-cover rounded-md" />
                     </div>
                   </div>
 
@@ -947,7 +865,7 @@ export default async function CenterPage(props: CenterPageProps) {
                 </div>
 
                 {/* RIGHT SIDEBAR - STICKY */}
-                <aside className="lg:sticky lg:top-6 h-fit">
+                <aside className="lg:sticky lg:top-18 h-fit">
                   {/* Call to Action */}
                   <div className="rounded-2xl border border-neutral-200 bg-gmcc-blue-light/30 p-6 max-w-xs text-center">
                     <h2 className="text-xl font-bold text-gmcc-navy mb-2 text-left">

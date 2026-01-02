@@ -52,9 +52,5 @@ export default async function CentersPage() {
   const centers = data?.centers?.nodes ?? [];
   const programs = data?.programs?.nodes ?? [];
 
-  return (
-    <main className="mx-auto max-w-6xl px-4 py-8 space-y-8">
-      <ExploreCentersClient centers={centers} programs={programs} />
-    </main>
-  );
+  return <ExploreCentersClient centers={centers} programs={programs} />;
 }

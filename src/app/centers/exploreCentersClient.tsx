@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ImageCarousel from "@/components/imageCarousel";
+import HeaderImage from "@/components/headerImage";
 
 type CenterNode = any;
 type ProgramNode = any;
@@ -74,6 +76,9 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
   const [amenitiesSelected, setAmenitiesSelected] = useState<string[]>([]);
   const [areasSelected, setAreasSelected] = useState<string[]>([]);
   const [programsSelected, setProgramsSelected] = useState<string[]>([]);
+  
+  // Mobile filter panel state (collapsed by default)
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Filtering logic:
   // - AND across categories
@@ -127,7 +132,14 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
   };
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10">
+    <main>
+      {/* HEADER IMAGE - Full Width */}
+      <div className="w-full">
+        <HeaderImage src="/images/MembershipHeaderImage.png" alt="Greater Midland Memberships" />
+      </div>
+
+    {/* Page content - constrained width */}
+    <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
       <header className="mb-8 space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           Explore our centers
@@ -139,75 +151,81 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
 
       <section className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         {/* FILTER SIDEBAR */}
-        <aside className="space-y-6 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm h-fit sticky top-6">
-          {/* Amenities */}
-          <div>
-            <h2 className="text-sm font-semibold text-neutral-900">Amenities</h2>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {amenityOptions.map(a => (
-                <button
-                  key={a.slug}
-                  onClick={() => toggle(amenitiesSelected, a.slug, setAmenitiesSelected)}
-                  className={`rounded-full px-3 py-1 text-xs border ${
-                    amenitiesSelected.includes(a.slug)
-                      ? "bg-emerald-600 text-white border-emerald-600"
-                      : "bg-neutral-50 text-neutral-700 border-neutral-200"
-                  }`}
-                >
-                  {a.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Program Areas */}
-          <div>
-            <h2 className="text-sm font-semibold text-neutral-900">Program areas</h2>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {programAreaOptions.map(a => (
-                <button
-                  key={a.slug}
-                  onClick={() => toggle(areasSelected, a.slug, setAreasSelected)}
-                  className={`rounded-full px-3 py-1 text-xs border ${
-                    areasSelected.includes(a.slug)
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-neutral-50 text-neutral-700 border-neutral-200"
-                  }`}
-                >
-                  {a.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Programs */}
-          <div>
-            <h2 className="text-sm font-semibold text-neutral-900">Programs</h2>
-            <div className="mt-2 max-h-56 overflow-auto space-y-1 pr-1">
-              {programOptions.map(p => (
-                <label key={p.slug} className="flex items-center gap-2 text-xs text-neutral-700">
-                  <input
-                    type="checkbox"
-                    checked={programsSelected.includes(p.slug)}
-                    onChange={() => toggle(programsSelected, p.slug, setProgramsSelected)}
-                  />
-                  {p.title}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Reset */}
+        <aside className="rounded-2xl border border-neutral-200 bg-white shadow-sm h-fit sticky top-18">
+          {/* Mobile toggle button */}
           <button
-            onClick={() => {
-              setAmenitiesSelected([]);
-              setAreasSelected([]);
-              setProgramsSelected([]);
-            }}
-            className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
+            onClick={() => setFiltersOpen(!filtersOpen)}
+            className="lg:hidden w-full flex items-center justify-between p-4 text-sm font-medium text-neutral-700"
           >
-            Clear filters
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              Filters
+              {(amenitiesSelected.length + areasSelected.length + programsSelected.length) > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-emerald-100 text-emerald-700 rounded-full">
+                  {amenitiesSelected.length + areasSelected.length + programsSelected.length}
+                </span>
+              )}
+            </span>
+            <svg
+              className={`w-4 h-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
+
+          {/* Filter content - hidden on mobile by default, always visible on desktop */}
+          <div className={`space-y-6 p-4 pt-0 lg:pt-4 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
+            {/* Amenities */}
+            <div>
+              <h3>Amenities</h3>
+              <div className="mt-2 max-h-56 overflow-auto space-y-1 pr-1">
+                {amenityOptions.map(a => (
+                  <label key={a.slug} className="flex items-center gap-2 text-xs text-neutral-700">
+                    <input
+                      type="checkbox"
+                      checked={amenitiesSelected.includes(a.slug)}
+                      onChange={() => toggle(amenitiesSelected, a.slug, setAmenitiesSelected)}
+                    />
+                    {a.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Program Areas */}
+            <div>
+              <h3>Program areas</h3>
+              <div className="mt-2 max-h-56 overflow-auto space-y-1 pr-1">
+                {programAreaOptions.map(a => (
+                  <label key={a.slug} className="flex items-center gap-2 text-xs text-neutral-700">
+                    <input
+                      type="checkbox"
+                      checked={areasSelected.includes(a.slug)}
+                      onChange={() => toggle(areasSelected, a.slug, setAreasSelected)}
+                    />
+                    {a.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Reset */}
+            <button
+              onClick={() => {
+                setAmenitiesSelected([]);
+                setAreasSelected([]);
+                setProgramsSelected([]);
+              }}
+              className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
+            >
+              Clear filters
+            </button>
+          </div>
         </aside>
 
         {/* CENTER CARDS */}
@@ -275,6 +293,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
           </div>
         </div>
       </section>
+      </div>
     </main>
   );
 }

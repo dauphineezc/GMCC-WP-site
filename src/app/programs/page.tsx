@@ -2,6 +2,7 @@
 import { Suspense } from "react";
 import { wpFetch } from "@/lib/wp";
 import ExploreProgramsClient from "./exploreProgramsClient";
+import HeaderImage from "@/components/headerImage";
 
 const EXPLORE_PROGRAMS_QUERY = `
   query ExplorePrograms {
@@ -55,7 +56,7 @@ export default async function ExploreProgramsPage() {
 
 function ProgramsLoadingSkeleton() {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10 space-y-8">
+    <main>
       <header className="space-y-2">
         <div className="h-10 w-80 bg-neutral-200 rounded animate-pulse" />
         <div className="h-5 w-96 bg-neutral-100 rounded animate-pulse" />

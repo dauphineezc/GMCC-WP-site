@@ -17,7 +17,7 @@ function normalizeWpUrlToPath(url: string) {
   const PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
     "Aquatics": "/programs?" + buildQuery({ programArea: "Aquatics" }),
     "Child Swim Lessons": "/programs?" + buildQuery({ programArea: "Aquatics", audience: "youth" }),
-    "Adult Swim Lessons": "/programs?" + buildQuery({ programArea: "Aquatics", audience: "teen,family,adult,activeOlderAdult" }),
+    "Adult Swim Lessons": "/programs?" + buildQuery({ programArea: "Aquatics", audience: "youth,family,adult,activeOlderAdult" }),
     "Fitness": "/programs?" + buildQuery({ programArea: "Fitness" }),
     "Camps": "/programs?" + buildQuery({ offeringType: "Camp" }),
     "Childcare": "/programs?" + buildQuery({ programArea: "Childcare" }),

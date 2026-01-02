@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import HeaderImage from "@/components/headerImage";
 
 type ProgramWP = any;
 
@@ -213,6 +214,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
   const [skillLevels, setSkillLevels] = useState<string[]>(initialFilters.skillLevels);
   const [memberships, setMemberships] = useState<string[]>([]); 
   const [audience, setAudience] = useState<string[]>(initialFilters.audience);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Sync state when URL params change (e.g., navigating from navbar)
   useEffect(() => {
@@ -314,7 +316,14 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
   ]);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10 space-y-8">
+    <main>
+      {/* HEADER IMAGE - Full Width */}
+      <div className="w-full">
+        <HeaderImage src="/images/MembershipHeaderImage.png" alt="Greater Midland Memberships" />
+      </div>
+
+      {/* Page content - constrained width */}
+      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Explore our programs</h1>
         <p className="text-sm text-neutral-600 sm:text-base">
@@ -324,12 +333,41 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
 
       <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
         {/* FILTER SIDEBAR */}
-        <aside className="space-y-6 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm h-fit">
+        <aside className="rounded-2xl border border-neutral-200 bg-white shadow-sm h-fit sticky top-18">
+          {/* Mobile toggle button */}
+          <button
+            onClick={() => setFiltersOpen(!filtersOpen)}
+            className="lg:hidden w-full flex items-center justify-between p-4 text-sm font-medium text-neutral-700"
+          >
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              Filters
+              {(offeringTypes.length + centers.length + programAreas.length + skillLevels.length + memberships.length + audience.length) > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-emerald-100 text-emerald-700 rounded-full">
+                  {offeringTypes.length + centers.length + programAreas.length + skillLevels.length + memberships.length + audience.length}
+                </span>
+              )}
+            </span>
+            <svg
+              className={`w-4 h-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Filter content - hidden on mobile by default, always visible on desktop */}
+          <div className={`space-y-6 p-4 pt-0 lg:pt-4 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
+
           {/* Search */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Search</label>
+          <div className="space-y-2 border-b border-neutral-200 pb-4 mt-2">
+            <label className="text-base text-gmcc-navy">Search</label>
             <input
-              className="w-full rounded-lg border px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-neutral-500 px-3 py-2 text-sm mt-2"
               placeholder="Search programs..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -343,7 +381,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
               onClick={() => toggleDropdown("offeringType")}
               className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
             >
-              <span>Offering type{offeringTypes.length > 0 && <span className="ml-2 text-xs text-neutral-500">({offeringTypes.length})</span>}</span>
+              <span><label className="text-base text-gmcc-navy">Offering type</label>{offeringTypes.length > 0 && <span className="ml-2 text-xs text-neutral-500">({offeringTypes.length})</span>}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${openDropdowns.has("offeringType") ? "rotate-180" : ""}`}
                 fill="none"
@@ -377,7 +415,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
               onClick={() => toggleDropdown("centers")}
               className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
             >
-              <span>Center{centers.length > 0 && <span className="ml-2 text-xs text-neutral-500">({centers.length})</span>}</span>
+              <span><label className="text-base text-gmcc-navy">Center</label>{centers.length > 0 && <span className="ml-2 text-xs text-neutral-500">({centers.length})</span>}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${openDropdowns.has("centers") ? "rotate-180" : ""}`}
                 fill="none"
@@ -411,7 +449,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
               onClick={() => toggleDropdown("programAreas")}
               className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
             >
-              <span>Program area{programAreas.length > 0 && <span className="ml-2 text-xs text-neutral-500">({programAreas.length})</span>}</span>
+              <span><label className="text-base text-gmcc-navy">Program area</label>{programAreas.length > 0 && <span className="ml-2 text-xs text-neutral-500">({programAreas.length})</span>}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${openDropdowns.has("programAreas") ? "rotate-180" : ""}`}
                 fill="none"
@@ -445,7 +483,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
               onClick={() => toggleDropdown("skillLevels")}
               className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
             >
-              <span>Skill level{skillLevels.length > 0 && <span className="ml-2 text-xs text-neutral-500">({skillLevels.length})</span>}</span>
+              <span><label className="text-base text-gmcc-navy">Skill level</label>{skillLevels.length > 0 && <span className="ml-2 text-xs text-neutral-500">({skillLevels.length})</span>}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${openDropdowns.has("skillLevels") ? "rotate-180" : ""}`}
                 fill="none"
@@ -479,7 +517,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
               onClick={() => toggleDropdown("audience")}
               className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
             >
-              <span>Audience{audience.length > 0 && <span className="ml-2 text-xs text-neutral-500">({audience.length})</span>}</span>
+              <span><label className="text-base text-gmcc-navy">Audience</label>{audience.length > 0 && <span className="ml-2 text-xs text-neutral-500">({audience.length})</span>}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${openDropdowns.has("audience") ? "rotate-180" : ""}`}
                 fill="none"
@@ -513,7 +551,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
               onClick={() => toggleDropdown("memberships")}
               className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
             >
-              <span>Membership required{memberships.length > 0 && <span className="ml-2 text-xs text-neutral-500">({memberships.length})</span>}</span>
+              <span><label className="text-base text-gmcc-navy">Membership required</label>{memberships.length > 0 && <span className="ml-2 text-xs text-neutral-500">({memberships.length})</span>}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${openDropdowns.has("memberships") ? "rotate-180" : ""}`}
                 fill="none"
@@ -542,7 +580,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
 
           {/* Clear */}
           <button
-            className="w-full rounded-lg border px-3 py-2 text-sm hover:bg-neutral-50"
+            className="w-full rounded-lg border border-neutral-500 text-neutral-700 px-3 py-2 text-sm hover:bg-neutral-50"
             onClick={() => {
               setSearch("");
               setOfferingTypes([]);
@@ -556,6 +594,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
           >
             Clear filters
           </button>
+          </div>
         </aside>
 
         {/* RESULTS */}
@@ -628,6 +667,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
           )}
         </section>
       </section>
+      </div>
     </main>
   );
 }

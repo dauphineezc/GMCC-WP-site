@@ -34,6 +34,7 @@ const EXPLORE_MEMBERSHIPS_QUERY = `
         }
         membershipFields {
           summary
+          benefits
           pricingTable {
             tier
             monthly
@@ -120,15 +121,12 @@ export default async function ExploreMembershipsPage() {
   const memberships: Membership[] =
     data?.memberships?.nodes?.map(mapMembershipNode) ?? [];
 
-  // You can also fetch centers here if you want this to be dynamic.
+  // Center links now point directly to /membership/[center-slug]
   const centerLinks = [
-    { slug: "center/community-center", label: "Community Center" },
-    { slug: "center/tennis-center", label: "Tennis Center" },
-    // { slug: "center/curling-center", label: "Curling Center" },
-    { slug: "center/north-family-center", label: "North Family Center" },
-    { slug: "center/coleman-family-center", label: "Coleman Family Center" },
-    // Add a fifth if you have another membership-by-center page
-    // { slug: "some-other-center", label: "Some Other Center" },
+    { slug: "community-center", label: "Community Center" },
+    { slug: "tennis-center", label: "Tennis Center" },
+    { slug: "north-family-center", label: "North Family Center" },
+    { slug: "coleman-family-center", label: "Coleman Family Center" },
   ];
 
   return (

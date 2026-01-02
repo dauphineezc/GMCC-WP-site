@@ -11,6 +11,7 @@
   --gmcc-teal-light: #7dd3dc;
   --gmcc-blue-light: #d4e8f2;
   --gmcc-green: #4C8B2B;
+  --gmcc-green-light: #e3f1e1;
 }
 
 @theme inline {
@@ -67,4 +68,11 @@ h3 {
 
 p {
   @apply text-sm text-neutral-700;
+}
+
+mark {
+  background-color: var(--gmcc-blue-light);
+  color: black;
+  padding: 3px 5px;
+  border-radius: 4px;
 }
