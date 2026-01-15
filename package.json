@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build",
+    "wpe-build": "node -v && npm -v && echo WPE_BUILD_STARTED && next build",
     "start": "next start",
     "lint": "eslint"
   },
