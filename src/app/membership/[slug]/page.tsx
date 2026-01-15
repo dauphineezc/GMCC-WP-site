@@ -153,9 +153,9 @@ export default async function CenterMembershipPage({ params }: CenterMembershipP
 
   if (!center) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-10">
-        <h1 className="text-2xl font-semibold">Center not found</h1>
-        <p className="mt-2 text-neutral-600">
+      <main className="mx-auto max-w-5xl px-4 section-y">
+        <h1 className="h2">Center not found</h1>
+        <p className="mt-2 body">
           The membership page you&apos;re looking for doesn&apos;t exist.
         </p>
       </main>

@@ -8,6 +8,7 @@ import {
 import CenterTabs from "./centerTabs";
 import ImageCarousel from "../../../components/imageCarousel";
 import AmenitiesCarousel from "../../../components/amenitiesCarousel";
+import AmenitiesGrid from "../../../components/amenitiesGrid";
 
 const CENTER_BY_SLUG_QUERY = `
   query CenterBySlug($slug: ID!) {
@@ -33,6 +34,24 @@ const CENTER_BY_SLUG_QUERY = `
           nodes {
             name
             slug
+            ... on Amenity {
+              amenitiesFields {
+                amenityImage {
+                  node {
+                    sourceUrl
+                    altText
+                  }
+                }
+                isService
+                additionalInformation
+                additionalImage {
+                  node {
+                    sourceUrl
+                    altText
+                  }
+                }
+              }
+            }
           }
         }
 
@@ -40,6 +59,16 @@ const CENTER_BY_SLUG_QUERY = `
           nodes {
             name
             slug
+            ... on AccessibilityAmenity {
+              amenitiesFields {
+                amenityImage {
+                  node {
+                    sourceUrl
+                    altText
+                  }
+                }
+              }
+            }
           }
         }
 
@@ -138,6 +167,29 @@ const CENTER_BY_SLUG_QUERY = `
           }
         }
 
+        upcomingEvents {
+          nodes {
+            ... on Event {
+              slug
+              title
+              featuredImage {
+                node {
+                  sourceUrl
+                  altText
+                }
+              }
+              eventFields {
+                summary
+                startDateTime
+                endDateTime
+                registrationLink
+                eventType
+                locationOverride
+              }
+            }
+          }
+        }
+
         policiesFaqs {
           nodes {
             ... on Policy {
@@ -211,8 +263,8 @@ export default async function CenterPage(props: CenterPageProps) {
 
   if (!center) {
     return (
-      <main className="mx-auto max-w-5xl p-6">
-        Center not found.
+      <main className="mx-auto max-w-5xl section-y">
+        <p className="body">Center not found.</p>
       </main>
     );
   }
@@ -363,36 +415,25 @@ export default async function CenterPage(props: CenterPageProps) {
       ) : null}
 
       {/* Content Container */}
-      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+      <div className="mx-auto max-w-6xl px-4 section-y stack-8">
         {/* HERO */}
-        <section className="space-y-4">
+        <section className="stack-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              {center.title}
-            </h1>
+          <div className="stack-2">
+            <h1 className="h1">{center.title}</h1>
             {f.summary && (
-              <p className="max-w-2xl text-sm text-neutral-600 sm:text-base">
-                {f.summary}
-              </p>
+              <p className="body max-w-2xl">{f.summary}</p>
             )}
           </div>
 
-          <div className="flex flex-col items-end gap-2 text-xs text-neutral-700">
+          <div className="flex flex-col items-end gap-2">
             {f.centerType && (
-              <span className="inline-flex rounded-full bg-neutral-100 px-3 py-1">
-                {f.centerType}
-              </span>
+              <span className="badge badge-neutral">{f.centerType}</span>
             )}
                 {amenityNames.length > 0 && (
                 <span className="inline-flex flex-wrap justify-end gap-1">
                     {amenityNames.map((name: string) => (
-                    <span
-                        key={name}
-                        className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-800"
-                    >
-                        {name}
-                    </span>
+                    <span key={name} className="badge badge-teal">{name}</span>
                     ))}
                 </span>     
                 )}
@@ -410,7 +451,7 @@ export default async function CenterPage(props: CenterPageProps) {
             content: (
               <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)]">
                 {/* LEFT COLUMN */}
-                <div className="space-y-8">
+                <div className="stack-8">
                   {/* Overview */}
                   {f.longDescription && (
                     <article className="prose prose-sm max-w-none sm:prose-base">
@@ -420,7 +461,7 @@ export default async function CenterPage(props: CenterPageProps) {
 
                   {/* Amenities Carousel */}
                   {amenitiesWithImages.length > 0 && (
-                    <AmenitiesCarousel amenities={amenitiesWithImages} title="Amenities" />
+                    <AmenitiesGrid amenities={amenitiesWithImages} title="Amenities" />
                   )}
 
                   {/* Accessibility Amenities Carousel */}
@@ -433,14 +474,11 @@ export default async function CenterPage(props: CenterPageProps) {
                     <div className="grid gap-6 md:grid-cols-2">
                       {policies.length > 0 && (
                         <div>
-                          <h2 className="text-lg font-medium">Policies & FAQs</h2>
-                          <ul className="mt-2 space-y-1 text-sm text-neutral-700">
+                          <h2 className="h2">Policies & FAQs</h2>
+                          <ul className="mt-2 stack-2 body">
                             {policies.map((p: any, i: number) => (
                               <li key={p.slug ?? i}>
-                                <a
-                                  href={`/policies/${p.slug}`}
-                                  className="text-blue-600 hover:underline"
-                                >
+                                <a href={`/policies/${p.slug}`} className="link">
                                   {p.title}
                                 </a>
                               </li>
@@ -450,14 +488,11 @@ export default async function CenterPage(props: CenterPageProps) {
                       )}
                       {announcements.length > 0 && (
                         <div>
-                          <h2 className="text-lg font-medium">Announcements</h2>
-                          <ul className="mt-2 space-y-1 text-sm text-neutral-700">
+                          <h2 className="h2">Announcements</h2>
+                          <ul className="mt-2 stack-2 body">
                             {announcements.map((n: any, i: number) => (
                               <li key={n.slug ?? i}>
-                                <a
-                                  href={`/news/${n.slug}`}
-                                  className="text-blue-600 hover:underline"
-                                >
+                                <a href={`/news/${n.slug}`} className="link">
                                   {n.title}
                                 </a>
                               </li>
@@ -470,24 +505,22 @@ export default async function CenterPage(props: CenterPageProps) {
                 </div>
 
                 {/* RIGHT SIDEBAR */}
-                <aside className="space-y-6">
+                <aside className="stack-4">
                   {/* Address & Contact Card */}
                   {(f.address || f.contactInfo?.contactPhone || f.contactInfo?.contactEmail) && (
-                    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+                    <div className="card">
                       <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-4">
+                        <div className="flex-1 stack-4">
                           {/* Address */}
                           {f.address && (
                             <div>
-                              <h3 className="text-sm font-medium text-neutral-500 mb-1">Address</h3>
-                              <p className="text-sm text-neutral-900 whitespace-pre-line">
-                                {f.address}
-                              </p>
+                              <h3 className="eyebrow mb-1">Address</h3>
+                              <p className="body whitespace-pre-line">{f.address}</p>
                               <a
                                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.address)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="mt-2 inline-block text-sm text-blue-600 hover:underline"
+                                className="link small mt-2 inline-block"
                               >
                                 Get directions →
                               </a>
@@ -497,15 +530,12 @@ export default async function CenterPage(props: CenterPageProps) {
                           {/* Contact */}
                           {(f.contactInfo?.contactPhone || f.contactInfo?.contactEmail) && (
                             <div>
-                              <h3 className="text-sm font-medium text-neutral-500 mb-1">Contact</h3>
-                              <div className="space-y-1 text-sm text-neutral-900">
+                              <h3 className="eyebrow mb-1">Contact</h3>
+                              <div className="stack-2 body">
                                 {f.contactInfo?.contactPhone && (
                                   <div>
                                     <span className="text-neutral-500">Phone: </span>
-                                    <a
-                                      href={`tel:${f.contactInfo.contactPhone}`}
-                                      className="text-blue-600 hover:underline"
-                                    >
+                                    <a href={`tel:${f.contactInfo.contactPhone}`} className="link">
                                       {f.contactInfo.contactPhone}
                                     </a>
                                   </div>
@@ -513,10 +543,7 @@ export default async function CenterPage(props: CenterPageProps) {
                                 {f.contactInfo?.contactEmail && (
                                   <div>
                                     <span className="text-neutral-500">Email: </span>
-                                    <a
-                                      href={`mailto:${f.contactInfo.contactEmail}`}
-                                      className="text-blue-600 hover:underline"
-                                    >
+                                    <a href={`mailto:${f.contactInfo.contactEmail}`} className="link">
                                       {f.contactInfo.contactEmail}
                                     </a>
                                   </div>
@@ -553,11 +580,9 @@ export default async function CenterPage(props: CenterPageProps) {
                   )}
 
                   {/* Hours card */}
-                  <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                    <h2 className="text-base font-semibold text-neutral-900">
-                      Hours
-                    </h2>
-                    <div className="mt-3 space-y-1">
+                  <div className="card">
+                    <h2 className="h3">Hours</h2>
+                    <div className="mt-3 stack-2">
                       {days.map(({ key, field, label }) => (
                         <div key={key}>
                           {renderDayHours({
@@ -572,28 +597,13 @@ export default async function CenterPage(props: CenterPageProps) {
 
                   {/* Social links */}
                   {f.socialLinks && (
-                    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                      <h2 className="text-base font-semibold text-neutral-900">
-                        Social
-                      </h2>
-                      <p className="mt-2 whitespace-pre-line text-sm text-neutral-700">
-                        {f.socialLinks}
-                      </p>
+                    <div className="card">
+                      <h2 className="h3">Social</h2>
+                      <p className="mt-2 body whitespace-pre-line">{f.socialLinks}</p>
                     </div>
                   )}
                 </aside>
               </div>
-            ),
-          },
-          {
-            id: "history",
-            label: "History",
-            content: f.history ? (
-              <article className="prose prose-sm max-w-none sm:prose-base">
-                <p className="whitespace-pre-line">{f.history}</p>
-              </article>
-            ) : (
-              <p className="text-sm text-neutral-500">History information coming soon.</p>
             ),
           },
           {
@@ -604,12 +614,10 @@ export default async function CenterPage(props: CenterPageProps) {
                 <p className="whitespace-pre-line">{f.schedule}</p>
               </article>
             ) : (
-              <div className="space-y-6">
-                <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                  <h2 className="text-base font-semibold text-neutral-900 mb-3">
-                    Hours
-                  </h2>
-                  <div className="space-y-1">
+              <div className="stack-4">
+                <div className="card">
+                  <h2 className="h3 mb-3">Hours</h2>
+                  <div className="stack-2">
                     {days.map(({ key, field, label }) => (
                       <div key={key}>
                         {renderDayHours({
@@ -637,13 +645,13 @@ export default async function CenterPage(props: CenterPageProps) {
             id: "programs",
             label: "Programs",
             content: featuredPrograms.length > 0 ? (
-              <div className="space-y-4">
+              <div className="stack-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   {featuredPrograms.map((prog: any) => (
                     <a
                       key={prog.slug}
                       href={`/programs/${prog.slug}`}
-                      className="group rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm hover:border-emerald-500/70 hover:shadow-md transition"
+                      className="group card card-hover"
                     >
                       <div className="flex gap-3">
                         {prog.featuredImage?.node?.sourceUrl && (
@@ -654,20 +662,10 @@ export default async function CenterPage(props: CenterPageProps) {
                             className="h-16 w-16 flex-none rounded-lg object-cover"
                           />
                         )}
-                        <div className="space-y-1">
-                          <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-emerald-700">
-                            {prog.title}
-                          </h3>
+                        <div className="stack-2">
+                          <h3 className="h3 group-hover:text-gmcc-teal">{prog.title}</h3>
                           {prog.programFields?.summary && (
-                            <p className="line-clamp-2 text-xs text-neutral-600">
-                              {prog.programFields.summary}
-                            </p>
-                          )}
-                          {prog.programFields?.offeringType && (
-                            <p className="text-[11px] text-neutral-500">
-                              {prog.programFields.offeringType.join?.(", ") ??
-                                prog.programFields.offeringType}
-                            </p>
+                            <p className="small line-clamp-2">{prog.programFields.summary}</p>
                           )}
                         </div>
                       </div>
@@ -675,16 +673,13 @@ export default async function CenterPage(props: CenterPageProps) {
                   ))}
                 </div>
                 <div className="text-center">
-                  <a
-                    href="/programs"
-                    className="inline-block text-sm text-blue-600 hover:underline"
-                  >
+                  <a href="/programs" className="link body">
                     View all programs →
                   </a>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-neutral-500">No programs available at this time.</p>
+              <p className="body">No programs available at this time.</p>
             ),
           },
           {
@@ -716,11 +711,11 @@ export default async function CenterPage(props: CenterPageProps) {
                   )}
 
                   {/* Benefits */}
-                  <h2 className="text-xl font-bold text-gmcc-navy mb-3">Facility</h2>
+                  <h2 className="h2 text-gmcc-navy mb-3">Facility</h2>
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <h3 className="text-md font-semibold text-gmcc-navy">Get access to the Community Center's brand new facility, built with your comfort and convenience in mind:</h3>
-                      <ul className="list-disc pl-5 text-base text-neutral-700">
+                    <div className="stack-2">
+                      <h3 className="h3 text-gmcc-navy">Get access to the Community Center's brand new facility, built with your comfort and convenience in mind:</h3>
+                      <ul className="list-disc pl-5 body">
                         <li>Double gymnasium</li>
                         <li>24/7 Fitness Center</li>
                         <li>Courts</li>
@@ -731,58 +726,58 @@ export default async function CenterPage(props: CenterPageProps) {
                         <li>Secure Childcare Rooms</li>
                       </ul>
                     </div>
-                    <div className="space-y-2">
+                    <div className="stack-2">
                       {amenitiesWithImages.length > 0 && (
                         <AmenitiesCarousel amenities={amenitiesWithImages} title="" />
                       )}
                     </div>
                   </div>
 
-                  <h2 className="text-xl font-bold text-gmcc-navy mb-3">For Families</h2>
-                  <h3 className="text-md font-semibold text-gmcc-navy">Find fitness and entertainment for the whole family:</h3>
+                  <h2 className="h2 text-gmcc-navy mb-3">For Families</h2>
+                  <h3 className="h3 text-gmcc-navy">Find fitness and entertainment for the whole family:</h3>
                   <div className="grid gap-4 md:grid-cols-[1fr_1.5fr] items-stretch">
                     <div className="flex flex-col gap-2">
                       <img src="/images/JungleGymPhoto.png" alt="Jungle Gym" className="w-full flex-1 object-cover rounded-md" />
                       <img src="/images/ChildCarePhoto.png" alt="Child Care" className="w-full flex-1 object-cover rounded-md" />
                     </div>
-                    <div className="space-y-2">
-                      <h4 className="text-md font-semibold text-neutral-700">The Zone</h4>
-                      <p className="text-sm text-neutral-700">A supervised hangout for kids ages 6–12, led by a certified K–12 teacher. Kids can get homework help, try STEM projects, play games, or enjoy 
+                    <div className="stack-2">
+                      <h4 className="h3">The Zone</h4>
+                      <p className="body">A supervised hangout for kids ages 6–12, led by a certified K–12 teacher. Kids can get homework help, try STEM projects, play games, or enjoy 
                         the Nintendo Switch and Nex Playground. Free for Center Plus Family and All Access Family members. Parents must remain on the property.</p>
 
-                      <h4 className="text-md font-semibold text-neutral-700">Child Watch</h4>
-                      <p className="text-sm text-neutral-700">PA safe, fun space for kids (ages 3 months–9 years) while parents enjoy the Community Center. Staff lead play, crafts, and age-appropriate 
+                      <h4 className="h3">Child Watch</h4>
+                      <p className="body">PA safe, fun space for kids (ages 3 months–9 years) while parents enjoy the Community Center. Staff lead play, crafts, and age-appropriate 
                         activities that keep little ones engaged. Each visit is up to 90 minutes, and parents must stay on-site. Free for Center Plus Family and All 
                         Access Family members, with drop-in rates available.</p>
 
-                      <h4 className="text-md font-semibold text-neutral-700">Jungle Gym</h4>
-                      <p className="text-sm text-neutral-700">Parent-child playtime for ages under 6, featuring padded floors, balance beams, and soft gym equipment. Kids can climb, tumble, and explore 
+                      <h4 className="h3">Jungle Gym</h4>
+                      <p className="body">Parent-child playtime for ages under 6, featuring padded floors, balance beams, and soft gym equipment. Kids can climb, tumble, and explore 
                         while building coordination and confidence. Free for Center Plus Family and All Access Family members, with drop-in options available.</p>
 
-                      <h4 className="text-md font-semibold text-neutral-700">Family Fun Nights</h4>
-                      <p className="text-sm text-neutral-700">Bring everyone together for games, crafts, themed activities, and a photo booth. Each event is a little different and perfect for all ages. 
+                      <h4 className="h3">Family Fun Nights</h4>
+                      <p className="body">Bring everyone together for games, crafts, themed activities, and a photo booth. Each event is a little different and perfect for all ages. 
                         Free for members; $7 per non-member participant.</p>
                     </div>
                   </div>
 
-                  <h2 className="text-xl font-bold text-gmcc-navy mb-3">For Individuals</h2>
-                  <h3 className="text-md font-semibold text-gmcc-navy">For teens, seniors, and everyone in between, see what the Community Center offers you:</h3>
+                  <h2 className="h2 text-gmcc-navy mb-3">For Individuals</h2>
+                  <h3 className="h3 text-gmcc-navy">For teens, seniors, and everyone in between, see what the Community Center offers you:</h3>
                   <div className="grid gap-4 md:grid-cols-[1.5fr_1fr] items-stretch">
-                    <div className="space-y-2">
-                      <h4 className="text-md font-semibold text-neutral-700">Group Fitness Classes</h4>
-                      <p className="text-sm text-neutral-700">Classes make it easy to stay motivated with options for every level—strength, cardio, cycling, yoga, dance, and more. Led by certified instructors, 
+                    <div className="stack-2">
+                      <h4 className="h3">Group Fitness Classes</h4>
+                      <p className="body">Classes make it easy to stay motivated with options for every level—strength, cardio, cycling, yoga, dance, and more. Led by certified instructors, 
                         classes are designed to energize, challenge, and build community. Free with All Access Membership.</p>
 
-                      <h4 className="text-md font-semibold text-neutral-700">Strength & Weight Training</h4>
-                      <p className="text-sm text-neutral-700">Our strength and weight training areas feature free weights, squat racks, cable machines, benches, and functional training equipment. Whether you're 
+                      <h4 className="h3">Strength & Weight Training</h4>
+                      <p className="body">Our strength and weight training areas feature free weights, squat racks, cable machines, benches, and functional training equipment. Whether you're 
                         new to lifting or building a serious routine, you'll find everything you need to get stronger and train effectively.</p>
 
-                      <h4 className="text-md font-semibold text-neutral-700">Cardio Training</h4>
-                      <p className="text-sm text-neutral-700">The cardio deck includes treadmills, ellipticals, and more! Perfect for warm-ups, endurance work, or full training sessions. Machines offer a variety 
+                      <h4 className="h3">Cardio Training</h4>
+                      <p className="body">The cardio deck includes treadmills, ellipticals, and more! Perfect for warm-ups, endurance work, or full training sessions. Machines offer a variety 
                         of programs and resistance levels so you can go at your own pace.</p>
 
-                      <h4 className="text-md font-semibold text-neutral-700">Personal Training</h4>
-                      <p className="text-sm text-neutral-700">Our goal is to inspire and enable individuals of all ages and fitness levels to reach their health and wellness goals through personalized training 
+                      <h4 className="h3">Personal Training</h4>
+                      <p className="body">Our goal is to inspire and enable individuals of all ages and fitness levels to reach their health and wellness goals through personalized training 
                         programs that foster long-term success and well-being. All our trainers are highly educated and certified and offer flexible schedules. Let them help you reach your goals! </p>
                     </div>
                     <div className="flex flex-col gap-2">
@@ -794,20 +789,17 @@ export default async function CenterPage(props: CenterPageProps) {
 
                   {/* Testimonials */}
                   {centerTestimonials.length > 0 && (
-                    <div className="space-y-4">
-                      <h2 className="text-xl font-bold text-gmcc-navy mb-3">
+                    <div className="stack-4">
+                      <h2 className="h2 text-gmcc-navy mb-3">
                         Don't just take our word for it, see what our members have to say:
                       </h2>
                       <div className="grid gap-4 md:grid-cols-2">
                         {centerTestimonials.map((t: any) => {
                           const tf = t.testimonialFields ?? {};
                           return (
-                            <figure
-                              key={t.slug}
-                              className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm"
-                            >
+                            <figure key={t.slug} className="card">
                               {tf.quote && (
-                                <blockquote className="text-sm text-neutral-700 whitespace-pre-line mb-4">
+                                <blockquote className="body whitespace-pre-line mb-4">
                                   "{tf.quote}"
                                 </blockquote>
                               )}
@@ -820,7 +812,7 @@ export default async function CenterPage(props: CenterPageProps) {
                                     className="h-12 w-12 rounded-full object-cover flex-shrink-0"
                                   />
                                 )}
-                                <div className="text-xs text-neutral-600">
+                                <div className="small">
                                   {tf.personName && (
                                     <div className="font-semibold text-neutral-900">
                                       {tf.personName}
@@ -867,26 +859,20 @@ export default async function CenterPage(props: CenterPageProps) {
                 {/* RIGHT SIDEBAR - STICKY */}
                 <aside className="lg:sticky lg:top-18 h-fit">
                   {/* Call to Action */}
-                  <div className="rounded-2xl border border-neutral-200 bg-gmcc-blue-light/30 p-6 max-w-xs text-center">
-                    <h2 className="text-xl font-bold text-gmcc-navy mb-2 text-left">
+                  <div className="card bg-gmcc-blue-light/20 max-w-xs text-center">
+                    <h2 className="h2 text-gmcc-navy mb-2 text-left">
                       Ready to Join?
                     </h2>
-                    <p className="text-sm text-neutral-700 mb-4 text-left">
+                    <p className="body mb-4 text-left">
                       Explore all membership options, compare pricing, and find the perfect fit for you or your family.
                     </p>
-                    <a
-                      href={`/membership/center/${slug}`}
-                      className="button-primary"
-                    >
+                    <a href={`/membership/center/${slug}`} className="btn btn-primary">
                       View Membership Options
                     </a>
-                    <p className="text-sm text-neutral-700 mt-4 mb-4 text-left">
+                    <p className="body mt-4 mb-4 text-left">
                       Not sure yet? Schedule a free tour!
                     </p>
-                    <a
-                      href={`/membership/center/${slug}`}
-                      className="button-secondary"
-                    >
+                    <a href={`/membership/center/${slug}`} className="btn btn-secondary">
                       Schedule a Tour
                     </a>
                   </div>

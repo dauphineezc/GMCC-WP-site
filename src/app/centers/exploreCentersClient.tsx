@@ -139,23 +139,21 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
       </div>
 
     {/* Page content - constrained width */}
-    <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
-      <header className="mb-8 space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Explore our centers
-        </h1>
-        <p className="max-w-3xl text-sm text-neutral-600 sm:text-base">
+    <div className="mx-auto max-w-6xl px-4 section-y stack-8">
+      <header className="mb-8 stack-2">
+        <h1 className="h1">Explore our centers</h1>
+        <p className="body max-w-3xl">
           Find the best location for your goals — filter by amenities, programs, or program areas.
         </p>
       </header>
 
       <section className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         {/* FILTER SIDEBAR */}
-        <aside className="rounded-2xl border border-neutral-200 bg-white shadow-sm h-fit sticky top-18">
+        <aside className="card h-fit sticky top-18">
           {/* Mobile toggle button */}
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
-            className="lg:hidden w-full flex items-center justify-between p-4 text-sm font-medium text-neutral-700"
+            className="lg:hidden w-full flex items-center justify-between p-4 body font-medium"
           >
             <span className="flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +161,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
               </svg>
               Filters
               {(amenitiesSelected.length + areasSelected.length + programsSelected.length) > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs bg-emerald-100 text-emerald-700 rounded-full">
+                <span className="badge badge-teal ml-1">
                   {amenitiesSelected.length + areasSelected.length + programsSelected.length}
                 </span>
               )}
@@ -179,13 +177,13 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
           </button>
 
           {/* Filter content - hidden on mobile by default, always visible on desktop */}
-          <div className={`space-y-6 p-4 pt-0 lg:pt-4 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
+          <div className={`stack-4 p-4 pt-0 lg:pt-4 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
             {/* Amenities */}
             <div>
-              <h3>Amenities</h3>
-              <div className="mt-2 max-h-56 overflow-auto space-y-1 pr-1">
+              <h3 className="h3">Amenities</h3>
+              <div className="mt-2 max-h-56 overflow-auto stack-2 pr-1">
                 {amenityOptions.map(a => (
-                  <label key={a.slug} className="flex items-center gap-2 text-xs text-neutral-700">
+                  <label key={a.slug} className="flex items-center gap-2 small">
                     <input
                       type="checkbox"
                       checked={amenitiesSelected.includes(a.slug)}
@@ -199,10 +197,10 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
 
             {/* Program Areas */}
             <div>
-              <h3>Program areas</h3>
-              <div className="mt-2 max-h-56 overflow-auto space-y-1 pr-1">
+              <h3 className="h3">Program areas</h3>
+              <div className="mt-2 max-h-56 overflow-auto stack-2 pr-1">
                 {programAreaOptions.map(a => (
-                  <label key={a.slug} className="flex items-center gap-2 text-xs text-neutral-700">
+                  <label key={a.slug} className="flex items-center gap-2 small">
                     <input
                       type="checkbox"
                       checked={areasSelected.includes(a.slug)}
@@ -221,7 +219,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
                 setAreasSelected([]);
                 setProgramsSelected([]);
               }}
-              className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
+              className="btn btn-secondary w-full"
             >
               Clear filters
             </button>
@@ -229,9 +227,9 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
         </aside>
 
         {/* CENTER CARDS */}
-        <div className="space-y-4">
+        <div className="stack-4">
           {filteredCenters.length === 0 && (
-            <p className="text-sm text-neutral-600">No centers match those filters.</p>
+            <p className="body">No centers match those filters.</p>
           )}
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -244,7 +242,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
                 <a
                   key={c.slug}
                   href={`/centers/${c.slug}`}
-                  className="group rounded-2xl border border-neutral-200 bg-white shadow-sm hover:shadow-md hover:border-emerald-500/60 transition overflow-hidden"
+                  className="group card card-hover overflow-hidden"
                 >
                   {hasMap ? (
                     <div className="h-40 w-full overflow-hidden bg-neutral-100">
@@ -261,23 +259,19 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
                     </div>
                   ) : (
                     <div className="h-40 w-full bg-neutral-100 flex items-center justify-center">
-                      <span className="text-xs text-neutral-400">No map available</span>
+                      <span className="small">No map available</span>
                     </div>
                   )}
 
-                  <div className="p-4 space-y-2">
-                    <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-emerald-700">
-                      {c.title}
-                    </h3>
+                  <div className="p-4 stack-2">
+                    <h3 className="h3 group-hover:text-gmcc-teal">{c.title}</h3>
 
                     {cf.address && (
-                      <p className="text-xs text-neutral-600 whitespace-pre-line">
-                        {cf.address}
-                      </p>
+                      <p className="small whitespace-pre-line">{cf.address}</p>
                     )}
 
                     {(cf.contactInfo?.contactPhone || cf.contactInfo?.contactEmail) && (
-                      <div className="text-xs text-neutral-700 space-y-0.5">
+                      <div className="small stack-2">
                         {cf.contactInfo?.contactPhone && (
                           <div>📞 {cf.contactInfo.contactPhone}</div>
                         )}

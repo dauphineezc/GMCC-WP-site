@@ -9,8 +9,16 @@ const AMENITY_BY_SLUG_QUERY = `
       name
       slug
       description
-      amenityImages {
+      amenitiesFields {
         amenityImage {
+          node {
+            sourceUrl
+            altText
+          }
+        }
+        isService
+        additionalInformation
+        additionalImage {
           node {
             sourceUrl
             altText
@@ -18,8 +26,7 @@ const AMENITY_BY_SLUG_QUERY = `
         }
       }
     }
-  }
-`;
+  }`;
 
 const ACCESSIBILITY_AMENITY_BY_SLUG_QUERY = `
   query AccessibilityAmenityBySlug($slug: ID!) {
@@ -27,7 +34,7 @@ const ACCESSIBILITY_AMENITY_BY_SLUG_QUERY = `
       name
       slug
       description
-      amenityImages {
+      amenitiesFields {
         amenityImage {
           node {
             sourceUrl
@@ -67,7 +74,7 @@ export async function fetchAmenitiesWithImages(
 
   for (const result of amenityResults) {
     const amenity = result?.amenity;
-    const imageNode = amenity?.amenityImages?.amenityImage?.node;
+    const imageNode = amenity?.amenitiesFields?.amenityImage?.node;
     if (amenity && imageNode?.sourceUrl) {
       amenitiesWithImages.push({
         name: amenity.name,
@@ -102,7 +109,7 @@ export async function fetchAccessibilityAmenitiesWithImages(
 
   for (const result of amenityResults) {
     const amenity = result?.accessibilityAmenity;
-    const imageNode = amenity?.amenityImages?.amenityImage?.node;
+    const imageNode = amenity?.amenitiesFields?.amenityImage?.node;
     if (amenity && imageNode?.sourceUrl) {
       amenitiesWithImages.push({
         name: amenity.name,

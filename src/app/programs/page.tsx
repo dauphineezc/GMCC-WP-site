@@ -2,11 +2,16 @@
 import { Suspense } from "react";
 import { wpFetch } from "@/lib/wp";
 import ExploreProgramsClient from "./exploreProgramsClient";
-import HeaderImage from "@/components/headerImage";
+
+const PAGE_SIZE = 24;
 
 const EXPLORE_PROGRAMS_QUERY = `
-  query ExplorePrograms {
-    programs(first: 500) {
+  query ExplorePrograms($first: Int!, $after: String) {
+    programs(first: $first, after: $after, where: { stati: PUBLISH }) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
       nodes {
         id
         slug
@@ -22,9 +27,8 @@ const EXPLORE_PROGRAMS_QUERY = `
           offeringType
           skillLevel
           priceFrom
-          audience { nodes { name slug }}
-          membershipRequirements { nodes { name slug }}
-
+          audience { nodes { name slug } }
+          campType { nodes { name slug } }
           center {
             nodes {
               ... on Center {
@@ -33,10 +37,7 @@ const EXPLORE_PROGRAMS_QUERY = `
               }
             }
           }
-
-          programArea {
-            nodes { name slug }
-          }
+          programArea { nodes { name slug } }
         }
       }
     }
@@ -44,12 +45,21 @@ const EXPLORE_PROGRAMS_QUERY = `
 `;
 
 export default async function ExploreProgramsPage() {
-  const data = await wpFetch<any>(EXPLORE_PROGRAMS_QUERY);
+  const data = await wpFetch<any>(EXPLORE_PROGRAMS_QUERY, {
+    first: PAGE_SIZE,
+    after: null,
+  });   
+
   const programs = data?.programs?.nodes ?? [];
+  const pageInfo = data?.programs?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
   return (
     <Suspense fallback={<ProgramsLoadingSkeleton />}>
-      <ExploreProgramsClient programs={programs} />
+      <ExploreProgramsClient
+        initialPrograms={programs}
+        initialPageInfo={pageInfo}
+        pageSize={PAGE_SIZE}
+      />
     </Suspense>
   );
 }

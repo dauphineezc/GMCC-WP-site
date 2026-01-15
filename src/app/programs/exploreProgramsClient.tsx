@@ -1,10 +1,16 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import HeaderImage from "@/components/headerImage";
+import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 
 type ProgramWP = any;
+
+type PageInfo = {
+  hasNextPage: boolean;
+  endCursor: string | null;
+};
 
 type ProgramCard = {
   slug: string;
@@ -12,13 +18,14 @@ type ProgramCard = {
   summary: string;
   heroUrl: string | null;
   heroAlt: string;
-  offeringType: string[];      // ACF select
-  skillLevel: string[];        // ACF select
-  membershipRequirements: { slug: string; name: string }[]; // taxonomy
-  audience: { slug: string; name: string }[]; // taxonomy
+  offeringType: string[];
+  skillLevel: string[];
+  membershipRequirements: { slug: string; name: string }[];
+  audience: { slug: string; name: string }[];
   centers: { slug: string; title: string }[];
   programAreas: { slug: string; name: string }[];
   priceFrom: number | null;
+  campTypes: { slug: string; name: string }[];
 };
 
 function splitLines(val: unknown): string[] {
@@ -71,11 +78,96 @@ function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
     centers,
     programAreas,
     priceFrom: typeof f.priceFrom === "number" ? f.priceFrom : null,
+
+    campTypes: f.campType?.nodes?.map((n: any) => ({
+      slug: n?.slug,
+      name: n?.name,
+    })).filter((x: any) => x?.slug && x?.name) ?? [],
+
   };
 }
 
-export default function ExploreProgramsClient({ programs }: { programs: ProgramWP[] }) {
-  const all = useMemo(() => programs.map(mapProgramForExplorer), [programs]);
+export default function ExploreProgramsClient({
+  initialPrograms,
+  initialPageInfo,
+  pageSize,
+}: {
+  initialPrograms: ProgramWP[];
+  initialPageInfo: PageInfo;
+  pageSize: number;
+}) {
+  // ✅ Infinite scroll state
+  const [loadedPrograms, setLoadedPrograms] = useState<ProgramWP[]>(initialPrograms);
+  const [pageInfo, setPageInfo] = useState<PageInfo>(initialPageInfo);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore) return;
+    if (!pageInfo.hasNextPage) return;
+
+    setIsLoadingMore(true);
+    setLoadError(null);
+
+    try {
+      const params = new URLSearchParams();
+      params.set("first", String(pageSize));
+      if (pageInfo.endCursor) params.set("after", pageInfo.endCursor);
+
+      const res = await fetch(`/api/programs?${params.toString()}`);
+      if (!res.ok) throw new Error(`Failed to load more programs (${res.status})`);
+
+      const json: { programs: ProgramWP[]; pageInfo: PageInfo } = await res.json();
+
+      // de-dupe by slug/id just in case
+      setLoadedPrograms(prev => {
+        const seen = new Set(prev.map(p => p?.id ?? p?.slug));
+        const next = [...prev];
+        for (const p of json.programs ?? []) {
+          const key = p?.id ?? p?.slug;
+          if (!seen.has(key)) {
+            seen.add(key);
+            next.push(p);
+          }
+        }
+        return next;
+      });
+
+      setPageInfo(json.pageInfo);
+    } catch (e: any) {
+      setLoadError(e?.message ?? "Failed to load more programs");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, pageInfo.hasNextPage, pageInfo.endCursor, pageSize]);
+
+  // ✅ IntersectionObserver triggers loadMore near bottom
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first?.isIntersecting) {
+          loadMore();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "800px 0px", // start loading before you hit bottom
+        threshold: 0,
+      }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  
+  const all = useMemo(() => loadedPrograms.map(mapProgramForExplorer), [loadedPrograms]);
 
   // --- build option lists ---
   const offeringTypeOptions = useMemo(() => {
@@ -139,6 +231,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
     const offeringTypeParam = searchParams.get("offeringType");
     const centerParam = searchParams.get("center");
     const skillLevelParam = searchParams.get("skillLevel");
+    const campTypeParam = searchParams.get("campType");
 
     // programArea param uses names like "Aquatics", need to convert to slugs
     const programAreaSlugs: string[] = [];
@@ -146,6 +239,13 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
       programAreaParam.split(",").forEach(name => {
         const slug = findSlugByName(programAreaOptions, name.trim());
         if (slug) programAreaSlugs.push(slug);
+      });
+    }
+
+    const campTypeSlugs: string[] = [];
+    if (campTypeParam) {
+      campTypeParam.split(",").forEach(name => {
+        campTypeSlugs.push(name.trim());
       });
     }
 
@@ -203,6 +303,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
       offeringTypes: offeringTypeValues,
       centers: centerSlugs,
       skillLevels: skillLevelValues,
+      campTypes: campTypeSlugs,
     };
   }, [searchParams, programAreaOptions, audienceOptions, offeringTypeOptions, centerOptions, skillLevelOptions]);
 
@@ -214,6 +315,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
   const [skillLevels, setSkillLevels] = useState<string[]>(initialFilters.skillLevels);
   const [memberships, setMemberships] = useState<string[]>([]); 
   const [audience, setAudience] = useState<string[]>(initialFilters.audience);
+  const [campTypes, setCampTypes] = useState<string[]>(initialFilters.campTypes);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Sync state when URL params change (e.g., navigating from navbar)
@@ -223,6 +325,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
     setProgramAreas(initialFilters.programAreas);
     setSkillLevels(initialFilters.skillLevels);
     setAudience(initialFilters.audience);
+    setCampTypes(initialFilters.campTypes);
     
     // Auto-open dropdowns that have active filters
     const toOpen = new Set<string>();
@@ -231,6 +334,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
     if (initialFilters.programAreas.length) toOpen.add("programAreas");
     if (initialFilters.skillLevels.length) toOpen.add("skillLevels");
     if (initialFilters.audience.length) toOpen.add("audience");
+    if (initialFilters.campTypes.length) toOpen.add("campTypes");
     if (toOpen.size > 0) setOpenDropdowns(toOpen);
   }, [initialFilters]);
   
@@ -292,14 +396,14 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
         if (!p.skillLevel.some(x => skillLevels.includes(x))) return false;
       }
 
-      // membership requirements
-      if (memberships.length) {
-        if (!p.membershipRequirements.some((m: any) => memberships.includes(m.slug))) return false;
-      }
-
       // audience
       if (audience.length) {
         if (!p.audience.some((a: any) => audience.includes(a.slug))) return false;
+      }
+
+      // camp type
+      if (campTypes.length) {
+        if (!p.campTypes.some(ct => campTypes.includes(ct.slug))) return false;
       }
 
       return true;
@@ -313,6 +417,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
     skillLevels,
     memberships,
     audience,
+    campTypes,
   ]);
 
   return (
@@ -323,21 +428,21 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
       </div>
 
       {/* Page content - constrained width */}
-      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Explore our programs</h1>
-        <p className="text-sm text-neutral-600 sm:text-base">
+      <div className="mx-auto max-w-6xl px-4 section-y stack-8">
+      <header className="stack-2">
+        <h1 className="h1">Explore our programs</h1>
+        <p className="body">
           Browse all programs and filter by location, type, age, and more.
         </p>
       </header>
 
       <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
         {/* FILTER SIDEBAR */}
-        <aside className="rounded-2xl border border-neutral-200 bg-white shadow-sm h-fit sticky top-18">
+        <aside className="card h-fit sticky top-18">
           {/* Mobile toggle button */}
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
-            className="lg:hidden w-full flex items-center justify-between p-4 text-sm font-medium text-neutral-700"
+            className="lg:hidden w-full flex items-center justify-between p-4 body font-medium"
           >
             <span className="flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -345,7 +450,7 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
               </svg>
               Filters
               {(offeringTypes.length + centers.length + programAreas.length + skillLevels.length + memberships.length + audience.length) > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs bg-emerald-100 text-emerald-700 rounded-full">
+                <span className="badge badge-teal ml-1">
                   {offeringTypes.length + centers.length + programAreas.length + skillLevels.length + memberships.length + audience.length}
                 </span>
               )}
@@ -361,13 +466,13 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
           </button>
 
           {/* Filter content - hidden on mobile by default, always visible on desktop */}
-          <div className={`space-y-6 p-4 pt-0 lg:pt-4 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
+          <div className={`stack-4 p-4 pt-0 lg:pt-4 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
 
           {/* Search */}
-          <div className="space-y-2 border-b border-neutral-200 pb-4 mt-2">
-            <label className="text-base text-gmcc-navy">Search</label>
+          <div className="stack-2 border-b border-neutral-200 pb-4 mt-2">
+            <label className="body text-gmcc-navy">Search</label>
             <input
-              className="w-full rounded-lg border border-neutral-500 px-3 py-2 text-sm mt-2"
+              className="w-full rounded-lg border border-neutral-500 px-3 py-2 body mt-2"
               placeholder="Search programs..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -544,43 +649,9 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
             )}
           </div>
 
-          {/* Membership Requirements */}
-          <div className="border-b border-neutral-200 pb-2">
-            <button
-              type="button"
-              onClick={() => toggleDropdown("memberships")}
-              className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
-            >
-              <span><label className="text-base text-gmcc-navy">Membership required</label>{memberships.length > 0 && <span className="ml-2 text-xs text-neutral-500">({memberships.length})</span>}</span>
-              <svg
-                className={`w-4 h-4 transition-transform ${openDropdowns.has("memberships") ? "rotate-180" : ""}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {openDropdowns.has("memberships") && (
-              <div className="space-y-1 pt-2 pb-2">
-                {membershipOptions.map((mr) => (
-                  <label key={mr.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
-                    <input
-                      type="checkbox"
-                      checked={memberships.includes(mr.slug)}
-                      onChange={() => setMemberships(toggle(memberships, mr.slug))}
-                      className="cursor-pointer"
-                    />
-                    <span>{mr.name}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Clear */}
           <button
-            className="w-full rounded-lg border border-neutral-500 text-neutral-700 px-3 py-2 text-sm hover:bg-neutral-50"
+            className="btn btn-secondary w-full"
             onClick={() => {
               setSearch("");
               setOfferingTypes([]);
@@ -598,73 +669,99 @@ export default function ExploreProgramsClient({ programs }: { programs: ProgramW
         </aside>
 
         {/* RESULTS */}
-        <section className="space-y-4">
+        <section className="stack-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Results</h2>
-            <div className="text-sm text-neutral-600">{filtered.length === 1 ? `${filtered.length} program` : `${filtered.length} programs`}</div>
+            <h2 className="h2">Results</h2>
+            <div className="body">{filtered.length === 1 ? `${filtered.length} program` : `${filtered.length} programs`}</div>
           </div>
-
+          
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((p) => (
-              <a
-                key={p.slug}
-                href={`/programs/${p.slug}`}
-                className="group rounded-2xl border border-neutral-200 bg-white overflow-hidden shadow-md hover:shadow-lg hover:border-emerald-500 translate-y-1"
-              >
-                {p.heroUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.heroUrl}
-                    alt={p.heroAlt}
-                    className="h-36 w-full object-cover"
-                  />
+
+          <a
+            key={p.slug}
+            href={`/programs/${p.slug}`}
+            className="group card card-hover card-link overflow-hidden h-[380px] flex flex-col"
+          >
+            {/* Full-bleed image */}
+            <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
+              {p.heroUrl && (
+                <img
+                  src={p.heroUrl}
+                  alt={p.heroAlt}
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                  loading="lazy"
+                  decoding="async"
+                />
+              )}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
+            </div>
+
+            <div className="flex flex-1 flex-col min-h-0 mt-5">
+              <h3 className="font-heading text-lg font-medium leading-snug text-neutral-900 group-hover:text-gmcc-teal line-clamp-1">
+                {p.title}
+              </h3>
+
+              <CentersBadgesOneLine centers={p.centers} />
+
+              {p.summary && (
+                <p className="mt-3 text-xs leading-6 text-neutral-600 line-clamp-4 mb-3">
+                  {p.summary}
+                </p>
+              )}
+
+              <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
+                {p.priceFrom != null ? (
+                  <div className="text-sm">
+                    <span className="text-neutral-500">From </span>
+                    <span className="font-semibold text-neutral-900">
+                      ${p.priceFrom.toFixed(2)}
+                    </span>
+                  </div>
+                ) : (
+                  <div />
                 )}
 
-                <div className="p-4 space-y-2">
-                  <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-emerald-700">
-                    {p.title}
-                  </h3>
-                  {p.summary && (
-                    <p className="text-xs text-neutral-600 line-clamp-3">
-                      {p.summary}
-                    </p>
-                  )}
-
-                  {/* chips */}
-                  <div className="flex flex-wrap gap-1 text-[11px] text-neutral-700">
-                    {/* {p.offeringType.map((ot) => (
-                      <span key={ot} className="rounded-full bg-neutral-100 px-2 py-0.5">
-                        {ot}
-                      </span>
-                    ))} */}
-                    {p.centers.map((c) => (
-                      <span key={c.slug} className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-800">
-                        {c.title}
-                      </span>
-                    ))}
-                    {p.skillLevel.map((sl) => (
-                      <span key={sl} className="rounded-full bg-green-50 px-2 py-0.5 text-green-800">
-                        {sl}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* price */}
-                  {p.priceFrom != null && (
-                    <div className="text-xs text-neutral-800">
-                      From <span className="font-semibold">${p.priceFrom.toFixed(2)}</span>
-                    </div>
-                  )}
-                </div>
-              </a>
+                <span className="text-sm font-semibold text-gmcc-navy underline-offset-4 group-hover:underline">
+                  View →
+                </span>
+              </div>
+            </div>
+          </a>
             ))}
           </div>
 
           {!filtered.length && (
-            <div className="rounded-xl border border-dashed p-8 text-center text-sm text-neutral-600">
+            <div className="rounded-xl border border-dashed p-8 text-center body">
               No programs match these filters.
             </div>
           )}
+
+          {/* Infinite scroll footer */}
+          <div className="pt-4">
+            {loadError && (
+              <div className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {loadError}
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  className="ml-3 underline"
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+
+            {pageInfo.hasNextPage && (
+              <div className="flex items-center justify-center py-6 text-sm text-neutral-600">
+                {isLoadingMore ? "Loading more programs…" : "Scroll to load more"}
+              </div>
+            )}
+
+            {/* The sentinel element observed by IntersectionObserver */}
+            <div ref={sentinelRef} className="h-1" />
+          </div>
+
         </section>
       </section>
       </div>

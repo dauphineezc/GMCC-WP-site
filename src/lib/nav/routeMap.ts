@@ -7,7 +7,6 @@ export function mapWpPathToNextPath(path: string) {
     const centerSlugs = new Set([
       "coleman-family-center",
       "community-center",
-      "corporate-wellness-center",
       "curling-center",
       "north-family-center",
       "tennis-center",
@@ -16,8 +15,8 @@ export function mapWpPathToNextPath(path: string) {
     const slug = p.split("/").filter(Boolean)[0]; // first segment
     if (centerSlugs.has(slug)) return `/centers/${slug}`;
   
-    // 2) (Optional) Programs category landing pages
-    const programCategorySlugs = new Set([
+    // 2) (Optional) Programs area landing pages
+    const programAreaSlugs = new Set([
       "aquatics",
       "fitness",
       "sports-recreation",
@@ -25,11 +24,32 @@ export function mapWpPathToNextPath(path: string) {
       "childcare",
       "community",
     ]);
-    if (programCategorySlugs.has(slug)) {
+    if (programAreaSlugs.has(slug)) {
       // you can choose either:
-      // return `/programs/${slug}` if you have a category page
+      // return `/programs/${slug}` if you have a area page
       // OR filter route:
-      return `/programs?area=${encodeURIComponent(slug)}`;
+      return `/programs?programArea=${encodeURIComponent(slug)}`;
+    }
+
+    const programSlugs = new Set([
+      "drop-in-swim",
+      "dolphins",
+      "lifeguard-training",
+      "group-fitness-classes",
+      "personal-training",
+      "silver-sneakers",
+      "virtual-fitness",
+      "drop-in-care",
+      "on-site-care",
+      "before-after-school",
+      "preschool",
+      "drivers-training",
+      "tax-aide",
+      "food-distributions",
+      "pantries",
+    ]);
+    if (programSlugs.has(slug)) {
+      return `/programs/${slug}`;
     }
   
     // default: just use the same path

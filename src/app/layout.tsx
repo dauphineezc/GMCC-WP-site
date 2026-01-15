@@ -5,6 +5,7 @@ import Navbar from "@/components/nav/navbar";
 import Footer from "@/components/footer/footer";
 import { getPrimaryNav } from "@/lib/nav/getPrimaryNav";
 import { getFooterNav } from "@/lib/nav/getFooterNav";
+// import { franklin, futura, roboto, buffalo } from "./fonts";
 
 export const metadata: Metadata = {
   title: "Greater Midland",
@@ -22,7 +23,15 @@ export default async function RootLayout({
   ]);
 
   return (
-    <html lang="en">
+    <html 
+      lang="en"
+      className={[
+        // franklin.variable,
+        // futura.variable,
+        // roboto.variable,
+        // buffalo.variable,
+      ].join(" ")}
+    >
       <body className="min-h-screen bg-white text-neutral-900 flex flex-col">
         <Navbar items={nav} />
         <main className="flex-1">{children}</main>

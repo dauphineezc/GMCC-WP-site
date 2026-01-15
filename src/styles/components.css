@@ -1,0 +1,63 @@
+@layer components {
+    /* Layout rhythm */
+    .section-y { @apply py-12 sm:py-16; }
+    .stack-8 { @apply space-y-8; }
+    .stack-4 { @apply space-y-4; }
+    .stack-2 { @apply space-y-2; }
+
+      
+    /* Type scale */
+    .h1 { @apply font-heading text-3xl font-medium tracking-tight text-gmcc-navy sm:text-4xl; }
+    .h1-strong { @apply font-heading text-3xl font-extrabold tracking-tight text-gmcc-navy sm:text-4xl; }
+    .h2 { @apply font-heading text-xl font-medium tracking-tight text-gmcc-navy sm:text-2xl; }
+    .h3 { @apply font-heading text-base font-medium text-gmcc-navy sm:text-lg; }
+  
+    .eyebrow { @apply font-secondary text-xs font-semibold uppercase tracking-wide text-gmcc-grey-dark; }
+    .body { @apply font-body text-sm leading-7 text-gmcc-grey-dark sm:text-base; }
+    .small { @apply font-body text-[14px] leading-5 text-gmcc-grey-dark; }
+    .script-accent { @apply font-script text-2xl leading-none text-gmcc-navy; }
+  
+    /* Surfaces */
+    .card {
+        @apply rounded-2xl border border-neutral-100 bg-white shadow-md p-4;
+    }
+    .card-hover {
+        @apply transition
+        hover:-translate-y-0.5 hover:shadow-xl hover:border-neutral-300;
+    }
+    /* For clickable cards */
+    .card-link {
+        @apply block focus:outline-none focus-visible:ring-2 focus-visible:ring-gmcc-teal focus-visible:ring-offset-2;
+    }
+    /* Full-bleed section inside a padded card */
+    .card-bleed {
+        @apply -mx-5 -mt-5 overflow-hidden;
+    }
+
+    .card-bleed-bottom {
+        @apply -mx-5 -mb-5 overflow-hidden;
+    }
+    /* Optional: content padding helpers */
+    .card-pad { @apply p-5; }
+    .card-pad-sm { @apply p-4; }
+      
+  
+    /* Badges */
+    .badge { @apply inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium leading-none; }
+    .badge-grey { @apply bg-gmcc-grey-light text-gmcc-grey-dark; }
+    .badge-teal { @apply bg-gmcc-blue-light/60 text-gmcc-teal-dark; }
+    .badge-blue { @apply bg-gmcc-navy/10 text-gmcc-navy; }
+    .badge-green { @apply bg-gmcc-green-lightest text-gmcc-green-dark; }
+    .badge-neutral { @apply bg-gmcc-vanilla-ice text-gmcc-rifle-green; }
+    .badge-maroon { @apply bg-gmcc-orchid-bouquet/50 text-gmcc-pickled-beet; }
+  
+    /* Buttons */
+    .btn { @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-gmcc-teal focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none; }
+    .btn-primary { @apply bg-gmcc-navy text-white hover:bg-gmcc-navy/85; }
+    .btn-secondary { @apply border border-gmcc-navy bg-white text-gmcc-navy hover:bg-gmcc-blue-light/40; }
+    .btn-tertiary { @apply bg-gmcc-green text-white hover:bg-gmcc-green/85; }
+  
+    /* Links */
+    .link { @apply font-semibold text-gmcc-navy underline-offset-4 hover:underline; }  
+  }
+  

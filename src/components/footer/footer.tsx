@@ -31,7 +31,7 @@ export default function Footer({ items }: FooterProps) {
               <li key={item.id}>
                 <Link
                   href={item.href}
-                  className="text-xs md:text-sm tracking-widest uppercase text-white/90 hover:text-white transition-colors"
+                  className="eyebrow text-white/90 hover:text-white transition-colors"
                 >
                   {item.label}
                 </Link>
@@ -44,7 +44,7 @@ export default function Footer({ items }: FooterProps) {
         <div className="md:hidden border-t border-white/20 my-6" />
 
         {/* Contact Info */}
-        <div className="flex flex-col md:flex-row flex-wrap justify-center items-center gap-y-3 md:gap-x-6 md:gap-y-2 text-xs md:text-sm tracking-wide text-white/80">
+        <div className="flex flex-col md:flex-row flex-wrap justify-center items-center gap-y-3 md:gap-x-6 md:gap-y-2 small tracking-wide text-white/80">
           <span className="font-medium">GREATER MIDLAND</span>
           <span className="text-center">2205 S Jefferson Ave, Midland MI, 48640</span>
           <div className="flex gap-4 md:gap-6">

@@ -126,19 +126,19 @@ export default function ExploreMembershipsClient({
       </div>
 
       {/* Page content - constrained width */}
-      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+      <div className="mx-auto max-w-6xl px-4 section-y stack-8">
 
       {/* TOP HEADER */}
-      <section className="space-y-1">
+      <section className="stack-2">
         <div className="inline-block">
-          <h1>Greater Midland Memberships</h1>
+          <h1 className="h1">Greater Midland Memberships</h1>
         </div>
       </section>
 
       {/* FIND THE RIGHT MEMBERSHIP */}
-      <section className="space-y-2">
-        <h2 className="text-2xl font-semibold text-neutral-900">Find the Right Membership</h2>
-        <p>
+      <section className="stack-2">
+        <h2 className="h2">Find the Right Membership</h2>
+        <p className="body">
           Not sure which option is the best fit? Start by browsing memberships by
           center, or answer a couple of quick questions and we&apos;ll suggest
           memberships that match what you&apos;re looking for.
@@ -146,15 +146,11 @@ export default function ExploreMembershipsClient({
       </section>
 
       {/* BROWSE BY CENTER - simple text links */}
-      <section className="space-y-2">
-        <p className="text-sm text-neutral-500">Browse by center:</p>
+      <section className="stack-2">
+        <p className="small">Browse by center:</p>
         <div className="flex flex-wrap gap-x-8 gap-y-2">
           {centerLinks.map((c) => (
-            <a
-              key={c.slug}
-              href={`/membership/${c.slug}`}
-              className="text-base font-semibold text-[#1a4d6d] hover:underline"
-            >
+            <a key={c.slug} href={`/membership/${c.slug}`} className="link body">
               {c.label}
             </a>
           ))}
@@ -162,8 +158,8 @@ export default function ExploreMembershipsClient({
       </section>
 
       {/* GUIDED QUESTIONNAIRE - Timeline/Stepper */}
-      <section className="space-y-0">
-        <p className="text-sm text-neutral-500 mb-4">Get personalized recommendations:</p>
+      <section className="stack-2">
+        <p className="small mb-4">Get personalized recommendations:</p>
         
         <div className="relative">
           {/* Vertical line - centered through circles at left-0, circle is 2rem wide so center at 1rem */}
@@ -171,15 +167,15 @@ export default function ExploreMembershipsClient({
           
           {/* Step 1: Audience */}
           <div className="relative pb-8">
-            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white text-sm font-semibold">
+            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white small font-semibold">
               1
             </div>
             <div className="ml-12 flex flex-col sm:flex-row sm:items-center gap-3 pt-1">
-              <label className="text-sm text-neutral-700 whitespace-nowrap">
+              <label className="body whitespace-nowrap">
                 Who is the membership for?
               </label>
               <select
-                className="rounded border border-neutral-300 bg-white px-3 py-1.5 text-sm min-w-[150px]"
+                className="rounded border border-neutral-300 bg-white px-3 py-1.5 body min-w-[150px] shadow-sm"
                 value={audienceFilter}
                 onChange={(e) => setAudienceFilter(e.target.value)}
               >
@@ -195,17 +191,17 @@ export default function ExploreMembershipsClient({
 
           {/* Step 2: Program Areas as checkboxes */}
           <div className="relative pb-8">
-            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white text-sm font-semibold">
+            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white small font-semibold">
               2
             </div>
             <div className="ml-12 flex flex-col sm:flex-row sm:items-start gap-3 pt-1">
-              <label className="text-sm text-neutral-700 block sm:pt-1">
+              <label className="body block sm:pt-1">
                 What type of program(s) are you looking for?
               </label>
-              <div className="rounded border border-neutral-300 bg-white px-3 py-1.5 inline-block min-w-[150px]">
-                <div className="space-y-2">
+              <div className="rounded border border-neutral-300 bg-white px-3 py-1.5 inline-block min-w-[150px] shadow-sm">
+                <div className="stack-2">
                   {programAreas.map((p) => (
-                    <label key={p.slug} className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
+                    <label key={p.slug} className="flex items-center gap-2 body cursor-pointer">
                       <input
                         type="checkbox"
                         checked={programAreaFilters.includes(p.slug)}
@@ -228,24 +224,22 @@ export default function ExploreMembershipsClient({
 
           {/* Step 3: Recommended Memberships */}
           <div className="relative pb-8">
-            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white text-sm font-semibold">
+            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white small font-semibold">
               3
             </div>
             <div className="ml-12 pt-1">
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">
-                Recommended Memberships:
-              </h3>
+              <h3 className="h3 mb-3">Recommended Memberships:</h3>
 
               {filteredMemberships.length === 0 ? (
-                <p className="text-sm text-neutral-600">
+                <p className="body">
                   No memberships match those filters yet. Try changing your selections or
                   contact us and we&apos;ll help you find a fit.
                 </p>
               ) : (
-                <div className="space-y-3">
+                <div className="stack-4">
                   {/* Header row with count + arrows */}
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs text-neutral-600">
+                    <p className="small">
                       Showing{" "}
                       <span className="font-medium">
                         {currentRecIndex + 1}-
@@ -263,7 +257,7 @@ export default function ExploreMembershipsClient({
                           setCurrentRecIndex((i) => Math.max(0, i - VISIBLE_RECS))
                         }
                         disabled={currentRecIndex === 0}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 text-sm text-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100"
                         aria-label="Previous memberships"
                       >
                         ‹
@@ -274,7 +268,7 @@ export default function ExploreMembershipsClient({
                           setCurrentRecIndex((i) => Math.min(maxRecIndex, i + VISIBLE_RECS))
                         }
                         disabled={currentRecIndex >= maxRecIndex}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 text-sm text-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100"
                         aria-label="Next memberships"
                       >
                         ›
@@ -285,16 +279,11 @@ export default function ExploreMembershipsClient({
                   {/* Membership cards */}
                   <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
                     {visibleRecommended.map((m) => (
-                      <article
-                        key={m.slug}
-                        className="flex flex-col rounded-lg border border-neutral-200 bg-white p-4"
-                      >
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-bold text-gmcc-navy leading-tight">
-                            {m.title}
-                          </h4>
+                      <article key={m.slug} className="flex flex-col card">
+                        <div className="stack-2">
+                          <h4 className="h3 text-gmcc-navy leading-tight">{m.title}</h4>
 
-                          <div className="space-y-0.5 text-sm text-neutral-800">
+                          <div className="stack-2 body">
                             {m.pricing.monthly != null && (
                               <div>
                                 <span className="text-neutral-500">Monthly:</span>{" "}
@@ -312,34 +301,34 @@ export default function ExploreMembershipsClient({
                               </div>
                             )}
                             {m.pricing.joiningFee != null && (
-                              <div className="text-xs text-neutral-500">
+                              <div className="small">
                                 One-time impact fee: ${Math.round(m.pricing.joiningFee)}
                               </div>
                             )}
                           </div>
                         </div>
 
-                        <div className="mt-auto pt-4 space-y-2">
+                        <div className="mt-auto pt-4 stack-2">
                           {m.benefits && m.benefits.length > 0 ? (
                             <button
                               type="button"
                               onClick={() => toggleCompare(m.slug)}
-                              className={`inline-flex w-full items-center justify-center rounded px-3 py-2 text-xs font-semibold ${
+                              className={`btn w-full ${
                                 comparedSlugs.includes(m.slug)
-                                  ? "bg-gmcc-navy/20 text-gmcc-navy border border-gmcc-navy"
-                                  : "bg-gmcc-navy text-white hover:bg-gmcc-navy/80"
+                                  ? "btn-secondary"
+                                  : "btn-primary"
                               }`}
                             >
                               {comparedSlugs.includes(m.slug) ? "Remove from Compare" : "View and Compare Benefits"}
                             </button>
                           ) : (
-                            <span className="inline-flex w-full items-center justify-center rounded bg-neutral-200 px-3 py-2 text-xs font-semibold text-neutral-500 cursor-not-allowed">
+                            <span className="btn w-full bg-neutral-200 text-neutral-500 cursor-not-allowed">
                               No benefits listed
                             </span>
                           )}
                           <a
                             href={'https://register.greatermidland.org/webtrac/web/search.html?Action=Start'}
-                            className="inline-flex w-full items-center justify-center rounded border border-gmcc-navy px-3 py-2 text-xs font-semibold text-gmcc-navy hover:bg-gmcc-blue-light/50"
+                            className="btn btn-secondary w-full"
                           >
                             Join or Renew
                           </a>
@@ -354,16 +343,14 @@ export default function ExploreMembershipsClient({
 
           {/* Step 4: Compare Options */}
           <div className="relative">
-            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white text-sm font-semibold">
+            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white small font-semibold">
               4
             </div>
             <div className="ml-12 pt-1">
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">
-                Compare Options:
-              </h3>
+              <h3 className="h3 mb-3">Compare Options:</h3>
 
               {comparedMemberships.length === 0 ? (
-                <p className="text-sm text-neutral-600">
+                <p className="body">
                   Click &quot;View and Compare Benefits&quot; on the memberships above to compare them side by side.
                 </p>
               ) : (
@@ -378,19 +365,19 @@ export default function ExploreMembershipsClient({
                         <button
                           type="button"
                           onClick={() => removeFromCompare(m.slug)}
-                          className="text-xs text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
+                          className="small text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
                         >
-                          <span className="text-sm">✕</span> Close
+                          <span>✕</span> Close
                         </button>
                       </div>
 
                       {/* Title */}
-                      <h4 className="text-sm font-bold text-gmcc-navy leading-tight text-center mb-3">
+                      <h4 className="h3 text-gmcc-navy leading-tight text-center mb-3">
                         {m.title}
                       </h4>
 
                       {/* Benefits list */}
-                      <ul className="space-y-1 text-sm text-neutral-700 text-center flex-1">
+                      <ul className="stack-2 body text-center flex-1">
                         {m.benefits.map((benefit, i) => (
                           <li key={i}>{benefit}</li>
                         ))}
@@ -400,7 +387,7 @@ export default function ExploreMembershipsClient({
                       <div className="mt-4 pt-3 border-t border-neutral-200">
                         <a
                           href="https://register.greatermidland.org/webtrac/web/search.html?Action=Start"
-                          className="inline-flex w-full items-center justify-center rounded bg-gmcc-navy px-3 py-2 text-xs font-semibold text-white hover:bg-gmcc-navy/80"
+                          className="btn btn-primary w-full"
                         >
                           Join or Renew
                         </a>
@@ -416,10 +403,8 @@ export default function ExploreMembershipsClient({
 
 
     {/* Financial aid estimator stub */}
-    <h2 className="text-base font-semibold text-neutral-900" style={{ marginBottom: '12px' }}>
-        Financial assistance
-    </h2>
-    <p className="mt-1 text-sm text-neutral-600" style={{ marginTop: '12px', marginBottom: '12px', justifyContent: 'center' }}>
+    <h2 className="h2 mb-3">Financial assistance</h2>
+    <p className="body mt-3 mb-3">
         Greater Midland Community Center strives to ensure wellness, education, recreation and social programming remains available, accessible and affordable to Midland County 
         residents and employees. With the support of United Way of Midland County we are pleased to provide scholarship assistance to qualifying families and individuals.
     </p>
@@ -427,22 +412,17 @@ export default function ExploreMembershipsClient({
 
 
       {/* GENERIC MEMBERSHIP INFO SECTIONS */}
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section className="grid gap-6 lg:grid-cols-2 mt-6">
 
         {/* FAQ stub */}
-        <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm" style={{ marginTop: '24px' }}>
-          <h2 className="text-base font-semibold text-neutral-900">
-            Membership FAQs
-          </h2>
-          <ul className="mt-3 space-y-3 text-sm text-neutral-700">
+        <div className="card">
+          <h2 className="h2">Membership FAQs</h2>
+          <ul className="mt-3 stack-4 body">
             <li>How do I add family members to my membership?</li>
             <li>How do I change my membership?</li>
             <li>Can I pause or freeze my membership?</li>
             <li className="mt-1">
-              <a
-                href="/membership-faq"
-                className="text-gmcc-navy hover:underline"
-              >
+              <a href="/membership-faq" className="link">
                 View all membership FAQs →
               </a>
             </li>
@@ -450,24 +430,19 @@ export default function ExploreMembershipsClient({
         </div>
 
         {/* Insurance-based memberships (SilverSneakers etc.) */}
-        <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm" style={{ marginTop: '24px' }}>
-          <h2 className="text-base font-semibold text-neutral-900">
-            Insurance-based memberships
-          </h2>
-          <p className="mt-2 text-sm">
+        <div className="card">
+          <h2 className="h2">Insurance-based memberships</h2>
+          <p className="mt-2 body">
             Certain health plans include memberships like{" "}
             <strong>SilverSneakers</strong>, <strong>Renew Active</strong>, or
             other wellness benefits. If you&apos;re 60+ or on Medicare, you may
             qualify for a free or reduced-cost membership.
           </p>
-          <p className="mt-2 text-sm">
+          <p className="mt-2 body">
             Bring your insurance card to the front desk or contact us and we
             can help you check eligibility.
           </p>
-          <a
-            href="/insurance-memberships"
-            className="mt-3 text-sm text-gmcc-navy hover:underline"
-          >
+          <a href="/insurance-memberships" className="link body mt-3 block">
             Learn more about insurance-based options →
           </a>
         </div>

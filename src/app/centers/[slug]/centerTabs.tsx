@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type TabId = "about" | "history" | "visit" | "programs" | "membership";
+type TabId = "about" | "visit" | "programs" | "membership";
 
 type Tab = {
   id: TabId;

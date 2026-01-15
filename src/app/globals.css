@@ -1,36 +1,72 @@
 @import "tailwindcss";
+@import "../styles/components.css";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
   
   /* Brand colors */
+  /* Primary Palette */
   --gmcc-navy: #003A70;
-  --gmcc-navy-dark: #0f2847;
-  --gmcc-teal: #0085ad;
-  --gmcc-teal-light: #7dd3dc;
-  --gmcc-blue-light: #d4e8f2;
   --gmcc-green: #4C8B2B;
-  --gmcc-green-light: #e3f1e1;
+  --gmcc-grey: #8b8b8e;
+
+  /* Secondary Palette */
+  --gmcc-teal: #0085ad;
+  --gmcc-teal-dark: #00556f;
+  --gmcc-teal-light: #b3e0ed;
+  --gmcc-blue-light: #c8e8f0;
+  --gmcc-green-dark: #006747;
+  --gmcc-green-light: #00ad68;
+  --gmcc-green-lightest: #d2ebc5;
+  --gmcc-grey-dark: #55565a;
+  --gmcc-grey-light: #e5e7eb;
+
+  /* Tertiary Palette */
+  --gmcc-vanilla-ice: #F2ECDC;
+  --gmcc-rifle-green: #423E28;
+  --gmcc-pickled-beet: #561F37;
+  --gmcc-orchid-bouquet: #CD9FCC;
+  --gmcc-baltic: #2CA6A4;
+  --gmcc-orange-tiger: #F26419;
+  --gmcc-love-child: #BDDD3C;
 }
 
+/* Tailwind v4 theme - registers custom tokens as utility classes */
 @theme inline {
-  --color-background: var(--background);
+  /* Colors */
+  --color-background: var(--background);  
   --color-foreground: var(--foreground);
   --color-gmcc-navy: var(--gmcc-navy);
-  --color-gmcc-navy-dark: var(--gmcc-navy-dark);
   --color-gmcc-teal: var(--gmcc-teal);
+  --color-gmcc-teal-dark: var(--gmcc-teal-dark);
   --color-gmcc-teal-light: var(--gmcc-teal-light);
   --color-gmcc-blue-light: var(--gmcc-blue-light);
   --color-gmcc-green: var(--gmcc-green);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-gmcc-green-dark: var(--gmcc-green-dark);
+  --color-gmcc-green-light: var(--gmcc-green-light);
+  --color-gmcc-green-lightest: var(--gmcc-green-lightest);
+  --color-gmcc-grey: var(--gmcc-grey);
+  --color-gmcc-grey-dark: var(--gmcc-grey-dark);
+  --color-gmcc-grey-light: var(--gmcc-grey-light);
+  --color-gmcc-vanilla-ice: var(--gmcc-vanilla-ice);
+  --color-gmcc-rifle-green: var(--gmcc-rifle-green);
+  --color-gmcc-pickled-beet: var(--gmcc-pickled-beet);
+  --color-gmcc-orchid-bouquet: var(--gmcc-orchid-bouquet);
+  --color-gmcc-baltic: var(--gmcc-baltic);
+  --color-gmcc-orange-tiger: var(--gmcc-orange-tiger);
+  --color-gmcc-love-child: var(--gmcc-love-child);
+  /* Fonts - these create font-heading, font-body, etc. utility classes */
+  --font-heading: "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif;
+  --font-secondary: "Futura PT", Futura, "Century Gothic", Arial, sans-serif;
+  --font-body: Roboto, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --font-script: "Buffalo", "Brush Script MT", cursive;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
 }
 
 
@@ -42,32 +78,24 @@ body {
 .prose :where(iframe, embed, object) { width: 100%; aspect-ratio: 16 / 9; }
 
 
-.button-primary {
-  @apply bg-gmcc-navy text-white px-4 py-2 rounded-md outline outline-2 outline-gmcc-navy hover:bg-gmcc-navy/80 transition-colors;
+/* Legacy button aliases for backwards compatibility */
+.button-primary { 
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors;
+  @apply focus:outline-none focus:ring-2 focus:ring-gmcc-teal focus:ring-offset-2;
+  @apply disabled:opacity-50 disabled:pointer-events-none;
+  @apply bg-gmcc-navy text-white hover:bg-gmcc-navy/85;
 }
-
-.button-secondary {
-  @apply bg-white text-gmcc-navy px-4 py-2 rounded-md outline outline-2 outline-gmcc-navy hover:bg-gmcc-blue-light/50 transition-colors;
+.button-secondary { 
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors;
+  @apply focus:outline-none focus:ring-2 focus:ring-gmcc-teal focus:ring-offset-2;
+  @apply disabled:opacity-50 disabled:pointer-events-none;
+  @apply border border-gmcc-navy bg-white text-gmcc-navy hover:bg-gmcc-blue-light/40;
 }
-
-.button-tertiary {
-  @apply bg-gmcc-green text-white px-4 py-2 rounded-md outline outline-2 outline-gmcc-green hover:bg-gmcc-green/80 transition-colors;
-}
-
-h1 {
-  @apply text-3xl font-bold text-gmcc-navy;
-}
-
-h2 {
-  @apply text-xl font-bold text-gmcc-navy;
-}
-
-h3 {
-  @apply text-base font-bold text-gmcc-navy;
-}
-
-p {
-  @apply text-sm text-neutral-700;
+.button-tertiary { 
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors;
+  @apply focus:outline-none focus:ring-2 focus:ring-gmcc-teal focus:ring-offset-2;
+  @apply disabled:opacity-50 disabled:pointer-events-none;
+  @apply bg-gmcc-green text-white hover:bg-gmcc-green/85;
 }
 
 mark {

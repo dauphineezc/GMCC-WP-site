@@ -309,17 +309,17 @@ function CommunityTieredLayout({
               const prevDisplayName = prevTier ? tierDisplayNames[prevTier] : null;
               
               return (
-                <div key={tier} className="rounded-lg border border-neutral-200 bg-white p-4 space-y-3">
+                <div key={tier} className="rounded-lg rounded-lg border-2 border-gmcc-blue-light bg-gmcc-blue-light/10 p-5 space-y-3">
                   <h3 className="text-center text-xl font-bold uppercase tracking-wide">{displayName}</h3>
-                  <div className="p-1 bg-white mt-0">
+                  <div className="p-1 mt-0">
                     {prevDisplayName && (
-                      <p className="text-xs justify-start text-gmcc-navy mb-4 italic">
-                        <mark>All the {prevDisplayName} benefits, and:</mark>
+                      <p className="justify-start text-gmcc-navy mb-3 italic">
+                        <mark className="text-left text-[12px]">All the {prevDisplayName} benefits, and:</mark>
                       </p>
                     )}
-                    <ul className="space-y-1.5 text-sm text-neutral-700">
+                    <ul className="divide-y-2 divide-gmcc-blue-light/50 text-sm text-neutral-700">
                       {benefits.map((benefit, i) => (
-                        <li key={i} className="text-center mb-3">{"• " + benefit}</li>
+                        <li key={i} className="text-center py-2">{benefit}</li>
                       ))}
                     </ul>
                   </div>
@@ -424,20 +424,20 @@ function ComparisonLayout({
       {/* Benefits Comparison */}
       <section>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 items-start">
-          <div className="rounded-lg border border-neutral-200 bg-white p-4 space-y-3">
+          <div className="rounded-lg border-2 border-gmcc-blue-light bg-gmcc-blue-light/10 p-5 space-y-3">
             <h3 className="text-center text-xl font-bold uppercase tracking-wide">{centerMembershipName}</h3>
-            <ul className="space-y-1.5 text-sm text-neutral-700">
+            <ul className="divide-y-2 divide-gmcc-blue-light/50 text-sm text-neutral-700">
               {centerBenefits.map((benefit, i) => (
-                <li key={i} className="text-center mb-3">{"• " + benefit}</li>
+                <li key={i} className="text-center py-2">{benefit}</li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-lg border border-neutral-200 bg-white p-4 space-y-3">
+          <div className="rounded-lg border-2 border-gmcc-blue-light bg-gmcc-blue-light/10 p-5 space-y-3">
             <h3 className="text-center text-xl font-bold uppercase tracking-wide">All Access</h3>
-            <ul className="space-y-1.5 text-sm text-neutral-700">
+            <ul className="divide-y-2 divide-gmcc-blue-light/50 text-sm text-neutral-700">
               {allAccessBenefits.map((benefit, i) => (
-                <li key={i} className="text-center mb-3">{"• " + benefit}</li>
+                <li key={i} className="text-center py-2">{benefit}</li>
               ))}
             </ul>
           </div>

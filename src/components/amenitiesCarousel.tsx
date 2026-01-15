@@ -58,7 +58,6 @@ export default function AmenitiesCarousel({ amenities, title = "Amenities" }: Am
             onClick={handleImageClick}
           />
         )}
-
         {/* Click hint for items with description */}
         {hasDescription && (
           <div className="absolute top-3 right-3 z-10 rounded-full bg-white/90 p-1.5 shadow-md">

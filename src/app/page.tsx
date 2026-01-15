@@ -177,8 +177,8 @@ export default async function HomePage() {
 
   if (!wp || !f) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-10">
-        Homepage not configured yet.
+      <main className="mx-auto max-w-6xl px-4 section-y">
+        <p className="body">Homepage not configured yet.</p>
       </main>
     );
   }
@@ -223,35 +223,25 @@ export default async function HomePage() {
     ql?.links?.filter(Boolean) ?? [];
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 space-y-12">
+    <main className="mx-auto max-w-6xl px-4 section-y stack-8">
 
       {/* HERO */}
       <section className="grid gap-8 md:grid-cols-2 items-center">
-        <div className="space-y-4">
+        <div className="stack-4">
           {hero.heroHeadline && (
-            <h1 className="text-4xl font-semibold tracking-tight">
-              {hero.heroHeadline}
-            </h1>
+            <h1 className="h1">{hero.heroHeadline}</h1>
           )}
           {hero.heroSubheadline && (
-            <p className="text-neutral-600 whitespace-pre-line">
-              {hero.heroSubheadline}
-            </p>
+            <p className="body whitespace-pre-line">{hero.heroSubheadline}</p>
           )}
           <div className="flex flex-wrap gap-3 pt-2">
             {hero.heroPrimaryCtaUrl && hero.heroPrimaryCtaLabel && (
-              <a
-                href={hero.heroPrimaryCtaUrl}
-                className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-              >
+              <a href={hero.heroPrimaryCtaUrl} className="btn btn-primary">
                 {hero.heroPrimaryCtaLabel}
               </a>
             )}
             {hero.heroSecondaryCtaUrl && hero.heroSecondaryCtaLabel && (
-              <a
-                href={hero.heroSecondaryCtaUrl}
-                className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-              >
+              <a href={hero.heroSecondaryCtaUrl} className="btn btn-secondary">
                 {hero.heroSecondaryCtaLabel}
               </a>
             )}
@@ -275,7 +265,7 @@ export default async function HomePage() {
 
       {/* CAMPAIGN BANNER */}
       {campaign && (
-        <section className="rounded-2xl border bg-emerald-50 p-6 flex flex-col md:flex-row md:items-center gap-4">
+        <section className="card bg-gmcc-blue-light/30 flex flex-col md:flex-row md:items-center gap-4">
           {campaign.featuredImage?.node?.sourceUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -284,19 +274,14 @@ export default async function HomePage() {
               className="h-24 w-24 rounded-xl object-cover"
             />
           )}
-          <div className="flex-1 space-y-1">
-            <h2 className="text-lg font-semibold">{campaign.title}</h2>
+          <div className="flex-1 stack-2">
+            <h2 className="h3">{campaign.title}</h2>
             {campaign.campaignFields?.summary && (
-              <p className="text-sm text-emerald-900/80">
-                {campaign.campaignFields.summary}
-              </p>
+              <p className="small">{campaign.campaignFields.summary}</p>
             )}
           </div>
           {campaign.campaignFields?.linkUrl && (
-            <a
-              href={campaign.campaignFields.linkUrl}
-              className="inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
-            >
+            <a href={campaign.campaignFields.linkUrl} className="btn btn-primary">
               {campaign.campaignFields.linkLabel ?? "Learn more"}
             </a>
           )}
@@ -305,8 +290,8 @@ export default async function HomePage() {
 
       {/* FEATURED MODULES */}
       {modules.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Featured</h2>
+        <section className="stack-4">
+          <h2 className="h2">Featured</h2>
 
           <div className="grid gap-4 md:grid-cols-3">
             {modules.map((m: AnyObj, i: number) => {
@@ -320,10 +305,7 @@ export default async function HomePage() {
               const icon = m.fm1Icon ?? m.fm2Icon ?? m.fm3Icon;
 
               return (
-                <article
-                  key={title ?? i}
-                  className="rounded-2xl border bg-white p-5 shadow-sm space-y-3"
-                >
+                <article key={title ?? i} className="card stack-4">
                   <div className="flex items-center gap-3">
                     {icon?.node?.sourceUrl && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -333,18 +315,13 @@ export default async function HomePage() {
                         className="h-9 w-9 rounded-md object-cover"
                       />
                     )}
-                    {title && <h3 className="font-semibold">{title}</h3>}
+                    {title && <h3 className="h3">{title}</h3>}
                   </div>
                   {body && (
-                    <p className="text-sm text-neutral-600 whitespace-pre-line">
-                      {body}
-                    </p>
+                    <p className="small whitespace-pre-line">{body}</p>
                   )}
                   {linkUrl && (
-                    <a
-                      href={linkUrl}
-                      className="text-sm text-emerald-700 hover:underline"
-                    >
+                    <a href={linkUrl} className="link small">
                       {linkLabel ?? "View details"}
                     </a>
                   )}
@@ -357,21 +334,17 @@ export default async function HomePage() {
 
       {/* FEATURED PROGRAMS */}
       {featuredPrograms.length > 0 && (
-        <section className="space-y-4">
+        <section className="stack-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-xl font-semibold">Featured programs</h2>
+            <h2 className="h2">Featured programs</h2>
 
             {/* show query params you used (nice for sandbox validation) */}
-            <div className="flex flex-wrap gap-2 text-xs text-neutral-600">
+            <div className="flex flex-wrap gap-2">
               {(fp.audience?.nodes ?? []).map((t: AnyObj) => (
-                <span key={t.slug} className="rounded-full bg-neutral-100 px-2 py-1">
-                  {t.name}
-                </span>
+                <span key={t.slug} className="badge badge-neutral">{t.name}</span>
               ))}
               {(fp.programArea?.nodes ?? []).map((t: AnyObj) => (
-                <span key={t.slug} className="rounded-full bg-neutral-100 px-2 py-1">
-                  {t.name}
-                </span>
+                <span key={t.slug} className="badge badge-neutral">{t.name}</span>
               ))}
             </div>
           </div>
@@ -381,7 +354,7 @@ export default async function HomePage() {
               <a
                 key={p.slug}
                 href={`/programs/${p.slug}`}
-                className="group rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition"
+                className="group card card-hover"
               >
                 {p.featuredImage?.node?.sourceUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -391,17 +364,13 @@ export default async function HomePage() {
                     className="h-40 w-full rounded-xl object-cover"
                   />
                 )}
-                <div className="mt-3 space-y-1">
-                  <h3 className="font-semibold group-hover:text-emerald-700">
-                    {p.title}
-                  </h3>
+                <div className="mt-3 stack-2">
+                  <h3 className="h3 group-hover:text-gmcc-teal">{p.title}</h3>
                   {p.programFields?.summary && (
-                    <p className="text-sm text-neutral-600 line-clamp-2">
-                      {p.programFields.summary}
-                    </p>
+                    <p className="small line-clamp-2">{p.programFields.summary}</p>
                   )}
                   {p.programFields?.priceFrom != null && (
-                    <p className="text-xs text-neutral-700">
+                    <p className="small">
                       From ${Number(p.programFields.priceFrom).toFixed(2)}
                     </p>
                   )}
@@ -414,16 +383,16 @@ export default async function HomePage() {
 
       {/* UPCOMING EVENTS */}
       {upcomingEvents.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Upcoming events</h2>
+        <section className="stack-4">
+          <h2 className="h2">Upcoming events</h2>
 
           <div className="grid gap-4 md:grid-cols-3">
             {upcomingEvents.slice(0, ue.maxEvents ?? 6).map((ev: AnyObj) => {
               const ef = ev.eventFields ?? {};
               const start = ef.startDateTime ? new Date(ef.startDateTime) : null;
 
-              // NOTE: you’re using /events/yyyy/mm/slug routing.
-              // We’ll compute yyyy/mm from startDateTime if present.
+              // NOTE: you're using /events/yyyy/mm/slug routing.
+              // We'll compute yyyy/mm from startDateTime if present.
               const yyyy = start ? start.getFullYear() : "2025";
               const mm = start ? String(start.getMonth() + 1).padStart(2, "0") : "01";
 
@@ -431,7 +400,7 @@ export default async function HomePage() {
                 <a
                   key={ev.slug}
                   href={`/events/${yyyy}/${mm}/${ev.slug}`}
-                  className="group rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition"
+                  className="group card card-hover"
                 >
                   {ev.featuredImage?.node?.sourceUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -441,17 +410,13 @@ export default async function HomePage() {
                       className="h-36 w-full rounded-xl object-cover"
                     />
                   )}
-                  <div className="mt-3 space-y-1">
-                    <h3 className="font-semibold group-hover:text-emerald-700">
-                      {ev.title}
-                    </h3>
+                  <div className="mt-3 stack-2">
+                    <h3 className="h3 group-hover:text-gmcc-teal">{ev.title}</h3>
                     {ef.summary && (
-                      <p className="text-sm text-neutral-600 line-clamp-2">
-                        {ef.summary}
-                      </p>
+                      <p className="small line-clamp-2">{ef.summary}</p>
                     )}
                     {start && (
-                      <p className="text-xs text-neutral-700">
+                      <p className="small">
                         {start.toLocaleDateString()}{" "}
                         {start.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                       </p>
@@ -466,24 +431,21 @@ export default async function HomePage() {
 
       {/* TESTIMONIALS */}
       {testimonials.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-xl font-semibold">What members say</h2>
+        <section className="stack-4">
+          <h2 className="h2">What members say</h2>
 
           <div className="grid gap-4 md:grid-cols-3">
             {testimonials.map((t: AnyObj) => {
               const tf = t.testimonialFields ?? {};
               return (
-                <figure
-                  key={t.slug}
-                  className="rounded-2xl border bg-white p-5 shadow-sm"
-                >
+                <figure key={t.slug} className="card">
                   {tf.quote && (
-                    <blockquote className="text-sm text-neutral-700 whitespace-pre-line">
-                      “{tf.quote}”
+                    <blockquote className="body whitespace-pre-line">
+                      "{tf.quote}"
                     </blockquote>
                   )}
                   {(tf.authorName || tf.authorSubtitle) && (
-                    <figcaption className="mt-3 text-xs text-neutral-500">
+                    <figcaption className="mt-3 small">
                       <div className="font-semibold text-neutral-800">
                         {tf.authorName}
                       </div>
@@ -499,15 +461,15 @@ export default async function HomePage() {
 
       {/* NEWS HIGHLIGHTS */}
       {news.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-xl font-semibold">Latest news</h2>
+        <section className="stack-4">
+          <h2 className="h2">Latest news</h2>
 
           <div className="grid gap-4 md:grid-cols-3">
             {news.map((n: AnyObj) => (
               <a
                 key={n.slug}
                 href={`/news/${n.slug}`}
-                className="group rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition"
+                className="group card card-hover"
               >
                 {n.featuredImage?.node?.sourceUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -517,14 +479,10 @@ export default async function HomePage() {
                     className="h-36 w-full rounded-xl object-cover"
                   />
                 )}
-                <div className="mt-3 space-y-1">
-                  <h3 className="font-semibold group-hover:text-emerald-700">
-                    {n.title}
-                  </h3>
+                <div className="mt-3 stack-2">
+                  <h3 className="h3 group-hover:text-gmcc-teal">{n.title}</h3>
                   {n.newsFields?.summary && (
-                    <p className="text-sm text-neutral-600 line-clamp-2">
-                      {n.newsFields.summary}
-                    </p>
+                    <p className="small line-clamp-2">{n.newsFields.summary}</p>
                   )}
                 </div>
               </a>
@@ -535,10 +493,10 @@ export default async function HomePage() {
 
       {/* QUICK LINKS */}
       {quickLinks.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-xl font-semibold">Quick links</h2>
+        <section className="stack-4">
+          <h2 className="h2">Quick links</h2>
           {ql?.description && (
-            <p className="text-sm text-neutral-600">{ql.description}</p>
+            <p className="body">{ql.description}</p>
           )}
 
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
@@ -546,7 +504,7 @@ export default async function HomePage() {
               <a
                 key={l.linkUrl ?? i}
                 href={l.linkUrl}
-                className="flex items-center gap-3 rounded-xl border bg-white p-3 text-sm hover:bg-neutral-50"
+                className="flex items-center gap-3 card card-hover"
               >
                 {l.linkIcon?.node?.sourceUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -556,7 +514,7 @@ export default async function HomePage() {
                     className="h-7 w-7 rounded-md object-cover"
                   />
                 )}
-                <span className="font-medium">{l.linkLabel}</span>
+                <span className="h3">{l.linkLabel}</span>
               </a>
             ))}
           </div>

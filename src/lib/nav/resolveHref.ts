@@ -12,15 +12,56 @@ function normalizeWpUrlToPath(url: string) {
     const sp = new URLSearchParams(params);
     return sp.toString();
   }
+
+  const MEMBERSHIP_PAGES: Record<string, string> = {
+    "Join Now": "/membership",
+    "Take a Tour": "/membership/tour",
+    "Membership Discounts": "/membership/discounts",
+    "Corporate Memberships": "/membership/corporate",
+    "Cancellation Policy": "/membership/policies",
+  };
   
-  // “test” program filter rules (label-based for now)
+  // "test" program filter rules (label-based for now)
   const PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
     "Aquatics": "/programs?" + buildQuery({ programArea: "Aquatics" }),
-    "Child Swim Lessons": "/programs?" + buildQuery({ programArea: "Aquatics", audience: "youth" }),
-    "Adult Swim Lessons": "/programs?" + buildQuery({ programArea: "Aquatics", audience: "youth,family,adult,activeOlderAdult" }),
+    "Youth Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "youth" }),
+    "Adult Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "youth,family,adult,activeOlderAdult" }),
     "Fitness": "/programs?" + buildQuery({ programArea: "Fitness" }),
     "Camps": "/programs?" + buildQuery({ offeringType: "Camp" }),
+    "Full Day Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "full-day" }),
+    "Mini Day Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "mini-day" }),
+    "Specialty/Art Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "specialty-art" }),
+    "Sport/Aquatics Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "sport-aquatics" }),
     "Childcare": "/programs?" + buildQuery({ programArea: "Childcare" }),
+  };
+
+  // Unique program pages that link directly to /programs/[slug]
+  const UNIQUE_PROGRAM_PAGES: Record<string, string> = {
+    "Drop-In Swim": "/programs/drop-in-swim",
+    "Dolphins Swim Team": "/programs/dolphins",
+    "Lifeguard Training": "/programs/lifeguard-training",
+    "Group Fitness Classes": "/programs/group-fitness-classes",
+    "Personal Training": "/programs/personal-training",
+    "SilverSneakers": "/programs/silver-sneakers",
+    "Virtual Fitness": "/programs/virtual-fitness",
+    "Drop-In Care": "/programs/drop-in-care",
+    "On-Site Care": "/programs/on-site-care",
+    "Before & After School Care": "/programs/before-after-school",
+    "Preschool": "/programs/preschool",
+    "Driver's Training": "/programs/drivers-training",
+    "Tax Aide Program": "/programs/tax-aide",
+    "Food Distributions": "/programs/food-distributions",
+    "Food, Clothes, & Hygiene Pantries": "/programs/pantries",
+  };
+
+  const SCHEDULE_PAGES: Record<string, string> = {
+    "Plan Your Visit": "/visit",
+    "Group Fitness Schedules": "/visit/group-fitness-schedules",
+    "Community Activity Schedules": "/visit/community-activity-schedules",
+    "Session Calendar": "/visit/session-calendar",
+    "Court Availability": "/visit/court-availability",
+    "Pool Availability": "/visit/pool-availability",
+    "League Schedules": "/visit/league-schedules",
   };
   
   export function resolveHref({
@@ -32,15 +73,27 @@ function normalizeWpUrlToPath(url: string) {
     label: string;
     centerMap: Map<string, string>;
   }) {
+
+    const membershipPage = MEMBERSHIP_PAGES[label];
+    if (membershipPage) return membershipPage;
+
     // 1) Programs filter overrides (based on desired behavior)
     const programOverride = PROGRAM_FILTER_BY_LABEL[label];
     if (programOverride) return programOverride;
+
+    // 2) Unique program pages that link directly to /programs/[slug]
+    const uniqueProgramPage = UNIQUE_PROGRAM_PAGES[label];
+    if (uniqueProgramPage) return uniqueProgramPage;
   
-    // 2) Centers: WP page URI -> /centers/[slug]
+    // 3) Centers: WP page URI -> /centers/[slug]
     const wpPath = normalizeWpUrlToPath(wpUrl);
     const centerHref = centerMap.get(wpPath);
     if (centerHref) return centerHref;
   
-    // 3) Otherwise: keep path as-is (works for normal pages like /about, /events, etc.)
+    // 4) Schedule pages: WP page URI -> /visit/[slug]
+    const scheduleHref = SCHEDULE_PAGES[label];
+    if (scheduleHref) return scheduleHref;
+  
+    // 4) Otherwise: keep path as-is (works for normal pages like /about, /events, etc.)
     return wpPath;
   }  
