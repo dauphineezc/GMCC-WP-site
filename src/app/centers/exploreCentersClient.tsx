@@ -27,7 +27,9 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
       for (const c of linkedCenters) {
         if (!c?.slug) continue;
         const entry = map.get(c.slug) ?? { programs: [], programAreas: [] };
-        entry.programs.push({ slug: p.slug, title: p.title });
+        const pSlug = typeof p?.slug === "string" ? p.slug : "";
+        const pTitle = typeof p?.title === "string" ? p.title : "";
+        if (pSlug && pTitle) entry.programs.push({ slug: pSlug, title: pTitle });
         entry.programAreas.push(...areas);
         map.set(c.slug, entry);
       }
@@ -85,7 +87,8 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
   // - OR within a category
   const filteredCenters = useMemo(() => {
     return centers.filter(c => {
-      const cSlug = c?.slug;
+      const cSlug = typeof c?.slug === "string" ? c.slug : "";
+      if (!cSlug) return false;
       const cf = c?.centersFields ?? {};
       const cAmenities = (cf.amenities?.nodes ?? []).map((t: any) => t?.slug).filter(Boolean);
 
@@ -235,8 +238,13 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCenters.map((c: any) => {
               const cf = c.centersFields ?? {};
-              const googleMap = cf.googleMap;
-              const hasMap = googleMap?.lat && googleMap?.lng;
+              const lat = Number(cf.googleMap?.lat);
+              const lng = Number(cf.googleMap?.lng);
+              const zoom = Number(cf.googleMap?.zoom ?? 15);
+              const hasMap = Number.isFinite(lat) && Number.isFinite(lng);
+              const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(
+                `${lat},${lng}`
+              )}&z=${Number.isFinite(zoom) ? zoom : 15}&output=embed`;
 
               return (
                 <a
@@ -244,10 +252,10 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
                   href={`/centers/${c.slug}`}
                   className="group card card-hover overflow-hidden"
                 >
-                  {hasMap ? (
+                  {mapSrc ? (
                     <div className="h-40 w-full overflow-hidden bg-neutral-100">
                       <iframe
-                        src={`https://www.google.com/maps?q=${googleMap.lat},${googleMap.lng}&z=${googleMap.zoom || 15}&output=embed`}
+                        src={mapSrc}
                         width="100%"
                         height="100%"
                         style={{ border: 0 }}

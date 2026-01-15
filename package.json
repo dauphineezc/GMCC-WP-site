@@ -1,13 +1,19 @@
 {
   "name": "gmcc-headless",
   "version": "0.1.0",
+  "engines": {
+    "node": ">=22.20.0 <23.0.0"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "wpe-build": "node -v && npm -v && echo WPE_BUILD_STARTED && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+
+    "preinstall": "node -e \"console.log('=== PREINSTALL ===', process.cwd())\"",
+    "postinstall": "node -e \"console.log('=== POSTINSTALL ===')\""
   },
   "dependencies": {
     "@faustwp/core": "^3.3.1",

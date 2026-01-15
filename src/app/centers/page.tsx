@@ -2,6 +2,8 @@
 import { wpFetch } from "@/lib/wp";
 import ExploreCentersClient from "./exploreCentersClient";
 
+export const dynamic = "force-dynamic";
+
 const EXPLORE_CENTERS_QUERY = `
   query ExploreCenters {
     centers(first: 100) {
