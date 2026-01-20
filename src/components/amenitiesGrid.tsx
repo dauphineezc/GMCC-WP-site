@@ -1,28 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import type { AmenityDisplay } from "@/types/amenities";
 
-type AmenityImage = {
-  name: string;
-  slug: string;
-  description?: string | null;
-  image: {
-    sourceUrl: string;
-    altText: string | null;
-  };
-};
 
 type AmenitiesGridProps = {
-  amenities: AmenityImage[];
+  amenities: AmenityDisplay[];
   title?: string;
 };
 
+
 export default function AmenitiesGrid({ amenities, title = "Amenities" }: AmenitiesGridProps) {
-  const [selectedAmenity, setSelectedAmenity] = useState<AmenityImage | null>(null);
+  const [selectedAmenity, setSelectedAmenity] = useState<AmenityDisplay | null>(null);
+
 
   if (!amenities || amenities.length === 0) return null;
 
-  const handleAmenityClick = (amenity: AmenityImage) => {
+  const handleAmenityClick = (amenity: AmenityDisplay) => {
     if (amenity.description) {
       setSelectedAmenity(amenity);
     }
@@ -30,7 +24,7 @@ export default function AmenitiesGrid({ amenities, title = "Amenities" }: Amenit
 
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
+      <h2 className="h3">{title}</h2>
       <div className="grid gap-2 grid-cols-1 md:grid-cols-3">
         {amenities.map((amenity) => {
           const hasDescription = !!amenity.description;

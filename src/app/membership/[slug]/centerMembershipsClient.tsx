@@ -228,7 +228,10 @@ export default function CenterMembershipsClient({
         <aside className="space-y-6">
           {/* Amenities Carousel */}
           {amenitiesWithImages.length > 0 && (
-            <AmenitiesCarousel amenities={amenitiesWithImages} title={`${centerTitle} Amenities`} />
+            <AmenitiesCarousel amenities={amenitiesWithImages.map((a) => ({
+              ...a,
+              image: { sourceUrl: a.defaultImage?.sourceUrl ?? "", altText: a.defaultImage?.altText ?? null }
+            }))} title={`${centerTitle} Amenities`} />
           )}
 
           {/* Testimonial */}

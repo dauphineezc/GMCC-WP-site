@@ -4,6 +4,11 @@ import {
   fetchAmenitiesWithImages,
   fetchAccessibilityAmenitiesWithImages,
   extractAmenitySlugs,
+  AmenityWithImage,
+  pickAmenityImageForCenter,
+  toAmenityImagesForCenter,
+  toAmenityDisplayForCenter,
+  toAmenityDisplayDefault,
 } from "@/lib/amenities";
 import CenterTabs from "./centerTabs";
 import ImageCarousel from "../../../components/imageCarousel";
@@ -19,27 +24,92 @@ const CENTER_BY_SLUG_QUERY = `
         node {
           sourceUrl
           altText
-          mediaDetails { width height }
+          mediaDetails {
+            width
+            height
+          }
         }
       }
       centersFields {
         summary
         longDescription
-
         centerType
         address
         socialLinks
-
         amenities {
           nodes {
             name
             slug
             ... on Amenity {
               amenitiesFields {
-                amenityImage {
+                amenityImage1 {
                   node {
                     sourceUrl
                     altText
+                  }
+                }
+                center1 {
+                  nodes {
+                    ... on Center {
+                      title
+                      slug
+                    }
+                  }
+                }
+                amenityImage2 {
+                  node {
+                    sourceUrl
+                    altText
+                  }
+                }
+                center2 {
+                  nodes {
+                    ... on Center {
+                      title
+                      slug
+                    }
+                  }
+                }
+                amenityImage3 {
+                  node {
+                    sourceUrl
+                    altText
+                  }
+                }
+                center3 {
+                  nodes {
+                    ... on Center {
+                      title
+                      slug
+                    }
+                  }
+                }
+                amenityImage4 {
+                  node {
+                    sourceUrl
+                    altText
+                  }
+                }
+                center4 {
+                  nodes {
+                    ... on Center {
+                      title
+                      slug
+                    }
+                  }
+                }
+                amenityImage5 {
+                  node {
+                    sourceUrl
+                    altText
+                  }
+                }
+                center5 {
+                  nodes {
+                    ... on Center {
+                      title
+                      slug
+                    }
                   }
                 }
                 isService
@@ -54,14 +124,13 @@ const CENTER_BY_SLUG_QUERY = `
             }
           }
         }
-
         accessibilityAmenities {
           nodes {
             name
             slug
             ... on AccessibilityAmenity {
               amenitiesFields {
-                amenityImage {
+                amenityImage1 {
                   node {
                     sourceUrl
                     altText
@@ -71,7 +140,6 @@ const CENTER_BY_SLUG_QUERY = `
             }
           }
         }
-
         hours {
           mondayHours {
             closedMonday
@@ -109,12 +177,10 @@ const CENTER_BY_SLUG_QUERY = `
             sundayCloseTime
           }
         }
-
         contactInfo {
           contactPhone
           contactEmail
         }
-
         imagesforcarousel {
           image1 {
             image1Image {
@@ -147,26 +213,23 @@ const CENTER_BY_SLUG_QUERY = `
             image3Url
           }
         }
-
-        featuredPrograms {
+        programAreas {
           nodes {
-            ... on Program {
-              slug
-              title
-              featuredImage {
-                node {
-                  sourceUrl
-                  altText
+            name
+            slug
+            description
+            ... on ProgramArea {
+              programAreaFields {
+                programAreaImage {
+                  node {
+                    sourceUrl
+                    altText
+                  }
                 }
-              }
-              programFields {
-                summary
-                offeringType
               }
             }
           }
         }
-
         upcomingEvents {
           nodes {
             ... on Event {
@@ -189,7 +252,6 @@ const CENTER_BY_SLUG_QUERY = `
             }
           }
         }
-
         policiesFaqs {
           nodes {
             ... on Policy {
@@ -198,7 +260,6 @@ const CENTER_BY_SLUG_QUERY = `
             }
           }
         }
-
         announcements {
           nodes {
             ... on News {
@@ -209,7 +270,6 @@ const CENTER_BY_SLUG_QUERY = `
         }
       }
     }
-
     testimonials(first: 100) {
       nodes {
         slug
@@ -233,7 +293,6 @@ const CENTER_BY_SLUG_QUERY = `
         }
       }
     }
-
     memberships(first: 100) {
       nodes {
         title
@@ -305,14 +364,15 @@ export default async function CenterPage(props: CenterPageProps) {
   const amenityNames =
     amenityNodes.map((n: any) => n?.name).filter(Boolean) ?? [];
 
-  // Fetch amenity images for carousel using shared utility
+  // Fetch amenities for this center
   const amenitySlugs = extractAmenitySlugs(amenityNodes);
   const amenitiesWithImages = await fetchAmenitiesWithImages(amenitySlugs);
+  const amenitiesForThisCenter = toAmenityDisplayForCenter(amenitiesWithImages, slug);
 
-  // Fetch accessibility amenity images for carousel using shared utility
-  const accessibilityAmenityNodes = f.accessibilityAmenities?.nodes ?? [];
-  const accessibilityAmenitySlugs = extractAmenitySlugs(accessibilityAmenityNodes);
+  // Fetch accessibility amenities for this center
+  const accessibilityAmenitySlugs = extractAmenitySlugs(f.accessibilityAmenities?.nodes ?? []);
   const accessibilityAmenitiesWithImages = await fetchAccessibilityAmenitiesWithImages(accessibilityAmenitySlugs);
+  const accessibilityAmenitiesForThisCenter = toAmenityDisplayDefault(accessibilityAmenitiesWithImages);
 
   const featuredPrograms = f.featuredPrograms?.nodes ?? [];
   const policies = f.policiesFaqs?.nodes ?? [];
@@ -461,12 +521,12 @@ export default async function CenterPage(props: CenterPageProps) {
 
                   {/* Amenities Carousel */}
                   {amenitiesWithImages.length > 0 && (
-                    <AmenitiesGrid amenities={amenitiesWithImages} title="Amenities" />
+                    <AmenitiesGrid amenities={amenitiesForThisCenter} title="Amenities" />
                   )}
 
                   {/* Accessibility Amenities Carousel */}
-                  {accessibilityAmenitiesWithImages.length > 0 && (
-                    <AmenitiesCarousel amenities={accessibilityAmenitiesWithImages} title="Accessibility Features" />
+                  {accessibilityAmenitiesForThisCenter.length > 0 && (
+                    <AmenitiesCarousel amenities={accessibilityAmenitiesForThisCenter} title="Accessibility Features" />
                   )}
 
                   {/* Policies & FAQs / Announcements */}
@@ -630,58 +690,101 @@ export default async function CenterPage(props: CenterPageProps) {
                   </div>
                 </div>
 
-                <div className="gmcc-schedule-embed">
-                    <iframe
-                      src="https://gmcc-drop-in-schedule.vercel.app/?type=dropin&sub=aquatics"
-                      style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    ></iframe>
-                  </div>
+                
               </div>
             ),
           },
           {
             id: "programs",
             label: "Programs",
-            content: featuredPrograms.length > 0 ? (
-              <div className="stack-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  {featuredPrograms.map((prog: any) => (
-                    <a
-                      key={prog.slug}
-                      href={`/programs/${prog.slug}`}
-                      className="group card card-hover"
-                    >
-                      <div className="flex gap-3">
-                        {prog.featuredImage?.node?.sourceUrl && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={prog.featuredImage.node.sourceUrl}
-                            alt={prog.featuredImage.node.altText ?? ""}
-                            className="h-16 w-16 flex-none rounded-lg object-cover"
-                          />
-                        )}
-                        <div className="stack-2">
-                          <h3 className="h3 group-hover:text-gmcc-teal">{prog.title}</h3>
-                          {prog.programFields?.summary && (
-                            <p className="small line-clamp-2">{prog.programFields.summary}</p>
-                          )}
+            content: (() => {
+              // Build unique Program Areas from featured programs
+              const areasMap = new Map<
+                string,
+                {
+                  slug: string;
+                  name: string;
+                  imageUrl?: string;
+                  imageAlt?: string;
+                  description?: string;
+                }
+              >();
+          
+              featuredPrograms.forEach((prog: any) => {
+                const areas = prog?.programFields?.programArea?.nodes ?? [];
+                areas.forEach((a: any) => {
+                  const slug = a?.slug;
+                  if (!slug) return;
+          
+                  if (!areasMap.has(slug)) {
+                    // Try a couple common ACF-on-taxonomy shapes (keep the first one that exists)
+                    const imgNode =
+                      a?.programAreaFields?.image?.node ??
+                      a?.programAreaFields?.programAreaImage?.node ??
+                      a?.programAreasFields?.image?.node ??
+                      null;
+          
+                    areasMap.set(slug, {
+                      slug,
+                      name: a?.name ?? slug,
+                      imageUrl: imgNode?.sourceUrl,
+                      imageAlt: imgNode?.altText ?? "",
+                    });
+                  }
+                });
+              });
+          
+              const programAreas = Array.from(areasMap.values()).sort((x, y) =>
+                x.name.localeCompare(y.name)
+              );
+          
+              return programAreas.length > 0 ? (
+                <div className="stack-4">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {programAreas.map((area) => (
+                      <a
+                        key={area.slug}
+                        href={`/programs?programArea=${encodeURIComponent(area.slug)}`}
+                        className="group card card-hover overflow-hidden"
+                      >
+                        <div className="stack-3">
+                          {/* Full-bleed image */}
+                          <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
+                            {area.imageUrl && (
+                              <img
+                                src={area.imageUrl}
+                                alt={area.imageAlt}
+                                className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            )}
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
+                          </div>
+          
+                          <div className="stack-4">
+                            <h3 className="h3 group-hover:text-gmcc-teal mt-2">{area.name}</h3>
+                            {area.description && (
+                              <p className="body text-sm">{area.description}</p>
+                            )}
+                            <p className="link body text-sm">View all {area.name} programs →</p>
+                          </div>
                         </div>
-                      </div>
+                      </a>
+                    ))}
+                  </div>
+          
+                  <div className="btn btn-secondary center-block mx-auto">
+                    <a href="/programs" className="link body">
+                      View all {center.title} programs
                     </a>
-                  ))}
+                  </div>
                 </div>
-                <div className="text-center">
-                  <a href="/programs" className="link body">
-                    View all programs →
-                  </a>
-                </div>
-              </div>
-            ) : (
-              <p className="body">No programs available at this time.</p>
-            ),
-          },
+              ) : (
+                <p className="body">No program areas available at this time.</p>
+              );
+            })(),
+          },          
           {
             id: "membership",
             label: "Membership",
@@ -727,8 +830,8 @@ export default async function CenterPage(props: CenterPageProps) {
                       </ul>
                     </div>
                     <div className="stack-2">
-                      {amenitiesWithImages.length > 0 && (
-                        <AmenitiesCarousel amenities={amenitiesWithImages} title="" />
+                      {amenitiesForThisCenter.length > 0 && (
+                        <AmenitiesCarousel amenities={amenitiesForThisCenter} title="" />
                       )}
                     </div>
                   </div>
@@ -791,7 +894,7 @@ export default async function CenterPage(props: CenterPageProps) {
                   {centerTestimonials.length > 0 && (
                     <div className="stack-4">
                       <h2 className="h2 text-gmcc-navy mb-3">
-                        Don't just take our word for it, see what our members have to say:
+                        More than a membership:
                       </h2>
                       <div className="grid gap-4 md:grid-cols-2">
                         {centerTestimonials.map((t: any) => {

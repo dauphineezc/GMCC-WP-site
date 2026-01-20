@@ -20,6 +20,11 @@ export function mapProgram(wp: any) {
       if (!n || !n.title) return null;
       const featuredImage = n.featuredImage?.node;
       const programFields = n.programFields ?? {};
+      // Map centers for related programs (from either programFields.center or n.center depending on query structure)
+      const relatedCenterNodes = programFields.center?.nodes ?? n.center?.nodes ?? [];
+      const relatedCenters = relatedCenterNodes
+        .map((c: any) => c && c.title ? { title: c.title as string, slug: c.slug as string } : null)
+        .filter(Boolean) as { title: string; slug: string }[];
       return {
         title: n.title as string,
         slug: n.slug as string,
@@ -30,6 +35,7 @@ export function mapProgram(wp: any) {
               alt: featuredImage.altText ?? "",
             }
           : null,
+        centers: relatedCenters,
       };
     })
     .filter(Boolean) as {
@@ -37,6 +43,7 @@ export function mapProgram(wp: any) {
       slug: string;
       summary: string;
       heroImage: { url: string; alt: string } | null;
+      centers: { title: string; slug: string }[];
     }[];
 
   const taxonomies = {

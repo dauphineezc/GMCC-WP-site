@@ -2,6 +2,8 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import HeaderImage from "@/components/headerImage";
+import Link from "next/link";
+import { buildEventHref } from "@/lib/events/buildEventHref";
 
 type EventWP = any;
 
@@ -468,7 +470,7 @@ export default function ExploreEventsClient({
               {filtered.map((e) => (
                 <a
                   key={e.slug}
-                  href={`/events/${e.slug}`}
+                  href={buildEventHref(e.slug, e.startDateTime ?? "")}
                   className="group card card-hover card-link overflow-hidden h-[380px] flex flex-col"
                 >
                   {/* Full-bleed image */}
@@ -486,7 +488,7 @@ export default function ExploreEventsClient({
                   </div>
 
                   <div className="flex flex-1 flex-col min-h-0 mt-5">
-                    <h3 className="font-heading text-lg font-medium leading-snug text-neutral-900 group-hover:text-gmcc-teal line-clamp-2">
+                    <h3 className="font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-1">
                         {e.title}
                     </h3>
 

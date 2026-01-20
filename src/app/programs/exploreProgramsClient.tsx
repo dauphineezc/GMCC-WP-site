@@ -622,7 +622,7 @@ export default function ExploreProgramsClient({
               onClick={() => toggleDropdown("audience")}
               className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
             >
-              <span><label className="text-base text-gmcc-navy">Audience</label>{audience.length > 0 && <span className="ml-2 text-xs text-neutral-500">({audience.length})</span>}</span>
+              <span><label className="text-base text-gmcc-navy">Age group</label>{audience.length > 0 && <span className="ml-2 text-xs text-neutral-500">({audience.length})</span>}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${openDropdowns.has("audience") ? "rotate-180" : ""}`}
                 fill="none"
@@ -698,14 +698,14 @@ export default function ExploreProgramsClient({
             </div>
 
             <div className="flex flex-1 flex-col min-h-0 mt-5">
-              <h3 className="font-heading text-lg font-medium leading-snug text-neutral-900 group-hover:text-gmcc-teal line-clamp-1">
+              <h3 className="font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-1">
                 {p.title}
               </h3>
 
               <CentersBadgesOneLine centers={p.centers} />
 
               {p.summary && (
-                <p className="mt-3 text-xs leading-6 text-neutral-600 line-clamp-4 mb-3">
+                <p className="mt-3 text-xs leading-6 text-neutral-600 line-clamp-3 mb-3">
                   {p.summary}
                 </p>
               )}

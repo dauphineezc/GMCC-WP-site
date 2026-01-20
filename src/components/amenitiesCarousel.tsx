@@ -1,19 +1,10 @@
 "use client";
 
 import { useState } from "react";
-
-type AmenityImage = {
-  name: string;
-  slug: string;
-  description?: string | null;
-  image: {
-    sourceUrl: string;
-    altText: string | null;
-  };
-};
+import type { AmenityDisplay } from "@/types/amenities";
 
 type AmenitiesCarouselProps = {
-  amenities: AmenityImage[];
+  amenities: AmenityDisplay[];
   title?: string;
 };
 
@@ -46,7 +37,7 @@ export default function AmenitiesCarousel({ amenities, title = "Amenities" }: Am
 
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
+      <h2 className="h3">{title}</h2>
       <div className="relative overflow-hidden rounded-md border border-neutral-200 bg-neutral-50">
         {/* Image */}
         {currentAmenity?.image?.sourceUrl && (

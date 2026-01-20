@@ -106,7 +106,7 @@ export default function CentersBadgesOneLine({
   return (
     <div
       ref={rowRef}
-      className="mt-1 flex items-center gap-2 flex-nowrap overflow-hidden min-w-0"
+      className="mt-2 flex items-center gap-2 flex-nowrap overflow-hidden min-w-0"
       style={{ maskImage: "linear-gradient(to right, black 88%, transparent)" }}
     >
       {centers.slice(0, visibleCount).map((c) => (

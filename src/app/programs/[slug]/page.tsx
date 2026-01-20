@@ -2,6 +2,7 @@
 import { wpFetch } from "@/lib/wp";
 import { mapProgram } from "@/lib/mappers";
 import HeaderImage from "@/components/headerImage";
+import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 
 const PROGRAM_BY_SLUG_QUERY = `
   query ProgramBySlug($slug: ID!) {
@@ -102,6 +103,14 @@ const PROGRAM_BY_SLUG_QUERY = `
                 slug
                 programFields {
                   summary
+                  center {
+                    nodes {
+                      ... on Center {
+                        slug
+                        title
+                      }
+                    }
+                  }
                 }
                 featuredImage {
                   node {
@@ -291,19 +300,6 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                 </div>
                 )}
 
-              {p.developmentalAssets && p.developmentalAssets.length > 0 && (
-                <div>
-                  <h2 className="h2 mb-2">Developmental assets</h2>
-                  <div className="card">
-                    <ul className="list-disc pl-5 body">
-                      {p.developmentalAssets.map((da: string, i: number) => (
-                        <li key={i}>{da}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-
               {p.whatToBring?.length > 0 && (
                 <div>
                   <h2 className="h2 mb-2">What to bring</h2>
@@ -319,6 +315,19 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                 </div>
               )}
           </div>
+
+          {p.developmentalAssets && p.developmentalAssets.length > 0 && (
+                <div>
+                  <h2 className="h2 mb-2">Developmental assets</h2>
+                  <div className="card">
+                    <ul className="list-disc pl-5 body">
+                      {p.developmentalAssets.map((da: string, i: number) => (
+                        <li key={i}>{da}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
 
           {/* Instructors (optional) */}
           {p.instructors?.length > 0 && (
@@ -392,30 +401,48 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
       {p.relatedPrograms && p.relatedPrograms.length > 0 && (
         <section className="stack-4">
           <h2 className="h2 mb-2">Similar programs</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {p.relatedPrograms.map((rp: any) => (
-              <a
-                key={rp.slug}
-                href={`/programs/${rp.slug}`}
-                className="group flex flex-col card card-hover overflow-hidden"
-              >
-                {rp.heroImage?.url && (
-                  <div className="card-bleed relative aspect-[16/9] h-48 overflow-hidden bg-neutral-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={rp.heroImage.url}
-                      alt={rp.heroImage.alt}
-                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                )}
-                <div className="flex flex-col flex-1 p-4">
-                  <h3 className="h3 group-hover:text-gmcc-teal mb-2">{rp.title}</h3>
-                  {rp.summary && (
-                    <p className="body text-sm line-clamp-3 flex-1">{rp.summary}</p>
-                  )}
-                </div>
-              </a>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {p.relatedPrograms.map((p) => (
+          <a
+            key={p.slug}
+            href={`/programs/${p.slug}`}
+            className="group card card-hover card-link overflow-hidden h-[380px] flex flex-col"
+          >
+            {/* Full-bleed image */}
+            <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
+              {p.heroImage?.url && (
+                <img
+                  src={p.heroImage.url}
+                  alt={p.heroImage.alt}
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                  loading="lazy"
+                  decoding="async"
+                />
+              )}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
+            </div>
+
+            <div className="flex flex-1 flex-col min-h-0 mt-5">
+              <h3 className="font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-2">
+                {p.title}
+              </h3>
+
+              <CentersBadgesOneLine centers={p.centers ?? []} />
+
+              {p.summary && (
+                <p className="mt-3 text-xs leading-6 text-neutral-600 line-clamp-3 mb-3">
+                  {p.summary}
+                </p>
+              )}
+
+              <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
+                <div />
+                <span className="text-sm font-semibold text-gmcc-navy underline-offset-4 group-hover:underline">
+                  View →
+                </span>
+              </div>
+            </div>
+          </a>
             ))}
           </div>
         </section>

@@ -2,6 +2,7 @@
 // Shared utility for fetching amenity details with images
 
 import { wpFetch } from "@/lib/wp";
+import type { AmenityDisplay } from "@/types/amenities";
 
 const AMENITY_BY_SLUG_QUERY = `
   query AmenityBySlug($slug: ID!) {
@@ -10,12 +11,22 @@ const AMENITY_BY_SLUG_QUERY = `
       slug
       description
       amenitiesFields {
-        amenityImage {
-          node {
-            sourceUrl
-            altText
-          }
-        }
+
+        amenityImage1 { node { sourceUrl altText } }
+        center1 { nodes { ... on Center { slug title } } }
+
+        amenityImage2 { node { sourceUrl altText } }
+        center2 { nodes { ... on Center { slug title } } }
+
+        amenityImage3 { node { sourceUrl altText } }
+        center3 { nodes { ... on Center { slug title } } }
+
+        amenityImage4 { node { sourceUrl altText } }
+        center4 { nodes { ... on Center { slug title } } }
+
+        amenityImage5 { node { sourceUrl altText } }
+        center5 { nodes { ... on Center { slug title } } }
+
         isService
         additionalInformation
         additionalImage {
@@ -26,7 +37,8 @@ const AMENITY_BY_SLUG_QUERY = `
         }
       }
     }
-  }`;
+  }
+`;
 
 const ACCESSIBILITY_AMENITY_BY_SLUG_QUERY = `
   query AccessibilityAmenityBySlug($slug: ID!) {
@@ -35,7 +47,7 @@ const ACCESSIBILITY_AMENITY_BY_SLUG_QUERY = `
       slug
       description
       amenitiesFields {
-        amenityImage {
+        amenityImage1 {
           node {
             sourceUrl
             altText
@@ -46,15 +58,106 @@ const ACCESSIBILITY_AMENITY_BY_SLUG_QUERY = `
   }
 `;
 
+
+export function toAmenityDisplayForCenter(
+  amenities: AmenityWithImage[],
+  centerSlug: string
+): AmenityDisplay[] {
+  return amenities
+    .map((a) => {
+      const image = pickAmenityImageForCenter(a, centerSlug);
+      if (!image) return null;
+
+      return {
+        name: a.name,
+        slug: a.slug,
+        description: a.description ?? null,
+        image,
+      } satisfies AmenityDisplay;
+    })
+    .filter((x) => Boolean(x)) as AmenityDisplay[];
+}
+
+
+export function toAmenityDisplayDefault(
+  amenities: AmenityWithImage[]
+): AmenityDisplay[] {
+  return amenities
+    .map((a) => {
+      const image = a.defaultImage ?? a.centerImageCandidates[0]?.image ?? null;
+      if (!image) return null;
+
+      return {
+        name: a.name,
+        slug: a.slug,
+        description: a.description ?? null,
+        image,
+      } satisfies AmenityDisplay;
+    })
+    .filter((x) => Boolean(x)) as AmenityDisplay[];
+}
+
+
+
 export type AmenityWithImage = {
   name: string;
   slug: string;
   description?: string | null;
-  image: {
-    sourceUrl: string;
-    altText: string | null;
-  };
+
+  // default/fallback image (old behavior)
+  defaultImage: { sourceUrl: string; altText: string | null } | null;
+
+  // new: up to 5 center-specific candidates
+  centerImageCandidates: Array<{
+    centerSlug: string;
+    centerTitle?: string | null;
+    image: { sourceUrl: string; altText: string | null };
+  }>;
 };
+
+
+export function pickAmenityImageForCenter(
+  amenity: AmenityWithImage,
+  centerSlug: string
+): { sourceUrl: string; altText: string | null } | null {
+  const match = amenity.centerImageCandidates.find((c) => c.centerSlug === centerSlug);
+  if (match) return match.image;
+
+  // fallback to default image if no per-center match
+  if (amenity.defaultImage) return amenity.defaultImage;
+
+  // final fallback: first candidate image
+  return amenity.centerImageCandidates[0]?.image ?? null;
+}
+
+// If you already have AmenityImage defined in the component file,
+// move it to a shared file (e.g. src/lib/types.ts) or re-declare it here.
+export type AmenityImage = {
+  name: string;
+  slug: string;
+  description?: string | null;
+  image: { sourceUrl: string; altText: string | null };
+};
+
+export function toAmenityImagesForCenter(
+  amenities: AmenityWithImage[],
+  centerSlug: string
+): AmenityImage[] {
+  return amenities
+    .map((a) => {
+      const img = pickAmenityImageForCenter(a, centerSlug);
+      if (!img) return null;
+
+      return {
+        name: a.name,
+        slug: a.slug,
+        description: a.description ?? null,
+        image: img,
+      } satisfies AmenityImage;
+    })
+    .filter((x) => Boolean(x)) as AmenityImage[];
+}
+
 
 /**
  * Fetches amenity details including images for a list of amenity slugs.
@@ -65,31 +168,60 @@ export async function fetchAmenitiesWithImages(
 ): Promise<AmenityWithImage[]> {
   if (!amenitySlugs.length) return [];
 
-  const amenityPromises = amenitySlugs.map((slug) =>
-    wpFetch<any>(AMENITY_BY_SLUG_QUERY, { slug })
+  const amenityResults = await Promise.all(
+    amenitySlugs.map((slug) => wpFetch<any>(AMENITY_BY_SLUG_QUERY, { slug }))
   );
-  const amenityResults = await Promise.all(amenityPromises);
 
-  const amenitiesWithImages: AmenityWithImage[] = [];
+  const amenities: AmenityWithImage[] = [];
 
   for (const result of amenityResults) {
     const amenity = result?.amenity;
-    const imageNode = amenity?.amenitiesFields?.amenityImage?.node;
-    if (amenity && imageNode?.sourceUrl) {
-      amenitiesWithImages.push({
+    const af = amenity?.amenitiesFields;
+
+    if (!amenity || !af) continue;
+
+    const defaultNode = af?.amenityImage?.node ?? null;
+    const defaultImage =
+      defaultNode?.sourceUrl
+        ? { sourceUrl: defaultNode.sourceUrl, altText: defaultNode.altText ?? null }
+        : null;
+
+    const centerImageCandidates: AmenityWithImage["centerImageCandidates"] = [];
+
+    for (let i = 1; i <= 5; i++) {
+      const imageNode = af?.[`amenityImage${i}`]?.node;
+      const centerNodes = af?.[`center${i}`]?.nodes ?? [];
+
+      const centerSlug = centerNodes?.[0]?.slug; // you expect 1 selected center
+      const centerTitle = centerNodes?.[0]?.title ?? null;
+
+      if (centerSlug && imageNode?.sourceUrl) {
+        centerImageCandidates.push({
+          centerSlug,
+          centerTitle,
+          image: {
+            sourceUrl: imageNode.sourceUrl,
+            altText: imageNode.altText ?? null,
+          },
+        });
+      }
+    }
+
+    // keep the amenity even if it has no default image, as long as it has candidates
+    if (defaultImage || centerImageCandidates.length) {
+      amenities.push({
         name: amenity.name,
         slug: amenity.slug,
         description: amenity.description ?? null,
-        image: {
-          sourceUrl: imageNode.sourceUrl,
-          altText: imageNode.altText ?? null,
-        },
+        defaultImage,
+        centerImageCandidates,
       });
     }
   }
 
-  return amenitiesWithImages;
+  return amenities;
 }
+
 
 /**
  * Fetches accessibility amenity details including images for a list of slugs.
@@ -115,10 +247,8 @@ export async function fetchAccessibilityAmenitiesWithImages(
         name: amenity.name,
         slug: amenity.slug,
         description: amenity.description ?? null,
-        image: {
-          sourceUrl: imageNode.sourceUrl,
-          altText: imageNode.altText ?? null,
-        },
+        defaultImage: imageNode ? { sourceUrl: imageNode.sourceUrl, altText: imageNode.altText ?? null } : null,
+        centerImageCandidates: [],
       });
     }
   }
