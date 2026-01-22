@@ -3,6 +3,29 @@ import { wpFetch } from "@/lib/wp";
 import { mapProgram } from "@/lib/mappers";
 import HeaderImage from "@/components/headerImage";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
+import ImageCarousel from "@/components/imageCarousel";
+
+/** Map age range to audience slug(s) for filtering */
+function getAudienceSlugFromAge(min: number | null, max: number | null): string | null {
+  // If no age data, can't determine audience
+  if (min == null && max == null) return null;
+  
+  const ageMin = min ?? 0;
+  const ageMax = max ?? 100;
+  
+  // Determine primary audience based on age range
+  // These slugs should match your WordPress audience taxonomy
+  if (ageMax <= 12) return "youth";
+  if (ageMin >= 13 && ageMax <= 17) return "teen";
+  if (ageMin >= 18 && ageMax <= 64) return "adult";
+  if (ageMin >= 55 || ageMin >= 50) return "senior";
+  
+  // Default for mixed/general ages - use youth if it includes children
+  if (ageMin < 13) return "youth";
+  if (ageMin >= 13 && ageMin < 18) return "teen";
+  
+  return "adult";
+}
 
 const PROGRAM_BY_SLUG_QUERY = `
   query ProgramBySlug($slug: ID!) {
@@ -188,36 +211,80 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
           </div>
         </div>
 
-        {/* Chips row */}
+        {/* Chips row - all clickable, linking to /programs with filters */}
         <div className="flex flex-wrap gap-2">
           {p.offeringType?.map((ot: string) => (
-            <span key={ot} className="badge badge-maroon">{ot}</span>
+            <a 
+              key={ot} 
+              href={`/programs?offeringType=${encodeURIComponent(ot)}`}
+              className="badge badge-maroon hover:opacity-80 transition-opacity"
+            >
+              {ot}
+            </a>
           ))}
 
-          {/* Centers as clickable chips */}
-          {p.taxonomies?.center?.length > 0 &&
+          {/* Centers as clickable chips - link to program filter */}
+          {p.centers?.length > 0 &&
             p.centers.map((c: any) => (
-              <a key={c.slug} href={`/centers/${c.slug}`} className="badge badge-teal hover:opacity-80">
+              <a 
+                key={c.slug} 
+                href={`/programs?center=${encodeURIComponent(c.slug)}`} 
+                className="badge badge-teal hover:opacity-80 transition-opacity"
+              >
                 {c.title}
               </a>
             ))}
 
-          {p.ageRange && (p.ageRange.min || p.ageRange.max) && (
-            <span className="badge badge-green">
-              Ages {p.ageRange.min ?? "?"}–{p.ageRange.max ?? "?"}
-            </span>
-          )}
+          {/* Age range - link to audience filter based on age mapping */}
+          {p.ageRange && (p.ageRange.min || p.ageRange.max) && (() => {
+            let audienceSlug: string | null = null;
+            if (p.ageRange.min.includes("months")) { audienceSlug = "youth";}
+            else { audienceSlug = getAudienceSlugFromAge(p.ageRange.min, p.ageRange.max);}
+            return audienceSlug ? (
+              <a 
+                href={`/programs?audience=${encodeURIComponent(audienceSlug)}`}
+                className="badge badge-green hover:opacity-80 transition-opacity"
+              >
+                Ages {p.ageRange.min ?? "?"}–{p.ageRange.max ?? "?"}
+              </a>
+            ) : (
+              <span className="badge badge-green">
+                Ages {p.ageRange.min ?? "?"}–{p.ageRange.max ?? "?"}
+              </span>
+            );
+          })()}
 
+          {/* Skill level - clickable */}
           {p.skillLevel && (
-            <span className="badge badge-neutral">Level: {p.skillLevel}</span>
+            <a 
+              href={`/programs?skillLevel=${encodeURIComponent(p.skillLevel)}`}
+              className="badge badge-neutral hover:opacity-80 transition-opacity"
+            >
+              Level: {p.skillLevel}
+            </a>
           )}
 
-          {p.taxonomies?.programArea?.length > 0 && (
-            <span className="badge badge-blue">{p.taxonomies.programArea.join(", ")}</span>
-          )}
-          {p.taxonomies?.audience?.length > 0 && (
-            <span className="badge badge-grey">Audience: {p.taxonomies.audience.join(", ")}</span>
-          )}
+          {/* Program areas - need slugs, so extract from raw data */}
+          {wp.programFields?.programArea?.nodes?.map((area: any) => (
+            <a 
+              key={area.slug} 
+              href={`/programs?programArea=${encodeURIComponent(area.name)}`}
+              className="badge badge-blue hover:opacity-80 transition-opacity"
+            >
+              {area.name}
+            </a>
+          ))}
+          
+          {/* Audience - need slugs, so extract from raw data */}
+          {wp.programFields?.audience?.nodes?.map((aud: any) => (
+            <a 
+              key={aud.slug} 
+              href={`/programs?audience=${encodeURIComponent(aud.slug)}`}
+              className="badge badge-grey hover:opacity-80 transition-opacity"
+            >
+              {aud.name}
+            </a>
+          ))}
         </div>
       </section>
 
@@ -231,6 +298,42 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
               {/* If you switch to WYSIWYG later, swap this for dangerouslySetInnerHTML */}
               <p className="whitespace-pre-line">{p.longDescription}</p>
             </article>
+          )}
+
+          {/* Attachments card */}
+          {p.attachments?.length > 0 && (
+            <div>
+              <h3 className="eyebrow mb-3">Relevant documents</h3>
+              <div className="flex flex-wrap gap-3">
+                {p.attachments.map((att: any, i: number) => (
+                  <a 
+                    key={i}
+                    href={att.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="group flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 transition-all hover:border-gmcc-teal hover:bg-white hover:shadow-md"
+                  >
+                    {/* Document icon */}
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gmcc-teal/10 text-gmcc-teal">
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 3v6h6" />
+                      </svg>
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-medium text-neutral-800 group-hover:text-gmcc-navy truncate">
+                        {att.label}
+                      </span>
+                      <span className="text-xs text-neutral-500">PDF • Click to download</span>
+                    </div>
+                    {/* Download arrow icon */}
+                    <svg className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-y-0.5 group-hover:text-gmcc-teal ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Details card */}
@@ -259,7 +362,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
               {/* Center row */}
               {centerNames.length > 0 && (
                 <div className="flex justify-between gap-3">
-                  <dt className="text-neutral-500">Center</dt>
+                  <dt className="text-neutral-500">Center(s)</dt>
                   <dd className="text-right">{centerNames.join(", ")}</dd>
                 </div>
               )}
@@ -278,7 +381,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
               )}
               {p.taxonomies?.session?.length > 0 && (
                 <div className="flex justify-between gap-3">
-                  <dt className="text-neutral-500">Session</dt>
+                  <dt className="text-neutral-500">Session(s)</dt>
                   <dd className="text-right">{p.taxonomies.session.join(", ")}</dd>
                 </div>
               )}
@@ -318,16 +421,58 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
 
           {p.developmentalAssets && p.developmentalAssets.length > 0 && (
                 <div>
-                  <h2 className="h2 mb-2">Developmental assets</h2>
-                  <div className="card">
-                    <ul className="list-disc pl-5 body">
-                      {p.developmentalAssets.map((da: string, i: number) => (
-                        <li key={i}>{da}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  <h2 className="h2 mb-3">Developmental assets</h2>
+                  <ul className="space-y-2 body">
+                    {p.developmentalAssets.map((da: string, i: number) => {
+                      // Split on em dash (—) to bold the part before it
+                      const dashIndex = da.indexOf("—");
+                      if (dashIndex > 0) {
+                        const before = da.substring(0, dashIndex).trim();
+                        const after = da.substring(dashIndex + 1).trim();
+                        return (
+                          <li key={i}>
+                            <span className="font-semibold text-neutral-700">{before} — </span>
+                            <span className="text-neutral-600">{after}</span>
+                          </li>
+                        );
+                      }
+                      return <li key={i}>{da}</li>;
+                    })}
+                  </ul>
                 </div>
               )}
+
+          {/* Media Gallery Carousel */}
+          {(() => {
+            const gallery = wp.programFields?.mediaGallery;
+            if (!gallery) return null;
+            
+            // Transform media gallery images into carousel format
+            const carouselImages = [
+              gallery.image1,
+              gallery.image2,
+              gallery.image3,
+              gallery.image4,
+            ]
+              .filter((img) => img?.node?.sourceUrl)
+              .map((img) => ({
+                image: {
+                  sourceUrl: img.node.sourceUrl,
+                  altText: img.node.altText ?? null,
+                },
+                cta: null,
+                url: null,
+              }));
+            
+            if (carouselImages.length === 0) return null;
+            
+            return (
+              <div>
+                <h2 className="h2 mb-2">See {p.title} in action</h2>
+                <ImageCarousel images={carouselImages} />
+              </div>
+            );
+          })()}
 
           {/* Instructors (optional) */}
           {p.instructors?.length > 0 && (
@@ -340,25 +485,6 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                     ))}
                   </ul>
                 </div>
-            </div>
-          )}
-
-          {/* Attachments card */}
-          {p.attachments?.length > 0 && (
-            <div>
-            <h2 className="h2 mb-2">Documents</h2>
-            <div className="card">
-              <ul className="mt-3 stack-2 body">
-                {p.attachments.map((att: any, i: number) => (
-                  <li key={i}>
-                    <a href={att.url} target="_blank" rel="noopener noreferrer" className="link inline-flex items-center gap-2">
-                      <span className="badge badge-teal">PDF</span>
-                      <span>{att.label}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
             </div>
           )}
         </div>
@@ -400,7 +526,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
 
       {p.relatedPrograms && p.relatedPrograms.length > 0 && (
         <section className="stack-4">
-          <h2 className="h2 mb-2">Similar programs</h2>
+          <h2 className="h2 mb-2">Explore similar programs</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {p.relatedPrograms.map((p) => (
           <a

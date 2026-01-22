@@ -38,8 +38,12 @@ const EXPLORE_MEMBERSHIPS_QUERY = `
           pricingTable {
             tier
             monthly
-            annual
+            annually
             joiningFee
+            additionalPaymentSplit {
+              frequency
+              cost
+            }
           }
           audience {
             nodes { name slug }
@@ -89,12 +93,18 @@ function mapMembershipNode(wp: any): Membership {
       tier: (pricing.tier as string) ?? null,
       monthly:
         typeof pricing.monthly === "number" ? (pricing.monthly as number) : null,
-      annual:
-        typeof pricing.annual === "number" ? (pricing.annual as number) : null,
+      annually:
+        typeof pricing.annually === "number" ? (pricing.annually as number) : null,
       joiningFee:
         typeof pricing.joiningFee === "number"
           ? (pricing.joiningFee as number)
           : null,
+      paymentSplit: pricing.additionalPaymentSplit
+        ? {
+            frequency: pricing.additionalPaymentSplit?.frequency as string,
+            cost: typeof pricing.additionalPaymentSplit?.cost === "number" ? (pricing.additionalPaymentSplit?.cost as number) : null,
+          }
+        : null,
     },
     audience,
     programArea,

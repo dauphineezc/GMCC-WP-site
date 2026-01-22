@@ -17,8 +17,9 @@ export type Membership = {
   pricing: {
     tier: string | null;
     monthly: number | null;
-    annual: number | null;
+    annually: number | null;
     joiningFee: number | null;
+    paymentSplit: { frequency: string; cost: number | null } | null;
   };
   audience: Audience[];
   programArea: ProgramArea[];
@@ -169,11 +170,13 @@ export default function ExploreMembershipsClient({
       {/* BROWSE BY CENTER - simple text links */}
       <section className="stack-2">
         <p className="small">Browse by center:</p>
-        <div className="flex flex-wrap gap-x-8 gap-y-2">
+        <div className="flex flex-wrap gap-x-8 gap-y-2 p-4">
           {centerLinks.map((c) => (
-            <a key={c.slug} href={`/membership/${c.slug}`} className="link body">
-              {c.label}
-            </a>
+            <div key={c.slug} className="card p-4">
+              <a href={`/membership/${c.slug}`} className="link body">
+                {c.label}
+              </a>
+            </div>
           ))}
         </div>
       </section>
@@ -328,11 +331,21 @@ export default function ExploreMembershipsClient({
                                 </span>
                               </div>
                             )}
-                            {m.pricing.annual != null && (
+                            {m.pricing.paymentSplit != null && (
                               <div>
-                                <span className="text-neutral-500">Annual:</span>{" "}
+                                <span className="text-neutral-500">
+                                  {m.pricing.paymentSplit.frequency}: {" "}
+                                </span>
                                 <span className="font-bold">
-                                  ${Math.round(m.pricing.annual)}
+                                  ${Math.round(m.pricing.paymentSplit.cost ?? 0)}
+                                </span>
+                              </div>
+                            )}
+                            {m.pricing.annually != null && (
+                              <div>
+                                <span className="text-neutral-500">Annually:</span>{" "}
+                                <span className="font-bold">
+                                  ${Math.round(m.pricing.annually)}
                                 </span>
                               </div>
                             )}

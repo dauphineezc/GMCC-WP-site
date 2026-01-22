@@ -366,10 +366,10 @@ function CommunityTieredLayout({
                           <span className="font-bold">${Math.round(m.pricing.monthly)}</span>
                         </div>
                       )}
-                      {m.pricing.annual != null && (
+                      {m.pricing.annually != null && (
                         <div>
                           <span className="text-neutral-500">Annual:</span>{" "}
-                          <span className="font-bold">${Math.round(m.pricing.annual)}</span>
+                          <span className="font-bold">${Math.round(m.pricing.annually)}</span>
                         </div>
                       )}
                       {m.pricing.joiningFee != null && (
@@ -474,10 +474,10 @@ function ComparisonLayout({
                         <span className="font-bold">${Math.round(m.pricing.monthly)}</span>
                       </div>
                     )}
-                    {m.pricing.annual != null && (
+                    {m.pricing.annually != null && (
                       <div>
                         <span className="text-neutral-500">Annual:</span>{" "}
-                        <span className="font-bold">${Math.round(m.pricing.annual)}</span>
+                        <span className="font-bold">${Math.round(m.pricing.annually)}</span>
                       </div>
                     )}
                     {m.pricing.joiningFee != null && (
@@ -529,10 +529,10 @@ function ComparisonLayout({
                         <span className="font-bold">${Math.round(m.pricing.monthly)}</span>
                       </div>
                     )}
-                    {m.pricing.annual != null && (
+                    {m.pricing.annually != null && (
                       <div>
                         <span className="text-neutral-500">Annual:</span>{" "}
-                        <span className="font-bold">${Math.round(m.pricing.annual)}</span>
+                        <span className="font-bold">${Math.round(m.pricing.annually)}</span>
                       </div>
                     )}
                     {m.pricing.joiningFee != null && (

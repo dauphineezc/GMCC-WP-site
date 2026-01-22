@@ -183,7 +183,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
           <div className={`stack-4 p-4 pt-0 lg:pt-4 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
             {/* Amenities */}
             <div>
-              <h3 className="h3">Amenities</h3>
+              <h3 className="text-base text-gmcc-navy">Amenities</h3>
               <div className="mt-2 max-h-56 overflow-auto stack-2 pr-1">
                 {amenityOptions.map(a => (
                   <label key={a.slug} className="flex items-center gap-2 small">
@@ -253,7 +253,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
                   className="group card card-hover overflow-hidden"
                 >
                   {mapSrc ? (
-                    <div className="h-40 w-full overflow-hidden bg-neutral-100">
+                    <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
                       <iframe
                         src={mapSrc}
                         width="100%"
@@ -271,8 +271,8 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
                     </div>
                   )}
 
-                  <div className="p-4 stack-2">
-                    <h3 className="h3 group-hover:text-gmcc-teal">{c.title}</h3>
+                  <div className="pt-4 stack-2">
+                    <h3 className="font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-1">{c.title}</h3>
 
                     {cf.address && (
                       <p className="small whitespace-pre-line">{cf.address}</p>

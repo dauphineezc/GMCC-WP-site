@@ -499,7 +499,7 @@ export default function ExploreProgramsClient({
             {openDropdowns.has("offeringType") && (
               <div className="space-y-1 pt-2 pb-2">
                 {offeringTypeOptions.map((ot) => (
-                  <label key={ot} className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                  <label key={ot} className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900">
                     <input
                       type="checkbox"
                       checked={offeringTypes.includes(ot)}
@@ -533,7 +533,7 @@ export default function ExploreProgramsClient({
             {openDropdowns.has("centers") && (
               <div className="space-y-1 pt-2 pb-2">
                 {centerOptions.map((c) => (
-                  <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                  <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900">
                     <input
                       type="checkbox"
                       checked={centers.includes(c.slug)}
@@ -567,7 +567,7 @@ export default function ExploreProgramsClient({
             {openDropdowns.has("programAreas") && (
               <div className="space-y-1 pt-2 pb-2">
                 {programAreaOptions.map((a) => (
-                  <label key={a.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                  <label key={a.slug} className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900">
                     <input
                       type="checkbox"
                       checked={programAreas.includes(a.slug)}
@@ -601,7 +601,7 @@ export default function ExploreProgramsClient({
             {openDropdowns.has("skillLevels") && (
               <div className="space-y-1 pt-2 pb-2">
                 {skillLevelOptions.map((sl) => (
-                  <label key={sl} className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                  <label key={sl} className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900">
                     <input
                       type="checkbox"
                       checked={skillLevels.includes(sl)}
@@ -635,7 +635,7 @@ export default function ExploreProgramsClient({
             {openDropdowns.has("audience") && (
               <div className="space-y-1 pt-2 pb-2">
                 {audienceOptions.map((a) => (
-                  <label key={a.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                  <label key={a.slug} className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900">
                     <input
                       type="checkbox"
                       checked={audience.includes(a.slug)}

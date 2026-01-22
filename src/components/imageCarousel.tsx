@@ -42,7 +42,7 @@ export default function ImageCarousel({ images }: ImageCarouselProps) {
         <img
           src={currentImage.image.sourceUrl}
           alt={currentImage.image.altText ?? ""}
-          className="h-60 w-full object-cover sm:h-96 lg:h-[24rem]"
+          className="h-60 w-full object-cover sm:h-96 lg:h-[24rem] rounded-lg"
         />
       )}
 

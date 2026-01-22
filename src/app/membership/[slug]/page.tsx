@@ -36,7 +36,7 @@ const CENTER_MEMBERSHIPS_QUERY = `
           pricingTable {
             tier
             monthly
-            annual
+            annually
             joiningFee
           }
           joinRenewLink
@@ -89,7 +89,7 @@ export type Membership = {
   pricing: {
     tier: string | null;
     monthly: number | null;
-    annual: number | null;
+    annually: number | null;
     joiningFee: number | null;
   };
   joinRenewLink: string | null;
@@ -126,7 +126,7 @@ function mapMembership(wp: any): Membership {
     pricing: {
       tier: (pricing.tier as string) ?? null,
       monthly: pricing.monthly ?? null,
-      annual: pricing.annual ?? null,
+      annually: pricing.annually ?? null,
       joiningFee: pricing.joiningFee ?? null,
     },
     joinRenewLink: (f.joinRenewLink as string) ?? null,
