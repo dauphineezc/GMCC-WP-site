@@ -516,16 +516,16 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             )}
 
             <h2 className="h3 text-gmcc-navy mt-4">Need more information?</h2>
-            <a href={``} className="link body block text-sm">➜ View session calendars</a>
-            <a href={``} className="link body block text-sm">➜ Compare centers</a>
-            <a href={``} className="link body block text-sm">➜ Explore similar programs</a>
+            <a href={`/visit/session-calendar`} className="link body block text-sm">➜ View session calendars</a>
+            <a href={`/centers`} className="link body block text-sm">➜ Compare centers</a>
+            <a href={`#similar-programs`} className="link body block text-sm">➜ Explore similar programs</a>
           </div>
 
         </aside>
       </section>
 
       {p.relatedPrograms && p.relatedPrograms.length > 0 && (
-        <section className="stack-4">
+        <section className="stack-4 scroll-mt-24" id="similar-programs">
           <h2 className="h2 mb-2">Explore similar programs</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {p.relatedPrograms.map((p) => (
