@@ -51,10 +51,10 @@ export default function GroupFitnessSchedulesPage() {
     <main>
         <HeaderImage src="/images/GroupFitnessPhoto.png" alt="Group Fitness Schedules" />
         <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
-          <h1 className="text-3xl font-bold text-gmcc-navy tracking-tight sm:text-4xl mb-4">Group Fitness Schedules</h1>
+          <h1 className="h1">Group Fitness Schedules</h1>
           <h3 className="text-xl text-neutral-700 mt-0 mb-4">Choose from a variety of group fitness classes to fit your schedule, goals, and 
             interests. View the schedules for all group fitness classes below.</h3>
-          <p className="text-neutral-700 text-xl mt-0mb-8">Click on a class for more information and to register.</p>
+          <p className="body">Click on a class for more information and to register.</p>
 
           <Accordion 
             items={faqItems}

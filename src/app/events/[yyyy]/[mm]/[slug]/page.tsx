@@ -25,6 +25,25 @@ const EVENT_BY_SLUG_QUERY = `
         eventType
         locationOverride
 
+        attachments {
+          attachment1 {
+            attachment1Label
+            attachment1File { node { mediaItemUrl } }
+          }
+          attachment2 {
+            attachment2Label
+            attachment2File { node { mediaItemUrl } }
+          }
+          attachment3 {
+            attachment3Label
+            attachment3File { node { mediaItemUrl } }
+          }
+          attachment4 {
+            attachment4Label
+            attachment4File { node { mediaItemUrl } }
+          }
+          }
+
         center {
           nodes {
             ... on Center {
@@ -98,8 +117,6 @@ export default async function EventPage(props: EventPageProps) {
   const end = f.endDateTime ? new Date(f.endDateTime) : null;
 
   const centers = (f.center?.nodes ?? []).map((c: any) => ({ title: c.title, slug: c.slug }));
-  const programAreaNames = (f.programArea?.nodes ?? []).map((pa: any) => pa.name);
-  const audienceNames = (f.audience?.nodes ?? []).map((a: any) => a.name);
 
   const dateRangeLabel =
     start && end
@@ -139,26 +156,48 @@ export default async function EventPage(props: EventPageProps) {
       </div>
 
 
-        {/* Chips row */}
+        {/* Chips row - all clickable, linking to /events with filters */}
         <div className="flex flex-wrap gap-2">
           {f.eventType?.map((ot: string) => (
-            <span key={ot} className="badge badge-maroon">{ot}</span>
+            <a 
+              key={ot} 
+              href={`/events?eventType=${encodeURIComponent(ot)}`}
+              className="badge badge-maroon hover:opacity-80 transition-opacity"
+            >
+              {ot}
+            </a>
           ))}
-          {/* Centers as clickable chips */}
+          {/* Centers as clickable chips - link to events filter */}
           {centers.length > 0 &&
             centers.map((c: { title: string; slug: string }) => (
-              <a key={c.slug} href={`/centers/${c.slug}`} className="badge badge-teal hover:opacity-80">
+              <a 
+                key={c.slug} 
+                href={`/centers/${c.slug}`} 
+                className="badge badge-teal hover:opacity-80 transition-opacity"
+              >
                 {c.title}
               </a>
             ))}
-          {programAreaNames.length > 0 && (
-            <span className="badge badge-green">
-              {programAreaNames.join(", ")}
-            </span>
-          )}
-          {audienceNames.length > 0 && (
-            <span className="badge badge-grey">Audience: {audienceNames.join(", ")}</span>
-          )}
+          {/* Program areas - clickable */}
+          {f.programArea?.nodes?.map((area: any) => (
+            <a 
+              key={area.slug} 
+              href={`/events?programArea=${encodeURIComponent(area.name)}`}
+              className="badge badge-green hover:opacity-80 transition-opacity"
+            >
+              {area.name}
+            </a>
+          ))}
+          {/* Audience - clickable */}
+          {f.audience?.nodes?.map((aud: any) => (
+            <a 
+              key={aud.slug} 
+              href={`/events?audience=${encodeURIComponent(aud.slug)}`}
+              className="badge badge-grey hover:opacity-80 transition-opacity"
+            >
+              {aud.name}
+            </a>
+          ))}
         </div>
       </section>
 
@@ -172,6 +211,42 @@ export default async function EventPage(props: EventPageProps) {
               {/* If you stored HTML, use dangerouslySetInnerHTML instead */}
               <p className="whitespace-pre-line">{f.longDescription}</p>
             </article>
+          )}
+
+          {/* Attachments card */}
+          {f.attachments?.length > 0 && (
+            <div>
+              <h3 className="eyebrow mb-3">Relevant documents</h3>
+              <div className="flex flex-wrap gap-3">
+                {f.attachments.map((att: any, i: number) => (
+                  <a 
+                    key={i}
+                    href={att.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="group flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 transition-all hover:border-gmcc-teal hover:bg-white hover:shadow-md"
+                  >
+                    {/* Document icon */}
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gmcc-teal/10 text-gmcc-teal">
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 3v6h6" />
+                      </svg>
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-medium text-neutral-800 group-hover:text-gmcc-navy truncate">
+                        {att.label}
+                      </span>
+                      <span className="text-xs text-neutral-500">PDF • Click to download</span>
+                    </div>
+                    {/* Download arrow icon */}
+                    <svg className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-y-0.5 group-hover:text-gmcc-teal ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Details card */}

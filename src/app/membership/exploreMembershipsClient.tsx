@@ -172,8 +172,8 @@ export default function ExploreMembershipsClient({
         <p className="small">Browse by center:</p>
         <div className="flex flex-wrap gap-x-8 gap-y-2 p-4">
           {centerLinks.map((c) => (
-            <div key={c.slug} className="card p-4">
-              <a href={`/membership/${c.slug}`} className="link body">
+            <div key={c.slug} className="group card card-hover p-4">
+              <a href={`/membership/${c.slug}`} className="text-sm font-semibold text-gmcc-navy underline-offset-4 group-hover:underline">
                 {c.label}
               </a>
             </div>
@@ -331,7 +331,7 @@ export default function ExploreMembershipsClient({
                                 </span>
                               </div>
                             )}
-                            {m.pricing.paymentSplit != null && (
+                            {m.pricing.paymentSplit != null && m.pricing.paymentSplit.cost != null && (
                               <div>
                                 <span className="text-neutral-500">
                                   {m.pricing.paymentSplit.frequency}: {" "}
@@ -497,7 +497,7 @@ export default function ExploreMembershipsClient({
             Bring your insurance card to the front desk or contact us and we
             can help you check eligibility.
           </p>
-          <a href="/insurance-memberships" className="link body mt-3 block">
+          <a href="/membership/discounts" className="link body mt-3 block">
             Learn more about insurance-based options →
           </a>
         </div>

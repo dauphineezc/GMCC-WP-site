@@ -1,73 +1,270 @@
 // src/app/page.tsx
 import { wpFetch } from "@/lib/wp";
+import HeroSection from "./(home)/sections/hero";
+import AboutSection from "./(home)/sections/about";
+import TestimonialsSection from "./(home)/sections/testimonials";
+import FeaturedCampaignSection from "./(home)/sections/featuredCampaign";
+import ImpactSection from "./(home)/sections/impact";
+import HistorySection from "./(home)/sections/history";
+import CentersSection from "./(home)/sections/centers";
+import NewsSection from "./(home)/sections/news";
+import UtilityMenu from "@/components/nav/utilityMenu";
 
-const HOMEPAGE_QUERY = `
-query Homepage {
-  page(id: "home", idType: URI) {
-    id
+// ---- Types (match your query) ----
+type GqlImage = { node?: { sourceUrl: string; altText?: string | null } | null };
+
+type HomeData = {
+  page: {
+    title: string;
+    uri: string;
+    homepageFields?: {
+      hero?: {
+        heroHeadline?: string | null;
+        heroSubheadline?: string | null;
+        heroMedia?: GqlImage | null;
+        heroPrimaryCtaLabel?: string | null;
+        heroPrimaryCtaUrl?: string | null;
+        heroSecondaryCtaLabel?: string | null;
+        heroSecondaryCtaUrl?: string | null;
+      } | null;
+
+      aboutBlurb?: string | null;
+      aboutImage?: GqlImage | null;
+
+      campaignBanner?: {
+        nodes?: Array<{
+          id: string;
+          title?: string | null;
+          uri?: string | null;
+          featuredImage?: GqlImage | null;
+          campaignFields?: {
+            headline?: string | null;
+            body?: string | null;
+            primaryCta?: { primaryCtaLabel?: string | null; primaryCtaUrl?: string | null } | null;
+            secondaryCta?: { secondaryCtaLabel?: string | null; secondaryCtaUrl?: string | null } | null;
+          } | null;
+        }> | null;
+      } | null;
+
+      impact?: {
+        impactHeader?: string | null;
+        impactBody?: string | null;
+        impactImage?: GqlImage | null;
+        impactCta1?: string | null; // url only
+        impactCta2?: string | null; // url only
+        impactStats?: {
+          stat1?: { statValue?: string | null; statLabel?: string | null } | null;
+          stat2?: { statValue?: string | null; statLabel?: string | null } | null;
+          stat3?: { statValue?: string | null; statLabel?: string | null } | null;
+          stat4?: { statValue?: string | null; statLabel?: string | null } | null;
+        } | null;
+      } | null;
+
+      historyTimeline?: {
+        historyHeader?: string | null;
+        historyDescription?: string | null;
+        timelineItems?: {
+          item1?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
+          item2?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
+          item3?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
+          item4?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
+          item5?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
+          item6?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
+        } | null;
+      } | null;
+
+      testimonials?: {
+        nodes?: Array<{
+          id: string;
+          title?: string | null;
+          testimonialFields?: {
+            quote?: string | null;
+            personName?: string | null;
+            personContext?: string | null;
+            photo?: GqlImage | null;
+          } | null;
+        }> | null;
+      } | null;
+
+      centers?: {
+        nodes?: Array<{
+          id: string;
+          title?: string | null;
+          uri?: string | null;
+          featuredImage?: GqlImage | null;
+          centersFields?: {
+            address?: string | null;
+            contactInfo?: { contactPhone?: string | null; contactEmail?: string | null } | null;
+            map?: { latitude?: string | null; longitude?: string | null; zoom?: string | null } | null;
+          } | null;
+        }> | null;
+      } | null;
+
+      upcomingEvents?: {
+        nodes?: Array<{
+          id: string;
+          title?: string | null;
+          uri?: string | null;
+          featuredImage?: GqlImage | null;
+          eventFields?: { startDateTime?: string | null; endDateTime?: string | null } | null;
+        }> | null;
+      } | null;
+
+      newsHighlights?: {
+        nodes?: Array<{
+          id: string;
+          title?: string | null;
+          uri?: string | null;
+          date?: string | null;
+          featuredImage?: GqlImage | null;
+        }> | null;
+      } | null;
+    } | null;
+  };
+};
+
+// ---- Helpers ----
+function normalizeImpactStats(stats: HomeData["page"]["homepageFields"] extends infer H
+  ? H extends { impact?: infer I }
+    ? I extends { impactStats?: infer S }
+      ? S
+      : any
+    : any
+  : any) {
+  const slots = ["stat1", "stat2", "stat3", "stat4"] as const;
+  return slots
+    .map((k) => (stats as any)?.[k])
+    .filter(Boolean)
+    .map((s: any) => ({ value: s?.statValue ?? "", label: s?.statLabel ?? "" }))
+    .filter((s) => (s.value || "").trim() || (s.label || "").trim());
+}
+
+function normalizeTimelineItems(timelineItems: any) {
+  const slots = ["item1", "item2", "item3", "item4", "item5", "item6"] as const;
+  return slots
+    .map((k) => timelineItems?.[k])
+    .filter(Boolean)
+    .map((it: any) => ({
+      date: it?.date ?? "",
+      title: it?.title ?? "",
+      body: it?.body ?? "",
+      imageUrl: it?.image?.node?.sourceUrl ?? null,
+      imageAlt: it?.image?.node?.altText ?? "",
+    }))
+    .filter((it) => (it.date || "").trim() || (it.title || "").trim() || (it.body || "").trim());
+}
+
+function safeFirst<T>(arr: T[] | null | undefined) {
+  return Array.isArray(arr) && arr.length ? arr[0] : null;
+}
+
+// ---- Query (your exact query text) ----
+const HOME_QUERY = /* GraphQL */ `
+query HomePage($uri: ID!) {
+  page(id: $uri, idType: URI) {
     title
-    slug
+    uri
 
     homepageFields {
       hero {
         heroHeadline
         heroSubheadline
-        heroMedia
+        heroMedia {
+          node { sourceUrl altText }
+        }
         heroPrimaryCtaLabel
         heroPrimaryCtaUrl
         heroSecondaryCtaLabel
         heroSecondaryCtaUrl
       }
 
-      featuredModules {
-        featuredModule1 {
-          fm1Enabled
-          fm1Title
-          fm1Body
-          fm1LinkLabel
-          fm1LinkUrl
-          fm1Icon {
-            node { sourceUrl altText }
-          }
+      aboutBlurb
+      aboutImage {
+        node {
+          sourceUrl
+          altText
         }
-        featuredModule2 {
-          fm2Enabled
-          fm2Title
-          fm2Body
-          fm2LinkLabel
-          fm2LinkUrl
-          fm2Icon {
-            node { sourceUrl altText }
-          }
-        }
-        featuredModule3 {
-          fm3Enabled
-          fm3Title
-          fm3Body
-          fm3LinkLabel
-          fm3LinkUrl
-          fm3Icon {
-            node { sourceUrl altText }
+      }
+
+      campaignBanner {
+        nodes{
+          ... on Campaign {
+            id
+            title
+            uri
+            featuredImage {
+              node { sourceUrl altText }
+            }
+            campaignFields {
+              headline
+              body
+              primaryCta { primaryCtaLabel primaryCtaUrl }
+              secondaryCta { secondaryCtaLabel secondaryCtaUrl }
+            }
           }
         }
       }
 
-      featuredPrograms {
-        mode
-        audience { nodes { name slug } }
-        programArea { nodes { name slug } }
-        programs {
-          nodes {
-            ... on Program {
-              slug
-              title
-              featuredImage {
-                node { sourceUrl altText }
+      impact {
+        impactHeader
+        impactBody
+        impactImage { node { sourceUrl altText } }
+        impactCta1
+        impactCta2
+
+        impactStats {
+          stat1 { statValue statLabel }
+          stat2 { statValue statLabel }
+          stat3 { statValue statLabel }
+          stat4 { statValue statLabel }
+        }
+      }
+
+      historyTimeline {
+        historyHeader
+        historyDescription
+        timelineItems {
+          item1 { date title body image { node { sourceUrl altText } } }
+          item2 { date title body image { node { sourceUrl altText } } }
+          item3 { date title body image { node { sourceUrl altText } } }
+          item4 { date title body image { node { sourceUrl altText } } }
+          item5 { date title body image { node { sourceUrl altText } } }
+          item6 { date title body image { node { sourceUrl altText } } }
+        }
+      }
+
+      testimonials {
+        nodes {
+          ... on Testimonial {
+            id
+            title
+            testimonialFields {
+              quote
+              personName
+              personContext
+              photo { node { sourceUrl altText } }
+            }
+          }
+        }
+      }
+
+      centers {
+        nodes {
+          ... on Center {
+            id
+            title
+            uri
+            featuredImage { node { sourceUrl altText } }
+            centersFields {
+              address
+              contactInfo {
+                contactPhone
+                contactEmail
               }
-              programFields {
-                summary
-                priceFrom
-                offeringType
+              map {
+                latitude
+                longitude
+                zoom
               }
             }
           }
@@ -75,57 +272,13 @@ query Homepage {
       }
 
       upcomingEvents {
-        center {
-          nodes {
-            ... on Center { slug title }
-          }
-        }
-        maxEvents
-        events {
-          nodes {
-            ... on Event {
-              slug
-              title
-              featuredImage { node { sourceUrl altText } }
-              eventFields {
-                summary
-                startDateTime
-                endDateTime
-                registrationLink
-                eventType
-              }
-            }
-          }
-        }
-      }
-
-      campaignBanner {
         nodes {
-          ... on Campaign {
-            slug
+          ... on Event {
+            id
             title
+            uri
             featuredImage { node { sourceUrl altText } }
-            campaignFields {
-              headline
-              primaryCta {
-                primaryCtaLabel
-                primaryCtaUrl
-              }
-            }
-          }
-        }
-      }
-
-      testimonialCarousel {
-        nodes {
-          ... on Testimonial {
-            slug
-            title
-            testimonialFields {
-              quote
-              personName
-              personContext
-            }
+            eventFields { startDateTime endDateTime }
           }
         }
       }
@@ -133,27 +286,11 @@ query Homepage {
       newsHighlights {
         nodes {
           ... on News {
-            slug
+            id
             title
+            uri
+            date
             featuredImage { node { sourceUrl altText } }
-            newsFields { summary publishDate }
-          }
-        }
-      }
-
-      quickLinksSet {
-        nodes {
-          ... on QuickLinksSet {
-            slug
-            title
-            quickLinksSetFields {
-              description
-              link1 {
-                label
-                url
-                icon { node { sourceUrl altText } }
-              }
-            }
           }
         }
       }
@@ -162,364 +299,73 @@ query Homepage {
 }
 `;
 
-type AnyObj = Record<string, any>;
-
-function splitLines(v: unknown): string[] {
-  return typeof v === "string"
-    ? v.split("\n").map(s => s.trim()).filter(Boolean)
-    : [];
-}
-
 export default async function HomePage() {
-  const data = await wpFetch<AnyObj>(HOMEPAGE_QUERY);
-  const wp = data?.page;
-  const f = wp?.homepageFields;
+  const data = await wpFetch<HomeData>(HOME_QUERY, { uri: "/" });
+  const f = data?.page?.homepageFields;
 
-  if (!wp || !f) {
-    return (
-      <main className="mx-auto max-w-6xl px-4 section-y">
-        <p className="body">Homepage not configured yet.</p>
-      </main>
-    );
-  }
+  const hero = f?.hero;
+  const campaign = safeFirst(f?.campaignBanner?.nodes);
+  const testimonials = f?.testimonials?.nodes ?? [];
+  const centers = f?.centers?.nodes ?? [];
+  const news = f?.newsHighlights?.nodes ?? [];
 
-  /* ---------------------- HERO ---------------------- */
-  const hero = f.hero ?? {};
-
-  /* ------------------ FEATURED MODULES ------------------ */
-  const fmRaw = f.featuredModules ?? {};
-  const modules = [
-    fmRaw.featuredModule1,
-    fmRaw.featuredModule2,
-    fmRaw.featuredModule3,
-  ]
-    .filter(Boolean)
-    .filter((m: AnyObj) => m.fm1Enabled ?? m.fm2Enabled ?? m.fm3Enabled);
-
-  /* ------------------ FEATURED PROGRAMS ------------------ */
-  const fp = f.featuredPrograms ?? {};
-  const featuredPrograms =
-    fp.programs?.nodes?.filter(Boolean) ?? [];
-
-  /* ------------------ UPCOMING EVENTS ------------------ */
-  const ue = f.upcomingEvents ?? {};
-  const upcomingEvents =
-    ue.events?.nodes?.filter(Boolean) ?? [];
-
-  /* ------------------ CAMPAIGN BANNER ------------------ */
-  const campaign = f.campaignBanner ?? null;
-
-  /* ------------------ TESTIMONIALS ------------------ */
-  const testimonials =
-    f.testimonialCarousel?.nodes?.filter(Boolean) ?? [];
-
-  /* ------------------ NEWS ------------------ */
-  const news =
-    f.newsHighlights?.nodes?.filter(Boolean) ?? [];
-
-  /* ------------------ QUICK LINKS ------------------ */
-  const ql = f.quickLinksSet?.quickLinksFields ?? null;
-  const quickLinks =
-    ql?.links?.filter(Boolean) ?? [];
+  const impactStats = normalizeImpactStats(f?.impact?.impactStats);
+  const timeline = normalizeTimelineItems(f?.historyTimeline?.timelineItems);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 section-y stack-8">
+    <main className="bg-white">
 
-      {/* HERO */}
-      <section className="grid gap-8 md:grid-cols-2 items-center">
-        <div className="stack-4">
-          {hero.heroHeadline && (
-            <h1 className="h1">{hero.heroHeadline}</h1>
-          )}
-          {hero.heroSubheadline && (
-            <p className="body whitespace-pre-line">{hero.heroSubheadline}</p>
-          )}
-          <div className="flex flex-wrap gap-3 pt-2">
-            {hero.heroPrimaryCtaUrl && hero.heroPrimaryCtaLabel && (
-              <a href={hero.heroPrimaryCtaUrl} className="btn btn-primary">
-                {hero.heroPrimaryCtaLabel}
-              </a>
-            )}
-            {hero.heroSecondaryCtaUrl && hero.heroSecondaryCtaLabel && (
-              <a href={hero.heroSecondaryCtaUrl} className="btn btn-secondary">
-                {hero.heroSecondaryCtaLabel}
-              </a>
-            )}
-          </div>
+      <header>
+        <div className="flex items-center justify-end">
+          <UtilityMenu />
         </div>
+      </header>
+      
+      <HeroSection
+        headline={hero?.heroHeadline ?? "Serving Greater Midland for Over a Century"}
+        subheadline={hero?.heroSubheadline ?? "Building healthier people, stronger families, and a more connected community."}
+        imageUrl={hero?.heroMedia?.node?.sourceUrl ?? null}
+        imageAlt={hero?.heroMedia?.node?.altText ?? ""}
+        primaryCta={{
+          title: hero?.heroPrimaryCtaLabel ?? "Explore Programs",
+          url: hero?.heroPrimaryCtaUrl ?? "/programs",
+        }}
+      />
 
-        {/* oEmbed media: store as URL; if it's a YouTube/Vimeo link you can iframe it */}
-        {hero.heroMedia && (
-          <div className="aspect-video w-full overflow-hidden rounded-2xl border bg-neutral-100">
-            {/* simplest sandbox render */}
-            <iframe
-              src={hero.heroMedia}
-              className="h-full w-full"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-              title="Hero media"
-            />
-          </div>
-        )}
-      </section>
+      <AboutSection
+        eyebrow="About Us"
+        heading="About Us"
+        body={f?.aboutBlurb ?? ""}
+        imageUrl={f?.aboutImage?.node?.sourceUrl ?? null}
+        imageAlt={f?.aboutImage?.node?.altText ?? ""}
+        cta={{ title: "Learn more about our mission", url: "/about" }}
+      />
+      
+      <ImpactSection
+        heading={f?.impact?.impactHeader ?? "Our Impact"}
+        body={f?.impact?.impactBody ?? ""}
+        stats={impactStats}
+        imageUrl={f?.impact?.impactImage?.node?.sourceUrl ?? null}
+        imageAlt={f?.impact?.impactImage?.node?.altText ?? ""}
+        cta={f?.impact?.impactCta1 ? { title: "Get involved", url: f.impact.impactCta1 } : null}
+      />
 
-      {/* CAMPAIGN BANNER */}
-      {campaign && (
-        <section className="card bg-gmcc-blue-light/30 flex flex-col md:flex-row md:items-center gap-4">
-          {campaign.featuredImage?.node?.sourceUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={campaign.featuredImage.node.sourceUrl}
-              alt={campaign.featuredImage.node.altText ?? ""}
-              className="h-24 w-24 rounded-xl object-cover"
-            />
-          )}
-          <div className="flex-1 stack-2">
-            <h2 className="h3">{campaign.title}</h2>
-            {campaign.campaignFields?.summary && (
-              <p className="small">{campaign.campaignFields.summary}</p>
-            )}
-          </div>
-          {campaign.campaignFields?.linkUrl && (
-            <a href={campaign.campaignFields.linkUrl} className="btn btn-primary">
-              {campaign.campaignFields.linkLabel ?? "Learn more"}
-            </a>
-          )}
-        </section>
-      )}
+      <FeaturedCampaignSection campaign={campaign} />
 
-      {/* FEATURED MODULES */}
-      {modules.length > 0 && (
-        <section className="stack-4">
-          <h2 className="h2">Featured</h2>
+      <TestimonialsSection
+        heading="Testimonials"
+        testimonials={testimonials}
+      />
 
-          <div className="grid gap-4 md:grid-cols-3">
-            {modules.map((m: AnyObj, i: number) => {
-              const enabled = m.fm1Enabled ?? m.fm2Enabled ?? m.fm3Enabled;
-              if (!enabled) return null;
+      <HistorySection
+        heading={f?.historyTimeline?.historyHeader ?? "Our History"}
+        intro={f?.historyTimeline?.historyDescription ?? ""}
+        items={timeline}
+      />
 
-              const title = m.fm1Title ?? m.fm2Title ?? m.fm3Title;
-              const body = m.fm1Body ?? m.fm2Body ?? m.fm3Body;
-              const linkLabel = m.fm1LinkLabel ?? m.fm2LinkLabel ?? m.fm3LinkLabel;
-              const linkUrl = m.fm1LinkUrl ?? m.fm2LinkUrl ?? m.fm3LinkUrl;
-              const icon = m.fm1Icon ?? m.fm2Icon ?? m.fm3Icon;
+      <CentersSection heading="Centers" centers={centers} />
 
-              return (
-                <article key={title ?? i} className="card stack-4">
-                  <div className="flex items-center gap-3">
-                    {icon?.node?.sourceUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={icon.node.sourceUrl}
-                        alt={icon.node.altText ?? ""}
-                        className="h-9 w-9 rounded-md object-cover"
-                      />
-                    )}
-                    {title && <h3 className="h3">{title}</h3>}
-                  </div>
-                  {body && (
-                    <p className="small whitespace-pre-line">{body}</p>
-                  )}
-                  {linkUrl && (
-                    <a href={linkUrl} className="link small">
-                      {linkLabel ?? "View details"}
-                    </a>
-                  )}
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* FEATURED PROGRAMS */}
-      {featuredPrograms.length > 0 && (
-        <section className="stack-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="h2">Featured programs</h2>
-
-            {/* show query params you used (nice for sandbox validation) */}
-            <div className="flex flex-wrap gap-2">
-              {(fp.audience?.nodes ?? []).map((t: AnyObj) => (
-                <span key={t.slug} className="badge badge-neutral">{t.name}</span>
-              ))}
-              {(fp.programArea?.nodes ?? []).map((t: AnyObj) => (
-                <span key={t.slug} className="badge badge-neutral">{t.name}</span>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {featuredPrograms.map((p: AnyObj) => (
-              <a
-                key={p.slug}
-                href={`/programs/${p.slug}`}
-                className="group card card-hover"
-              >
-                {p.featuredImage?.node?.sourceUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.featuredImage.node.sourceUrl}
-                    alt={p.featuredImage.node.altText ?? ""}
-                    className="h-40 w-full rounded-xl object-cover"
-                  />
-                )}
-                <div className="mt-3 stack-2">
-                  <h3 className="h3 group-hover:text-gmcc-teal">{p.title}</h3>
-                  {p.programFields?.summary && (
-                    <p className="small line-clamp-2">{p.programFields.summary}</p>
-                  )}
-                  {p.programFields?.priceFrom != null && (
-                    <p className="small">
-                      From ${Number(p.programFields.priceFrom).toFixed(2)}
-                    </p>
-                  )}
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* UPCOMING EVENTS */}
-      {upcomingEvents.length > 0 && (
-        <section className="stack-4">
-          <h2 className="h2">Upcoming events</h2>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {upcomingEvents.slice(0, ue.maxEvents ?? 6).map((ev: AnyObj) => {
-              const ef = ev.eventFields ?? {};
-              const start = ef.startDateTime ? new Date(ef.startDateTime) : null;
-
-              // NOTE: you're using /events/yyyy/mm/slug routing.
-              // We'll compute yyyy/mm from startDateTime if present.
-              const yyyy = start ? start.getFullYear() : "2025";
-              const mm = start ? String(start.getMonth() + 1).padStart(2, "0") : "01";
-
-              return (
-                <a
-                  key={ev.slug}
-                  href={`/events/${yyyy}/${mm}/${ev.slug}`}
-                  className="group card card-hover"
-                >
-                  {ev.featuredImage?.node?.sourceUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={ev.featuredImage.node.sourceUrl}
-                      alt={ev.featuredImage.node.altText ?? ""}
-                      className="h-36 w-full rounded-xl object-cover"
-                    />
-                  )}
-                  <div className="mt-3 stack-2">
-                    <h3 className="h3 group-hover:text-gmcc-teal">{ev.title}</h3>
-                    {ef.summary && (
-                      <p className="small line-clamp-2">{ef.summary}</p>
-                    )}
-                    {start && (
-                      <p className="small">
-                        {start.toLocaleDateString()}{" "}
-                        {start.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-                      </p>
-                    )}
-                  </div>
-                </a>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* TESTIMONIALS */}
-      {testimonials.length > 0 && (
-        <section className="stack-4">
-          <h2 className="h2">What members say</h2>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {testimonials.map((t: AnyObj) => {
-              const tf = t.testimonialFields ?? {};
-              return (
-                <figure key={t.slug} className="card">
-                  {tf.quote && (
-                    <blockquote className="body whitespace-pre-line">
-                      "{tf.quote}"
-                    </blockquote>
-                  )}
-                  {(tf.authorName || tf.authorSubtitle) && (
-                    <figcaption className="mt-3 small">
-                      <div className="font-semibold text-neutral-800">
-                        {tf.authorName}
-                      </div>
-                      {tf.authorSubtitle && <div>{tf.authorSubtitle}</div>}
-                    </figcaption>
-                  )}
-                </figure>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* NEWS HIGHLIGHTS */}
-      {news.length > 0 && (
-        <section className="stack-4">
-          <h2 className="h2">Latest news</h2>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {news.map((n: AnyObj) => (
-              <a
-                key={n.slug}
-                href={`/news/${n.slug}`}
-                className="group card card-hover"
-              >
-                {n.featuredImage?.node?.sourceUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={n.featuredImage.node.sourceUrl}
-                    alt={n.featuredImage.node.altText ?? ""}
-                    className="h-36 w-full rounded-xl object-cover"
-                  />
-                )}
-                <div className="mt-3 stack-2">
-                  <h3 className="h3 group-hover:text-gmcc-teal">{n.title}</h3>
-                  {n.newsFields?.summary && (
-                    <p className="small line-clamp-2">{n.newsFields.summary}</p>
-                  )}
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* QUICK LINKS */}
-      {quickLinks.length > 0 && (
-        <section className="stack-4">
-          <h2 className="h2">Quick links</h2>
-          {ql?.description && (
-            <p className="body">{ql.description}</p>
-          )}
-
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-            {quickLinks.map((l: AnyObj, i: number) => (
-              <a
-                key={l.linkUrl ?? i}
-                href={l.linkUrl}
-                className="flex items-center gap-3 card card-hover"
-              >
-                {l.linkIcon?.node?.sourceUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={l.linkIcon.node.sourceUrl}
-                    alt={l.linkIcon.node.altText ?? ""}
-                    className="h-7 w-7 rounded-md object-cover"
-                  />
-                )}
-                <span className="h3">{l.linkLabel}</span>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+      <NewsSection heading="News" items={news} cta={{ title: "View all news", url: "/news" }} />
     </main>
   );
 }

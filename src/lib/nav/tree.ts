@@ -14,6 +14,9 @@ export type NavItem = {
   children: NavItem[];
 };
 
+// Handy alias for places where you want to pass utility links around
+export type UtilityNavItem = NavItem;
+
 export function buildMenuTree(
   items: WPMenuItem[],
   hrefResolver: (item: WPMenuItem) => string

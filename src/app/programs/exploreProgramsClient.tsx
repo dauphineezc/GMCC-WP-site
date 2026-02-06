@@ -369,7 +369,7 @@ export default function ExploreProgramsClient({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    return all.filter(p => {
+    const results = all.filter(p => {
       // text search
       if (q) {
         const hay = `${p.title} ${p.summary}`.toLowerCase();
@@ -408,6 +408,9 @@ export default function ExploreProgramsClient({
 
       return true;
     });
+
+    // Sort alphabetically by title
+    return results.sort((a, b) => a.title.localeCompare(b.title));
   }, [
     all,
     search,

@@ -35,6 +35,14 @@ function normalizeWpUrlToPath(url: string) {
     "Childcare": "/programs?" + buildQuery({ programArea: "Childcare" }),
   };
 
+  // Event filter rules (label-based for navbar items)
+  const EVENT_FILTER_BY_LABEL: Record<string, string> = {
+    "Tournaments": "/events?" + buildQuery({ eventType: "Tournament" }),
+    "Races": "/events?" + buildQuery({ eventType: "Race" }),
+    "Socials": "/events?" + buildQuery({ eventType: "Social" }),
+    "Trips": "/events?" + buildQuery({ eventType: "Trip" }),
+  };
+
   // Unique program pages that link directly to /programs/[slug]
   const UNIQUE_PROGRAM_PAGES: Record<string, string> = {
     "Drop-In Swim": "/programs/drop-in-swim",
@@ -80,6 +88,10 @@ function normalizeWpUrlToPath(url: string) {
     // 1) Programs filter overrides (based on desired behavior)
     const programOverride = PROGRAM_FILTER_BY_LABEL[label];
     if (programOverride) return programOverride;
+
+    // 1b) Events filter overrides (based on desired behavior)
+    const eventOverride = EVENT_FILTER_BY_LABEL[label];
+    if (eventOverride) return eventOverride;
 
     // 2) Unique program pages that link directly to /programs/[slug]
     const uniqueProgramPage = UNIQUE_PROGRAM_PAGES[label];

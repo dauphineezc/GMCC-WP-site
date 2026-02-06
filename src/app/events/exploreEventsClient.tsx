@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import HeaderImage from "@/components/headerImage";
 import Link from "next/link";
 import { buildEventHref } from "@/lib/events/buildEventHref";
+import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 
 type EventWP = any;
 
@@ -21,6 +23,7 @@ type EventCard = {
     endDateTime: string | null;
     heroUrl: string | null;
     heroAlt: string;
+    centers: { slug: string; title: string }[];
     audience: { slug: string; name: string }[];
     eventType: string[];
   };
@@ -38,6 +41,11 @@ type EventCard = {
       endDateTime: f.endDateTime ?? null,
       heroUrl: hero?.sourceUrl ?? null,
       heroAlt: hero?.altText ?? "",
+      centers:
+        f.center?.nodes?.map((c: any) => ({
+          slug: c.slug,
+          title: c.title,
+        })).filter((c: any) => c.slug && c.title) ?? [],
       audience:
         f.audience?.nodes?.map((a: any) => ({
           slug: a.slug,
@@ -183,18 +191,69 @@ export default function ExploreEventsClient({
     all.forEach(e => e.eventType.forEach(t => s.add(t)));
     return Array.from(s).sort((a, b) => a.localeCompare(b));
   }, [all]);
-  
-  
+
+  // --- Read URL search params ---
+  const searchParams = useSearchParams();
+
+  // Parse initial values from URL
+  const initialFilters = useMemo(() => {
+    const audienceParam = searchParams.get("audience");
+    const eventTypeParam = searchParams.get("eventType");
+
+    // audience param can be comma-separated slugs
+    const audienceSlugs: string[] = [];
+    if (audienceParam) {
+      audienceParam.split(",").forEach(val => {
+        const trimmed = val.trim();
+        // Check if it's a valid audience slug
+        const existingSlug = audienceOptions.find(a => a.slug === trimmed || a.name.toLowerCase() === trimmed.toLowerCase());
+        if (existingSlug) {
+          audienceSlugs.push(existingSlug.slug);
+        }
+      });
+    }
+
+    // eventType param - case-insensitive match
+    const eventTypeValues: string[] = [];
+    if (eventTypeParam) {
+      eventTypeParam.split(",").forEach(val => {
+        const trimmed = val.trim();
+        const match = eventTypeOptions.find(o => o.toLowerCase() === trimmed.toLowerCase());
+        if (match) eventTypeValues.push(match);
+      });
+    }
+
+    return {
+      audience: audienceSlugs,
+      eventTypes: eventTypeValues,
+    };
+  }, [searchParams, audienceOptions, eventTypeOptions]);
+
   const [search, setSearch] = useState("");
-  const [audience, setAudience] = useState<string[]>([]);
-  const [eventTypes, setEventTypes] = useState<string[]>([]);
+  const [audience, setAudience] = useState<string[]>(initialFilters.audience);
+  const [eventTypes, setEventTypes] = useState<string[]>(initialFilters.eventTypes);
   const [dateFilter, setDateFilter] = useState<"upcoming" | "past" | "all">("upcoming");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Sync state when URL params change (e.g., navigating from navbar)
+  useEffect(() => {
+    setAudience(initialFilters.audience);
+    setEventTypes(initialFilters.eventTypes);
+    
+    // Auto-open dropdowns that have active filters
+    const toOpen = new Set<string>(["date"]);
+    if (initialFilters.audience.length) toOpen.add("audience");
+    if (initialFilters.eventTypes.length) toOpen.add("eventType");
+    if (toOpen.size > 1) setOpenDropdowns(toOpen);
+  }, [initialFilters]);
   
   // --- dropdown state (same as programs) ---
   const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(() => {
-    // open ones if you want by default
-    return new Set<string>(["date"]);
+    // Initialize with dropdowns that have active filters from URL
+    const toOpen = new Set<string>(["date"]);
+    if (initialFilters.audience.length) toOpen.add("audience");
+    if (initialFilters.eventTypes.length) toOpen.add("eventType");
+    return toOpen;
   });
   
   const toggleDropdown = (key: string) => {
@@ -235,8 +294,9 @@ export default function ExploreEventsClient({
       // date
       if (dateFilter !== "all" && e.startDateTime) {
         const start = new Date(e.startDateTime);
-        if (dateFilter === "upcoming" && start < now) return false;
-        if (dateFilter === "past" && start >= now) return false;
+        const end = e.endDateTime ? new Date(e.endDateTime) : null;
+        if (dateFilter === "upcoming" && end && end < now) return false;
+        if (dateFilter === "past" && end && end >= now) return false;
       }
   
       return true;
@@ -493,10 +553,12 @@ export default function ExploreEventsClient({
                     </h3>
 
                     {(e.startDateTime || e.endDateTime) && (
-                    <span className="mt-2 inline-flex w-fit rounded-full bg-gmcc-blue-light/30 px-3 py-1 text-xs font-medium text-gmcc-navy">
+                    <span className="mt-2 badge badge-green w-fit">
                         {formatEventDate(e.startDateTime, e.endDateTime)}
                     </span>
                     )}
+
+                    <CentersBadgesOneLine centers={e.centers} />
 
                     {e.summary && (
                     <p className="mt-3 text-xs leading-6 text-neutral-600 line-clamp-3">

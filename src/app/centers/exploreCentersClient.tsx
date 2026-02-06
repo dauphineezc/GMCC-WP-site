@@ -82,11 +82,21 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
   // Mobile filter panel state (collapsed by default)
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  // Preferred display order for centers
+  const centerOrder = [
+    "community-center",
+    "tennis-center",
+    "curling-center",
+    "coleman-family-center",
+    "north-family-center",
+    "corporate-wellness-center",
+  ];
+
   // Filtering logic:
   // - AND across categories
   // - OR within a category
   const filteredCenters = useMemo(() => {
-    return centers.filter(c => {
+    const filtered = centers.filter(c => {
       const cSlug = typeof c?.slug === "string" ? c.slug : "";
       if (!cSlug) return false;
       const cf = c?.centersFields ?? {};
@@ -127,6 +137,16 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
       }
 
       return true;
+    });
+
+    // Sort by the preferred order
+    return filtered.sort((a, b) => {
+      const aIndex = centerOrder.indexOf(a.slug);
+      const bIndex = centerOrder.indexOf(b.slug);
+      // Centers not in the order list go to the end
+      const aOrder = aIndex === -1 ? centerOrder.length : aIndex;
+      const bOrder = bIndex === -1 ? centerOrder.length : bIndex;
+      return aOrder - bOrder;
     });
   }, [centers, centerDerivedData, amenitiesSelected, areasSelected, programsSelected, programs]);
 
@@ -200,7 +220,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
 
             {/* Program Areas */}
             <div>
-              <h3 className="h3">Program areas</h3>
+              <h3 className="text-base text-gmcc-navy">Program areas</h3>
               <div className="mt-2 max-h-56 overflow-auto stack-2 pr-1">
                 {programAreaOptions.map(a => (
                   <label key={a.slug} className="flex items-center gap-2 small">

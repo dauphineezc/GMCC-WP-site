@@ -26,6 +26,14 @@ const EXPLORE_EVENTS_QUERY = `
           summary
           startDateTime
           endDateTime
+          center {
+            nodes {
+              ... on Center {
+                slug
+                title
+              }
+            }
+          }
           audience {
             nodes {
               name

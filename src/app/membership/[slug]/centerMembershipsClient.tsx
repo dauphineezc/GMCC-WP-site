@@ -17,6 +17,14 @@ type Props = {
   isCommunityCenter: boolean;
 };
 
+type CommunityTierKey = "center" | "centerPlus" | "allAccess";
+
+type CommunityTieredData = {
+  tierGroups: Record<CommunityTierKey, Membership[]>;
+  sortedTiers: CommunityTierKey[];
+  tierBenefits: Record<CommunityTierKey, string[]>;
+  tierDisplayNames: Record<CommunityTierKey, string>;
+};
 
 export default function CenterMembershipsClient({
   centerTitle,
@@ -27,109 +35,107 @@ export default function CenterMembershipsClient({
   testimonials,
   isCommunityCenter,
 }: Props) {
-
   // Extract membership display name from title (e.g., "Center – Family" → "Center")
   // Handles both regular hyphen (-) and en-dash (–)
   const getMembershipDisplayName = (title: string): string => {
-    // Try en-dash first (–), then regular hyphen (-)
     let separatorIndex = title.indexOf(" – ");
-    if (separatorIndex < 0) {
-      separatorIndex = title.indexOf(" - ");
-    }
-    if (separatorIndex > 0) {
-      return title.substring(0, separatorIndex).trim();
-    }
-    if (title.includes("Membership")) {
-      return title.replace("Membership", "").trim();
-    }
+    if (separatorIndex < 0) separatorIndex = title.indexOf(" - ");
+    if (separatorIndex > 0) return title.substring(0, separatorIndex).trim();
+
+    if (title.includes("Membership")) return title.replace("Membership", "").trim();
     return title.trim();
   };
 
   // Extract audience name from title (e.g., "Center – Family" → "Family")
   // Handles both regular hyphen (-) and en-dash (–)
   const getAudienceFromTitle = (title: string): string => {
-    // Try en-dash first (–), then regular hyphen (-)
     let separatorIndex = title.indexOf(" – ");
-    if (separatorIndex < 0) {
-      separatorIndex = title.indexOf(" - ");
-    }
-    if (separatorIndex > 0) {
-      return title.substring(separatorIndex + 3).trim();
-    }
-    return "Member"; // Fallback if no separator found
+    if (separatorIndex < 0) separatorIndex = title.indexOf(" - ");
+    if (separatorIndex > 0) return title.substring(separatorIndex + 3).trim();
+    return "Member";
   };
 
-  // For Community Center: Group memberships by tier and deduplicate benefits
-  const tieredData = useMemo(() => {
+  // For Community Center: Build stable 3-tier comparison (Center / Center Plus / All Access)
+  // and extract Community Activity Pass into a separate bucket.
+  const communityCenterData = useMemo(() => {
     if (!isCommunityCenter) return null;
 
-    // Group by tier NUMBER (e.g., "1", "2", "3")
-    const tierGroups: Record<string, Membership[]> = {};
-    memberships.forEach((m) => {
-      const tierKey = m.pricing.tier?.toString() ?? "unknown";
-      if (!tierGroups[tierKey]) tierGroups[tierKey] = [];
-      tierGroups[tierKey].push(m);
-    });
+    const CAP_NAME = "community activity pass";
 
-    // Sort tiers numerically
-    const sortedTiers = Object.keys(tierGroups).sort((a, b) => {
-      const numA = parseInt(a, 10);
-      const numB = parseInt(b, 10);
-      
-      if (!isNaN(numA) && !isNaN(numB)) {
-        return numA - numB;
+    const tierGroups: Record<CommunityTierKey, Membership[]> = {
+      center: [],
+      centerPlus: [],
+      allAccess: [],
+    };
+
+    const activityPasses: Membership[] = [];
+
+    // Bucket memberships by parsed base name
+    for (const m of memberships) {
+      const baseName = getMembershipDisplayName(m.title);
+      const norm = baseName.trim().toLowerCase();
+
+      if (norm === CAP_NAME) {
+        activityPasses.push(m);
+        continue;
       }
-      
-      return a.localeCompare(b);
-    });
 
-    // Create a mapping from tier number to SHORT display name (e.g., "All Access" not "All Access - Family")
-    const tierDisplayNames: Record<string, string> = {};
-    sortedTiers.forEach((tier) => {
-      const firstMembership = tierGroups[tier][0];
-      if (firstMembership) {
-        // Extract just the membership name part (before " - ")
-        const fullName = getMembershipDisplayName(firstMembership.title);
-        // Further simplify by removing any remaining "Membership" suffix if desired
-        tierDisplayNames[tier] = fullName;
-      } else {
-        tierDisplayNames[tier] = `Tier ${tier}`;
-      }
-    });
+      if (norm === "center") tierGroups.center.push(m);
+      else if (norm === "center plus") tierGroups.centerPlus.push(m);
+      else if (norm === "all access") tierGroups.allAccess.push(m);
+    }
 
-    // Collect benefits in tier order, deduplicating
-    const seenBenefits = new Set<string>();
-    const tierBenefits: Record<string, string[]> = {};
+    const sortedTiers: CommunityTierKey[] = ["center", "centerPlus", "allAccess"];
 
-    sortedTiers.forEach((tier) => {
-      const tierMemberships = tierGroups[tier];
-      // Get all benefits for this tier (combine from all audience variants)
-      const allBenefitsForTier = new Set<string>();
-      tierMemberships.forEach((m) => {
-        m.benefits.forEach((b) => allBenefitsForTier.add(b));
-      });
+    const tierDisplayNames: Record<CommunityTierKey, string> = {
+      center: "Center",
+      centerPlus: "Center Plus",
+      allAccess: "All Access",
+    };
 
-      // Filter out already-seen benefits
-      const uniqueBenefits = Array.from(allBenefitsForTier).filter(
-        (b) => !seenBenefits.has(b)
-      );
-      
-      // Mark these as seen for next tier
-      uniqueBenefits.forEach((b) => seenBenefits.add(b));
-      
-      tierBenefits[tier] = uniqueBenefits;
-    });
-
-    // Sort memberships within each tier alphabetically by audience from title
-    sortedTiers.forEach((tier) => {
-      tierGroups[tier].sort((a, b) => {
+    // Sort memberships within each tier by audience label
+    for (const tierKey of sortedTiers) {
+      tierGroups[tierKey].sort((a, b) => {
         const aAud = getAudienceFromTitle(a.title).toLowerCase();
         const bAud = getAudienceFromTitle(b.title).toLowerCase();
         return aAud.localeCompare(bAud);
       });
+    }
+
+    // CAP: only one item typically, but keep sorting predictable
+    activityPasses.sort((a, b) => {
+      const aAud = getAudienceFromTitle(a.title).toLowerCase();
+      const bAud = getAudienceFromTitle(b.title).toLowerCase();
+      return aAud.localeCompare(bAud);
     });
 
-    return { tierGroups, sortedTiers, tierBenefits, tierDisplayNames };
+    // Benefits: incremental, Center → Center Plus → All Access
+    const seenBenefits = new Set<string>();
+    const tierBenefits: Record<CommunityTierKey, string[]> = {
+      center: [],
+      centerPlus: [],
+      allAccess: [],
+    };
+
+    for (const tierKey of sortedTiers) {
+      const allBenefitsForTier = new Set<string>();
+      for (const m of tierGroups[tierKey]) {
+        (m.benefits ?? []).forEach((b) => allBenefitsForTier.add(b));
+      }
+
+      const uniqueBenefits = Array.from(allBenefitsForTier).filter((b) => !seenBenefits.has(b));
+      uniqueBenefits.forEach((b) => seenBenefits.add(b));
+      tierBenefits[tierKey] = uniqueBenefits;
+    }
+
+    const tieredData: CommunityTieredData = {
+      tierGroups,
+      sortedTiers,
+      tierBenefits,
+      tierDisplayNames,
+    };
+
+    return { tieredData, activityPasses };
   }, [isCommunityCenter, memberships]);
 
   // For non-Community Center: Get center-specific and All Access memberships
@@ -158,11 +164,11 @@ export default function CenterMembershipsClient({
 
     // Get unique benefits for center-specific
     const centerBenefits = new Set<string>();
-    centerSpecific.forEach((m) => m.benefits.forEach((b) => centerBenefits.add(b)));
+    centerSpecific.forEach((m) => (m.benefits ?? []).forEach((b) => centerBenefits.add(b)));
 
     // Get unique benefits for All Access
     const allAccessBenefits = new Set<string>();
-    allAccess.forEach((m) => m.benefits.forEach((b) => allAccessBenefits.add(b)));
+    allAccess.forEach((m) => (m.benefits ?? []).forEach((b) => allAccessBenefits.add(b)));
 
     return {
       centerSpecific,
@@ -174,7 +180,6 @@ export default function CenterMembershipsClient({
 
   // Get short membership name (extract just the center name for display)
   const getShortMembershipName = (title: string): string => {
-    // Remove audience descriptors and simplify (handles both - and – separators)
     return title
       .replace(/[–-] (Adult|Family|Youth|Young Adult)$/i, "")
       .replace(/(Adult|Family|Youth|Young Adult) /i, "")
@@ -196,92 +201,166 @@ export default function CenterMembershipsClient({
             {centerTitle} Memberships
           </h1>
           <p className="mt-2 text-neutral-600">
-            Explore membership options for the {centerTitle}. Compare pricing, benefits,
-            and eligibility to find the best fit for you or your family.
+            Explore membership options for the {centerTitle}. Compare pricing, benefits, and
+            eligibility to find the best fit for you or your family.
           </p>
         </section>
 
         {/* Main Content Grid */}
         <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
-        {/* Left Column - Membership Content */}
-        <div className="space-y-8">
-          {isCommunityCenter && tieredData ? (
-            <CommunityTieredLayout 
-              tieredData={tieredData} 
-              getAudienceFromTitle={getAudienceFromTitle}
-            />
-          ) : comparisonData ? (
-            <ComparisonLayout
-              comparisonData={comparisonData}
-              centerTitle={centerTitle}
-              getShortMembershipName={getShortMembershipName}
-              getAudienceFromTitle={getAudienceFromTitle}
-            />
-          ) : (
-            <p className="text-neutral-600">
-              No membership information available for this center yet.
-            </p>
-          )}
-        </div>
+          {/* Left Column - Membership Content */}
+          <div className="space-y-8">
+            {isCommunityCenter && communityCenterData?.tieredData ? (
+              <>
+                <CommunityTieredLayout
+                  tieredData={communityCenterData.tieredData}
+                  getAudienceFromTitle={getAudienceFromTitle}
+                />
 
-        {/* Right Column - Amenities & Testimonials */}
-        <aside className="space-y-6">
-          {/* Amenities Carousel */}
-          {amenitiesWithImages.length > 0 && (
-            <AmenitiesCarousel amenities={amenitiesWithImages.map((a) => ({
-              ...a,
-              image: { sourceUrl: a.defaultImage?.sourceUrl ?? "", altText: a.defaultImage?.altText ?? null }
-            }))} title={`${centerTitle} Amenities`} />
-          )}
+                <CommunityActivityPassSection
+                  passes={communityCenterData.activityPasses}
+                  getAudienceFromTitle={getAudienceFromTitle}
+                />
+              </>
+            ) : comparisonData ? (
+              <ComparisonLayout
+                comparisonData={comparisonData}
+                centerTitle={centerTitle}
+                getShortMembershipName={getShortMembershipName}
+                getAudienceFromTitle={getAudienceFromTitle}
+              />
+            ) : (
+              <p className="text-neutral-600">No membership information available for this center yet.</p>
+            )}
+          </div>
 
-          {/* Testimonial */}
-          <h2 className="text-lg font-semibold text-neutral-900 mb-1">
-                More Than a Membership
-          </h2>
-          {testimonials.length > 0 && (
-            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-              {testimonials[0] && (
-                <div className="space-y-3">
-                  {/* Testimonial Image */}
-                  {testimonials[0].image && (
-                    <div className="relative rounded-lg overflow-hidden bg-neutral-100 aspect-[4/3]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={testimonials[0].image.url}
-                        alt={testimonials[0].image.alt}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
+          {/* Right Column - Amenities & Testimonials */}
+          <aside className="space-y-6">
+            {/* Amenities Carousel */}
+            {amenitiesWithImages.length > 0 && (
+              <AmenitiesCarousel
+                amenities={amenitiesWithImages.map((a) => ({
+                  ...a,
+                  image: {
+                    sourceUrl: a.defaultImage?.sourceUrl ?? "",
+                    altText: a.defaultImage?.altText ?? null,
+                  },
+                }))}
+                title={`${centerTitle} Amenities`}
+              />
+            )}
 
-                  {/* Quote */}
-                  {testimonials[0].quote && (
-                    <blockquote className="text-sm text-neutral-700 italic">
-                      &ldquo;{testimonials[0].quote}&rdquo;
-                    </blockquote>
-                  )}
+            {/* Testimonial */}
+            <h2 className="h3 mb-4">More Than a Membership</h2>
 
-                  {/* Person Name */}
-                  {testimonials[0].personName && (
-                    <p className="text-xs font-semibold text-neutral-800 mb-0">
-                      — {testimonials[0].personName}
-                    </p>
-                  )}
+            {testimonials.length > 0 && (
+              <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+                {testimonials[0] && (
+                  <div className="space-y-3">
+                    {/* Testimonial Image */}
+                    {testimonials[0].image && (
+                      <div className="relative rounded-lg overflow-hidden bg-neutral-100 aspect-[4/3]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={testimonials[0].image.url}
+                          alt={testimonials[0].image.alt}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
 
-                  {/* Person Context */}
-                  {testimonials[0].personContext && (
-                    <p className="text-xs text-neutral-600 italic">
-                      {testimonials[0].personContext}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </aside>
+                    {/* Quote */}
+                    {testimonials[0].quote && (
+                      <blockquote className="text-sm text-neutral-700 italic">
+                        &ldquo;{testimonials[0].quote}&rdquo;
+                      </blockquote>
+                    )}
+
+                    {/* Person Name */}
+                    {testimonials[0].personName && (
+                      <p className="text-xs font-semibold text-neutral-800 mb-0">
+                        — {testimonials[0].personName}
+                      </p>
+                    )}
+
+                    {/* Person Context */}
+                    {testimonials[0].personContext && (
+                      <p className="text-xs text-neutral-600 italic">{testimonials[0].personContext}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </aside>
         </div>
       </div>
     </main>
+  );
+}
+
+/** Community Activity Pass Section */
+function CommunityActivityPassSection({
+  passes,
+  getAudienceFromTitle,
+}: {
+  passes: Membership[];
+  getAudienceFromTitle: (title: string) => string;
+}) {
+  if (!passes || passes.length === 0) return null;
+
+  return (
+    <section className="space-y-4 pt-6 border-t border-neutral-200">
+      <h2 className="h3 mb-2">Community Activity Pass</h2>
+      <p className="text-neutral-600 max-w-prose mb-2">
+        Get access to a multitude of fun community activities, including:
+      </p>
+      {passes[0].benefits?.map((benefit, i) => (
+        <ul className="list-disc pl-5 body text-neutral-700 mb-0" key={i}>
+          <li>{benefit}</li>
+        </ul>
+      ))}
+
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {passes.map((m) => {
+          const audienceName = getAudienceFromTitle(m.title);
+
+          return (
+            <div key={m.slug} className="rounded-lg border border-neutral-200 bg-white p-4 space-y-3 mt-2">
+              {/* <h3 className="text-base font-bold text-gmcc-navy">{audienceName}</h3> */}
+
+              <div className="space-y-1 text-sm">
+                {m.pricing.monthly != null && (
+                  <div>
+                    <span className="text-neutral-500">Monthly:</span>{" "}
+                    <span className="font-bold">${Math.round(m.pricing.monthly)}</span>
+                  </div>
+                )}
+                {m.pricing.annually != null && (
+                  <div>
+                    <span className="text-neutral-500">Annual:</span>{" "}
+                    <span className="font-bold">${Math.round(m.pricing.annually)}</span>
+                  </div>
+                )}
+                {m.pricing.joiningFee != null && (
+                  <div className="text-xs text-neutral-500">
+                    One-time joining fee: ${Math.round(m.pricing.joiningFee)}
+                  </div>
+                )}
+              </div>
+
+              <a
+                href={m.joinRenewLink ?? "https://register.greatermidland.org/webtrac/web/search.html?Action=Start"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full items-center justify-center rounded bg-gmcc-navy px-3 py-2 text-sm font-semibold text-white hover:bg-gmcc-navy/80"
+              >
+                Get the Pass
+              </a>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -290,12 +369,7 @@ function CommunityTieredLayout({
   tieredData,
   getAudienceFromTitle,
 }: {
-  tieredData: {
-    tierGroups: Record<string, Membership[]>;
-    sortedTiers: string[];
-    tierBenefits: Record<string, string[]>;
-    tierDisplayNames: Record<string, string>;
-  };
+  tieredData: CommunityTieredData;
   getAudienceFromTitle: (title: string) => string;
 }) {
   const { tierGroups, sortedTiers, tierBenefits, tierDisplayNames } = tieredData;
@@ -305,31 +379,38 @@ function CommunityTieredLayout({
       {/* Benefits Comparison Table */}
       <section>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-start">
-            {sortedTiers.map((tier, tierIdx) => {
-              const displayName = tierDisplayNames[tier] || `Tier ${tier}`;
-              const benefits = tierBenefits[tier] || [];
-              const prevTier = tierIdx > 0 ? sortedTiers[tierIdx - 1] : null;
-              const prevDisplayName = prevTier ? tierDisplayNames[prevTier] : null;
-              
-              return (
-                <div key={tier} className="rounded-lg rounded-lg border-2 border-gmcc-blue-light bg-gmcc-blue-light/10 p-5 space-y-3">
-                  <h3 className="text-center text-xl font-bold uppercase tracking-wide">{displayName}</h3>
-                  <div className="p-1 mt-0">
-                    {prevDisplayName && (
-                      <p className="justify-start text-gmcc-navy mb-3 italic">
-                        <mark className="text-left text-[12px]">All the {prevDisplayName} benefits, and:</mark>
-                      </p>
-                    )}
-                    <ul className="divide-y-2 divide-gmcc-blue-light/50 text-sm text-neutral-700">
-                      {benefits.map((benefit, i) => (
-                        <li key={i} className="text-center py-2">{benefit}</li>
-                      ))}
-                    </ul>
-                  </div>
+          {sortedTiers.map((tier, tierIdx) => {
+            const displayName = tierDisplayNames[tier] || `Tier ${tier}`;
+            const benefits = tierBenefits[tier] || [];
+            const prevTier = tierIdx > 0 ? sortedTiers[tierIdx - 1] : null;
+            const prevDisplayName = prevTier ? tierDisplayNames[prevTier] : null;
+
+            return (
+              <div
+                key={tier}
+                className="rounded-lg border-2 border-gmcc-blue-light bg-gmcc-blue-light/10 p-5 space-y-3"
+              >
+                <h3 className="text-center text-xl font-bold uppercase tracking-wide">{displayName}</h3>
+                <div className="p-1 mt-0">
+                  {prevDisplayName && (
+                    <p className="justify-start text-gmcc-navy mb-3 italic">
+                      <mark className="text-left text-[12px]">
+                        All the {prevDisplayName} benefits, and:
+                      </mark>
+                    </p>
+                  )}
+                  <ul className="divide-y-2 divide-gmcc-blue-light/50 text-sm text-neutral-700">
+                    {benefits.map((benefit, i) => (
+                      <li key={i} className="text-center py-2">
+                        {benefit}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
+        </div>
         <p className="text-[10px] text-neutral-400 mt-2 italic text-start">
           *All participants in child and familial activities must hold a membership.
         </p>
@@ -339,26 +420,25 @@ function CommunityTieredLayout({
       {sortedTiers.map((tier) => {
         const displayName = tierDisplayNames[tier] || `Tier ${tier}`;
         const tierMemberships = tierGroups[tier] || [];
-        
+
+        // If a tier has no memberships, hide the pricing section (prevents empty headings)
+        if (tierMemberships.length === 0) return null;
+
         return (
           <section key={tier} className="space-y-4">
-            <h2 className="mb-2">
-              {displayName} Membership Prices:
-            </h2>
-            
+            <h2 className="h3 mb-2">{displayName} Membership Prices:</h2>
+
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {tierMemberships.map((m) => {
                 const audienceName = getAudienceFromTitle(m.title);
-                
+
                 return (
                   <div
                     key={m.slug}
                     className="rounded-lg border border-neutral-200 bg-white p-4 space-y-3"
                   >
-                    <h3 className="text-base font-bold text-gmcc-navy">
-                      {audienceName}
-                    </h3>
-                    
+                    <h3 className="text-base font-bold text-gmcc-navy">{audienceName}</h3>
+
                     <div className="space-y-1 text-sm">
                       {m.pricing.monthly != null && (
                         <div>
@@ -378,7 +458,7 @@ function CommunityTieredLayout({
                         </div>
                       )}
                     </div>
-                    
+
                     <a
                       href={m.joinRenewLink ?? "https://register.greatermidland.org/webtrac/web/search.html?Action=Start"}
                       target="_blank"
@@ -417,8 +497,7 @@ function ComparisonLayout({
 }) {
   const { centerSpecific, allAccess, centerBenefits, allAccessBenefits } = comparisonData;
 
-  // Get a representative name for center-specific membership
-  const centerMembershipName = centerSpecific[0] 
+  const centerMembershipName = centerSpecific[0]
     ? getShortMembershipName(centerSpecific[0].title)
     : `${centerTitle} Membership`;
 
@@ -428,19 +507,27 @@ function ComparisonLayout({
       <section>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 items-start">
           <div className="rounded-lg border-2 border-gmcc-blue-light bg-gmcc-blue-light/10 p-5 space-y-3">
-            <h3 className="text-center text-xl font-bold uppercase tracking-wide">{centerMembershipName}</h3>
+            <h3 className="text-center text-xl font-bold uppercase tracking-wide text-gmcc-navy">
+              {centerMembershipName}
+            </h3>
             <ul className="divide-y-2 divide-gmcc-blue-light/50 text-sm text-neutral-700">
               {centerBenefits.map((benefit, i) => (
-                <li key={i} className="text-center py-2">{benefit}</li>
+                <li key={i} className="text-center py-2">
+                  {benefit}
+                </li>
               ))}
             </ul>
           </div>
 
           <div className="rounded-lg border-2 border-gmcc-blue-light bg-gmcc-blue-light/10 p-5 space-y-3">
-            <h3 className="text-center text-xl font-bold uppercase tracking-wide">All Access</h3>
+            <h3 className="text-center text-xl font-bold uppercase tracking-wide text-gmcc-navy">
+              All Access
+            </h3>
             <ul className="divide-y-2 divide-gmcc-blue-light/50 text-sm text-neutral-700">
               {allAccessBenefits.map((benefit, i) => (
-                <li key={i} className="text-center py-2">{benefit}</li>
+                <li key={i} className="text-center py-2">
+                  {benefit}
+                </li>
               ))}
             </ul>
           </div>
@@ -450,23 +537,19 @@ function ComparisonLayout({
       {/* Center-specific Pricing */}
       {centerSpecific.length > 0 && (
         <section className="space-y-4">
-          <h2 className="mb-2">
-            {centerMembershipName} Prices:
-          </h2>
-          
+          <h2 className="h3 mb-2">{centerMembershipName} Prices:</h2>
+
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {centerSpecific.map((m) => {
               const audienceName = getAudienceFromTitle(m.title);
-              
+
               return (
                 <div
                   key={m.slug}
                   className="rounded-lg bg-white p-4 space-y-3 border border-neutral-200"
                 >
-                  <h3 className="text-base font-bold text-gmcc-navy">
-                    {audienceName}
-                  </h3>
-                  
+                  <h3 className="text-base font-bold text-gmcc-navy">{audienceName}</h3>
+
                   <div className="space-y-1 text-sm">
                     {m.pricing.monthly != null && (
                       <div>
@@ -486,7 +569,7 @@ function ComparisonLayout({
                       </div>
                     )}
                   </div>
-                  
+
                   <a
                     href={m.joinRenewLink ?? "https://register.greatermidland.org/webtrac/web/search.html?Action=Start"}
                     target="_blank"
@@ -505,23 +588,19 @@ function ComparisonLayout({
       {/* All Access Pricing */}
       {allAccess.length > 0 && (
         <section className="space-y-4">
-          <h2 className="mb-2">
-            All Access Membership Prices:
-          </h2>
-          
+          <h2 className="h3 mb-2">All Access Membership Prices:</h2>
+
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {allAccess.map((m) => {
               const audienceName = getAudienceFromTitle(m.title);
-              
+
               return (
                 <div
                   key={m.slug}
                   className="rounded-lg border border-neutral-200 bg-white p-4 space-y-3"
                 >
-                  <h3 className="text-base font-bold text-gmcc-navy">
-                    {audienceName}
-                  </h3>
-                  
+                  <h3 className="text-base font-bold text-gmcc-navy">{audienceName}</h3>
+
                   <div className="space-y-1 text-sm">
                     {m.pricing.monthly != null && (
                       <div>
@@ -541,7 +620,7 @@ function ComparisonLayout({
                       </div>
                     )}
                   </div>
-                  
+
                   <a
                     href={m.joinRenewLink ?? "https://register.greatermidland.org/webtrac/web/search.html?Action=Start"}
                     target="_blank"

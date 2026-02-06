@@ -77,30 +77,26 @@ body {
 /* Make embeds and iframes responsive-ish */
 .prose :where(iframe, embed, object) { width: 100%; aspect-ratio: 16 / 9; }
 
-
-/* Legacy button aliases for backwards compatibility */
-.button-primary { 
-  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors;
-  @apply focus:outline-none focus:ring-2 focus:ring-gmcc-teal focus:ring-offset-2;
-  @apply disabled:opacity-50 disabled:pointer-events-none;
-  @apply bg-gmcc-navy text-white hover:bg-gmcc-navy/85;
-}
-.button-secondary { 
-  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors;
-  @apply focus:outline-none focus:ring-2 focus:ring-gmcc-teal focus:ring-offset-2;
-  @apply disabled:opacity-50 disabled:pointer-events-none;
-  @apply border border-gmcc-navy bg-white text-gmcc-navy hover:bg-gmcc-blue-light/40;
-}
-.button-tertiary { 
-  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors;
-  @apply focus:outline-none focus:ring-2 focus:ring-gmcc-teal focus:ring-offset-2;
-  @apply disabled:opacity-50 disabled:pointer-events-none;
-  @apply bg-gmcc-green text-white hover:bg-gmcc-green/85;
-}
-
 mark {
   background-color: var(--gmcc-blue-light);
   color: black;
   padding: 3px 5px;
   border-radius: 4px;
+}
+
+/* Text size */
+html[data-text-size="large"] { font-size: 112.5%; }  /* ~18px if base is 16 */
+html[data-text-size="xlarge"] { font-size: 125%; }   /* ~20px */
+
+/* High contrast (lightweight default; refine later) */
+html.a11y-contrast {
+  filter: contrast(1.1);
+}
+
+/* Reduce motion */
+html.reduce-motion * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
 }

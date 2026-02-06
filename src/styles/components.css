@@ -31,11 +31,11 @@
     }
     /* Full-bleed section inside a padded card */
     .card-bleed {
-        @apply -mx-5 -mt-5 overflow-hidden;
+        @apply -mx-4 -mt-4 overflow-hidden;
     }
 
     .card-bleed-bottom {
-        @apply -mx-5 -mb-5 overflow-hidden;
+        @apply -mx-4 -mb-4 overflow-hidden;
     }
     /* Optional: content padding helpers */
     .card-pad { @apply p-5; }
@@ -51,11 +51,39 @@
     .badge-neutral { @apply bg-gmcc-vanilla-ice text-gmcc-rifle-green; }
     .badge-maroon { @apply bg-gmcc-orchid-bouquet/50 text-gmcc-pickled-beet; }
   
+
     /* Buttons */
-    .btn { @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-gmcc-teal focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none; }
+    .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors
+        focus:outline-none focus:ring-2 focus:ring-gmcc-teal focus:ring-offset-2
+        disabled:opacity-50 disabled:pointer-events-none;
+    }
+
     .btn-primary { @apply bg-gmcc-navy text-white hover:bg-gmcc-navy/85; }
     .btn-secondary { @apply border border-gmcc-navy bg-white text-gmcc-navy hover:bg-gmcc-blue-light/40; }
     .btn-tertiary { @apply bg-gmcc-green text-white hover:bg-gmcc-green/85; }
+    .btn-hero { @apply relative overflow-hidden rounded-md px-4 py-2 bg-white text-gmcc-navy; }
+
+    /* overlay tint */
+    .btn-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 133, 173, 0.15);
+    opacity: 0;
+    transition: opacity 200ms ease;
+    pointer-events: none;
+    }
+
+    .btn-hero:hover::after,
+    .btn-hero:focus-visible::after {
+    opacity: 1;
+    }
+
+    .btn-hero > * { position: relative; z-index: 1; }
+    .btn-hero:hover { box-shadow: 0 8px 24px rgba(0, 58, 112, 0.14); }
+    .btn-hero:active { transform: translateY(1px); }
+      
   
     /* Links */
     .link { @apply font-semibold text-gmcc-navy underline-offset-4 hover:underline; }  

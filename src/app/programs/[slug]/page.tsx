@@ -95,7 +95,6 @@ const PROGRAM_BY_SLUG_QUERY = `
           image4 { node { sourceUrl altText mediaDetails { width height } } }
         }
 
-        # Attachments (ACF group-of-groups)
         attachments {
           attachment1 {
             attachment1Label
@@ -364,19 +363,6 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                 <div className="flex justify-between gap-3">
                   <dt className="text-neutral-500">Center(s)</dt>
                   <dd className="text-right">{centerNames.join(", ")}</dd>
-                </div>
-              )}
-
-              {p.taxonomies?.programArea?.length > 0 && (
-                <div className="flex justify-between gap-3">
-                  <dt className="text-neutral-500">Program area</dt>
-                  <dd className="text-right">{p.taxonomies.programArea.join(", ")}</dd>
-                </div>
-              )}
-              {p.taxonomies?.audience?.length > 0 && (
-                <div className="flex justify-between gap-3">
-                  <dt className="text-neutral-500">Audience</dt>
-                  <dd className="text-right">{p.taxonomies.audience.join(", ")}</dd>
                 </div>
               )}
               {p.taxonomies?.session?.length > 0 && (

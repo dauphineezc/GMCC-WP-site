@@ -221,6 +221,14 @@ const CENTER_BY_SLUG_QUERY = `
             ... on ProgramArea {
               programAreaFields {
                 programAreaImage {
+                node {
+                  sourceUrl
+                  altText
+                }
+                }
+              }
+              programAreaFields {
+                programAreaImage {
                   node {
                     sourceUrl
                     altText
@@ -273,16 +281,11 @@ const CENTER_BY_SLUG_QUERY = `
     testimonials(first: 100) {
       nodes {
         slug
-        featuredImage {
-          node {
-            sourceUrl
-            altText
-          }
-        }
         testimonialFields {
           quote
           personName
           personContext
+          photo { node { sourceUrl altText } }
           relatedCenters {
             nodes {
               ... on Center {
@@ -374,7 +377,6 @@ export default async function CenterPage(props: CenterPageProps) {
   const accessibilityAmenitiesWithImages = await fetchAccessibilityAmenitiesWithImages(accessibilityAmenitySlugs);
   const accessibilityAmenitiesForThisCenter = toAmenityDisplayDefault(accessibilityAmenitiesWithImages);
 
-  const featuredPrograms = f.featuredPrograms?.nodes ?? [];
   const policies = f.policiesFaqs?.nodes ?? [];
   const announcements = f.announcements?.nodes ?? [];
 
@@ -698,50 +700,38 @@ export default async function CenterPage(props: CenterPageProps) {
             id: "programs",
             label: "Programs",
             content: (() => {
-              // Build unique Program Areas from featured programs
-              const areasMap = new Map<
-                string,
-                {
-                  slug: string;
-                  name: string;
-                  imageUrl?: string;
-                  imageAlt?: string;
-                  description?: string;
-                }
-              >();
-          
-              featuredPrograms.forEach((prog: any) => {
-                const areas = prog?.programFields?.programArea?.nodes ?? [];
-                areas.forEach((a: any) => {
-                  const slug = a?.slug;
-                  if (!slug) return;
-          
-                  if (!areasMap.has(slug)) {
-                    // Try a couple common ACF-on-taxonomy shapes (keep the first one that exists)
-                    const imgNode =
-                      a?.programAreaFields?.image?.node ??
-                      a?.programAreaFields?.programAreaImage?.node ??
-                      a?.programAreasFields?.image?.node ??
-                      null;
-          
-                    areasMap.set(slug, {
-                      slug,
-                      name: a?.name ?? slug,
-                      imageUrl: imgNode?.sourceUrl,
-                      imageAlt: imgNode?.altText ?? "",
-                    });
-                  }
-                });
-              });
-          
-              const programAreas = Array.from(areasMap.values()).sort((x, y) =>
-                x.name.localeCompare(y.name)
-              );
+              // Use program areas directly from the center's programAreas field
+              const programAreasRaw = f.programAreas?.nodes ?? [];
+              
+              // Helper to strip HTML tags from description
+              const stripHtml = (html: string) => {
+                if (!html) return "";
+                return html.replace(/<[^>]*>/g, "").trim();
+              };
+              
+              const programAreas = programAreasRaw
+                .filter((a: any) => a?.slug)
+                .map((a: any) => {
+                  // Try programAreaFields image first, then featuredImage as fallback
+                  const imageNode = 
+                    a.programAreaFields?.programAreaImage?.node ??
+                    a.featuredImage?.node ??
+                    null;
+                  
+                  return {
+                    slug: a.slug,
+                    name: a.name ?? a.slug,
+                    description: stripHtml(a.description ?? ""),
+                    imageUrl: imageNode?.sourceUrl,
+                    imageAlt: imageNode?.altText ?? "",
+                  };
+                })
+                .sort((x: any, y: any) => x.name.localeCompare(y.name));
           
               return programAreas.length > 0 ? (
                 <div className="stack-4">
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {programAreas.map((area) => (
+                    {programAreas.map((area: { slug: string; name: string; description: string; imageUrl?: string; imageAlt: string }) => (
                       <a
                         key={area.slug}
                         href={`/programs?programArea=${encodeURIComponent(area.slug)}`}
@@ -767,7 +757,7 @@ export default async function CenterPage(props: CenterPageProps) {
                             {area.description && (
                               <p className="body text-sm">{area.description}</p>
                             )}
-                            <p className="link body text-sm">View all {area.name} programs →</p>
+                            <p className="link body text-sm group-hover:text-gmcc-teal group-hover:underline">View all {area.name} programs →</p>
                           </div>
                         </div>
                       </a>
@@ -775,7 +765,7 @@ export default async function CenterPage(props: CenterPageProps) {
                   </div>
           
                   <div className="btn btn-secondary center-block mx-auto">
-                    <a href="/programs" className="link body">
+                    <a href="/programs">
                       View all {center.title} programs
                     </a>
                   </div>
@@ -907,11 +897,11 @@ export default async function CenterPage(props: CenterPageProps) {
                                 </blockquote>
                               )}
                               <figcaption className="flex items-center gap-3">
-                                {t.featuredImage?.node?.sourceUrl && (
+                                {t.photo?.node?.sourceUrl && (
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img
-                                    src={t.featuredImage.node.sourceUrl}
-                                    alt={t.featuredImage.node.altText ?? ""}
+                                    src={t.photo.node.sourceUrl}
+                                    alt={t.photo.node.altText ?? ""}
                                     className="h-12 w-12 rounded-full object-cover flex-shrink-0"
                                   />
                                 )}
