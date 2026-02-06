@@ -30,6 +30,33 @@ function isLocalhost() {
   );
 }
 
+function isOnGoogleTranslate(): boolean {
+  return window.location.hostname.includes("translate.goog");
+}
+
+function getOriginalUrl(): string {
+  // Google Translate proxy URLs look like:
+  // https://example-com.translate.goog/path?_x_tr_sl=en&_x_tr_tl=es...
+  // We need to convert back to https://example.com/path
+  const url = new URL(window.location.href);
+  
+  // Extract original hostname (convert hyphens back to dots, remove .translate.goog)
+  const originalHost = url.hostname
+    .replace(".translate.goog", "")
+    .replace(/-/g, ".");
+  
+  // Remove Google Translate query params
+  const cleanParams = new URLSearchParams();
+  url.searchParams.forEach((value, key) => {
+    if (!key.startsWith("_x_tr_")) {
+      cleanParams.set(key, value);
+    }
+  });
+  
+  const queryString = cleanParams.toString();
+  return `https://${originalHost}${url.pathname}${queryString ? `?${queryString}` : ""}`;
+}
+
 function translateWithGoogle(targetLang: Lang): boolean {
   if (isLocalhost()) {
     // Can't use Google Translate on localhost
@@ -37,25 +64,17 @@ function translateWithGoogle(targetLang: Lang): boolean {
   }
 
   if (targetLang === "en") {
-    // If already on translated page, go back to original
-    if (window.location.hostname.includes("translate.goog")) {
-      // Extract original URL from translated URL
-      const url = new URL(window.location.href);
-      const originalHost = url.searchParams.get("_x_tr_sl") 
-        ? url.hostname.replace(".translate.goog", "").replace(/-/g, ".")
-        : null;
-      if (originalHost) {
-        window.location.href = `https://${originalHost}${url.pathname}`;
-        return true;
-      }
+    // If on translated page, go back to original
+    if (isOnGoogleTranslate()) {
+      window.location.href = getOriginalUrl();
+      return true;
     }
-    // Already on English, just reload to clear any translation
-    window.location.reload();
+    // Already on English, no action needed
     return true;
   } else {
-    // Redirect to Google Translate
-    const currentUrl = window.location.href;
-    const translateUrl = `https://translate.google.com/translate?sl=en&tl=${targetLang}&u=${encodeURIComponent(currentUrl)}`;
+    // Get the URL to translate (original if on Google Translate, current otherwise)
+    const urlToTranslate = isOnGoogleTranslate() ? getOriginalUrl() : window.location.href;
+    const translateUrl = `https://translate.google.com/translate?sl=en&tl=${targetLang}&u=${encodeURIComponent(urlToTranslate)}`;
     window.location.href = translateUrl;
     return true;
   }

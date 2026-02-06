@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/nav/navbar";
 import Footer from "@/components/footer/footer";
+import LanguageRedirect from "@/components/languageRedirect";
 import { getPrimaryNav } from "@/lib/nav/getPrimaryNav";
 import { getFooterNav } from "@/lib/nav/getFooterNav";
 import { getUtilityNav } from "@/lib/nav/getUtilityMenu";
@@ -30,6 +31,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-white text-neutral-900 flex flex-col">
+        <LanguageRedirect />
         <Navbar items={nav} utilityItems={utilityItems} />
         <main className="flex-1">{children}</main>
         <Footer items={footerNav} />
