@@ -4,6 +4,7 @@
 import { useEffect } from "react";
 
 const LANG_COOKIE = "gmcc_preferred_lang";
+const REDIRECT_FLAG = "gmcc_lang_redirect_pending";
 
 function getCookie(name: string): string {
   if (typeof document === "undefined") return "";
@@ -24,13 +25,20 @@ function isLocalhost(): boolean {
 }
 
 function isOnGoogleTranslate(): boolean {
-  return window.location.hostname.includes("translate.goog");
+  // Check hostname for Google Translate proxy
+  if (window.location.hostname.includes("translate.goog")) return true;
+  if (window.location.hostname.includes("translate.google")) return true;
+  
+  // Check for Google Translate query params
+  const url = new URL(window.location.href);
+  if (url.searchParams.has("_x_tr_sl")) return true;
+  
+  return false;
 }
 
-function getCurrentTranslateLang(): string | null {
-  // Check if we're on Google Translate and what language
+function hasGoogleTranslateParams(): boolean {
   const url = new URL(window.location.href);
-  return url.searchParams.get("_x_tr_tl");
+  return url.searchParams.has("_x_tr_sl") || url.searchParams.has("_x_tr_tl");
 }
 
 export default function LanguageRedirect() {
@@ -38,40 +46,30 @@ export default function LanguageRedirect() {
     // Don't run on localhost
     if (isLocalhost()) return;
 
+    // Don't run if we're on any Google Translate page
+    if (isOnGoogleTranslate()) return;
+    
+    // Don't run if we have Google Translate params (edge case)
+    if (hasGoogleTranslateParams()) return;
+
+    // Check if we just redirected (prevent loops)
+    const redirectPending = sessionStorage.getItem(REDIRECT_FLAG);
+    if (redirectPending) {
+      // Clear the flag after a delay
+      setTimeout(() => {
+        sessionStorage.removeItem(REDIRECT_FLAG);
+      }, 5000);
+      return;
+    }
+
     // Check user's language preference
     const preferredLang = getCookie(LANG_COOKIE);
 
-    // If on Google Translate already
-    if (isOnGoogleTranslate()) {
-      const currentTranslateLang = getCurrentTranslateLang();
+    // If user prefers Spanish, redirect to Google Translate
+    if (preferredLang === "es") {
+      // Set flag to prevent loops
+      sessionStorage.setItem(REDIRECT_FLAG, "true");
       
-      // If user wants English but we're on translated page, redirect to original
-      if (preferredLang === "en" || !preferredLang) {
-        // Extract original URL and redirect
-        const originalHost = window.location.hostname
-          .replace(".translate.goog", "")
-          .replace(/-/g, ".");
-        
-        const url = new URL(window.location.href);
-        const cleanParams = new URLSearchParams();
-        url.searchParams.forEach((value, key) => {
-          if (!key.startsWith("_x_tr_")) {
-            cleanParams.set(key, value);
-          }
-        });
-        
-        const queryString = cleanParams.toString();
-        const originalUrl = `https://${originalHost}${url.pathname}${queryString ? `?${queryString}` : ""}`;
-        window.location.replace(originalUrl);
-        return;
-      }
-      
-      // Already on correct translation, do nothing
-      if (currentTranslateLang === preferredLang) return;
-    }
-
-    // If user prefers Spanish and we're not on Google Translate, redirect
-    if (preferredLang === "es" && !isOnGoogleTranslate()) {
       const currentUrl = window.location.href;
       const translateUrl = `https://translate.google.com/translate?sl=en&tl=es&u=${encodeURIComponent(currentUrl)}`;
       window.location.replace(translateUrl);

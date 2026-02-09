@@ -1,10 +1,64 @@
 // components/nav/mobileMenu.tsx
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { NavItem } from "@/lib/nav/tree";
+
+// Accessibility types and helpers
+type TextSize = "normal" | "large" | "xlarge";
+type A11yState = {
+  textSize: TextSize;
+  highContrast: boolean;
+  reduceMotion: boolean;
+};
+
+const A11Y_STORAGE_KEY = "gmcc_a11y";
+const LANG_COOKIE = "gmcc_preferred_lang";
+
+const DEFAULT_A11Y_STATE: A11yState = {
+  textSize: "normal",
+  highContrast: false,
+  reduceMotion: false,
+};
+
+function applyA11yToDom(state: A11yState) {
+  const root = document.documentElement;
+  root.dataset.textSize = state.textSize;
+  root.classList.toggle("a11y-contrast", state.highContrast);
+  root.classList.toggle("reduce-motion", state.reduceMotion);
+}
+
+function getLangCookie(): string {
+  if (typeof document === "undefined") return "en";
+  const cookies = document.cookie.split(";");
+  for (const c of cookies) {
+    const [name, value] = c.trim().split("=");
+    if (name === LANG_COOKIE && value === "es") return "es";
+  }
+  return "en";
+}
+
+const REDIRECT_FLAG = "gmcc_lang_redirect_pending";
+
+function setLangCookie(lang: string) {
+  const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
+  document.cookie = `${LANG_COOKIE}=${lang}; expires=${expires}; path=/; SameSite=Lax`;
+  // Clear any redirect prevention flag when user explicitly changes language
+  try {
+    sessionStorage.removeItem(REDIRECT_FLAG);
+  } catch {}
+}
+
+function isLocalhost(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.startsWith("192.168."))
+  );
+}
 
 type MobileMenuProps = {
   items: NavItem[];
@@ -24,10 +78,72 @@ export default function MobileMenu({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  // Accessibility state
+  const [a11yState, setA11yState] = useState<A11yState>(DEFAULT_A11Y_STATE);
+  const [a11yExpanded, setA11yExpanded] = useState(false);
+
+  // Language state
+  const [lang, setLang] = useState<string>("en");
+  const [langExpanded, setLangExpanded] = useState(false);
+
+  // Load accessibility settings
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(A11Y_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<A11yState>;
+        const next: A11yState = {
+          textSize: parsed.textSize ?? DEFAULT_A11Y_STATE.textSize,
+          highContrast: !!parsed.highContrast,
+          reduceMotion: !!parsed.reduceMotion,
+        };
+        setA11yState(next);
+      }
+    } catch {}
+  }, []);
+
+  // Save and apply accessibility settings
+  useEffect(() => {
+    try {
+      localStorage.setItem(A11Y_STORAGE_KEY, JSON.stringify(a11yState));
+    } catch {}
+    applyA11yToDom(a11yState);
+  }, [a11yState]);
+
+  // Load language preference
+  useEffect(() => {
+    setLang(getLangCookie());
+  }, []);
+
+  // Handle language change
+  const handleLanguageChange = (newLang: string) => {
+    setLangCookie(newLang);
+    setLang(newLang);
+    
+    if (isLocalhost()) {
+      // Just update state on localhost
+      return;
+    }
+
+    if (newLang === "es") {
+      const currentUrl = window.location.href;
+      const translateUrl = `https://translate.google.com/translate?sl=en&tl=es&u=${encodeURIComponent(currentUrl)}`;
+      window.location.href = translateUrl;
+    } else if (window.location.hostname.includes("translate.goog")) {
+      // Go back to original site
+      const originalHost = window.location.hostname
+        .replace(".translate.goog", "")
+        .replace(/-/g, ".");
+      window.location.href = `https://${originalHost}${window.location.pathname}`;
+    }
+  };
+
   // Clear search when menu closes
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery("");
+      setA11yExpanded(false);
+      setLangExpanded(false);
     }
   }, [isOpen]);
 
@@ -126,13 +242,141 @@ export default function MobileMenu({
           </form>
         </div>
 
-        {/* Utility links (optional) */}
+        {/* Accessibility Section */}
+        <div className="border-b border-gray-100">
+          <button
+            onClick={() => setA11yExpanded(!a11yExpanded)}
+            className="w-full flex items-center justify-between pl-6 pr-4 py-2 text-sm font-medium text-neutral-700 hover:bg-gray-50 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              {/* <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 4a2 2 0 110 4 2 2 0 010-4z" />
+                <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M6 8h12" />
+                <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M7 20l5-11 5 11" />
+              </svg> */}
+              Accessibility
+            </span>
+            <svg
+              className={`w-4 h-4 transition-transform duration-200 ${a11yExpanded ? "rotate-180" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          <div
+            className="grid transition-[grid-template-rows] duration-300 ease-out"
+            style={{ gridTemplateRows: a11yExpanded ? "1fr" : "0fr" }}
+          >
+            <div className="overflow-hidden">
+              <div className="px-4 pb-4 space-y-4 bg-gray-50">
+                {/* Text Size */}
+                <MobileTextSizeSlider
+                  value={a11yState.textSize}
+                  onChange={(v) => setA11yState((s) => ({ ...s, textSize: v }))}
+                />
+                
+                {/* High Contrast Toggle */}
+                <MobileToggle
+                  label="High contrast"
+                  checked={a11yState.highContrast}
+                  onChange={(v) => setA11yState((s) => ({ ...s, highContrast: v }))}
+                />
+                
+                {/* Reduce Motion Toggle */}
+                <MobileToggle
+                  label="Reduce motion"
+                  checked={a11yState.reduceMotion}
+                  onChange={(v) => setA11yState((s) => ({ ...s, reduceMotion: v }))}
+                />
+                
+                {/* Reset Button */}
+                <button
+                  onClick={() => setA11yState(DEFAULT_A11Y_STATE)}
+                  className="text-xs font-medium text-neutral-500 hover:text-gmcc-navy"
+                >
+                  Reset to defaults
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Language Section */}
+        <div className="border-b border-gray-100">
+          <button
+            onClick={() => setLangExpanded(!langExpanded)}
+            className="w-full flex items-center justify-between pl-6 pr-4 py-2 text-sm font-medium text-neutral-700 hover:bg-gray-50 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              {/* <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M2 12h20" />
+                <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 2c3 3 3 17 0 20" />
+              </svg> */}
+              Language: {lang.toUpperCase()}
+            </span>
+            <svg
+              className={`w-4 h-4 transition-transform duration-200 ${langExpanded ? "rotate-180" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          <div
+            className="grid transition-[grid-template-rows] duration-300 ease-out"
+            style={{ gridTemplateRows: langExpanded ? "1fr" : "0fr" }}
+          >
+            <div className="overflow-hidden">
+              <div className="px-4 pb-4 bg-gray-50">
+                <div className="space-y-1">
+                  <button
+                    onClick={() => handleLanguageChange("en")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                      lang === "en" ? "bg-gmcc-blue-light text-gmcc-navy font-medium" : "hover:bg-white text-neutral-700"
+                    }`}
+                  >
+                    <span>English</span>
+                    {lang === "en" && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleLanguageChange("es")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                      lang === "es" ? "bg-gmcc-blue-light text-gmcc-navy font-medium" : "hover:bg-white text-neutral-700"
+                    }`}
+                  >
+                    <span>Español</span>
+                    {lang === "es" && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Utility links (filtered) */}
         {showUtility && (
           <div className="border-b border-gray-100 bg-white">
             <nav aria-label="Utility" className="py-2">
               <ul className="px-6">
                 {utilityItems
-                  .filter((u) => u.label.toLowerCase() !== "search")
+                  .filter((u) => {
+                    const label = u.label.toLowerCase();
+                    return label !== "search" && label !== "accessibility" && label !== "language";
+                  })
                   .map((u) => (
                     <li key={u.id}>
                       <Link
@@ -245,6 +489,154 @@ export default function MobileMenu({
         </nav>
       </div>
     </>
+  );
+}
+
+// Mobile Text Size Slider
+function MobileTextSizeSlider({
+  value,
+  onChange,
+}: {
+  value: TextSize;
+  onChange: (value: TextSize) => void;
+}) {
+  const options: Array<{ value: TextSize; label: string }> = [
+    { value: "normal", label: "Default" },
+    { value: "large", label: "Larger" },
+    { value: "xlarge", label: "Largest" },
+  ];
+
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const getValueFromPosition = useCallback(
+    (clientX: number) => {
+      if (!trackRef.current) return value;
+      const rect = trackRef.current.getBoundingClientRect();
+      const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const index = Math.round(percent * (options.length - 1));
+      return options[index].value;
+    },
+    [options, value]
+  );
+
+  const handleMove = useCallback(
+    (clientX: number) => {
+      const newValue = getValueFromPosition(clientX);
+      if (newValue !== value) onChange(newValue);
+    },
+    [getValueFromPosition, onChange, value]
+  );
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    handleMove(e.clientX);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX);
+    const handleMouseUp = () => setIsDragging(false);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, handleMove]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    handleMove(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging) handleMove(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => setIsDragging(false);
+
+  const currentIndex = options.findIndex((o) => o.value === value);
+  const percent = (currentIndex / (options.length - 1)) * 100;
+
+  return (
+    <div className="pt-2">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-neutral-600">Text size</span>
+        <span className="text-xs font-medium text-gmcc-navy">
+          {options.find((o) => o.value === value)?.label}
+        </span>
+      </div>
+      <div
+        ref={trackRef}
+        className="relative pt-1 pb-5 cursor-pointer select-none"
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="h-2 bg-neutral-200 rounded-full" />
+        <div
+          className={`absolute top-1 left-0 h-2 bg-gmcc-navy rounded-full ${isDragging ? "" : "transition-all duration-150"}`}
+          style={{ width: `${percent}%` }}
+        />
+        <div className="absolute top-0 left-0 right-0 flex justify-between pointer-events-none">
+          {options.map((opt, idx) => {
+            const isActive = value === opt.value;
+            const isPast = currentIndex >= idx;
+            return (
+              <div key={opt.value} className="relative flex flex-col items-center">
+                <div
+                  className={[
+                    "w-4 h-4 rounded-full border-2",
+                    isDragging ? "" : "transition-all duration-150",
+                    isActive
+                      ? "bg-gmcc-navy border-gmcc-navy scale-110"
+                      : isPast
+                        ? "bg-gmcc-navy border-gmcc-navy"
+                        : "bg-white border-neutral-300",
+                  ].join(" ")}
+                />
+                <span className={`absolute top-5 text-[10px] font-medium ${isActive ? "text-gmcc-navy" : "text-neutral-400"}`}>
+                  {opt.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Mobile Toggle
+function MobileToggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-xs font-medium text-neutral-600">{label}</span>
+      <button
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+          checked ? "bg-gmcc-navy" : "bg-neutral-300"
+        }`}
+        aria-pressed={checked}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            checked ? "translate-x-4" : "translate-x-0.5"
+          }`}
+        />
+      </button>
+    </div>
   );
 }
 

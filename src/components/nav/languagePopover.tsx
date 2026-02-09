@@ -17,9 +17,15 @@ function getCurrentLang(): Lang {
   return "en";
 }
 
+const REDIRECT_FLAG = "gmcc_lang_redirect_pending";
+
 function setLangCookie(lang: Lang) {
   const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
   document.cookie = `${LANG_COOKIE}=${lang}; expires=${expires}; path=/; SameSite=Lax`;
+  // Clear any redirect prevention flag when user explicitly changes language
+  try {
+    sessionStorage.removeItem(REDIRECT_FLAG);
+  } catch {}
 }
 
 function isLocalhost() {
@@ -164,12 +170,12 @@ export default function LanguagePopover({ className = "" }: { className?: string
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-colors font-secondary text-neutral-600 hover:text-gmcc-navy hover:bg-neutral-200/60 leading-none"
+        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-colors font-secondary text-neutral-700 hover:text-gmcc-navy hover:bg-neutral-200/60 leading-none"
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        <IconGlobe className="w-3.5 h-3.5 flex-shrink-0" />
-        <span>{lang.toUpperCase()}</span>
+        {/* <IconGlobe className="w-3.5 h-3.5 flex-shrink-0" /> */}
+        <span>Language</span>
       </button>
 
       {open && (
@@ -188,7 +194,7 @@ export default function LanguagePopover({ className = "" }: { className?: string
               className="p-1 rounded hover:bg-neutral-100"
               aria-label="Close language menu"
             >
-              <IconX className="h-4 w-4 text-neutral-600" />
+              <IconX className="h-4 w-4 text-neutral-700" />
             </button>
           </div>
 

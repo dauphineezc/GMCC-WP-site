@@ -140,11 +140,11 @@ export default function Navbar({
                                   value={searchQuery}
                                   onChange={(e) => setSearchQuery(e.target.value)}
                                   placeholder="Search…"
-                                  className="w-full px-3 py-1 text-sm bg-white border border-neutral-300 rounded-l text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-gmcc-navy focus:border-gmcc-navy font-body transition-colors"
+                                  className="w-full px-3 py-1 text-sm bg-white rounded-l border-gmcc-navy text-neutral-900 placeholder-neutral-400 font-body transition-colors"
                                 />
                                 <button
                                   type="submit"
-                                  className="px-2 py-1 bg-gmcc-navy hover:bg-gmcc-navy/90 text-white rounded-r transition-colors"
+                                  className="px-2 py-1 bg-gmcc-navy hover:bg-gmcc-navy/80 text-white rounded-r transition-colors"
                                   aria-label="Submit search"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,7 +172,7 @@ export default function Navbar({
                               className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-colors font-secondary ${
                                 searchOpen
                                   ? "bg-neutral-200 text-gmcc-navy"
-                                  : "text-neutral-600 hover:text-gmcc-navy hover:bg-neutral-200/60"
+                                  : "text-neutral-700 hover:text-gmcc-navy hover:bg-neutral-200/60"
                               }`}
                               aria-expanded={searchOpen}
                               aria-label={searchOpen ? "Close search" : "Open search"}
@@ -204,8 +204,8 @@ export default function Navbar({
                             className={[
                               "px-3 py-1 text-xs font-medium rounded transition-colors font-secondary",
                               isDonate
-                                ? "text-gmcc-navy underline decoration-gmcc-navy/30 bg-gmcc-navy/20 hover:decoration-gmcc-navy hover:bg-gmcc-navy/30"
-                                : "text-neutral-600 hover:text-gmcc-navy hover:bg-neutral-200/60",
+                                ? "text-gmcc-navy decoration-gmcc-navy/30 bg-gmcc-navy/20 hover:decoration-gmcc-navy hover:bg-gmcc-navy/30"
+                                : "text-neutral-700 hover:text-gmcc-navy hover:bg-neutral-200/80",
                             ].join(" ")}
                             onClick={() => setOpenId(null)}
                           >

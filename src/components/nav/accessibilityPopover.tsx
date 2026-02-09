@@ -123,11 +123,11 @@ export default function AccessibilityPopover({
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-colors font-secondary text-neutral-600 hover:text-gmcc-navy hover:bg-neutral-200/60 leading-none"
+        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-colors font-secondary text-neutral-700 hover:text-gmcc-navy hover:bg-neutral-200/60 leading-none"
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        <IconA11y className="w-3.5 h-3.5 flex-shrink-0" />
+        {/* <IconA11y className="w-3.5 h-3.5 flex-shrink-0" /> */}
         <span className="hidden xl:inline">Accessibility</span>
       </button>
 
@@ -154,37 +154,17 @@ export default function AccessibilityPopover({
               className="p-1 rounded hover:bg-neutral-100"
               aria-label="Close accessibility menu"
             >
-              <IconX className="h-4 w-4 text-neutral-600" />
+              <IconX className="h-4 w-4 text-neutral-700" />
             </button>
           </div>
 
           <div className="space-y-4">
-            {/* Text size */}
-            <div>
-              <div className="text-xs font-semibold text-neutral-700 mb-2">
-                Text size
-              </div>
-              <div className="flex gap-2">
-                {textSizeOptions.map((opt) => {
-                  const active = state.textSize === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setState((s) => ({ ...s, textSize: opt.value }))}
-                      className={[
-                        "flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition-colors",
-                        active
-                          ? "border-gmcc-navy bg-gmcc-blue-light text-gmcc-navy"
-                          : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
-                      ].join(" ")}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* Text size slider */}
+            <TextSizeSlider
+              value={state.textSize}
+              options={textSizeOptions}
+              onChange={(value) => setState((s) => ({ ...s, textSize: value }))}
+            />
 
             {/* Toggles */}
             <ToggleRow
@@ -212,6 +192,162 @@ export default function AccessibilityPopover({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function TextSizeSlider({
+  value,
+  options,
+  onChange,
+}: {
+  value: TextSize;
+  options: Array<{ value: TextSize; label: string }>;
+  onChange: (value: TextSize) => void;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const getValueFromPosition = useCallback(
+    (clientX: number) => {
+      if (!trackRef.current) return value;
+      const rect = trackRef.current.getBoundingClientRect();
+      const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      
+      // Snap to nearest option
+      const index = Math.round(percent * (options.length - 1));
+      return options[index].value;
+    },
+    [options, value]
+  );
+
+  const handleMove = useCallback(
+    (clientX: number) => {
+      const newValue = getValueFromPosition(clientX);
+      if (newValue !== value) {
+        onChange(newValue);
+      }
+    },
+    [getValueFromPosition, onChange, value]
+  );
+
+  // Mouse events
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    handleMove(e.clientX);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      handleMove(e.clientX);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, handleMove]);
+
+  // Touch events
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    handleMove(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging) {
+      handleMove(e.touches[0].clientX);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  const currentIndex = options.findIndex((o) => o.value === value);
+  const percent = (currentIndex / (options.length - 1)) * 100;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-xs font-semibold text-neutral-700">Text size</div>
+        <div className="text-xs font-medium text-gmcc-navy">
+          {options.find((o) => o.value === value)?.label}
+        </div>
+      </div>
+
+      {/* Slider track */}
+      <div
+        ref={trackRef}
+        className="relative pt-1 pb-6 cursor-pointer select-none"
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Track background */}
+        <div className="h-2 bg-neutral-200 rounded-full" />
+
+        {/* Active track */}
+        <div
+          className={`absolute top-1 left-0 h-2 bg-gmcc-navy rounded-full ${
+            isDragging ? "" : "transition-all duration-150"
+          }`}
+          style={{ width: `${percent}%` }}
+        />
+
+        {/* Tick marks / points */}
+        <div className="absolute top-0 left-0 right-0 flex justify-between pointer-events-none">
+          {options.map((opt, idx) => {
+            const isActive = value === opt.value;
+            const isPast = currentIndex >= idx;
+            return (
+              <div key={opt.value} className="relative flex flex-col items-center">
+                {/* Point */}
+                <div
+                  className={[
+                    "w-4 h-4 rounded-full border-2",
+                    isDragging ? "" : "transition-all duration-150",
+                    isActive
+                      ? "bg-gmcc-navy border-gmcc-navy scale-125"
+                      : isPast
+                        ? "bg-gmcc-navy border-gmcc-navy"
+                        : "bg-white border-neutral-300",
+                  ].join(" ")}
+                />
+                {/* Label */}
+                <span
+                  className={[
+                    "absolute top-6 text-[10px] font-medium whitespace-nowrap",
+                    isDragging ? "" : "transition-colors",
+                    isActive ? "text-gmcc-navy" : "text-neutral-500",
+                  ].join(" ")}
+                >
+                  {opt.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Draggable thumb (invisible, for larger hit area) */}
+        <div
+          className={`absolute top-0 w-6 h-6 -ml-3 rounded-full ${
+            isDragging ? "cursor-grabbing" : "cursor-grab"
+          }`}
+          style={{ left: `${percent}%` }}
+        />
+      </div>
     </div>
   );
 }
