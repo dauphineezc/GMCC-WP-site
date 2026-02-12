@@ -8,12 +8,18 @@ type Lang = "en" | "es";
 const LANG_COOKIE = "gmcc_preferred_lang";
 
 function getCurrentLang(): Lang {
-  if (typeof document === "undefined") return "en";
-  const cookies = document.cookie.split(";");
-  for (const c of cookies) {
-    const [name, value] = c.trim().split("=");
-    if (name === LANG_COOKIE && value === "es") return "es";
-  }
+  if (typeof window === "undefined") return "en";
+  const url = new URL(window.location.href);
+
+  // Most reliable: explicit Google Translate target-language query param.
+  const translatedTo = url.searchParams.get("_x_tr_tl");
+  if (translatedTo === "es") return "es";
+
+  // Fallback for translated hostnames.
+  if (window.location.hostname.includes("translate.goog")) return "es";
+
+  // If we're on the original site, reflect original language (English).
+  // This avoids stale cookie mismatches where UI says ES on an EN page.
   return "en";
 }
 

@@ -7,17 +7,29 @@ type Linkish = { title?: string | null; url?: string | null; target?: string | n
 /**
  * Parse a stat value like "10,000+", "$5M", "95%" into its components
  */
-function parseStatValue(value: string): { prefix: string; number: number; suffix: string; hasCommas: boolean } {
+function parseStatValue(value: string): {
+  prefix: string;
+  number: number;
+  suffix: string;
+  hasCommas: boolean;
+  hasNumber: boolean;
+} {
   const trimmed = value.trim();
-  // Match optional prefix (non-digit, non-comma chars), digits with commas, optional suffix
-  const match = trimmed.match(/^([^\d,]*)([\d,]+)(.*)$/);
+
+  // Match first numeric chunk with common locale separators:
+  // commas, dots, spaces, no-break spaces, and apostrophes.
+  const match = trimmed.match(/^([^\d]*)(\d[\d,.\s\u00A0\u202F']*)(.*)$/);
   if (!match) {
-    return { prefix: "", number: 0, suffix: trimmed, hasCommas: false };
+    return { prefix: "", number: 0, suffix: trimmed, hasCommas: false, hasNumber: false };
   }
-  const [, prefix, numStr, suffix] = match;
-  const hasCommas = numStr.includes(",");
-  const number = parseInt(numStr.replace(/,/g, ""), 10);
-  return { prefix, number, suffix, hasCommas };
+  const [, prefix, numStrRaw, suffix] = match;
+  const hasCommas = numStrRaw.includes(",") || numStrRaw.includes(".") || /\s|\u00A0|\u202F/.test(numStrRaw);
+
+  // Strip everything except digits so localized separators do not break parsing.
+  const digitsOnly = numStrRaw.replace(/[^\d]/g, "");
+  const number = digitsOnly ? parseInt(digitsOnly, 10) : 0;
+
+  return { prefix, number, suffix, hasCommas, hasNumber: digitsOnly.length > 0 };
 }
 
 /**
@@ -34,7 +46,7 @@ function formatNumber(num: number, hasCommas: boolean): string {
  * Animated counter component that ticks up when in view
  */
 function AnimatedStat({ value, isInView }: { value: string; isInView: boolean }) {
-  const { prefix, number, suffix, hasCommas } = parseStatValue(value);
+  const { prefix, number, suffix, hasCommas, hasNumber } = parseStatValue(value);
   const [displayNum, setDisplayNum] = useState(0);
   const hasAnimated = useRef(false);
 
@@ -64,8 +76,8 @@ function AnimatedStat({ value, isInView }: { value: string; isInView: boolean })
     return () => clearInterval(timer);
   }, [isInView, number]);
 
-  // If no numeric value, just show the original
-  if (number === 0 && !prefix && !suffix) {
+  // If no numeric value at all, render original string and skip animation.
+  if (!hasNumber) {
     return <>{value}</>;
   }
 

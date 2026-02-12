@@ -40,6 +40,14 @@ function getLangCookie(): string {
   return "en";
 }
 
+function getCurrentPageLang(): "en" | "es" {
+  if (typeof window === "undefined") return "en";
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("_x_tr_tl") === "es") return "es";
+  if (window.location.hostname.includes("translate.goog")) return "es";
+  return "en";
+}
+
 function setLangCookie(lang: string) {
   const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
   document.cookie = `${LANG_COOKIE}=${lang}; expires=${expires}; path=/; SameSite=Lax`;
@@ -106,7 +114,8 @@ export default function MobileMenu({
 
   // Load language preference
   useEffect(() => {
-    setLang(getLangCookie());
+    // Reflect actual page language first; fallback to cookie.
+    setLang(getCurrentPageLang() || getLangCookie());
   }, []);
 
   // Handle language change
