@@ -47,12 +47,15 @@ function formatNumber(num: number, hasCommas: boolean): string {
  */
 function AnimatedStat({ value, isInView }: { value: string; isInView: boolean }) {
   const { prefix, number, suffix, hasCommas, hasNumber } = parseStatValue(value);
-  const [displayNum, setDisplayNum] = useState(0);
+  // Default to final value so translated/proxied pages still show real numbers
+  // even if client-side animation scripts do not run reliably.
+  const [displayNum, setDisplayNum] = useState(number);
   const hasAnimated = useRef(false);
 
   useEffect(() => {
     if (!isInView || hasAnimated.current || number === 0) return;
     hasAnimated.current = true;
+    setDisplayNum(0);
 
     const duration = 1500; // 1.5 seconds
     const steps = 60;

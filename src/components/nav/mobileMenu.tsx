@@ -62,6 +62,27 @@ function isLocalhost(): boolean {
   );
 }
 
+function resolveTranslatedHref(href: string): string {
+  if (typeof window === "undefined") return href;
+  if (!window.location.hostname.includes("translate.goog")) return href;
+  if (!href || href.startsWith("#")) return href;
+
+  const currentUrl = new URL(window.location.href);
+  const targetLang = currentUrl.searchParams.get("_x_tr_tl") || "es";
+
+  let absoluteTarget = href;
+  if (!/^https?:\/\//i.test(href)) {
+    const originalHost = window.location.hostname
+      .replace(".translate.goog", "")
+      .replace(/-/g, ".");
+    absoluteTarget = `https://${originalHost}${href.startsWith("/") ? href : `/${href}`}`;
+  }
+
+  return `https://translate.google.com/translate?sl=en&tl=${targetLang}&u=${encodeURIComponent(
+    absoluteTarget
+  )}`;
+}
+
 type MobileMenuProps = {
   items: NavItem[];
   utilityItems?: NavItem[];
@@ -153,7 +174,13 @@ export default function MobileMenu({
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      const searchHref = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+      const resolvedSearchHref = resolveTranslatedHref(searchHref);
+      if (resolvedSearchHref === searchHref) {
+        router.push(searchHref);
+      } else {
+        window.location.href = resolvedSearchHref;
+      }
       setSearchQuery("");
       onClose();
     }
@@ -383,7 +410,7 @@ export default function MobileMenu({
                   .map((u) => (
                     <li key={u.id}>
                       <Link
-                        href={u.href}
+                        href={resolveTranslatedHref(u.href)}
                         onClick={onClose}
                         className="block py-2 text-sm font-medium text-neutral-700 hover:text-gmcc-navy transition-colors"
                       >
@@ -414,7 +441,7 @@ export default function MobileMenu({
                       <div className="flex items-center">
                         {/* Clickable label - navigates to page */}
                         <Link
-                          href={item.href}
+                          href={resolveTranslatedHref(item.href)}
                           onClick={onClose}
                           className="flex-1 px-6 py-4 text-gmcc-navy font-medium hover:bg-gmcc-blue-light/30 transition-colors"
                         >
@@ -463,7 +490,7 @@ export default function MobileMenu({
                                   <NestedSubmenu item={child} onClose={onClose} />
                                 ) : (
                                   <Link
-                                    href={child.href}
+                                    href={resolveTranslatedHref(child.href)}
                                     onClick={onClose}
                                     className="block px-10 py-3 text-gray-700 hover:text-gmcc-navy hover:bg-gmcc-blue-light/20 transition-colors"
                                   >
@@ -478,7 +505,7 @@ export default function MobileMenu({
                     </>
                   ) : (
                     <Link
-                      href={item.href}
+                      href={resolveTranslatedHref(item.href)}
                       onClick={onClose}
                       className="block px-6 py-4 text-gmcc-navy font-medium hover:bg-gmcc-blue-light/30 transition-colors"
                     >
@@ -658,7 +685,7 @@ function NestedSubmenu({
       <div className="flex items-center">
         {/* Clickable label - navigates to category page */}
         <Link
-          href={item.href}
+          href={resolveTranslatedHref(item.href)}
           onClick={onClose}
           className="flex-1 px-10 py-3 text-gray-700 font-medium hover:text-gmcc-navy hover:bg-gmcc-blue-light/20 transition-colors"
         >
@@ -704,7 +731,7 @@ function NestedSubmenu({
             {item.children.map((leaf) => (
               <li key={leaf.id}>
                 <Link
-                  href={leaf.href}
+                  href={resolveTranslatedHref(leaf.href)}
                   onClick={onClose}
                   className="block px-14 py-2 text-sm text-gray-600 hover:text-gmcc-navy transition-colors"
                 >
