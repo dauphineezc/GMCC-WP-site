@@ -169,37 +169,42 @@ export default async function LeadershipPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
               {elts.map((staff, index) => {
                 const dotCardLink = staff.staffProfilesFields?.dotCardLink;
-                const CardWrapper = dotCardLink ? Link : 'div';
-                const wrapperProps = dotCardLink 
-                  ? { href: dotCardLink, className: "flex flex-col rounded-2xl border border-neutral-100 bg-white shadow-md overflow-hidden transition hover:-translate-y-0.5 hover:shadow-xl hover:border-neutral-300" }
-                  : { className: "flex flex-col rounded-2xl border border-neutral-100 bg-white shadow-md overflow-hidden transition hover:-translate-y-0.5 hover:shadow-xl hover:border-neutral-300" };
+                const cardClassName =
+                  "flex flex-col rounded-2xl border border-neutral-100 bg-white shadow-md overflow-hidden transition hover:-translate-y-0.5 hover:shadow-xl hover:border-neutral-300";
 
-                return (
-                  <CardWrapper
-                    key={index}
-                    {...wrapperProps}
-                  >
+                const cardBody = (
+                  <>
                     {staff.featuredImage?.node?.sourceUrl && (
                       <div className="relative w-full aspect-square">
                         <Image
                           src={staff.featuredImage.node.sourceUrl}
-                          alt={staff.featuredImage.node.altText || staff.title || ''}
+                          alt={staff.featuredImage.node.altText || staff.title || ""}
                           fill
                           className="object-cover"
                         />
                       </div>
                     )}
                     <div className="bg-gmcc-navy text-white p-4 flex-grow">
-                      <h3 className="font-semibold text-lg">
-                        {staff.title}
-                      </h3>
+                      <h3 className="font-semibold text-lg">{staff.title}</h3>
                       {staff.staffProfilesFields?.title && (
                         <p className="text-sm opacity-90 italic">
                           {staff.staffProfilesFields.title}
                         </p>
                       )}
                     </div>
-                  </CardWrapper>
+                  </>
+                );
+
+                return (
+                  dotCardLink ? (
+                    <Link key={index} href={dotCardLink} className={cardClassName}>
+                      {cardBody}
+                    </Link>
+                  ) : (
+                    <div key={index} className={cardClassName}>
+                      {cardBody}
+                    </div>
+                  )
                 );
               })}
             </div>
