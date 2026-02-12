@@ -40,15 +40,9 @@ function getLangCookie(): string {
   return "en";
 }
 
-const REDIRECT_FLAG = "gmcc_lang_redirect_pending";
-
 function setLangCookie(lang: string) {
   const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
   document.cookie = `${LANG_COOKIE}=${lang}; expires=${expires}; path=/; SameSite=Lax`;
-  // Clear any redirect prevention flag when user explicitly changes language
-  try {
-    sessionStorage.removeItem(REDIRECT_FLAG);
-  } catch {}
 }
 
 function isLocalhost(): boolean {

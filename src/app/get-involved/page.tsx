@@ -202,9 +202,9 @@ export default async function GetInvolvedPage() {
       </div>
 
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
-        <div>
+        {/* <div>
           <h1 className="h1 text-gmcc-navy">{data?.page?.title ?? "Get Involved"}</h1>
-        </div>
+        </div> */}
 
         <GetInvolvedClient fields={fields} />
       </div>
