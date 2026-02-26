@@ -54,23 +54,23 @@ export default function ExploreMembershipsClient({
   /** ---------------------------
    *  PROGRESSIVE REVEAL STATE
    * ----------------------------*/
-  const [maxVisibleStep, setMaxVisibleStep] = useState(1);
+  // const [maxVisibleStep, setMaxVisibleStep] = useState(1);
 
   // Handler to update audience and reveal next step
-  const handleAudienceChange = (value: string) => {
-    setAudienceFilter(value);
-    if (maxVisibleStep < 2) setMaxVisibleStep(2);
-  };
+  // const handleAudienceChange = (value: string) => {
+  //   setAudienceFilter(value);
+  //   if (maxVisibleStep < 2) setMaxVisibleStep(2);
+  // };
 
   // Handler to update program areas and reveal next step
-  const handleProgramAreaChange = (slug: string, checked: boolean) => {
-    if (checked) {
-      setProgramAreaFilters([...programAreaFilters, slug]);
-    } else {
-      setProgramAreaFilters(programAreaFilters.filter((s) => s !== slug));
-    }
-    if (maxVisibleStep < 3) setMaxVisibleStep(3);
-  };
+  // const handleProgramAreaChange = (slug: string, checked: boolean) => {
+  //   if (checked) {
+  //     setProgramAreaFilters([...programAreaFilters, slug]);
+  //   } else {
+  //     setProgramAreaFilters(programAreaFilters.filter((s) => s !== slug));
+  //   }
+  //   if (maxVisibleStep < 3) setMaxVisibleStep(3);
+  // };
 
   /** ---------------------------
    *  CAROUSEL STATE
@@ -135,11 +135,6 @@ export default function ExploreMembershipsClient({
     [filteredMemberships, currentRecIndex]
   );
 
-  /** ---------------------------
-   *  (then your return JSX goes here…)
-   * ----------------------------*/
-
-
   return (
     <main>
       {/* HEADER IMAGE - Full Width */}
@@ -187,7 +182,7 @@ export default function ExploreMembershipsClient({
         
         <div className="relative">
           {/* Vertical line - height adjusts based on visible steps */}
-          <div 
+          {/* <div 
             className={`absolute left-[calc(1rem-1px)] top-4 w-0.5 bg-gmcc-navy transition-all duration-500 ${
               maxVisibleStep === 1 
                 ? "h-0" 
@@ -196,7 +191,10 @@ export default function ExploreMembershipsClient({
                   : "bottom-4"
             }`} 
             style={maxVisibleStep >= 3 ? { bottom: '1rem' } : undefined}
-          />
+          /> */}
+
+          <div className="absolute left-[calc(1rem-1px)] top-4 w-0.5 bg-gmcc-navy h-225 bottom-1rem" />
+
           
           {/* Step 1: Audience */}
           <div className="relative pb-8">
@@ -210,7 +208,7 @@ export default function ExploreMembershipsClient({
               <select
                 className="rounded border border-neutral-300 bg-white px-3 py-1.5 body min-w-[150px] shadow-sm"
                 value={audienceFilter}
-                onChange={(e) => handleAudienceChange(e.target.value)}
+                // onChange={(e) => handleAudienceChange(e.target.value)}
               >
                 <option value="">Anyone</option>
                 {audiences.map((a) => (
@@ -225,9 +223,9 @@ export default function ExploreMembershipsClient({
           {/* Step 2: Program Areas as checkboxes */}
           <div 
             className={`relative pb-8 transition-all duration-500 ease-out ${
-              maxVisibleStep >= 2 
-                ? "opacity-100 translate-y-0" 
-                : "opacity-0 -translate-y-4 pointer-events-none h-0 pb-0 overflow-hidden"
+              // maxVisibleStep >= 2 
+                "opacity-100 translate-y-0" 
+                // : "opacity-0 -translate-y-4 pointer-events-none h-0 pb-0 overflow-hidden"
             }`}
           >
             <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white small font-semibold">
@@ -244,7 +242,7 @@ export default function ExploreMembershipsClient({
                       <input
                         type="checkbox"
                         checked={programAreaFilters.includes(p.slug)}
-                        onChange={(e) => handleProgramAreaChange(p.slug, e.target.checked)}
+                        // onChange={(e) => handleProgramAreaChange(p.slug, e.target.checked)}
                         className="h-4 w-4 rounded border-neutral-300 text-gmcc-navy focus:ring-gmcc-navy"
                       />
                       {p.name}
@@ -258,9 +256,9 @@ export default function ExploreMembershipsClient({
           {/* Step 3: Recommended Memberships */}
           <div 
             className={`relative pb-8 transition-all duration-500 ease-out delay-100 ${
-              maxVisibleStep >= 3 
-                ? "opacity-100 translate-y-0" 
-                : "opacity-0 -translate-y-4 pointer-events-none h-0 pb-0 overflow-hidden"
+              // maxVisibleStep >= 3 
+                "opacity-100 translate-y-0" 
+                // : "opacity-0 -translate-y-4 pointer-events-none h-0 pb-0 overflow-hidden"
             }`}
           >
             <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white small font-semibold">
@@ -393,9 +391,9 @@ export default function ExploreMembershipsClient({
           {/* Step 4: Compare Options */}
           <div 
             className={`relative transition-all duration-500 ease-out delay-200 ${
-              maxVisibleStep >= 3 
-                ? "opacity-100 translate-y-0" 
-                : "opacity-0 -translate-y-4 pointer-events-none h-0 overflow-hidden"
+              // maxVisibleStep >= 3 
+                "opacity-100 translate-y-0" 
+                // : "opacity-0 -translate-y-4 pointer-events-none h-0 overflow-hidden"
             }`}
           >
             <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white small font-semibold">

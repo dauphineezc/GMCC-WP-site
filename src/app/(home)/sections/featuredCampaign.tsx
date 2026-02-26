@@ -1,6 +1,8 @@
 // src/app/(home)/sections/FeaturedCampaignSection.tsx
 export default function FeaturedCampaignSection({
     campaign,
+    bgColor,
+    textColor,
   }: {
     campaign: null | {
       title?: string | null;
@@ -13,6 +15,8 @@ export default function FeaturedCampaignSection({
         secondaryCta?: { secondaryCtaLabel?: string | null; secondaryCtaUrl?: string | null } | null;
       } | null;
     };
+    bgColor: string | null;
+    textColor: string | null;
   }) {
     if (!campaign) return null;
   
@@ -28,12 +32,8 @@ export default function FeaturedCampaignSection({
   
     return (
       <section className="px-0 py-10">
-        <div className="text-center">
-          <h2 className="text-sm font-semibold tracking-wide text-neutral-500">Featured</h2>
-        </div>
-
-        <div className="mx-auto w-full mt-10">
-          <div className="overflow-hidden bg-neutral-900 text-white">
+        <div className="mx-auto w-full">
+          <div className={`overflow-hidden`} style={{ backgroundColor: bgColor ?? "#ffffff" }}>
             <div className="grid md:grid-cols-2">
               <div className="relative min-h-[280px] md:min-h-[360px]">
                 {img ? (
@@ -49,13 +49,13 @@ export default function FeaturedCampaignSection({
               </div>
   
               <div className="flex flex-col justify-center p-10 md:p-14 md:min-h-[360px]">
-                <h3 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h3>
-                {body ? <p className="mt-4 text-white/85 whitespace-pre-line text-base leading-relaxed">{body}</p> : null}
+                <h3 className="text-3xl font-semibold tracking-tight" style={{ color: `${textColor}` }}>{title}</h3>
+                {body ? <p className={`mt-4 whitespace-pre-line text-base leading-relaxed`} style={{ color: `${textColor}` }}>{body}</p> : null}
   
                 <div className="mt-8 flex flex-wrap gap-3">
                   <a
                     href={primaryUrl}
-                    className="btn btn-hero"
+                    className="btn btn-secondary"
                   >
                     {primaryLabel}
                   </a>
@@ -63,7 +63,7 @@ export default function FeaturedCampaignSection({
                   {secondaryUrl ? (
                     <a
                       href={secondaryUrl}
-                      className="btn btn-hero"
+                      className="btn btn-secondary"
                     >
                       {secondaryLabel}
                     </a>

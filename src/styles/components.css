@@ -59,8 +59,8 @@
         disabled:opacity-50 disabled:pointer-events-none;
     }
 
-    .btn-primary { @apply bg-gmcc-navy text-white hover:bg-gmcc-navy/85; }
-    .btn-secondary { @apply border border-gmcc-navy bg-white text-gmcc-navy hover:bg-gmcc-blue-light/40; }
+    .btn-primary { @apply bg-gmcc-navy text-white hover:bg-gmcc-navy/80; }
+    .btn-secondary { @apply border border-gmcc-navy bg-white text-gmcc-navy hover:bg-white/80; }
     .btn-tertiary { @apply bg-gmcc-green text-white hover:bg-gmcc-green/85; }
     .btn-hero { @apply relative overflow-hidden rounded-md px-4 py-2 bg-white text-gmcc-navy; }
 

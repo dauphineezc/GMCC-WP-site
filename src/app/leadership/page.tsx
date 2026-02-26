@@ -31,10 +31,8 @@ const LEADERSHIP_PAGE_QUERY = /* GraphQL */ `
         boardMembers
         ccBoardMembers
         tcBoardMembers
-        curlcBoardMembers
         cfcBoardMembers
         nfcBoardMembers
-        cwcBoardMembers
       }
     }
   }
@@ -65,14 +63,12 @@ type LeadershipFields = {
   boardMembers?: string | null;
   ccBoardMembers?: string | null;
   tcBoardMembers?: string | null;
-  curlcBoardMembers?: string | null;
   cfcBoardMembers?: string | null;
   nfcBoardMembers?: string | null;
-  cwcBoardMembers?: string | null;
 };
 
 // Helper function to parse board members text into table rows
-function parseBoardMembers(text: string | null | undefined): Array<{ name: string; position: string }> {
+function parseBoardMembers(text: string | null | undefined): Array<{ name: string; business: string; position: string }> {
   if (!text) return [];
   
   return text
@@ -80,11 +76,12 @@ function parseBoardMembers(text: string | null | undefined): Array<{ name: strin
     .map(line => line.trim())
     .filter(line => line.length > 0)
     .map(line => {
-      // Parse format: "Name, Position"
+      // Parse format: "Name, Business, Position"
       const parts = line.split(',').map(p => p.trim());
       return {
         name: parts[0] || '',
-        position: parts[1] || ''
+        business: parts[1] || '',
+        position: parts[2] || ''
       };
     })
     .filter(member => member.name);
@@ -226,8 +223,13 @@ export default async function LeadershipPage() {
 
             {/* Board Members Table */}
             {boardMembers.length > 0 && (
-              <div className="max-w-3xl mx-auto mb-16">
-                <table className="w-full">
+              <div className="max-w-4xl mx-auto mb-16">
+                <table className="w-full table-fixed">
+                  <colgroup>
+                    <col className="w-1/3" />
+                    <col className="w-1/3" />
+                    <col className="w-1/3" />
+                  </colgroup>
                   <tbody>
                     {boardMembers.map((member, index) => (
                       <tr 
@@ -236,8 +238,11 @@ export default async function LeadershipPage() {
                           index % 2 === 0 ? 'bg-neutral-50' : 'bg-white'
                         }`}
                       >
-                        <td className="py-3 px-4 text-gmcc-navy">
+                        <td className="py-3 px-4 text-left text-gmcc-navy">
                           {member.name}
+                        </td>
+                        <td className="py-3 px-4 text-center text-neutral-600">
+                          {member.business}
                         </td>
                         <td className="py-3 px-4 text-right text-neutral-600">
                           {member.position}
@@ -260,10 +265,8 @@ export default async function LeadershipPage() {
             <LeadershipAccordion
               ccBoardMembers={fields?.ccBoardMembers}
               tcBoardMembers={fields?.tcBoardMembers}
-              curlcBoardMembers={fields?.curlcBoardMembers}
               cfcBoardMembers={fields?.cfcBoardMembers}
               nfcBoardMembers={fields?.nfcBoardMembers}
-              cwcBoardMembers={fields?.cwcBoardMembers}
             />
           </div>
         </section>

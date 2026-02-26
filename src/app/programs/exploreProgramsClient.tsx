@@ -96,7 +96,7 @@ export default function ExploreProgramsClient({
   initialPageInfo: PageInfo;
   pageSize: number;
 }) {
-  // ✅ Infinite scroll state
+  // Infinite scroll state
   const [loadedPrograms, setLoadedPrograms] = useState<ProgramWP[]>(initialPrograms);
   const [pageInfo, setPageInfo] = useState<PageInfo>(initialPageInfo);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -143,7 +143,7 @@ export default function ExploreProgramsClient({
     }
   }, [isLoadingMore, pageInfo.hasNextPage, pageInfo.endCursor, pageSize]);
 
-  // ✅ IntersectionObserver triggers loadMore near bottom
+  // IntersectionObserver triggers loadMore near bottom
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;

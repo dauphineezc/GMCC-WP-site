@@ -106,7 +106,7 @@ export default function ExploreEventsClient({
   initialPageInfo: PageInfo;
   pageSize: number;
 }) {
-  // ✅ Infinite scroll state
+  // Infinite scroll state
   const [loadedEvents, setLoadedEvents] = useState<EventWP[]>(initialEvents);
   const [pageInfo, setPageInfo] = useState<PageInfo>(initialPageInfo);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -154,7 +154,7 @@ export default function ExploreEventsClient({
     }
   }, [isLoadingMore, pageInfo.hasNextPage, pageInfo.endCursor, pageSize]);
 
-  // ✅ IntersectionObserver triggers loadMore near bottom
+  // IntersectionObserver triggers loadMore near bottom
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-
 type HistoryItem = {
   date: string;
   title: string;
@@ -11,26 +10,21 @@ type HistoryItem = {
   imageAlt: string;
 };
 
-const GMCC = {
-  navy: "#003A70",
-  teal: "#0085ad",
-  green: "#4C8B2B",
-  darkTeal: "#00556f",
+type HistorySectionProps = {
+  heading: string;
+  items: HistoryItem[];
 };
 
-const COL_GAP_PX = 48;      // gap-8
-const SIDE_PADDING_PX = 0; // paddingLeft/Right in your grid
-const CARD_COL_MIN_PX = 320;
+// Layout constants (keep in sync with Tailwind classes below)
+const SIDE_PADDING_PX = 0; // extra left/right padding applied inside the grid (we use gutter on the scroller instead)
+const MOBILE_CARD_MIN_PX = 320;
+const MOBILE_CARD_MAX_PX = 420;
+const MOBILE_CARD_VW = 0.82; // matches [grid-auto-columns:minmax(320px,82vw)]
 
-export default function HistorySection({
-  heading,
-  intro,
-  items,
-}: {
-  heading: string;
-  intro: string;
-  items: HistoryItem[];
-}) {
+export default function HistorySection({ heading, items }: HistorySectionProps) {
+  /**
+   * Filter out completely-empty items so the timeline doesn't render blank cards.
+   */
   const cleanItems = useMemo(
     () =>
       (items ?? []).filter(
@@ -43,69 +37,189 @@ export default function HistorySection({
     [items]
   );
 
+  /**
+   * Refs for measuring and controlling horizontal scroll/snap.
+   */
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
   const cellRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  /**
+   * UI state
+   */
   const [activeIndex, setActiveIndex] = useState(0);
+  const [maxReachableIndex, setMaxReachableIndex] = useState(0);
+
+  /**
+   * Responsive state
+   */
+  const [isMd, setIsMd] = useState(false);
+  const [mobileGutter, setMobileGutter] = useState(0);
+
+  /**
+   * Timeline line width (must match the scrollable grid width)
+   */
+  const [trackWidth, setTrackWidth] = useState<number>(0);
+
+  /**
+   * Guard to keep our "active item" computation from fighting smooth programmatic scroll.
+   */
   const isProgrammaticScroll = useRef(false);
 
-  // Drag-to-scroll state
-  const [isDragging, setIsDragging] = useState(false);
+  /**
+   * Mouse drag-to-scroll state (desktop convenience)
+   */
+  const isDraggingRef = useRef(false);
   const dragStartX = useRef(0);
   const dragScrollLeft = useRef(0);
 
-  const scrollToIndex = (idx: number) => {
+  /**
+   * Track breakpoint (md) in JS so we can compute snap positions accurately:
+   * - desktop: snap to "start" of each card
+   * - mobile: snap to "center" of each card + gutter padding so ends can center
+   */
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsMd(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+
+  /**
+   * Compute mobile "gutter" padding so each card can be centered when snapping.
+   * This creates equal left/right padding on the scroller, matching the mobile card width.
+   */
+  useEffect(() => {
     const scroller = scrollerRef.current;
-    const cell = cellRefs.current[idx];
-    if (!scroller || !cell) return;
+    if (!scroller) return;
 
-    const targetLeft = cell.offsetLeft - SIDE_PADDING_PX;
+    const calc = () => {
+      const md = window.matchMedia("(min-width: 768px)").matches;
+      if (md) {
+        setMobileGutter(0);
+        return;
+      }
 
-    // Flag that we're doing a programmatic scroll so onScroll doesn't fight us
-    isProgrammaticScroll.current = true;
-    setActiveIndex(idx);
+      const w = scroller.clientWidth;
+      const cardW = Math.min(
+        Math.max(MOBILE_CARD_MIN_PX, Math.floor(w * MOBILE_CARD_VW)),
+        MOBILE_CARD_MAX_PX
+      );
+      setMobileGutter(Math.max(0, Math.floor((w - cardW) / 2)));
+    };
 
-    scroller.scrollTo({
-      left: targetLeft,
-      behavior: "smooth",
-    });
+    calc();
+    const ro = new ResizeObserver(calc);
+    ro.observe(scroller);
 
-    // Clear the flag after scroll completes (give it enough time for smooth scroll)
-    setTimeout(() => {
-      isProgrammaticScroll.current = false;
-    }, 500);
+    const mq = window.matchMedia("(min-width: 768px)");
+    mq.addEventListener?.("change", calc);
+
+    window.addEventListener("resize", calc);
+    return () => {
+      ro.disconnect();
+      mq.removeEventListener?.("change", calc);
+      window.removeEventListener("resize", calc);
+    };
+  }, []);
+
+  /**
+   * Measure the full scrollable width of the grid so the teal "timeline line" spans the entire track.
+   */
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    const grid = gridRef.current;
+    if (!scroller || !grid) return;
+
+    const calc = () => setTrackWidth(grid.scrollWidth);
+
+    calc();
+    const ro = new ResizeObserver(calc);
+    ro.observe(scroller);
+    ro.observe(grid);
+
+    window.addEventListener("resize", calc);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", calc);
+    };
+  }, [cleanItems.length]);
+
+  /**
+   * Given a card element, compute the scrollLeft value that represents its snap position.
+   * - Desktop: align card start to viewport start
+   * - Mobile: align card center to viewport center (accounts for mobile gutter padding)
+   */
+  const getSnapLeftForCell = (el: HTMLDivElement, scroller: HTMLDivElement) => {
+    // el.offsetLeft is relative to the grid; scroller padding shifts the content.
+    const leftInScroller = mobileGutter + el.offsetLeft - SIDE_PADDING_PX;
+
+    if (isMd) return leftInScroller;
+
+    // Center snap on mobile
+    return leftInScroller + el.clientWidth / 2 - scroller.clientWidth / 2;
   };
 
-  const goPrev = () => scrollToIndex(Math.max(0, activeIndex - 1));
-  const goNext = () => scrollToIndex(Math.min(cleanItems.length - 1, activeIndex + 1));
+  /**
+   * The last card index whose snap position is actually reachable by scrollLeft.
+   * On desktop we show multiple cards at once, so this is often less than (items - 1).
+   */
+  const getMaxReachableIndex = (scroller: HTMLDivElement) => {
+    const epsilon = isMd ? 4 : 10;
+    const maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
 
-  // Keep activeIndex in sync if the user manually scrolls/swipes
+    let reachable = 0;
+    for (let i = 0; i < cellRefs.current.length; i++) {
+      const el = cellRefs.current[i];
+      if (!el) continue;
+
+      const snapLeft = getSnapLeftForCell(el, scroller);
+      if (snapLeft <= maxScrollLeft + epsilon) {
+        reachable = i;
+      }
+    }
+
+    return reachable;
+  };
+
+  /**
+   * Scroll to a specific card index (membership-style index navigation).
+   */
+  const scrollToIndex = (index: number) => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const maxIndex = getMaxReachableIndex(scroller);
+    const clamped = Math.max(0, Math.min(index, maxIndex));
+    const targetEl = cellRefs.current[clamped];
+    if (!targetEl) return;
+    const target = getSnapLeftForCell(targetEl, scroller);
+
+    isProgrammaticScroll.current = true;
+    scroller.scrollTo({ left: target, behavior: "smooth" });
+    setActiveIndex(clamped);
+
+    window.setTimeout(() => {
+      isProgrammaticScroll.current = false;
+    }, 450);
+  };
+
+  const goPrev = () => scrollToIndex(activeIndex - 1);
+  const goNext = () => scrollToIndex(activeIndex + 1);
+  const atStart = activeIndex <= 0;
+  const atEnd = activeIndex >= maxReachableIndex;
+
+  /**
+   * Keep activeIndex + edge state in sync when user manually scrolls/swipes.
+   */
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
     const onScroll = () => {
-      // Ignore scroll events during programmatic scrolling
-      if (isProgrammaticScroll.current) return;
-
-      const maxLeft = scroller.scrollWidth - scroller.clientWidth;
-      const epsilon = 4; // px tolerance for "at the end"
-
-      // If we're basically at the end, force last index
-      if (maxLeft <= 0) {
-        setActiveIndex(0);
-        return;
-      }
-      if (scroller.scrollLeft >= maxLeft - epsilon) {
-        setActiveIndex(cleanItems.length - 1);
-        return;
-      }
-      if (scroller.scrollLeft <= epsilon) {
-        setActiveIndex(0);
-        return;
-      }
-
-      // Otherwise: choose closest cell to left edge
-      const left = scroller.scrollLeft + SIDE_PADDING_PX;
+      const current = scroller.scrollLeft;
+      const currentMaxReachable = getMaxReachableIndex(scroller);
+      setMaxReachableIndex(currentMaxReachable);
 
       let bestIdx = 0;
       let bestDist = Number.POSITIVE_INFINITY;
@@ -113,179 +227,141 @@ export default function HistorySection({
       for (let i = 0; i < cellRefs.current.length; i++) {
         const el = cellRefs.current[i];
         if (!el) continue;
-        const dist = Math.abs(el.offsetLeft - left);
+
+        const snapLeft = getSnapLeftForCell(el, scroller);
+        const dist = Math.abs(snapLeft - current);
+
         if (dist < bestDist) {
           bestDist = dist;
           bestIdx = i;
         }
       }
 
-      setActiveIndex((prev) => (prev === bestIdx ? prev : bestIdx));
+      setActiveIndex(Math.min(bestIdx, currentMaxReachable));
     };
 
     scroller.addEventListener("scroll", onScroll, { passive: true });
+    onScroll(); // initialize
     return () => scroller.removeEventListener("scroll", onScroll);
-  }, [cleanItems.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleanItems.length, isMd, mobileGutter]);
 
-  // Drag-to-scroll handlers
+  /**
+   * Mouse drag-to-scroll (desktop only behavior; safe on mobile).
+   * We temporarily disable snap while dragging to avoid jitter.
+   */
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
     const onMouseDown = (e: MouseEvent) => {
-      // Only handle left mouse button
       if (e.button !== 0) return;
-      
-      setIsDragging(true);
-      dragStartX.current = e.pageX - scroller.offsetLeft;
+
+      isDraggingRef.current = true;
+      dragStartX.current = e.pageX - scroller.getBoundingClientRect().left;
       dragScrollLeft.current = scroller.scrollLeft;
-      scroller.style.scrollSnapType = "none"; // Disable snap while dragging
+
+      scroller.style.scrollSnapType = "none";
+      scroller.style.cursor = "grabbing";
     };
 
     const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
+      if (!isDraggingRef.current) return;
       e.preventDefault();
-      const x = e.pageX - scroller.offsetLeft;
-      const walk = (x - dragStartX.current) * 1.5; // Multiply for faster scroll
+
+      const x = e.pageX - scroller.getBoundingClientRect().left;
+      const walk = (x - dragStartX.current) * 1.5;
       scroller.scrollLeft = dragScrollLeft.current - walk;
     };
 
-    const onMouseUp = () => {
-      if (!isDragging) return;
-      setIsDragging(false);
-      scroller.style.scrollSnapType = "x mandatory"; // Re-enable snap
-    };
+    const endDrag = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
 
-    const onMouseLeave = () => {
-      if (!isDragging) return;
-      setIsDragging(false);
       scroller.style.scrollSnapType = "x mandatory";
+      scroller.style.cursor = "grab";
     };
 
     scroller.addEventListener("mousedown", onMouseDown);
     scroller.addEventListener("mousemove", onMouseMove);
-    scroller.addEventListener("mouseup", onMouseUp);
-    scroller.addEventListener("mouseleave", onMouseLeave);
+    scroller.addEventListener("mouseup", endDrag);
+    scroller.addEventListener("mouseleave", endDrag);
 
     return () => {
       scroller.removeEventListener("mousedown", onMouseDown);
       scroller.removeEventListener("mousemove", onMouseMove);
-      scroller.removeEventListener("mouseup", onMouseUp);
-      scroller.removeEventListener("mouseleave", onMouseLeave);
+      scroller.removeEventListener("mouseup", endDrag);
+      scroller.removeEventListener("mouseleave", endDrag);
     };
-  }, [isDragging]);
-
-  const [colPx, setColPx] = useState<number>(CARD_COL_MIN_PX);
-
-  useEffect(() => {
-    const scroller = scrollerRef.current;
-    if (!scroller) return;
-
-    const calc = () => {
-      const w = scroller.clientWidth;
-      const isMd = window.matchMedia("(min-width: 768px)").matches;
-
-      const DESKTOP_COLS = 3; // change to 3, 4, etc.
-
-      if (isMd) {
-        const cols = 3; // or 2
-        const px =
-          (w - 2 * SIDE_PADDING_PX - (cols - 1) * COL_GAP_PX) / cols;
-      
-        setColPx(px)
-
-      } else {
-        // mobile: comfy single-card view (no need for exact)
-        const px = Math.min(w * 0.82, 420); // tweak if you want
-        setColPx(Math.max(CARD_COL_MIN_PX, Math.floor(px)));
-      }
-    };
-
-    calc();
-
-    const ro = new ResizeObserver(calc);
-    ro.observe(scroller);
-
-    const mq = window.matchMedia("(min-width: 768px)");
-    const onMq = () => calc();
-    mq.addEventListener?.("change", onMq);
-
-    window.addEventListener("resize", calc);
-    return () => {
-      ro.disconnect();
-      mq.removeEventListener?.("change", onMq);
-      window.removeEventListener("resize", calc);
-    };
-  }, []);
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMd, mobileGutter]);
 
   if (!cleanItems.length) return null;
 
   return (
-    <section className="px-4 py-14 scroll-mt-24 bg-neutral-100">
-      <div className="mx-auto max-w-6xl">
-        {/* Header row */}
+    <section className="relative overflow-hidden bg-gmcc-navy px-4 py-14 scroll-mt-24">
+      <div className="relative z-10 mx-auto max-w-6xl">
+        {/* Header */}
         <div className="text-center">
-          <h2 className="text-sm font-semibold tracking-wide text-neutral-500">History</h2>
-          {intro ? <p className="mt-10 mx-auto max-w-3xl text-neutral-700">{intro}</p> : null}
+          <h2 className="h2 mt-24 mb-0 tracking-wide text-3xl font-semibold text-white">{heading}</h2>
         </div>
-  
-        {/* arrows: move by ONE card */}
-        <div className="hidden md:flex gap-2 pt-2 justify-end">
+
+        {/* Desktop arrows */}
+        <div className="mt-0 hidden justify-end gap-2 pt-2 md:flex">
           <button
             type="button"
             onClick={goPrev}
-            disabled={activeIndex === 0}
-            className="grid h-10 w-10 place-items-center rounded-full border border-neutral-200 bg-white text-sm font-semibold shadow-sm disabled:opacity-40"
+            disabled={atStart}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
             aria-label="Previous"
-            style={{ color: GMCC.navy }}
           >
             ←
           </button>
           <button
             type="button"
             onClick={goNext}
-            disabled={activeIndex === cleanItems.length - 1}
-            className="grid h-10 w-10 place-items-center rounded-full border border-neutral-200 bg-white text-sm font-semibold shadow-sm disabled:opacity-40"
+            disabled={atEnd}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
             aria-label="Next"
-            style={{ color: GMCC.navy }}
           >
             →
           </button>
         </div>
-  
-        {/* Shared scroller (timeline + cards in same columns) */}
+
+        {/* Scroller */}
         <div
           ref={scrollerRef}
           className="mt-8 overflow-x-auto pb-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           style={{
             scrollSnapType: "x mandatory",
             WebkitOverflowScrolling: "touch",
-            cursor: isDragging ? "grabbing" : "grab",
-            userSelect: isDragging ? "none" : "auto",
+            cursor: "grab",
+            paddingLeft: mobileGutter,
+            paddingRight: mobileGutter,
+            scrollPaddingLeft: mobileGutter,
+            scrollPaddingRight: mobileGutter,
           }}
         >
-          {/* 
-            Make each column:
-            - mobile: minmax(320px, 80vw)
-            - md+: exactly 1/2 of the visible scroller width (minus padding + 1gap)
-          */}
           <div
-            className="relative inline-grid gap-8"
-            style={{
-              minWidth: "100%",
-              gridAutoFlow: "column",
-              gridAutoColumns: `${colPx}px`,
-              paddingLeft: SIDE_PADDING_PX,
-              paddingRight: SIDE_PADDING_PX,
-            }}
+            ref={gridRef}
+            className="
+              relative inline-grid gap-8
+              [grid-auto-flow:column]
+              [grid-auto-columns:minmax(320px,82vw)]
+              md:[grid-auto-columns:calc((100%-64px)/3)]
+            "
+            style={{ minWidth: "100%" }}
           >
-            {/* Timeline line across the FULL scroll width */}
+            {/* Timeline track line spanning full scroll width */}
             <div
-              className="pointer-events-none absolute left-0 right-0 top-[44px] h-[2px]"
-              style={{ backgroundColor: GMCC.teal, opacity: 0.35 }}
+              className="pointer-events-none absolute left-0 top-[44px] h-[4px]"
+              style={{
+                width: trackWidth ? `${trackWidth}px` : "100%",
+                backgroundColor: "var(--gmcc-teal)",
+                borderRadius: "9999px",
+              }}
             />
-  
+
             {cleanItems.map((it, idx) => (
               <div
                 key={`${it.date}-${idx}`}
@@ -294,29 +370,25 @@ export default function HistorySection({
                 }}
                 className="relative"
                 style={{
-                  scrollSnapAlign: "start",
+                  scrollSnapAlign: isMd ? "start" : "center",
                   scrollSnapStop: "always",
                 }}
               >
-                {/* Date label + pin on the line */}
+                {/* Date label */}
                 <button
                   type="button"
                   onClick={() => scrollToIndex(idx)}
                   className="group relative mx-auto block w-full select-none"
                   aria-label={`Go to ${it.date || `item ${idx + 1}`}`}
                 >
-                  <div
-                    className="text-center text-sm font-semibold tracking-wide"
-                    style={{ color: GMCC.navy }}
-                  >
+                  <div className="text-center text-base font-semibold tracking-widest text-white">
                     {it.date || `Item ${idx + 1}`}
                   </div>
                 </button>
-  
-                {/* Polaroid card */}
-                <div className="mt-8 mb-2 flex justify-center">
-                  {/* wrapper ensures the card can grow to fill the column nicely */}
-                  <div className="w-full max-w-none">
+
+                {/* Card */}
+                <div className="mt-10 mb-2 flex justify-center">
+                  <div className="w-full max-w-none select-none">
                     <PolaroidCard item={it} />
                   </div>
                 </div>
@@ -324,47 +396,80 @@ export default function HistorySection({
             ))}
           </div>
         </div>
-  
-        {/* mobile arrows */}
+
+        {/* Mobile arrows */}
         <div className="mt-2 flex items-center justify-center gap-2 md:hidden">
           <button
             type="button"
             onClick={goPrev}
-            disabled={activeIndex === 0}
-            className="grid h-10 w-10 place-items-center rounded-full border border-neutral-200 bg-white text-sm font-semibold shadow-sm disabled:opacity-40"
+            disabled={atStart}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
             aria-label="Previous"
-            style={{ color: GMCC.navy }}
           >
             ←
           </button>
           <button
             type="button"
             onClick={goNext}
-            disabled={activeIndex === cleanItems.length - 1}
-            className="grid h-10 w-10 place-items-center rounded-full border border-neutral-200 bg-white text-sm font-semibold shadow-sm disabled:opacity-40"
+            disabled={atEnd}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
             aria-label="Next"
-            style={{ color: GMCC.navy }}
           >
             →
           </button>
         </div>
       </div>
+
+      {/* Bottom wave (responsive) */}
+      <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
+        <svg
+          viewBox="0 0 390 120"
+          className="block h-14 w-full text-gmcc-navy md:hidden"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="
+              M0,98
+              C78,62 135,54 195,74
+              C255,96 322,88 390,60
+              L390,0 L0,0 Z
+            "
+            fill="currentColor"
+          />
+        </svg>
+
+        <svg
+          viewBox="0 0 1440 120"
+          className="hidden h-16 w-full text-gmcc-navy md:block"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="
+              M0,110
+              C300,-50  500,120  800,100
+              S1000,0 1440,0
+              L1440,0 L0,0 Z
+            "
+            fill="currentColor"
+          />
+        </svg>
+      </div>
     </section>
   );
-}  
+}
 
 function PolaroidCard({ item }: { item: HistoryItem }) {
   return (
     <div
       className={[
-        "relative w-full rounded-2xl bg-white border border-neutral-200",
-        "transition hover:-translate-y-0.5 hover:shadow-xl hover:border-neutral-300",
+        "relative w-full rounded-2xl border border-neutral-200 bg-white",
+        "transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-xl",
       ].join(" ")}
     >
-      {/* top pin */}
-      <div className="absolute -top-8 left-1/8">
-        <div className="grid h-10 w-10 place-items-center">
-          <BrandPin className="h-10 w-10 scale-x-[-1]" />
+      {/* Top pin */}
+      <div className="absolute -top-11 left-1/12">
+        <div className="grid h-12 w-12 place-items-center">
+          <BrandPin className="h-14 w-14 scale-x-[-1] rotate-[20deg]" />
         </div>
       </div>
 
@@ -374,9 +479,11 @@ function PolaroidCard({ item }: { item: HistoryItem }) {
             <img
               src={item.imageUrl}
               alt={item.imageAlt || ""}
-              className="aspect-[4/3] w-full object-cover"
+              className="aspect-[4/3] w-full select-none object-cover"
               loading="lazy"
               decoding="async"
+              draggable={false}
+              onDragStart={(e) => e.preventDefault()}
             />
           ) : (
             <div className="aspect-[4/3] w-full bg-neutral-200" />
@@ -411,13 +518,13 @@ function BrandPin({ className }: { className?: string }) {
         d="M24.5 35.5C17.8 42.9 2.9 60.9.6 63.1c0 0-.1 0-.1.1c-.9.9-.6 1.2.3.3c2-2 20.2-17.2 27.6-23.9l-3.9-4.1"
         fill="#d0d0d0"
       />
-      {/* darker cap */}
+      {/* main body */}
       <path
         d="M24.46 28.298L46.873 5.883L58.33 17.338L35.914 39.753z"
-        fill={GMCC.darkTeal}
+        fill="var(--gmcc-green-dark)"
       />
-      {/* main body */}
-      <g fill={GMCC.teal}>
+      {/* caps */}
+      <g fill="var(--gmcc-green)">
         <path d="M43.6 54.6c.9-7.8-2.5-17.1-9.8-24.3S17.2 19.6 9.4 20.4l34.2 34.2" />
         <path d="M64 22.9c-5.2.6-11.4-1.7-16.3-6.6c-4.9-4.9-7.2-11.1-6.6-16.3L64 22.9" />
       </g>

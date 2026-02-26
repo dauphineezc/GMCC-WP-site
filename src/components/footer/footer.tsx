@@ -1,4 +1,6 @@
 // components/footer/footer.tsx
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import type { FooterNavItem } from "@/lib/nav/getFooterNav";
@@ -9,17 +11,38 @@ type FooterProps = {
 
 export default function Footer({ items }: FooterProps) {
   return (
-    <footer className="bg-[#01192E] text-white">
-      <div className="mx-auto max-w-7xl px-6 py-8 md:py-10">
+    <footer className="relative text-white">
+      {/* Wave */}
+      <div className="absolute top-0 left-0 w-full overflow-hidden leading-none">
+        <svg
+          viewBox="0 0 1440 120"
+          className={`h-10 w-full md:h-16 text-white`}
+          preserveAspectRatio="none"
+        >
+          <path
+            d="
+              M0,110
+              C300,-50  500,120  800,100
+              S1000,0 1440,0
+              L1440,0 L0,0 Z
+            "
+            fill="currentColor"
+          />
+        </svg>
+      </div>
+
+      {/* Actual footer background */}
+      <div className="bg-gmcc-navy pt-12 md:pt-16">
+        <div className="mx-auto max-w-7xl px-6 py-8 md:py-10">
         {/* Logo */}
         <div className="flex justify-center mb-6 md:mb-8">
           <Link href="/">
             <Image
-              src="/GMLogoRibbonOnlyTransparent.png"
+              src="/GREATER MIDLAND COMMUNITY CENTER LOGO-WHITE VERSION-3-12-15.png"
               alt="Greater Midland"
               width={60}
               height={60}
-              className="h-10 md:h-12 w-auto opacity-80"
+              className="h-10 md:h-12 w-auto opacity-100"
             />
           </Link>
         </div>
@@ -61,6 +84,7 @@ export default function Footer({ items }: FooterProps) {
               INFO@GREATERMIDLAND.ORG
             </a>
           </div>
+        </div>
         </div>
       </div>
     </footer>
