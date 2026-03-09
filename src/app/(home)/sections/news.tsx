@@ -123,28 +123,25 @@ export default function NewsSection({
 
           {/* Subscribe card (same fixed height + layout) */}
           <div className={`card overflow-hidden p-0 ${CARD_HEIGHT}`}>
-            <div className="grid h-full grid-cols-5">
-              <div className="col-span-2 bg-gmcc-navy">
-                <div className="h-full w-full bg-gmcc-navy" />
-              </div>
+            <div className="grid h-full grid-cols-1 bg-gmcc-navy">
 
-              <div className="col-span-3 flex h-full flex-col p-5">
-                <div className="text-xl font-semibold leading-snug text-gmcc-navy line-clamp-2">
+              <div className="col-span-1 flex h-full flex-col p-6">
+                <div className="text-3xl font-semibold leading-snug text-white line-clamp-2">
                   {newsletterSubscriptionHeader || "Stay in the loop"}
                 </div>
 
-                <p className="mt-3 text-sm leading-relaxed text-neutral-700 line-clamp-4">
+                <p className="mt-1 text-base leading-relaxed text-neutral-200 line-clamp-4">
                   {newsletterSubscriptionSubtext ||
                     "Get updates about programs, events, and community news."}
                 </p>
 
-                <div className="mt-auto pt-4">
-                  <div className="w-full">
-                    <span className="sr-only">Enter your email address</span>
-                    <input type="email" placeholder="Enter your email address" className="w-full p-1 rounded-md border border-gmcc-navy" />
+                <div className="mt-4 pt-2">
+                  <div className="w-full px-10">
+                    <span className="sr-only pl-4">Enter your email address</span>
+                    <input type="email" placeholder="Enter your email address" className="w-full p-1 rounded-md border border-white bg-white text-neutral-700" />
                   </div>
-                  <div className="flex justify-center mt-2">
-                    <a href={cta?.url ?? "#"} className="btn btn-primary">
+                  <div className="flex justify-center mt-3">
+                    <a href={cta?.url ?? "#"} className="btn btn-secondary">
                       Subscribe
                     </a>
                   </div>

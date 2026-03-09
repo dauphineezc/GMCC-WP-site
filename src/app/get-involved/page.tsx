@@ -11,6 +11,15 @@ query GetInvolvedPage($uri: ID!) {
     slug
 
     getInvolvedPageFields {
+      heroImage {
+        node {
+          sourceUrl
+          altText
+        }
+        }
+
+      header
+      subheader
       impactBlurb
 
       volunteerGroup {
@@ -134,6 +143,9 @@ type MaybeImage = { node?: WPImageNode | null } | null;
 type Race = { raceName?: string | null; raceDetails?: string | null } | null;
 
 type GetInvolvedFields = {
+  heroImage?: MaybeImage;
+  header?: string | null;
+  subheader?: string | null;
   impactBlurb?: string | null;
 
   volunteerGroup?: {
@@ -196,18 +208,7 @@ export default async function GetInvolvedPage() {
 
   return (
     <main>
-      {/* HEADER IMAGE - Full Width */}
-      <div className="w-full">
-        <HeaderImage src="/images/GetInvolvedHeaderImage.png" alt="Get Involved" />
-      </div>
-
-      <div className="mx-auto max-w-6xl px-4 section-y stack-8">
-        {/* <div>
-          <h1 className="h1 text-gmcc-navy">{data?.page?.title ?? "Get Involved"}</h1>
-        </div> */}
-
         <GetInvolvedClient fields={fields} />
-      </div>
     </main>
   );
 }

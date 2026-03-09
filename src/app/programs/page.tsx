@@ -2,6 +2,11 @@
 import { Suspense } from "react";
 import { wpFetch } from "@/lib/wp";
 import ExploreProgramsClient from "./exploreProgramsClient";
+import type { ProgramsPageACF } from "@/components/programs/programsDirectoryHeader";
+import type {
+  DirectoryHeaderData,
+  DirectoryTrainer,
+} from "@/components/programs/directoryHeaderSection";
 
 const PAGE_SIZE = 24;
 
@@ -44,11 +49,231 @@ const EXPLORE_PROGRAMS_QUERY = `
   }
 `;
 
+const DIRECTORY_HEADER_FIELDS = `
+  header
+  body
+  attachments {
+    attachment1 { label file { node { sourceUrl mediaItemUrl title } } }
+    attachment2 { label file { node { sourceUrl mediaItemUrl title } } }
+    attachment3 { label file { node { sourceUrl mediaItemUrl title } } }
+    attachment4 { label file { node { sourceUrl mediaItemUrl title } } }
+  }
+`;
+
+const AQUATICS_DIRECTORY_HEADER_QUERY = `
+  query AquaticsDirectoryHeader($uri: ID!) {
+    page(id: $uri, idType: URI) {
+      aquaticsDirectoryPageFields {
+        ${DIRECTORY_HEADER_FIELDS}
+      }
+    }
+  }
+`;
+
+const CAMPS_DIRECTORY_HEADER_QUERY = `
+  query CampsDirectoryHeader($uri: ID!) {
+    page(id: $uri, idType: URI) {
+      campsDirectoryPageFields {
+        ${DIRECTORY_HEADER_FIELDS}
+      }
+    }
+  }
+`;
+
+const CHILDCARE_DIRECTORY_HEADER_QUERY = `
+  query ChildcareDirectoryHeader($uri: ID!) {
+    page(id: $uri, idType: URI) {
+      childcareDirectoryPageFields {
+        ${DIRECTORY_HEADER_FIELDS}
+      }
+    }
+  }
+`;
+
+const GROUP_FITNESS_DIRECTORY_HEADER_QUERY = `
+  query GroupFitnessDirectoryHeader($uri: ID!) {
+    page(id: $uri, idType: URI) {
+      groupFitnessDirectoryPageFields {
+        ${DIRECTORY_HEADER_FIELDS}
+      }
+    }
+  }
+`;
+
+const PERSONAL_TRAINING_AND_TENNIS_DIRECTORY_HEADER_QUERY = `
+  query PersonalTrainingAndTennisDirectoryHeader($uri: ID!) {
+    page(id: $uri, idType: URI) {
+      personalTrainingDirectoryPageFields {
+        ${DIRECTORY_HEADER_FIELDS}
+        trainers {
+          nodes {
+            ...on StaffProfile {
+              title
+              featuredImage { node {sourceUrl altText}}
+              staffProfilesFields {
+                title
+                bio
+              }
+            }
+          }
+        }
+      }
+      tennisLessonsDirectoryPageFields {
+        ${DIRECTORY_HEADER_FIELDS}
+        tennisInstructors {
+          nodes {
+            ...on StaffProfile {
+              title
+              featuredImage { node {sourceUrl altText}}
+              staffProfilesFields {
+                title
+                bio
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+function normalizeDirectoryHeaderData(
+  field?: any,
+  trainerConnectionKey: "trainers" | "tennisInstructors" = "trainers"
+): DirectoryHeaderData | undefined {
+  if (!field) return undefined;
+  const normalizeAttachment = (att: any) => {
+    if (!att) return undefined;
+    return {
+      label: att.label ?? null,
+      file: att.file?.node ?? att.file ?? null,
+    };
+  };
+
+  const trainerNodes = field?.[trainerConnectionKey]?.nodes ?? [];
+  const trainers: DirectoryTrainer[] =
+    trainerNodes.map((trainer: any) => ({
+      name: trainer?.title ?? null,
+      photo: trainer?.featuredImage?.node
+        ? {
+            sourceUrl: trainer.featuredImage.node.sourceUrl ?? null,
+            altText: trainer.featuredImage.node.altText ?? null,
+          }
+        : null,
+      jobTitle: trainer?.staffProfilesFields?.title ?? null,
+      bio: trainer?.staffProfilesFields?.bio ?? null,
+    })).filter((t: DirectoryTrainer) => t.name || t.jobTitle || t.photo?.sourceUrl || t.bio) ?? [];
+
+  return {
+    header: field.header ?? null,
+    body: field.body ?? null,
+    attachments: field.attachments
+      ? {
+          attachment1: normalizeAttachment(field.attachments.attachment1),
+          attachment2: normalizeAttachment(field.attachments.attachment2),
+          attachment3: normalizeAttachment(field.attachments.attachment3),
+          attachment4: normalizeAttachment(field.attachments.attachment4),
+        }
+      : null,
+    trainers,
+  };
+}
+
+function hasDirectoryHeaderContent(field?: DirectoryHeaderData | null) {
+  const header = (field?.header ?? "").trim();
+  const body = (field?.body ?? "").trim();
+  const attachments = field?.attachments;
+  const hasAttachment =
+    !!attachments?.attachment1 ||
+    !!attachments?.attachment2 ||
+    !!attachments?.attachment3 ||
+    !!attachments?.attachment4;
+  return Boolean(header || body || hasAttachment || (field?.trainers?.length ?? 0) > 0);
+}
+
+async function fetchFieldFromUris<TPage extends Record<string, any>>(
+  query: string,
+  uriCandidates: string[],
+  fieldName: keyof TPage
+) {
+  for (const uri of uriCandidates) {
+    try {
+      const data = await wpFetch<{ page?: TPage | null }>(query, { uri });
+      const field = (data?.page?.[fieldName] as DirectoryHeaderData | null | undefined) ?? null;
+      if (hasDirectoryHeaderContent(field)) return field;
+    } catch {
+      // try next candidate
+    }
+  }
+  return undefined;
+}
+
 export default async function ExploreProgramsPage() {
   const data = await wpFetch<any>(EXPLORE_PROGRAMS_QUERY, {
     first: PAGE_SIZE,
     after: null,
-  });   
+  });
+  const [
+    aquaticsRaw,
+    campsRaw,
+    childcareRaw,
+    groupFitnessRaw,
+    personalTrainingRaw,
+    tennisLessonsRaw,
+  ] = await Promise.all([
+    fetchFieldFromUris<{ aquaticsDirectoryPageFields?: DirectoryHeaderData | null }>(
+      AQUATICS_DIRECTORY_HEADER_QUERY,
+      ["/aquatics", "/aquatics/", "aquatics"],
+      "aquaticsDirectoryPageFields"
+    ),
+    fetchFieldFromUris<{ campsDirectoryPageFields?: DirectoryHeaderData | null }>(
+      CAMPS_DIRECTORY_HEADER_QUERY,
+      ["/camps", "/camps/", "camps"],
+      "campsDirectoryPageFields"
+    ),
+    fetchFieldFromUris<{ childcareDirectoryPageFields?: DirectoryHeaderData | null }>(
+      CHILDCARE_DIRECTORY_HEADER_QUERY,
+      ["/childcare", "/childcare/", "childcare"],
+      "childcareDirectoryPageFields"
+    ),
+    fetchFieldFromUris<{ groupFitnessDirectoryPageFields?: DirectoryHeaderData | null }>(
+      GROUP_FITNESS_DIRECTORY_HEADER_QUERY,
+      [
+        "/group-fitness-classes",
+        "/group-fitness-classes/",
+        "group-fitness-classes",
+        "/group-fitness",
+        "/group-fitness/",
+        "group-fitness",
+      ],
+      "groupFitnessDirectoryPageFields"
+    ),
+    fetchFieldFromUris<{
+      personalTrainingDirectoryPageFields?: DirectoryHeaderData | null;
+      tennisLessonsDirectoryPageFields?: DirectoryHeaderData | null;
+    }>(
+      PERSONAL_TRAINING_AND_TENNIS_DIRECTORY_HEADER_QUERY,
+      ["/personal-training", "/personal-training/", "personal-training"],
+      "personalTrainingDirectoryPageFields"
+    ),
+    fetchFieldFromUris<{
+      personalTrainingDirectoryPageFields?: DirectoryHeaderData | null;
+      tennisLessonsDirectoryPageFields?: DirectoryHeaderData | null;
+    }>(
+      PERSONAL_TRAINING_AND_TENNIS_DIRECTORY_HEADER_QUERY,
+      ["/personal-training", "/personal-training/", "personal-training"],
+      "tennisLessonsDirectoryPageFields"
+    ),
+  ]);
+
+  const directoryHeaderData: ProgramsPageACF = {
+    aquaticsDirectoryPageFields: normalizeDirectoryHeaderData(aquaticsRaw),
+    campsDirectoryPageFields: normalizeDirectoryHeaderData(campsRaw),
+    childcareDirectoryPageFields: normalizeDirectoryHeaderData(childcareRaw),
+    groupFitnessDirectoryPageFields: normalizeDirectoryHeaderData(groupFitnessRaw),
+    personalTrainingDirectoryPageFields: normalizeDirectoryHeaderData(personalTrainingRaw, "trainers"),
+    tennisLessonsDirectoryPageFields: normalizeDirectoryHeaderData(tennisLessonsRaw, "tennisInstructors"),
+  };
 
   const programs = data?.programs?.nodes ?? [];
   const pageInfo = data?.programs?.pageInfo ?? { hasNextPage: false, endCursor: null };
@@ -59,6 +284,7 @@ export default async function ExploreProgramsPage() {
         initialPrograms={programs}
         initialPageInfo={pageInfo}
         pageSize={PAGE_SIZE}
+        directoryHeaderData={directoryHeaderData}
       />
     </Suspense>
   );

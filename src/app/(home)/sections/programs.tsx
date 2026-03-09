@@ -276,7 +276,6 @@ export default function ProgramsSection({
 
   return (
     <section className="relative overflow-hidden pt-8 pb-8">
-      
       {/* Background logo pieces, clipped to section bounds
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <img

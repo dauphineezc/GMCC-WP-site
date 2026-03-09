@@ -34,7 +34,7 @@ export default function Footer({ items }: FooterProps) {
       {/* Actual footer background */}
       <div className="bg-gmcc-navy pt-12 md:pt-16">
         <div className="mx-auto max-w-7xl px-6 py-8 md:py-10">
-        {/* Logo */}
+        {/* Logo
         <div className="flex justify-center mb-6 md:mb-8">
           <Link href="/">
             <Image
@@ -45,7 +45,7 @@ export default function Footer({ items }: FooterProps) {
               className="h-10 md:h-12 w-auto opacity-100"
             />
           </Link>
-        </div>
+        </div> */}
 
         {/* Navigation Links */}
         <nav aria-label="Footer" className="mb-6 md:mb-8">

@@ -4,6 +4,7 @@ import { mapProgram } from "@/lib/mappers";
 import HeaderImage from "@/components/headerImage";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import ImageCarousel from "@/components/imageCarousel";
+import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 
 /** Map age range to audience slug(s) for filtering */
 function getAudienceSlugFromAge(min: number | null, max: number | null): string | null {
@@ -192,23 +193,25 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
 
   return (
     <main>
-      {/* HEADER IMAGE - Full Width */}
-      <div className="w-full">
-        <HeaderImage src={p.heroImage?.url ?? ""} alt={p.heroImage?.alt ?? ""} />
-      </div>
+      <SolidNavyWaveHeader title={p.title} description={p.summary} />
+      {/* <SolidNavyWaveHeader/> */}
+
 
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
 
-      {/* HERO */}
-      <section className="stack-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* MAIN GRID: content + sidebar */}
+      <section className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)]">
+
+      <div className="stack-4">
+
+        {/* <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="stack-2">
             <h1 className="h1">{p.title}</h1>
-            {p.summary && (
-              <p className="body max-w-2xl">{p.summary}</p>
-            )}
+              {p.summary && (
+                <p className="body max-w-2xl">{p.summary}</p>
+              )}
           </div>
-        </div>
+        </div> */}
 
         {/* Chips row - all clickable, linking to /programs with filters */}
         <div className="flex flex-wrap gap-2">
@@ -285,10 +288,8 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             </a>
           ))}
         </div>
-      </section>
 
-      {/* MAIN GRID: content + sidebar */}
-      <section className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)]">
+
         {/* LEFT COLUMN */}
         <div className="stack-8">
           {/* Long description */}
@@ -428,6 +429,26 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                 </div>
               )}
 
+          {/* Instructors (optional) */}
+          {p.instructors?.length > 0 && (
+            <div>
+              <h2 className="h2 mb-3">Instructors</h2>
+              <div>
+                  <ul className="stack-2 body">
+                    {p.instructors.map((name: string, i: number) => (
+                      <li key={i}>• {name}</li>
+                    ))}
+                  </ul>
+                </div>
+            </div>
+          )}
+        </div>
+
+        </div>
+
+        {/* RIGHT SIDEBAR */}
+        <div>
+
           {/* Media Gallery Carousel */}
           {(() => {
             const gallery = wp.programFields?.mediaGallery;
@@ -454,32 +475,15 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             
             return (
               <div>
-                <h2 className="h2 mb-2">See {p.title} in action</h2>
+                {/* <h2 className="h2 mb-2">See {p.title} in action</h2> */}
                 <ImageCarousel images={carouselImages} />
               </div>
             );
           })()}
 
-          {/* Instructors (optional) */}
-          {p.instructors?.length > 0 && (
-            <div>
-              <h2 className="h2 mb-3">Instructors</h2>
-              <div>
-                  <ul className="stack-2 body">
-                    {p.instructors.map((name: string, i: number) => (
-                      <li key={i}>• {name}</li>
-                    ))}
-                  </ul>
-                </div>
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT SIDEBAR */}
-        <aside className="lg:sticky lg:top-18 h-fit">
-
           {/* Registration card */}
-          <div className="sticky top-8 card bg-gmcc-blue-light/30 border-gmcc-teal/40">
+          <aside className="sticky top-18">
+            <div className="card bg-gmcc-blue-light/30 border-gmcc-teal/40">
             <h2 className="h2 text-gmcc-navy">Ready to register?</h2>
             <p className="mt-1 small">
               You&apos;ll be taken to our secure registration system to
@@ -505,9 +509,9 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             <a href={`/visit/session-calendar`} className="link body block text-sm">➜ View session calendars</a>
             <a href={`/centers`} className="link body block text-sm">➜ Compare centers</a>
             <a href={`#similar-programs`} className="link body block text-sm">➜ Explore similar programs</a>
-          </div>
-
-        </aside>
+            </div>
+          </aside>
+        </div>
       </section>
 
       {p.relatedPrograms && p.relatedPrograms.length > 0 && (

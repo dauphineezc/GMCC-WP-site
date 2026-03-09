@@ -51,26 +51,17 @@ export default function ExploreMembershipsClient({
   const [audienceFilter, setAudienceFilter] = useState<string>("");
   const [programAreaFilters, setProgramAreaFilters] = useState<string[]>([]);
 
-  /** ---------------------------
-   *  PROGRESSIVE REVEAL STATE
-   * ----------------------------*/
-  // const [maxVisibleStep, setMaxVisibleStep] = useState(1);
+  const handleAudienceChange = (value: string) => {
+    setAudienceFilter(value);
+  };
 
-  // Handler to update audience and reveal next step
-  // const handleAudienceChange = (value: string) => {
-  //   setAudienceFilter(value);
-  //   if (maxVisibleStep < 2) setMaxVisibleStep(2);
-  // };
-
-  // Handler to update program areas and reveal next step
-  // const handleProgramAreaChange = (slug: string, checked: boolean) => {
-  //   if (checked) {
-  //     setProgramAreaFilters([...programAreaFilters, slug]);
-  //   } else {
-  //     setProgramAreaFilters(programAreaFilters.filter((s) => s !== slug));
-  //   }
-  //   if (maxVisibleStep < 3) setMaxVisibleStep(3);
-  // };
+  const handleProgramAreaChange = (slug: string, checked: boolean) => {
+    if (checked) {
+      setProgramAreaFilters((prev) => [...prev, slug]);
+    } else {
+      setProgramAreaFilters((prev) => prev.filter((s) => s !== slug));
+    }
+  };
 
   /** ---------------------------
    *  CAROUSEL STATE
@@ -208,7 +199,7 @@ export default function ExploreMembershipsClient({
               <select
                 className="rounded border border-neutral-300 bg-white px-3 py-1.5 body min-w-[150px] shadow-sm"
                 value={audienceFilter}
-                // onChange={(e) => handleAudienceChange(e.target.value)}
+                onChange={(e) => handleAudienceChange(e.target.value)}
               >
                 <option value="">Anyone</option>
                 {audiences.map((a) => (
@@ -242,7 +233,7 @@ export default function ExploreMembershipsClient({
                       <input
                         type="checkbox"
                         checked={programAreaFilters.includes(p.slug)}
-                        // onChange={(e) => handleProgramAreaChange(p.slug, e.target.checked)}
+                        onChange={(e) => handleProgramAreaChange(p.slug, e.target.checked)}
                         className="h-4 w-4 rounded border-neutral-300 text-gmcc-navy focus:ring-gmcc-navy"
                       />
                       {p.name}

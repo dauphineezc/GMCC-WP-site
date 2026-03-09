@@ -85,9 +85,7 @@ function CenterAccordionItem({
                     <PhoneLink
                       phone={phone}
                       className="underline decoration-white/50 underline-offset-4 hover:decoration-white text-white"
-                    >
-                      {phone}
-                    </PhoneLink>
+                    />
                   </div>
                 ) : null}
 

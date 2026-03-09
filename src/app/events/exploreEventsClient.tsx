@@ -467,7 +467,7 @@ export default function ExploreEventsClient({
                     className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
                 >
                     <span>
-                    <label className="text-base text-gmcc-navy">Audience</label>
+                    <label className="text-base text-gmcc-navy">Age group</label>
                     {audience.length > 0 && (
                         <span className="ml-2 text-xs text-neutral-500">({audience.length})</span>
                     )}

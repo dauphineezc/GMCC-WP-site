@@ -1,9 +1,14 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import HeaderImage from "@/components/headerImage";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
+import {
+  ProgramsDirectoryHeader,
+  getProgramsDirectoryHeaderVariant,
+  type ProgramsPageACF,
+} from "@/components/programs/programsDirectoryHeader";
 
 type ProgramWP = any;
 
@@ -91,10 +96,12 @@ export default function ExploreProgramsClient({
   initialPrograms,
   initialPageInfo,
   pageSize,
+  directoryHeaderData,
 }: {
   initialPrograms: ProgramWP[];
   initialPageInfo: PageInfo;
   pageSize: number;
+  directoryHeaderData: ProgramsPageACF;
 }) {
   // Infinite scroll state
   const [loadedPrograms, setLoadedPrograms] = useState<ProgramWP[]>(initialPrograms);
@@ -215,7 +222,17 @@ export default function ExploreProgramsClient({
   }, [all]);
 
   // --- Read URL search params ---
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const searchParamsObj = useMemo(
+    () => Object.fromEntries(searchParams.entries()),
+    [searchParams]
+  );
+  const hasSpecializedHeader = useMemo(
+    () => getProgramsDirectoryHeaderVariant(searchParamsObj) !== null,
+    [searchParamsObj]
+  );
 
   // Helper to find slug by name (case-insensitive)
   const findSlugByName = (options: { slug: string; name: string }[], name: string) => {
@@ -317,6 +334,30 @@ export default function ExploreProgramsClient({
   const [audience, setAudience] = useState<string[]>(initialFilters.audience);
   const [campTypes, setCampTypes] = useState<string[]>(initialFilters.campTypes);
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Keep URL in sync for the two filters that drive directory header selection.
+  useEffect(() => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+
+    if (offeringTypes.length) {
+      nextParams.set("offeringType", offeringTypes.join(","));
+    } else {
+      nextParams.delete("offeringType");
+    }
+
+    if (programAreas.length) {
+      nextParams.set("programArea", programAreas.join(","));
+    } else {
+      nextParams.delete("programArea");
+    }
+
+    const current = searchParams.toString();
+    const next = nextParams.toString();
+    if (next !== current) {
+      const href = next ? `${pathname}?${next}` : pathname;
+      router.replace(href, { scroll: false });
+    }
+  }, [offeringTypes, programAreas, pathname, router, searchParams]);
 
   // Sync state when URL params change (e.g., navigating from navbar)
   useEffect(() => {
@@ -432,12 +473,21 @@ export default function ExploreProgramsClient({
 
       {/* Page content - constrained width */}
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
-      <header className="stack-2">
-        <h1 className="h1">Explore our programs</h1>
-        <p className="body">
-          Browse all programs and filter by location, type, age, and more.
-        </p>
-      </header>
+        <header className="stack-2">
+          {hasSpecializedHeader ? (
+            <ProgramsDirectoryHeader
+              searchParams={searchParamsObj}
+              acf={directoryHeaderData}
+            />
+          ) : (
+            <>
+              <h1 className="h1">Explore our programs</h1>
+              <p className="body">
+                Browse all programs and filter by location, type, age, and more.
+              </p>
+            </>
+          )}
+        </header>
 
       <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
         {/* FILTER SIDEBAR */}

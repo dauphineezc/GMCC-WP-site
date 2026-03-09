@@ -13,6 +13,10 @@ function normalizeWpUrlToPath(url: string) {
     return sp.toString();
   }
 
+  const OUR_PURPOSE_PAGE: Record<string, string> = {
+    "Our Purpose": "/about",
+  };
+
   const MEMBERSHIP_PAGES: Record<string, string> = {
     "Join Now": "/membership",
     "Take a Tour": "/membership/tour",
@@ -21,7 +25,7 @@ function normalizeWpUrlToPath(url: string) {
     "Cancellation Policy": "/membership/policies",
   };
   
-  // "test" program filter rules (label-based for now)
+  // program filter rules
   const PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
     "Aquatics": "/programs?" + buildQuery({ programArea: "Aquatics" }),
     "Youth Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "youth" }),
@@ -48,10 +52,10 @@ function normalizeWpUrlToPath(url: string) {
     "Drop-In Swim": "/programs/drop-in-swim",
     "Dolphins Swim Team": "/programs/dolphins",
     "Lifeguard Training": "/programs/lifeguard-training",
-    "Group Fitness Classes": "/programs/group-fitness-classes",
-    "Personal Training": "/programs/personal-training",
+    "Group Fitness Classes": "/programs?" + buildQuery({ programArea: "Group Fitness" }),
+    "Personal Training": "/programs?" + buildQuery({ programArea: "Personal Training" }),
     "SilverSneakers": "/programs/silver-sneakers",
-    "Virtual Fitness": "/programs/virtual-fitness",
+    "Virtual Fitness": "/virtual-fitness",
     "Drop-In Care": "/programs/drop-in-care",
     "On-Site Care": "/programs/on-site-care",
     "Before & After School Care": "/programs/before-after-school",
@@ -81,6 +85,9 @@ function normalizeWpUrlToPath(url: string) {
     label: string;
     centerMap: Map<string, string>;
   }) {
+
+    const ourPurposePage = OUR_PURPOSE_PAGE[label];
+    if (ourPurposePage) return ourPurposePage;
 
     const membershipPage = MEMBERSHIP_PAGES[label];
     if (membershipPage) return membershipPage;

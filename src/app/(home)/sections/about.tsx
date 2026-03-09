@@ -17,41 +17,36 @@ export default function AboutSection({
   cta?: Linkish | null;
 }) {
   return (
-    <section className="relative -mt-10 overflow-hidden bg-gmcc-navy px-4 pt-16 pb-10 md:-mt-10 md:pt-20">
+    <section className="relative -mt-10 overflow-hidden bg-gmcc-navy px-4 pt-16 pb-50 md:-mt-10 md:pt-20">
 
       <div className="relative z-20 mx-auto max-w-6xl pb-20 md:pb-24">
-        <div className="grid gap-12 md:grid-cols-2 md:items-start">
-          <div className="relative overflow-hidden">
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={imageAlt || ""}
-                className="block h-full w-full object-cover"
-                loading="lazy"
-                decoding="async"
-              />
-            ) : (
-              <div className="aspect-square bg-neutral-200" />
-            )}
+
+      <div className="flex flex-col text-center items-center">
+        <h2 className="h2 mb-0 text-3xl font-semibold tracking-wide text-white">{heading}</h2>
+
+        {body ? <p className="mt-6 text-lg leading-relaxed text-neutral-200">{body}</p> : null}
+
+        {cta?.url ? (
+          <div className="mt-8 mb-8 md:mb-16 flex w-full justify-center">
+            <a href={cta.url} target={cta.target || undefined} className="btn btn-secondary">
+              {cta.title || "Learn more about our mission"}
+            </a>
           </div>
-
-          <div className="flex flex-col text-right md:text-left items-center md:items-start">
-            <h2 className="h2 mb-0 text-3xl font-semibold tracking-wide text-white">{heading}</h2>
-
-            {body ? <p className="mt-4 text-base leading-relaxed text-neutral-200">{body}</p> : null}
-
-            {cta?.url ? (
-              <div className="mt-6 flex w-full justify-center">
-                <a href={cta.url} target={cta.target || undefined} className="btn btn-secondary">
-                  {cta.title || "Learn more about our mission"}
-                </a>
-              </div>
-            ) : null}
-          </div>
-        </div>
+        ) : null}
+      </div>
       </div>
 
-      {/* Bottom transition wave (same pattern used in impact) */}
+
+      <div aria-hidden className="mt-8 pl:4 pr:4 pointer-events-none absolute inset-0 z-20 overflow-hidden border-0">
+          <img
+            src="/LineArt.png"
+            alt=""
+            className="absolute bottom-[140px] left-0 w-full select-none opacity-100"
+            draggable={false}
+          />
+        </div>
+
+      {/* Bottom transition wave */}
       <div className="pointer-events-none absolute bottom-[-32px] left-0 z-10 w-full overflow-hidden leading-none">
         <svg
           viewBox="0 -12 390 132"
@@ -61,8 +56,8 @@ export default function AboutSection({
           <path
             d="
               M0,100
-              C70,70 130,58 190,78
-              C250,98 305,90 390,62
+              C70,100 130,100 190,100
+              C250,100 305,100 390,100
               L390,0 L0,0 Z
             "
             fill="currentColor"
@@ -77,8 +72,8 @@ export default function AboutSection({
           <path
             d="
               M0,110
-              C300,-50  500,120  800,100
-              S1000,0 1440,0
+              C300,-20  620,150  850,110
+              S1200,20 1440,90
               L1440,0 L0,0 Z
             "
             fill="currentColor"

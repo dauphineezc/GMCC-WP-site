@@ -1,28 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 
-type TabId = "race" | "league" | "center";
-
-type Tab = {
-  id: TabId;
+export type TabItem<T extends string = string> = {
+  id: T;
   label: string;
-  content: React.ReactNode;
+  content: ReactNode;
 };
 
-type SponsorshipTabsProps = {
-  tabs: Tab[];
-  defaultTab?: TabId;
+type SponsorshipTabsProps<T extends string = string> = {
+  tabs: ReadonlyArray<TabItem<T>>;
+  defaultTab?: T;
 };
 
-export default function SponsorshipTabs({ tabs, defaultTab = "race" }: SponsorshipTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>(defaultTab);
+export default function SponsorshipTabs<T extends string = string>({
+  tabs,
+  defaultTab,
+}: SponsorshipTabsProps<T>) {
+  const firstTabId = tabs[0]?.id;
+  const initialTab = defaultTab ?? firstTabId;
 
-  const activeTabContent = tabs.find((tab) => tab.id === activeTab)?.content;
+  const [activeTab, setActiveTab] = useState<T | undefined>(initialTab);
+
+  const activeTabContent = useMemo(
+    () => tabs.find((tab) => tab.id === activeTab)?.content,
+    [activeTab, tabs],
+  );
+
+  if (!tabs.length) return null;
 
   return (
     <div className="space-y-4">
-      {/* Tab Navigation */}
       <div className="border-b border-neutral-200">
         <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
           {tabs.map((tab) => (
@@ -45,9 +54,7 @@ export default function SponsorshipTabs({ tabs, defaultTab = "race" }: Sponsorsh
         </nav>
       </div>
 
-      {/* Tab Content */}
       <div className="min-h-[200px]">{activeTabContent}</div>
     </div>
   );
 }
-
