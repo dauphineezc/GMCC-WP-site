@@ -59,7 +59,7 @@ function CenterAccordionItem({
           <span
             className={[
               "mt-1 h-5 w-5 rounded-full ring-4",
-              isActive ? "bg-gmcc-green ring-gmcc-navy" : "bg-white/20 ring-gmcc-navy",
+              isActive ? "bg-gmcc-green ring-gmcc-navy" : "bg-gmcc-navy ring-gmcc-navy",
             ].join(" ")}
             aria-hidden="true"
           />
@@ -110,10 +110,10 @@ function CenterAccordionItem({
 const ORDERED_SLUGS = [
   "community-center",
   "tennis-center",
-  "curling-center",
   "coleman-family-center",
   "north-family-center",
   "corteva-fitness-center",
+  "curling-center",
 ] as const;
 
 export default function CentersSection({ heading, centers }: Props) {
@@ -261,7 +261,7 @@ export default function CentersSection({ heading, centers }: Props) {
                               <span
                                 className={[
                                   "mt-1.5 h-4 w-4 shrink-0 rounded-full ring-3 transition-all duration-300",
-                                  isActive ? "bg-gmcc-green scale-115 ring-gmcc-navy" : "bg-white/30 ring-gmcc-navy",
+                                  isActive ? "bg-gmcc-green scale-115 ring-gmcc-navy" : "bg-gmcc-navy ring-gmcc-navy",
                                 ].join(" ")}
                                 aria-hidden="true"
                               />

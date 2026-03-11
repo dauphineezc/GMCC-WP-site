@@ -60,7 +60,22 @@ const CONTACT_PAGE_QUERY = /* GraphQL */ `
 export default async function ContactPage() {
   const data = await wpFetch<any>(CONTACT_PAGE_QUERY, { uri: "/contact" });
   const f = data?.page?.contactPageFields;
-  const centers = (f?.centers?.nodes ?? []).filter((center: any) => !!center?.title);
+  const centerOrder = [
+    "community center",
+    "tennis center",
+    "coleman family center",
+    "north family center",
+    "curling center",
+  ];
+  const centers = (f?.centers?.nodes ?? [])
+    .filter((center: any) => !!center?.title)
+    .sort((a: any, b: any) => {
+      const aIndex = centerOrder.indexOf(String(a?.title ?? "").trim().toLowerCase());
+      const bIndex = centerOrder.indexOf(String(b?.title ?? "").trim().toLowerCase());
+      const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+      const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+      return normalizedA - normalizedB;
+    });
 
   return (
     <main className="pb-16">
@@ -111,8 +126,8 @@ export default async function ContactPage() {
         <p className="mb-4 text-center text-lg text-neutral-700 md:text-left">{f?.contactFormDescription}</p>
       </section>
 
-        {/* Placeholder contact form (visual only) */}
-        <div className="relative overflow-hidden mt-8 pb-8">
+      {/* Placeholder contact form (visual only) */}
+      <div className="relative mt-8 overflow-hidden pb-8">
           <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
             <img
               src="/GreaterLogoBG.png"
@@ -128,7 +143,8 @@ export default async function ContactPage() {
             />
           </div>
 
-          <div className="relative mx-auto max-w-xl rounded-2xl border border-neutral-300 bg-neutral-100 p-6 shadow-sm">
+        <div className="mx-auto max-w-6xl px-10">
+          <div className="relative mx-auto w-full rounded-2xl border border-neutral-300 bg-neutral-100 p-10 shadow-sm lg:w-[calc((3*(100%-4rem))/5+2rem)]">
             <h3 className="h2 text-4xl text-gmcc-navy">Contact Form</h3>
 
             <form className="mt-4 space-y-4" aria-label="Placeholder contact form">
@@ -178,6 +194,7 @@ export default async function ContactPage() {
             </form>
           </div>
         </div>
+      </div>
       {/* </section> */}
     </main>
   );

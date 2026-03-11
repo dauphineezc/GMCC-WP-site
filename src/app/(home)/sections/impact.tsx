@@ -165,7 +165,7 @@ export default function ImpactSection({
             {/* Navy backdrop behind the teal stat cards */}
             <div
               aria-hidden
-              className="absolute -bottom-2 left-1/2 h-[200px] w-screen -translate-x-1/2 bg-gmcc-navy md:h-52"
+              className="absolute -bottom-2 left-1/2 h-200 w-screen -translate-x-1/2 bg-gmcc-navy md:h-52"
             />
 
             <div ref={statsRef} className="relative z-10 grid w-full gap-8 px-6 pb-6 md:grid-cols-4">

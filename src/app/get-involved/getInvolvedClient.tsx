@@ -111,10 +111,10 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
   }, [sponsor]);
 
   return (
-    <>
+    <div className="overflow-x-clip">
 
     {/* HERO */}
-    <section className="relative mb-8 mt-24 overflow-hidden md:mt-28">
+    <section className="relative mb-8 mt-24 overflow-hidden md:mt-28 py-6">
       <div
         className="absolute inset-0"
         aria-hidden
@@ -145,7 +145,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
           {fields?.header ?? "Get Involved"}
         </h1>
 
-        <p className="mt-6 mb-6 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">{fields?.subheader ?? ""}</p>
+        <p className="mt-6 mb-12 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">{fields?.subheader ?? ""}</p>
       </div>
 
       {/* Wave */}
@@ -524,6 +524,6 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
       </section>
 
     </section>
-    </>
+    </div>
   );
 }

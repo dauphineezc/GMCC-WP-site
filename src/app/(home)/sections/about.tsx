@@ -17,7 +17,7 @@ export default function AboutSection({
   cta?: Linkish | null;
 }) {
   return (
-    <section className="relative -mt-10 overflow-hidden bg-gmcc-navy px-4 pt-16 pb-50 md:-mt-10 md:pt-20">
+    <section className="relative -mt-15 overflow-hidden bg-gmcc-navy px-4 pb-50">
 
       <div className="relative z-20 mx-auto max-w-6xl pb-20 md:pb-24">
 
