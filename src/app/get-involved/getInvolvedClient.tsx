@@ -114,7 +114,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
     <div className="overflow-x-clip">
 
     {/* HERO */}
-    <section className="relative mb-8 mt-24 overflow-hidden md:mt-28 py-6">
+    <section className="relative mb-8 overflow-hidden md:mt-28 py-6">
       <div
         className="absolute inset-0"
         aria-hidden
@@ -296,23 +296,6 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
       >
         {/* Top wave */}
         <div className="pointer-events-none w-full overflow-hidden leading-none">
-          <svg
-            viewBox="0 0 390 120"
-            className="block h-14 w-full text-gmcc-navy md:hidden"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M0,98
-                C78,62 135,54 195,74
-                C255,96 322,88 390,60
-                L390,0 L0,0 Z
-              "
-              transform="translate(0 120) scale(1 -1)"
-              fill="currentColor"
-            />
-          </svg>
-
           <svg
               viewBox="0 0 1440 120"
               className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"

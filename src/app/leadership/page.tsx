@@ -3,6 +3,7 @@ import HeaderImage from "@/components/headerImage";
 import Image from "next/image";
 import Link from "next/link";
 import LeadershipAccordion from "./leadershipAccordion";
+import UtilityMenu from "@/components/nav/utilityMenu";
 
 const LEADERSHIP_PAGE_QUERY = /* GraphQL */ `
   query LeadershipPage($uri: ID!) {
@@ -12,6 +13,9 @@ const LEADERSHIP_PAGE_QUERY = /* GraphQL */ `
       slug
   
       leadershipPageFields {
+        header
+        subheader
+        heroImage { node {sourceUrl altText}}
         organizationHeader
         organizationBlurb
         elts {
@@ -53,6 +57,14 @@ type StaffProfile = {
 };
 
 type LeadershipFields = {
+  header?: string | null;
+  subheader?: string | null;
+  heroImage?: {
+    node?: {
+      sourceUrl?: string | null;
+      altText?: string | null;
+    } | null;
+  } | null;
   organizationHeader?: string | null;
   organizationBlurb?: string | null;
   elts?: {
@@ -131,16 +143,63 @@ export default async function LeadershipPage() {
 
   return (
     <main>
-      {/* HEADER IMAGE */}
-      <div className="w-full">
-        <HeaderImage src="/images/MembershipHeaderImage.png" alt="Greater Midland Memberships" />
-      </div>
+      {/* HERO */}
+      <section className="relative mb-8 mt-24 overflow-hidden md:mt-28">
+        <div
+          className="absolute inset-0"
+          aria-hidden
+          style={
+            fields?.heroImage?.node?.sourceUrl
+              ? {
+                  backgroundImage: `url(${fields?.heroImage?.node?.sourceUrl})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : undefined
+          }
+        />
 
-      <div className="mx-auto max-w-6xl px-4 section-y stack-8">
-        {/* Page Title */}
-        {/* <div>
-          <h1 className="h1 text-gmcc-navy">{data?.page?.title ?? "Leadership"}</h1>
-        </div> */}
+        {/* Left-side navy overlay */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
+          }}
+          aria-hidden="true"
+        />
+
+        <div className="absolute inset-0" aria-hidden />
+
+        <div className="relative z-20 max-w-6xl px-8 pb-20 pt-10 md:py-16 md:px-12">
+          {/* <header>
+            <div className="flex items-center justify-end">
+              <UtilityMenu />
+            </div>
+          </header> */}
+
+          <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
+            {fields?.header || data?.page?.title || "Leadership"}
+          </h1>
+
+          {fields?.subheader ? (
+            <p className="mt-6 mb-12 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">{fields?.subheader}</p>
+          ) : null}
+
+        </div>
+
+        <div className="pointer-events-none absolute bottom-[-32px] left-0 z-30 w-full overflow-hidden leading-none">
+          <svg
+            viewBox="0 -60 1440 180"
+            className="block h-16 w-full origin-center text-white [transform:scale(-1,-1)] md:h-24"
+            preserveAspectRatio="none"
+          >
+            <path d="M0,110 C300,-50 500,120 800,100 S1000,0 1440,0 L1440,0 L0,0 Z" fill="currentColor" />
+          </svg>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 mt-6">
 
         {/* Organization Section */}
         {fields?.organizationHeader && (
@@ -270,7 +329,7 @@ export default async function LeadershipPage() {
             />
           </div>
         </section>
-      </div>
+        </section>
     </main>
   );
 }
