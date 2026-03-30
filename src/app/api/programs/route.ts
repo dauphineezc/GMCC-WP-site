@@ -4,9 +4,44 @@ import { wpFetch } from "@/lib/wp";
 
 const QUERY = `
   query ExplorePrograms($first: Int!, $after: String) {
-    programs(first: $first, after: $after) {
+    programs(first: $first, after: $after, where: { stati: PUBLISH }) {
       pageInfo { hasNextPage endCursor }
-      nodes { id slug title }
+      nodes {
+        id
+        slug
+        title
+        featuredImage {
+          node {
+            sourceUrl
+            altText
+          }
+        }
+        programFields {
+          summary
+          mediaGallery {
+            image1 {
+              node {
+                sourceUrl
+                altText
+              }
+            }
+          }
+          offeringType
+          skillLevel
+          priceFrom
+          audience { nodes { name slug } }
+          campType { nodes { name slug } }
+          center {
+            nodes {
+              ... on Center {
+                slug
+                title
+              }
+            }
+          }
+          programArea { nodes { name slug } }
+        }
+      }
     }
   }
 `;

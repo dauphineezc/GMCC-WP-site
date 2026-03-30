@@ -166,7 +166,7 @@ export default function HeroSection({
 
                   <div className="mt-6 flex flex-wrap gap-3">
                     {primaryCta?.url ? (
-                      <a href={primaryCta.url} className="btn btn-primary">
+                      <a href={primaryCta.url} className="btn btn-tertiary">
                         {primaryCta.title || "Learn more"}
                       </a>
                     ) : null}

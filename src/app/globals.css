@@ -56,17 +56,23 @@
   --color-gmcc-baltic: var(--gmcc-baltic);
   --color-gmcc-orange-tiger: var(--gmcc-orange-tiger);
   --color-gmcc-love-child: var(--gmcc-love-child);
-  /* Fonts - these create font-heading, font-body, etc. utility classes */
-  --font-heading: "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif;
-  --font-secondary: "Futura PT", Futura, "Century Gothic", Arial, sans-serif;
-  --font-body: Roboto, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-  --font-script: "Buffalo", "Brush Script MT", cursive;
+  /* Fonts - loaded deterministically in src/app/fonts.ts, with local fallbacks */
+  --font-heading: var(--font-heading-loaded), "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif;
+  --font-secondary: var(--font-secondary-loaded), "Futura PT", Futura, "Century Gothic", Arial, sans-serif;
+  --font-body: var(--font-body-loaded), Roboto, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --font-script: var(--font-script-loaded), "Buffalo", "Brush Script MT", cursive;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body);
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 

@@ -292,7 +292,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
       {/* VOLUNTEER */}
       <section
         id="volunteer"
-        className="relative mt-12 w-[100dvw] -ml-[calc(50dvw-50%)] overflow-x-clip scroll-mt-24"
+        className="relative mt-12 w-screen -ml-[calc(50vw-50%)] overflow-x-clip scroll-mt-24"
       >
         {/* Top wave */}
         <div className="pointer-events-none w-full overflow-hidden leading-none">

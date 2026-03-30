@@ -151,7 +151,6 @@ type HomeData = {
           centersFields?: {
             address?: string | null;
             contactInfo?: { contactPhone?: string | null; contactEmail?: string | null } | null;
-            map?: { latitude?: string | null; longitude?: string | null; zoom?: string | null } | null;
           } | null;
         }> | null;
       } | null;
@@ -457,11 +456,6 @@ query HomePage($uri: ID!) {
               contactInfo {
                 contactPhone
                 contactEmail
-              }
-              map {
-                latitude
-                longitude
-                zoom
               }
             }
           }

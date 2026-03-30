@@ -278,7 +278,7 @@ export default async function AboutPage() {
   return (
     <main>
       {/* HERO */}
-      <section className="relative mb-8 mt-24 overflow-hidden md:mt-28">
+      <section className="relative mb-8 overflow-hidden md:mt-28">
         <div
           className="absolute inset-0"
           aria-hidden
@@ -298,7 +298,7 @@ export default async function AboutPage() {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
+              "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)" 
           }}
           aria-hidden="true"
         />
@@ -306,11 +306,6 @@ export default async function AboutPage() {
         <div className="absolute inset-0" aria-hidden />
 
         <div className="relative z-20 max-w-6xl px-8 pb-20 pt-10 md:py-16 md:px-12">
-          <header>
-            <div className="flex items-center justify-end">
-              <UtilityMenu />
-            </div>
-          </header>
 
           <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
             {header || data?.page?.title || "About"}
@@ -329,7 +324,7 @@ export default async function AboutPage() {
           ) : null}
         </div>
 
-        <div className="pointer-events-none absolute bottom-[-32px] left-0 z-30 w-full overflow-hidden leading-none">
+        <div className="pointer-events-none absolute md:bottom-[-32px] bottom-[-22px] left-0 z-30 w-full overflow-hidden leading-none">
           <svg
             viewBox="0 -60 1440 180"
             className="block h-16 w-full origin-center text-gmcc-navy [transform:scale(-1,-1)] md:h-24"
@@ -349,7 +344,7 @@ export default async function AboutPage() {
         {hasStats ? (
           <div className="relative mt-8">
             {/* Navy backdrop behind the teal stat cards */}
-            <div aria-hidden className="absolute bottom-0 left-1/2 h-[240px] w-screen -translate-x-1/2 bg-gmcc-navy md:h-130" />
+            <div aria-hidden className="absolute inset-x-0 bottom-0 h-389 bg-gmcc-navy md:h-130" />
 
             <div className="relative z-10 mx-auto max-w-6xl px-6 pb-10">
               <div className="grid gap-6 md:grid-cols-4">
@@ -439,7 +434,7 @@ export default async function AboutPage() {
           </div>
         </div>
 
-        {/* Wave transitions to white (like mockup) */}
+        {/* Wave */}
         <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
         <svg
           viewBox="0 0 390 120"

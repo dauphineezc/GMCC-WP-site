@@ -27,6 +27,8 @@ const AMENITY_BY_SLUG_QUERY = `
         amenityImage5 { node { sourceUrl altText } }
         center5 { nodes { ... on Center { slug title } } }
 
+        relevantLink
+        linkLabel
         isService
         additionalInformation
         additionalImage {
@@ -72,6 +74,8 @@ export function toAmenityDisplayForCenter(
         name: a.name,
         slug: a.slug,
         description: a.description ?? null,
+        relevantLink: a.relevantLink ?? null,
+        linkLabel: a.linkLabel ?? null,
         image,
       } satisfies AmenityDisplay;
     })
@@ -91,6 +95,8 @@ export function toAmenityDisplayDefault(
         name: a.name,
         slug: a.slug,
         description: a.description ?? null,
+        relevantLink: a.relevantLink ?? null,
+        linkLabel: a.linkLabel ?? null,
         image,
       } satisfies AmenityDisplay;
     })
@@ -103,6 +109,8 @@ export type AmenityWithImage = {
   name: string;
   slug: string;
   description?: string | null;
+  relevantLink?: string | null;
+  linkLabel?: string | null;
 
   // default/fallback image (old behavior)
   defaultImage: { sourceUrl: string; altText: string | null } | null;
@@ -111,6 +119,7 @@ export type AmenityWithImage = {
   centerImageCandidates: Array<{
     centerSlug: string;
     centerTitle?: string | null;
+    relevantLink?: string | null;
     image: { sourceUrl: string; altText: string | null };
   }>;
 };
@@ -199,6 +208,7 @@ export async function fetchAmenitiesWithImages(
         centerImageCandidates.push({
           centerSlug,
           centerTitle,
+          relevantLink: af.relevantLink ?? null,
           image: {
             sourceUrl: imageNode.sourceUrl,
             altText: imageNode.altText ?? null,
@@ -213,6 +223,8 @@ export async function fetchAmenitiesWithImages(
         name: amenity.name,
         slug: amenity.slug,
         description: amenity.description ?? null,
+        relevantLink: af.relevantLink ?? null,
+        linkLabel: af.linkLabel ?? null,
         defaultImage,
         centerImageCandidates,
       });

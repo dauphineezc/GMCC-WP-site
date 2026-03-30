@@ -49,7 +49,15 @@ function releaseSlot() {
   if (next) next();
 }
 
-async function wpFetchInternal<T>(query: string, variables?: Record<string, any>) {
+type WpFetchOptions = {
+  suppressGraphQLErrorLogging?: boolean;
+};
+
+async function wpFetchInternal<T>(
+  query: string,
+  variables?: Record<string, any>,
+  options?: WpFetchOptions
+) {
   const endpoint = process.env.WP_GRAPHQL_ENDPOINT;
   if (!endpoint) {
     throw new Error("WP_GRAPHQL_ENDPOINT is not set");
@@ -91,8 +99,20 @@ async function wpFetchInternal<T>(query: string, variables?: Record<string, any>
     }
 
     if (json.errors) {
-      console.error("WPGraphQL GraphQL errors:", json.errors);
-      throw new Error(JSON.stringify(json.errors));
+      if (!options?.suppressGraphQLErrorLogging) {
+        console.error(
+          "WPGraphQL GraphQL errors:",
+          json.errors.map((e: any) => ({
+            message: e.message,
+            path: e.path,
+            locations: e.locations,
+            extensions: e.extensions,
+          }))
+        );
+      }
+      throw new Error(
+        json.errors.map((e: any) => e.message).join(" | ")
+      );
     }
 
     return json.data as T;
@@ -101,7 +121,11 @@ async function wpFetchInternal<T>(query: string, variables?: Record<string, any>
   throw new Error("WPGraphQL request failed after retries");
 }
 
-export async function wpFetch<T>(query: string, variables?: Record<string, any>) {
+export async function wpFetch<T>(
+  query: string,
+  variables?: Record<string, any>,
+  options?: WpFetchOptions
+) {
   const requestKey = JSON.stringify({ query, variables: variables ?? null });
   const existing = inFlightRequests.get(requestKey) as Promise<T> | undefined;
   if (existing) return existing;
@@ -109,7 +133,7 @@ export async function wpFetch<T>(query: string, variables?: Record<string, any>)
   const requestPromise = (async () => {
     await acquireSlot();
     try {
-      return await wpFetchInternal<T>(query, variables);
+      return await wpFetchInternal<T>(query, variables, options);
     } finally {
       releaseSlot();
     }

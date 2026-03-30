@@ -7,10 +7,11 @@ import type { AmenityDisplay } from "@/types/amenities";
 type AmenitiesGridProps = {
   amenities: AmenityDisplay[];
   title?: string;
+  numCols?: number;
 };
 
 
-export default function AmenitiesGrid({ amenities, title = "Amenities" }: AmenitiesGridProps) {
+export default function AmenitiesGrid({ amenities, title = "What we offer", numCols = 3 }: AmenitiesGridProps) {
   const [selectedAmenity, setSelectedAmenity] = useState<AmenityDisplay | null>(null);
 
 
@@ -24,21 +25,23 @@ export default function AmenitiesGrid({ amenities, title = "Amenities" }: Amenit
 
   return (
     <div className="space-y-3">
-      <h2 className="h3">{title}</h2>
-      <div className="grid gap-2 grid-cols-1 md:grid-cols-3">
+      {/* <h2 className="h2">{title}</h2> */}
+      <div className={`grid gap-8 grid-cols-1 md:grid-cols-${numCols}`}>
         {amenities.map((amenity) => {
           const hasDescription = !!amenity.description;
           return (
-            <div key={amenity.slug} className="relative">
+            <div key={amenity.slug} className="relative card card-hover">
               {/* eslint-disable-next-line @next/next/no-img-element */}
+            <div className="card-bleed relative aspect-[16/9] bg-neutral-100 overflow-hidden rounded-t-2xl">
               <img
                 src={amenity.image.sourceUrl} 
                 alt={amenity.image.altText ?? amenity.name} 
-                className={`w-full h-48 object-cover sm:h-64 rounded-md ${hasDescription ? "cursor-pointer" : ""}`}
+                className={`w-full h-full object-cover ${hasDescription ? "cursor-pointer" : ""}`}
                 onClick={() => handleAmenityClick(amenity)}
               />
+              </div>
               {/* Click hint for items with description */}
-                {hasDescription && (
+                {/* {hasDescription && (
                 <div className="absolute top-3 right-3 z-10 rounded-full bg-white/90 p-1.5 shadow-md">
                     <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -56,17 +59,18 @@ export default function AmenitiesGrid({ amenities, title = "Amenities" }: Amenit
                     />
                     </svg>
                 </div>
-                )}
-              <div className="flex flex-col items-center mt-2 mb-4">
-                <p className="text-lg text-gmcc-navy">{amenity.name}</p>
+                )} */}
+              <div className="flex flex-col mt-4">
+                <p className="text-lg font-semibold text-gmcc-navy flex items-center gap-2"><span className="items-start flex-1">{amenity.name}</span>
                 {hasDescription && (
                   <button
                     onClick={() => setSelectedAmenity(amenity)}
-                    className="text-blue-600 hover:underline text-xs font-normal"
+                    className="btn btn-tertiary items-end justify-end"
                   >
                     Learn more
                   </button>
                 )}
+                </p>
               </div>
             </div>
           );
@@ -95,11 +99,15 @@ export default function AmenitiesGrid({ amenities, title = "Amenities" }: Amenit
 
             {/* Modal Content */}
             <div className="p-6">
-              <h3 className="text-xl font-semibold text-neutral-900 mb-3">
+              <h3 className="text-xl font-semibold text-gmcc-navy mb-3">
                 {selectedAmenity.name}
               </h3>
               <p className="text-neutral-700 text-sm whitespace-pre-line">
-                {selectedAmenity.description}
+                {selectedAmenity.description} {selectedAmenity.relevantLink && (
+                  <a href={selectedAmenity.relevantLink} className="text-gmcc-teal hover:underline text-sm font-semibold">
+                    {selectedAmenity.linkLabel ? `${selectedAmenity.linkLabel} →` : "Learn more →"}
+                  </a>
+                )}
               </p>
             </div>
 

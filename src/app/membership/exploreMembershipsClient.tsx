@@ -2,9 +2,21 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import {
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+} from "react";
+import { useSearchParams } from "next/navigation";
 import FinancialAidEstimator from "@/components/financialAidEstimator";
-import HeaderImage from "@/components/headerImage";
+import MembershipQuiz from "@/components/membershipQuiz";
+import AmenitiesGrid from "@/components/amenitiesGrid";
+import type { AmenityDisplay } from "@/types/amenities";
+import { getBodyParts } from "@/components/centerCampaignModule";
+import FeaturedCampaignSection from "@/app/(home)/sections/featuredCampaign";
 
 export type Audience = { name: string; slug: string };
 export type ProgramArea = { name: string; slug: string };
@@ -31,11 +43,62 @@ type CenterLink = {
   label: string;
 };
 
+export type MembershipPageFields = {
+  header: string | null;
+  subheader: string | null;
+  heroImage: { url: string; alt: string } | null;
+  primaryCta: { url: string; label: string } | null;
+  quizCta: { url: string; label: string } | null;
+  centers: CenterLink[];
+  membershipsHeader: string | null;
+  membershipsDescription: string | null;
+  quizHeader: string | null;
+  quizDescription: string | null;
+  benefitsHeader: string | null;
+  benefitsDescription: string | null;
+  amenitySlugs: string[];
+  financialAssistanceHeader: string | null;
+  financialAssistanceSubheader: string | null;
+  financialAssistanceDescription: string | null;
+  financialAssistanceCta: { url: string; label: string } | null;
+  contactHeader: string | null;
+  contactDescription: string | null;
+  campaign: {
+    title?: string | null;
+    uri?: string | null;
+    featuredImage?: { node?: { sourceUrl: string; altText?: string | null } | null } | null;
+    campaignFields?: {
+      headline?: string | null;
+      body?: string | null;
+      primaryCta?: { primaryCtaLabel?: string | null; primaryCtaUrl?: string | null } | null;
+      secondaryCta?: { secondaryCtaLabel?: string | null; secondaryCtaUrl?: string | null } | null;
+    } | null;
+  } | null;
+  campaignBgColor: string | null;
+  campaignTextColor: string | null;
+  footerPhoto: { url: string; alt: string } | null;
+};
+
+export type SerializedAmenity = {
+  name: string;
+  slug: string;
+  description: string | null;
+  relevantLink: string | null;
+  linkLabel: string | null;
+  defaultImage: { sourceUrl: string; altText: string | null } | null;
+  centerImageCandidates: {
+    centerSlug: string;
+    image: { sourceUrl: string; altText: string | null };
+  }[];
+};
+
 type Props = {
   centerLinks: CenterLink[];
   audiences: Audience[];
   programAreas: ProgramArea[];
   memberships: Membership[];
+  fields: MembershipPageFields;
+  amenities: SerializedAmenity[];
 };
 
 export default function ExploreMembershipsClient({
@@ -43,455 +106,707 @@ export default function ExploreMembershipsClient({
   audiences,
   programAreas,
   memberships,
+  fields,
+  amenities,
 }: Props) {
+  const searchParams = useSearchParams();
 
-  /** ---------------------------
-   *  FILTER STATE
-   * ----------------------------*/
-  const [audienceFilter, setAudienceFilter] = useState<string>("");
-  const [programAreaFilters, setProgramAreaFilters] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<"compare" | "quiz">("compare");
+  const [activeCenter, setActiveCenter] = useState(centerLinks[0]?.slug ?? "");
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const handleAudienceChange = (value: string) => {
-    setAudienceFilter(value);
-  };
+  const quizRef = useRef<HTMLDivElement>(null);
+  const membershipsRef = useRef<HTMLDivElement>(null);
+  const plansSectionRef = useRef<HTMLElement | null>(null);
 
-  const handleProgramAreaChange = (slug: string, checked: boolean) => {
-    if (checked) {
-      setProgramAreaFilters((prev) => [...prev, slug]);
-    } else {
-      setProgramAreaFilters((prev) => prev.filter((s) => s !== slug));
-    }
-  };
-
-  /** ---------------------------
-   *  CAROUSEL STATE
-   * ----------------------------*/
-  const [currentRecIndex, setCurrentRecIndex] = useState(0);
-  const VISIBLE_RECS = 3;
-
-  /** ---------------------------
-   *  COMPARE STATE
-   * ----------------------------*/
-  const [comparedSlugs, setComparedSlugs] = useState<string[]>([]);
-
-  const toggleCompare = (slug: string) => {
-    setComparedSlugs((prev) =>
-      prev.includes(slug)
-        ? prev.filter((s) => s !== slug)
-        : [...prev, slug]
+  /** Deep link: /membership?center=tennis-center#plans */
+  useLayoutEffect(() => {
+    const raw = searchParams.get("center");
+    if (!raw) return;
+    const normalized = raw.trim().toLowerCase();
+    const match = centerLinks.find(
+      (c) => c.slug === raw || c.slug.toLowerCase() === normalized
     );
+    if (match) setActiveCenter(match.slug);
+  }, [searchParams, centerLinks]);
+
+  /**
+   * App Router often does not scroll to `#plans` on client navigations.
+   * Scroll after paint when we have a deep link (?center=… and/or #plans).
+   */
+  useEffect(() => {
+    if (activeTab !== "compare") return;
+    if (typeof window === "undefined") return;
+
+    const hash = window.location.hash.replace(/^#/, "").toLowerCase();
+    const hasCenterParam = Boolean(searchParams.get("center")?.trim());
+    if (hash !== "plans" && !hasCenterParam) return;
+
+    const scrollPlans = () => {
+      const el = plansSectionRef.current ?? document.getElementById("plans");
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    scrollPlans();
+    const t0 = window.setTimeout(scrollPlans, 0);
+    const t1 = window.setTimeout(scrollPlans, 120);
+    const t2 = window.setTimeout(scrollPlans, 350);
+    return () => {
+      window.clearTimeout(t0);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [activeTab, searchParams]);
+
+  const amenityDisplayItems: AmenityDisplay[] = useMemo(() => {
+    return amenities
+      .map((a) => {
+        const centerMatch = a.centerImageCandidates.find(
+          (c) => c.centerSlug === activeCenter
+        );
+        if (!centerMatch) return null;
+
+        return {
+          name: a.name,
+          slug: a.slug,
+          description: a.description ?? null,
+          relevantLink: a.relevantLink ?? null,
+          linkLabel: a.linkLabel ?? null,
+          image: centerMatch.image,
+        };
+      })
+      .filter(Boolean) as AmenityDisplay[];
+  }, [amenities, activeCenter]);
+
+  const getMembershipTierName = useCallback((title: string): string => {
+    let separatorIndex = title.indexOf(" – ");
+    if (separatorIndex < 0) separatorIndex = title.indexOf(" - ");
+    if (separatorIndex > 0) return title.substring(0, separatorIndex).trim();
+    if (title.includes("Membership")) return title.replace("Membership", "").trim();
+    return title.trim();
+  }, []);
+
+  const getAudienceFromTitle = useCallback((title: string): string => {
+    let separatorIndex = title.indexOf(" – ");
+    if (separatorIndex < 0) separatorIndex = title.indexOf(" - ");
+    if (separatorIndex > 0) return title.substring(separatorIndex + 3).trim();
+    return "Member";
+  }, []);
+
+  type TierGroup = {
+    tierName: string;
+    variants: Membership[];
   };
 
-  const removeFromCompare = (slug: string) => {
-    setComparedSlugs((prev) => prev.filter((s) => s !== slug));
-  };
+  const { intro, bullets } = getBodyParts(fields.quizDescription);
 
-  const comparedMemberships = useMemo(
-    () => memberships.filter((m) => comparedSlugs.includes(m.slug)),
-    [memberships, comparedSlugs]
-  );
+  const isCorporateCenter = activeCenter.toLowerCase().includes("corteva") ||
+    activeCenter.toLowerCase().includes("corporate");
 
-  /** ---------------------------
-   *  FILTER MEMBERSHIPS
-   * ----------------------------*/
-  const filteredMemberships = useMemo(() => {
-    return memberships.filter((m) => {
-      const matchesAudience = audienceFilter
-        ? m.audience.some((a) => a.slug === audienceFilter)
-        : true;
+  const isActivityPassTitle = useCallback((title: string) => {
+    return title.toLowerCase().includes("activity pass");
+  }, []);
 
-      const matchesProgramArea = programAreaFilters.length
-        ? programAreaFilters.every((sel) =>
-            m.programArea.some((p) => p.slug === sel)
-          )
-        : true;
+  /** Community Center only: activity pass shown as a fourth, secondary card */
+  const activityPassTier: TierGroup | null = useMemo(() => {
+    if (!activeCenter || isCorporateCenter) return null;
+    const centerName = centerLinks.find((c) => c.slug === activeCenter)?.label ?? "";
+    const centerLower = centerName.toLowerCase();
+    const isCommunity =
+      centerLower.includes("community") ||
+      activeCenter.toLowerCase().includes("community");
+    if (!isCommunity) return null;
 
-      return matchesAudience && matchesProgramArea;
+    const variants = memberships.filter((m) => isActivityPassTitle(m.title));
+    if (variants.length === 0) return null;
+
+    const tierName = getMembershipTierName(variants[0]!.title);
+    return {
+      tierName,
+      variants: variants.sort((a, b) => {
+        const aAud = getAudienceFromTitle(a.title).toLowerCase();
+        const bAud = getAudienceFromTitle(b.title).toLowerCase();
+        const audOrder = (s: string) =>
+          s.includes("youth") ? 0 : s.includes("adult") ? 1 : s.includes("family") ? 2 : 3;
+        return audOrder(aAud) - audOrder(bAud);
+      }),
+    };
+  }, [
+    memberships,
+    activeCenter,
+    centerLinks,
+    isCorporateCenter,
+    getMembershipTierName,
+    getAudienceFromTitle,
+    isActivityPassTitle,
+  ]);
+
+  const tierGroups: TierGroup[] = useMemo(() => {
+    if (!activeCenter || isCorporateCenter) return [];
+    const centerName = centerLinks.find((c) => c.slug === activeCenter)?.label ?? "";
+    const centerLower = centerName.toLowerCase();
+    const isCommunity =
+      centerLower.includes("community") ||
+      activeCenter.toLowerCase().includes("community");
+
+    const relevantMemberships = memberships.filter((m) => {
+      const title = m.title.toLowerCase();
+      if (isActivityPassTitle(m.title)) return false;
+
+      if (isCommunity) {
+        return (
+          (title.includes("center") || title.includes("all access")) &&
+          !title.includes("north") &&
+          !title.includes("coleman") &&
+          !title.includes("tennis") &&
+          !title.includes("curling")
+        );
+      }
+      const centerKeyword = centerLower.split(" ")[0];
+      return title.includes(centerKeyword) || title.includes("all access");
     });
-  }, [memberships, audienceFilter, programAreaFilters]);
 
-  /** ---------------------------
-   *  CAROUSEL VISIBLE ITEMS
-   * ----------------------------*/
-  // Calculate page-based navigation (no overlap)
-  const totalPages = Math.ceil(filteredMemberships.length / VISIBLE_RECS);
-  const maxRecIndex = Math.max(0, (totalPages - 1) * VISIBLE_RECS);
+    const groupMap = new Map<string, Membership[]>();
+    for (const m of relevantMemberships) {
+      const tier = getMembershipTierName(m.title);
+      const existing = groupMap.get(tier) ?? [];
+      existing.push(m);
+      groupMap.set(tier, existing);
+    }
 
-  const visibleRecommended = useMemo(
-    () =>
-      filteredMemberships.slice(
-        currentRecIndex,
-        currentRecIndex + VISIBLE_RECS
-      ),
-    [filteredMemberships, currentRecIndex]
-  );
+    const TIER_ORDER: Record<string, number> = {
+      center: 0,
+      "center plus": 1,
+      "all access": 2,
+    };
+
+    return Array.from(groupMap.entries())
+      .sort(([a], [b]) => {
+        const aOrder = TIER_ORDER[a.toLowerCase()] ?? 99;
+        const bOrder = TIER_ORDER[b.toLowerCase()] ?? 99;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return a.localeCompare(b);
+      })
+      .map(([tierName, variants]) => ({
+        tierName,
+        variants: variants.sort((a, b) => {
+          const aAud = getAudienceFromTitle(a.title).toLowerCase();
+          const bAud = getAudienceFromTitle(b.title).toLowerCase();
+          const audOrder = (s: string) =>
+            s.includes("youth") ? 0 : s.includes("adult") ? 1 : s.includes("family") ? 2 : 3;
+          return audOrder(aAud) - audOrder(bAud);
+        }),
+      }));
+  }, [
+    memberships,
+    activeCenter,
+    centerLinks,
+    isCorporateCenter,
+    getMembershipTierName,
+    getAudienceFromTitle,
+    isActivityPassTitle,
+  ]);
+
+  const scrollToQuiz = () => {
+    setActiveTab("quiz");
+    setTimeout(() => {
+      quizRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
 
   return (
     <main>
-      {/* HEADER IMAGE - Full Width */}
-      <div className="w-full">
-        <HeaderImage src="/images/MembershipHeaderImage.png" alt="Greater Midland Memberships" />
-      </div>
+      {/* HERO */}
+      <section className="relative overflow-hidden md:mt-28 py-6">
+        <div
+          className="absolute inset-0"
+          aria-hidden
+          style={
+          fields.heroImage?.url ? {
+              backgroundImage: `url(${fields.heroImage.url})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }
+            : undefined
+          }
+        />
 
-      {/* Page content - constrained width */}
-      <div className="mx-auto max-w-6xl px-4 section-y stack-8">
+        {/* Left-side navy overlay */}
+        <div
+          className="absolute inset-0"
+          style={{
+          background:
+            "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
+          }}
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0" aria-hidden />
+        <div className="relative z-20 max-w-6xl px-8 pb-20 pt-10 md:py-16 md:px-12">
+          <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
+            {fields.header}
+          </h1>
 
-      {/* TOP HEADER */}
-      <section className="stack-2">
-        <div className="inline-block">
-          <h1 className="h1">Greater Midland Memberships</h1>
-        </div>
-      </section>
-
-      {/* FIND THE RIGHT MEMBERSHIP */}
-      <section className="stack-2">
-        <h2 className="h2">Find the Right Membership</h2>
-        <p className="body">
-          Not sure which option is the best fit? Start by browsing memberships by
-          center, or answer a couple of quick questions and we&apos;ll suggest
-          memberships that match what you&apos;re looking for.
-        </p>
-      </section>
-
-      {/* BROWSE BY CENTER - simple text links */}
-      <section className="stack-2">
-        <p className="small">Browse by center:</p>
-        <div className="flex flex-wrap gap-x-8 gap-y-2 p-4">
-          {centerLinks.map((c) => (
-            <div key={c.slug} className="group card card-hover p-4">
-              <a href={`/membership/${c.slug}`} className="text-sm font-semibold text-gmcc-navy underline-offset-4 group-hover:underline">
-                {c.label}
-              </a>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* GUIDED QUESTIONNAIRE - Timeline/Stepper */}
-      <section className="stack-2">
-        <p className="small mb-4">Get personalized recommendations by answering two questions:</p>
-        
-        <div className="relative">
-          {/* Vertical line - height adjusts based on visible steps */}
-          {/* <div 
-            className={`absolute left-[calc(1rem-1px)] top-4 w-0.5 bg-gmcc-navy transition-all duration-500 ${
-              maxVisibleStep === 1 
-                ? "h-0" 
-                : maxVisibleStep === 2 
-                  ? "h-24" 
-                  : "bottom-4"
-            }`} 
-            style={maxVisibleStep >= 3 ? { bottom: '1rem' } : undefined}
-          /> */}
-
-          <div className="absolute left-[calc(1rem-1px)] top-4 w-0.5 bg-gmcc-navy h-225 bottom-1rem" />
-
-          
-          {/* Step 1: Audience */}
-          <div className="relative pb-8">
-            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white small font-semibold">
-              1
-            </div>
-            <div className="ml-12 flex flex-col sm:flex-row sm:items-center gap-3 pt-1">
-              <label className="body whitespace-nowrap">
-                Who is the membership for?
-              </label>
-              <select
-                className="rounded border border-neutral-300 bg-white px-3 py-1.5 body min-w-[150px] shadow-sm"
-                value={audienceFilter}
-                onChange={(e) => handleAudienceChange(e.target.value)}
-              >
-                <option value="">Anyone</option>
-                {audiences.map((a) => (
-                  <option key={a.slug} value={a.slug}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {fields.subheader ? (
+          <p className="mt-6 mb-4 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">
+            {fields.subheader}
+          </p>
+          ) : null}
+          <div className="flex flex-wrap gap-3">
+            {fields.primaryCta ? (
+                <div className="mt-4 mb-6">
+                <a href={fields.primaryCta.url} className="btn btn-tertiary">
+                    {fields.primaryCta.label}
+                </a>
+                </div>
+            ) : null}
+            {fields.quizCta ? (
+                <div className="mt-4 mb-6">
+                <button
+                      type="button"
+                      onClick={scrollToQuiz}
+                      className="btn btn-secondary justify-center"
+                    >
+                      {fields.quizCta?.label || "Take our Membership Quiz"}
+                    </button>
+                </div>
+            ) : null}
           </div>
+        </div>
 
-          {/* Step 2: Program Areas as checkboxes */}
-          <div 
-            className={`relative pb-8 transition-all duration-500 ease-out ${
-              // maxVisibleStep >= 2 
-                "opacity-100 translate-y-0" 
-                // : "opacity-0 -translate-y-4 pointer-events-none h-0 pb-0 overflow-hidden"
-            }`}
+        {/* Wave */}
+        <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
+            <svg
+                viewBox="0 0 1440 120"
+                className="-ml-px block h-10 w-[calc(100%+2px)] text-white md:h-16"
+                preserveAspectRatio="none"
+            >
+              <path
+                d="
+                    M-20,110
+                    C750,-90  800,120  1200,80
+                    S1420,0 1460,0
+                    L1460,0 L-20,0 Z
+                "
+                transform="translate(0 120) scale(1 -1)"
+                fill="currentColor"
+                />
+            </svg>
+          <div className="absolute bottom-0 left-0 h-[2px] w-full bg-white" />
+        </div>
+      </section>
+
+      {/* COMPARE TAB CONTENT */}
+      {activeTab === "compare" && (
+        <div>
+
+          {/* SEE WHAT YOU CAN GET — Amenities */}
+          {amenityDisplayItems.length > 0 && (
+            <section className="mx-auto max-w-6xl px-4 py-8 pt-12">
+              <h2 className="h2 mb-2">
+                {fields.benefitsHeader || "See What You Can Get with Your Membership"}
+              </h2>
+              {fields.benefitsDescription && (
+                <p className="body mb-8 max-w-2xl">
+                  {fields.benefitsDescription}
+                </p>
+              )}
+              <AmenitiesGrid amenities={amenityDisplayItems} title="" numCols={4} />
+            </section>
+          )}
+
+          {/* CENTER TAB NAVIGATION + MEMBERSHIP CARDS */}
+          <section
+            id="plans"
+            ref={plansSectionRef}
+            className="scroll-mt-28 md:scroll-mt-32"
           >
-            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white small font-semibold">
-              2
+            <div className="mx-auto max-w-6xl px-4 py-8">
+              <h2 className="h2 mb-2">{fields.membershipsHeader}</h2>
+              <p className="body mb-8 max-w-2xl">
+                {fields.membershipsDescription}
+              </p>
+
+              {/* Center tabs */}
+              <div ref={membershipsRef} className="mb-8 flex flex-wrap gap-2 scroll-mt-24">
+                {centerLinks.map((c) => (
+                  <button
+                    key={c.slug}
+                    type="button"
+                    onClick={() => {
+                      setActiveCenter(c.slug);
+                      setTimeout(() => {
+                        membershipsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }, 50);
+                    }}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                      activeCenter === c.slug
+                        ? "bg-gmcc-navy text-white shadow-md"
+                        : "bg-white text-gmcc-navy border border-neutral-200 hover:border-gmcc-navy/40"
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Membership tier cards */}
+              {isCorporateCenter ? (
+                <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-sm">
+                  <h3 className="h3 mb-2">Corporate Wellness</h3>
+                  <p className="body mb-4">
+                    Corporate memberships are available through Corporate partners. Please visit the dedicated page for pricing and enrollment details.
+                  </p>
+                  <a href="/membership/corporate" className="btn btn-primary">
+                    View Corporate Wellness Options
+                  </a>
+                </div>
+              ) : tierGroups.length > 0 || activityPassTier ? (
+                <div className="space-y-8">
+                  {tierGroups.length > 0 ? (
+                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      {tierGroups.map((group) => (
+                        <TierCard
+                          key={`${activeCenter}-${group.tierName}`}
+                          tierName={group.tierName}
+                          variants={group.variants}
+                          getAudienceFromTitle={getAudienceFromTitle}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                  {activityPassTier ? (
+                      <div className="flex justify-center lg:justify-start">
+                        <div className="w-full max-w-sm">
+                          <TierCard
+                            key={`${activeCenter}-${activityPassTier.tierName}`}
+                            tierName={activityPassTier.tierName}
+                            variants={activityPassTier.variants}
+                            getAudienceFromTitle={getAudienceFromTitle}
+                            secondary
+                          />
+                        </div>
+                      </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-8 text-center">
+                  <p className="body">
+                    No memberships found for this center. Visit the{" "}
+                    <a href={`/membership/${activeCenter}`} className="link">
+                      center membership page
+                    </a>{" "}
+                    for full details.
+                  </p>
+                </div>
+              )}
             </div>
-            <div className="ml-12 flex flex-col sm:flex-row sm:items-start gap-3 pt-1">
-              <label className="body block sm:pt-1">
-                What type of program(s) are you looking for?
-              </label>
-              <div className="rounded border border-neutral-300 bg-white px-3 py-1.5 inline-block min-w-[150px] shadow-sm">
-                <div className="stack-2">
-                  {programAreas.map((p) => (
-                    <label key={p.slug} className="flex items-center gap-2 body cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={programAreaFilters.includes(p.slug)}
-                        onChange={(e) => handleProgramAreaChange(p.slug, e.target.checked)}
-                        className="h-4 w-4 rounded border-neutral-300 text-gmcc-navy focus:ring-gmcc-navy"
-                      />
-                      {p.name}
-                    </label>
-                  ))}
+          </section>
+
+          {/* QUIZ CTA SECTION */}
+          <section>
+            <div className="mt-12 card bg-gmcc-navy text-white mx-auto max-w-6xl px-12 py-8">
+              <div className="grid gap-4 md:grid-cols-2 items-center">
+                <div className="col-span-1 gap-4">
+                  <h2 className="h2 mb-4 text-white">
+                    {fields.quizHeader || "Quick path to get the right fit"}
+                  </h2>
+                  <p className="body max-w-md text-neutral-200">
+                    {intro}
+                  </p>
+                  <ul className="mt-4 space-y-2">
+                    {bullets.map((item: string, i: number) => (
+                      <li key={i} className="flex items-center gap-2 text-base text-neutral-200">
+                        <svg className="h-4 w-4 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="col-span-1 flex flex-col items-center justify-center text-center card bg-white px-6 py-4 text-gmcc-navy">
+                    <p className="small mt-2 text-gmcc-navy">
+                      Perfect for first-time visitors who are not sure which membership to choose
+                    </p>
+                    <button
+                      type="button"
+                      onClick={scrollToQuiz}
+                      className="btn btn-tertiary mt-6"
+                    >
+                      {fields.quizCta?.label || "Take our Membership Quiz"}
+                    </button>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* Step 3: Recommended Memberships */}
-          <div 
-            className={`relative pb-8 transition-all duration-500 ease-out delay-100 ${
-              // maxVisibleStep >= 3 
-                "opacity-100 translate-y-0" 
-                // : "opacity-0 -translate-y-4 pointer-events-none h-0 pb-0 overflow-hidden"
-            }`}
-          >
-            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white small font-semibold">
-              3
-            </div>
-            <div className="ml-12 pt-1">
-              <h3 className="h3 mb-3">Recommended Memberships:</h3>
-
-              {filteredMemberships.length === 0 ? (
-                <p className="body">
-                  No memberships match those filters yet. Try changing your selections or
-                  contact us and we&apos;ll help you find a fit.
-                </p>
-              ) : (
-                <div className="stack-4">
-                  {/* Header row with count + arrows */}
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="small">
-                      Showing{" "}
-                      <span className="font-medium">
-                        {currentRecIndex + 1}-
-                        {Math.min(currentRecIndex + VISIBLE_RECS, filteredMemberships.length)}
-                      </span>{" "}
-                      of{" "}
-                      <span className="font-medium">{filteredMemberships.length}</span>{" "}
-                      recommended memberships
+          {/* FINANCIAL ASSISTANCE */}
+          <section>
+            <div className="mx-auto max-w-6xl px-4 py-16 sm:py-16">
+              <div className="grid gap-8 md:grid-cols-[1fr_auto] items-center">
+                <div>
+                  <h2 className="h2">
+                    {fields.financialAssistanceHeader || "Financial Assistance"}
+                  </h2>
+                  <p className="eyebrow mt-2">
+                    {fields.financialAssistanceSubheader || "Need help covering membership costs?"}
+                  </p>
+                  {fields.financialAssistanceDescription && (
+                    <p className="body mt-3 max-w-xl">
+                      {fields.financialAssistanceDescription}
                     </p>
-
-                    <div className="inline-flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setCurrentRecIndex((i) => Math.max(0, i - VISIBLE_RECS))
-                        }
-                        disabled={currentRecIndex === 0}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100"
-                        aria-label="Previous memberships"
-                      >
-                        ‹
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setCurrentRecIndex((i) => Math.min(maxRecIndex, i + VISIBLE_RECS))
-                        }
-                        disabled={currentRecIndex >= maxRecIndex}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100"
-                        aria-label="Next memberships"
-                      >
-                        ›
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Membership cards */}
-                  <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-                    {visibleRecommended.map((m) => (
-                      <article key={m.slug} className="flex flex-col card">
-                        <div className="stack-2">
-                          <h4 className="h3 text-gmcc-navy leading-tight">{m.title}</h4>
-
-                          <div className="stack-2 body">
-                            {m.pricing.monthly != null && (
-                              <div>
-                                <span className="text-neutral-500">Monthly:</span>{" "}
-                                <span className="font-bold">
-                                  ${Math.round(m.pricing.monthly)}
-                                </span>
-                              </div>
-                            )}
-                            {m.pricing.paymentSplit != null && m.pricing.paymentSplit.cost != null && (
-                              <div>
-                                <span className="text-neutral-500">
-                                  {m.pricing.paymentSplit.frequency}: {" "}
-                                </span>
-                                <span className="font-bold">
-                                  ${Math.round(m.pricing.paymentSplit.cost ?? 0)}
-                                </span>
-                              </div>
-                            )}
-                            {m.pricing.annually != null && (
-                              <div>
-                                <span className="text-neutral-500">Annually:</span>{" "}
-                                <span className="font-bold">
-                                  ${Math.round(m.pricing.annually)}
-                                </span>
-                              </div>
-                            )}
-                            {m.pricing.joiningFee != null && (
-                              <div className="small">
-                                One-time impact fee: ${Math.round(m.pricing.joiningFee)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="mt-auto pt-4 stack-2">
-                          {m.benefits && m.benefits.length > 0 ? (
-                            <button
-                              type="button"
-                              onClick={() => toggleCompare(m.slug)}
-                              className={`btn w-full ${
-                                comparedSlugs.includes(m.slug)
-                                  ? "btn-secondary"
-                                  : "btn-primary"
-                              }`}
-                            >
-                              {comparedSlugs.includes(m.slug) ? "Remove from Compare" : "View and Compare Benefits"}
-                            </button>
-                          ) : (
-                            <span className="btn w-full bg-neutral-200 text-neutral-500 cursor-not-allowed">
-                              No benefits listed
-                            </span>
-                          )}
-                          <a
-                            href={'https://register.greatermidland.org/webtrac/web/search.html?Action=Start'}
-                            className="btn btn-secondary w-full"
-                          >
-                            Join or Renew
-                          </a>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Step 4: Compare Options */}
-          <div 
-            className={`relative transition-all duration-500 ease-out delay-200 ${
-              // maxVisibleStep >= 3 
-                "opacity-100 translate-y-0" 
-                // : "opacity-0 -translate-y-4 pointer-events-none h-0 overflow-hidden"
-            }`}
-          >
-            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-gmcc-navy text-white small font-semibold">
-              4
-            </div>
-            <div className="ml-12 pt-1">
-              <h3 className="h3 mb-3">Compare Options:</h3>
-
-              {comparedMemberships.length === 0 ? (
-                <p className="body">
-                  Click &quot;View and Compare Benefits&quot; on the memberships above to compare them side by side.
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-4">
-                  {comparedMemberships.map((m) => (
-                    <article
-                      key={m.slug}
-                      className="flex flex-col rounded-lg border-2 border-gmcc-blue-light bg-gmcc-blue-light/10 p-4 min-w-[260px] max-w-[320px] flex-1"
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  {fields.financialAssistanceCta?.url ? (
+                    <a
+                      href={fields.financialAssistanceCta.url}
+                      className="btn btn-primary"
                     >
-                      {/* Close button */}
-                      <div className="flex justify-end mb-1">
-                        <button
-                          type="button"
-                          onClick={() => removeFromCompare(m.slug)}
-                          className="small text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
-                        >
-                          <span>✕</span> Close
-                        </button>
-                      </div>
-
-                      {/* Title */}
-                      <h4 className="h3 text-gmcc-navy leading-tight text-center mb-3">
-                        {m.title}
-                      </h4>
-
-                      {/* Benefits list */}
-                      <ul className="stack-2 body text-center flex-1">
-                        {m.benefits.map((benefit, i) => (
-                          <li key={i}>{benefit}</li>
-                        ))}
-                      </ul>
-
-                      {/* Join button */}
-                      <div className="mt-4 pt-3 border-t border-neutral-200">
-                        <a
-                          href="https://register.greatermidland.org/webtrac/web/search.html?Action=Start"
-                          className="btn btn-primary w-full"
-                        >
-                          Join or Renew
-                        </a>
-                      </div>
-                    </article>
-                  ))}
+                      {fields.financialAssistanceCta.label || "Apply / Get Started"}
+                    </a>
+                  ) : null}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
+          {/* FEATURED CAMPAIGN */}
+          {fields.campaign && (
+            <section className="relative mt-12" style={{ backgroundColor: fields.campaignBgColor ?? "#ffffff" }}>
+              <FeaturedCampaignSection campaign={fields.campaign} bgColor={fields.campaignBgColor ?? "#ffffff"} textColor={fields.campaignTextColor ?? "#003A70"} />
+            </section>
+          )}
 
-    {/* Financial aid estimator stub */}
-    <h2 className="h2 mb-3">Financial assistance</h2>
-    <p className="body mt-3 mb-3">
-        Greater Midland Community Center strives to ensure wellness, education, recreation and social programming remains available, accessible and affordable to Midland County 
-        residents and employees. With the support of United Way of Midland County we are pleased to provide scholarship assistance to qualifying families and individuals.
-    </p>
-    <FinancialAidEstimator />
-
-
-      {/* GENERIC MEMBERSHIP INFO SECTIONS */}
-      <section className="grid gap-6 lg:grid-cols-2 mt-6">
-
-        {/* FAQ stub */}
-        <div className="card">
-          <h2 className="h2">Membership FAQs</h2>
-          <ul className="mt-3 stack-4 body">
-            <li>How do I add family members to my membership?</li>
-            <li>How do I change my membership?</li>
-            <li>Can I pause or freeze my membership?</li>
-            <li className="mt-1">
-              <a href="/membership-faq" className="link">
-                View all membership FAQs →
+          {/* CONTACT CTA */}
+          <section>
+            <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16 text-center">
+              <h2 className="font-heading text-2xl font-bold text-gmcc-navy sm:text-3xl">
+                {fields.contactHeader}
+              </h2>
+              <p className="mt-3 text-gmcc-navy/70 max-w-xl mx-auto">
+                {fields.contactDescription}
+              </p>
+              <a
+                href="https://register.greatermidland.org/webtrac/web/search.html?Action=Start"
+                className="btn bg-gmcc-navy text-white hover:bg-neutral-100 mt-6 text-base px-8 py-3"
+              >
+                Contact Us
               </a>
-            </li>
-          </ul>
+            </div>
+          </section>
+
+        </div>
+      )}
+
+      {/* FOOTER PHOTO — wave overlaps top, photo tucks behind footer */}
+      {fields.footerPhoto && (
+        <section className="relative z-10 -mb-10 md:-mb-14">
+          <img
+            src={fields.footerPhoto.url}
+            alt={fields.footerPhoto.alt}
+            className="w-full h-[300px] md:h-[400px] object-cover"
+          />
+          <div className="pointer-events-none absolute top-0 left-0 z-20 w-full overflow-hidden leading-none">
+            <svg
+              viewBox="0 0 1440 120"
+              className="-ml-px block h-10 w-[calc(100%+2px)] text-white md:h-16"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="
+                  M-20,110
+                  C750,-90  800,120  1200,80
+                  S1420,0 1460,0
+                  L1460,0 L-20,0 Z
+                "
+                fill="currentColor"
+              />
+            </svg>
+          </div>
+        </section>
+      )}
+
+      {/* QUIZ TAB CONTENT */}
+      {activeTab === "quiz" && (
+        <div ref={quizRef} className="mx-auto max-w-4xl px-4 py-10 sm:py-14">
+          <MembershipQuiz
+            audiences={audiences}
+            programAreas={programAreas}
+            memberships={memberships}
+            onClose={() => setActiveTab("compare")}
+          />
+        </div>
+      )}
+    </main>
+  );
+}
+
+const VISIBLE_BENEFITS = 5;
+
+/** A single tier card with audience-switching pills */
+function TierCard({
+  tierName,
+  variants,
+  getAudienceFromTitle,
+  secondary = false,
+}: {
+  tierName: string;
+  variants: Membership[];
+  getAudienceFromTitle: (title: string) => string;
+  secondary?: boolean;
+}) {
+  const defaultIdx = variants.findIndex((v) => {
+    const aud = getAudienceFromTitle(v.title).toLowerCase();
+    return aud.includes("adult") && !aud.includes("young");
+  });
+  const [selectedIdx, setSelectedIdx] = useState(defaultIdx >= 0 ? defaultIdx : 0);
+  const [benefitsExpanded, setBenefitsExpanded] = useState(false);
+  const selected = variants[selectedIdx] ?? variants[0];
+  if (!selected) return null;
+
+  const hiddenCount = Math.max(0, selected.benefits.length - VISIBLE_BENEFITS);
+  const shownBenefits = benefitsExpanded
+    ? selected.benefits
+    : selected.benefits.slice(0, VISIBLE_BENEFITS);
+
+  const articleClass = secondary
+    ? "flex flex-col rounded-2xl border border-neutral-300 bg-neutral-50 shadow-none overflow-hidden ring-1 ring-neutral-100"
+    : "flex flex-col rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden";
+
+  return (
+    <article className={articleClass}>
+      {selected.hero && (
+        <div className={`relative bg-neutral-100 ${secondary ? "h-32 opacity-90" : "h-40"}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={selected.hero.url}
+            alt={selected.hero.alt}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
+
+      <div className={`flex flex-col flex-1 ${secondary ? "p-4" : "p-5"}`}>
+        <h3
+          className={`font-heading font-bold text-gmcc-navy ${
+            secondary ? "text-lg text-gmcc-navy" : "text-xl"
+          }`}
+        >
+          {tierName}
+        </h3>
+
+        {/* Pricing */}
+        <div className="mt-3 space-y-1 text-sm">
+          {selected.pricing.monthly != null && (
+            <div>
+              <span className={`font-bold ${secondary ? "text-3xl" : "text-4xl"}`}>
+                ${Math.round(selected.pricing.monthly)}
+              </span>
+              <span className="text-neutral-500">/month</span>
+            </div>
+          )}
+          {selected.pricing.paymentSplit?.cost != null && (
+            <div>
+              <span className="text-neutral-500">{selected.pricing.paymentSplit.frequency}:</span>{" "}
+              <span className="font-bold">${Math.round(selected.pricing.paymentSplit.cost)}</span>
+            </div>
+          )}
+          {selected.pricing.annually != null && (
+            <div>
+              <span className="text-neutral-500">Annual:</span>{" "}
+              <span className="font-bold">${Math.round(selected.pricing.annually)}</span>
+            </div>
+          )}
+          {selected.pricing.joiningFee != null && (
+            <div className="text-xs text-neutral-400">
+              One-time impact fee: ${Math.round(selected.pricing.joiningFee)}
+            </div>
+          )}
         </div>
 
-        {/* Insurance-based memberships (SilverSneakers etc.) */}
-        <div className="card">
-          <h2 className="h2">Insurance-based memberships</h2>
-          <p className="mt-2 body">
-            Certain health plans include memberships like{" "}
-            <strong>SilverSneakers</strong>, <strong>Renew Active</strong>, or
-            other wellness benefits. If you&apos;re 60+ or on Medicare, you may
-            qualify for a free or reduced-cost membership.
-          </p>
-          <p className="mt-2 body">
-            Bring your insurance card to the front desk or contact us and we
-            can help you check eligibility.
-          </p>
-          <a href="/membership/discounts" className="link body mt-3 block">
-            Learn more about insurance-based options →
+        {/* Audience pills */}
+        {variants.length > 1 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {variants.map((v, i) => {
+              const aud = getAudienceFromTitle(v.title);
+              return (
+                <button
+                  key={v.slug}
+                  type="button"
+                  onClick={() => {
+                    setSelectedIdx(i);
+                    setBenefitsExpanded(false);
+                  }}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+                    selectedIdx === i
+                      ? "bg-gmcc-navy text-white shadow-sm"
+                      : "bg-neutral-100 text-gmcc-navy hover:bg-neutral-200"
+                  }`}
+                >
+                  {aud}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {selected.summary && (
+          <p className="small mt-3">{selected.summary}</p>
+        )}
+
+        {/* Benefits — show first 5 then fade + "see X more" */}
+        {selected.benefits.length > 0 && (
+          <div className="mt-3 relative">
+            <ul className="space-y-1">
+              {shownBenefits.map((b, i) => (
+                <li key={i} className="flex items-start gap-1.5 text-xs text-neutral-600">
+                  <svg className="mt-0.5 h-3 w-3 shrink-0 text-gmcc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  {b}
+                </li>
+              ))}
+            </ul>
+
+            {!benefitsExpanded && hiddenCount > 0 && (
+              <>
+                <div
+                  className={`pointer-events-none absolute bottom-6 left-0 right-0 h-8 bg-gradient-to-t to-transparent ${
+                    secondary ? "from-neutral-50" : "from-white"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setBenefitsExpanded(true)}
+                  className="mt-1 text-xs font-semibold text-gmcc-navy hover:underline"
+                >
+                  See {hiddenCount} more benefit{hiddenCount !== 1 && "s"}
+                </button>
+              </>
+            )}
+
+            {benefitsExpanded && hiddenCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setBenefitsExpanded(false)}
+                className="mt-1 text-xs font-semibold text-gmcc-navy hover:underline"
+              >
+                Show less
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="mt-auto pt-4">
+          <a
+            href="https://register.greatermidland.org/webtrac/web/search.html?Action=Start"
+            className={secondary ? "btn btn-secondary w-full" : "btn btn-primary w-full"}
+          >
+            Join Now
           </a>
         </div>
-      </section>
       </div>
-    </main>
+    </article>
   );
 }

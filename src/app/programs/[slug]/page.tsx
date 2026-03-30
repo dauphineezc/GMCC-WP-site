@@ -247,11 +247,11 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                 href={`/programs?audience=${encodeURIComponent(audienceSlug)}`}
                 className="badge badge-green hover:opacity-80 transition-opacity"
               >
-                Ages {p.ageRange.min ?? "?"}–{p.ageRange.max ?? "?"}
+                Ages {p.ageRange.min ?? "0"}{p.ageRange.min && p.ageRange.max ? "–" : ""}{p.ageRange.max ?? "+"}
               </a>
             ) : (
               <span className="badge badge-green">
-                Ages {p.ageRange.min ?? "?"}–{p.ageRange.max ?? "?"}
+                Ages {p.ageRange.min ?? "0"}{p.ageRange.min && p.ageRange.max ? "–" : ""}{p.ageRange.max ?? "+"}
               </span>
             );
           })()}

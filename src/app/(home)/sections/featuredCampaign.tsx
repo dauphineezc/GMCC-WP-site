@@ -31,7 +31,7 @@ export default function FeaturedCampaignSection({
     const secondaryLabel = campaign.campaignFields?.secondaryCta?.secondaryCtaLabel || "Details";
   
     return (
-      <section className="px-0 py-10">
+      <section className="px-0 py-0">
         <div className="mx-auto w-full">
           <div className={`overflow-hidden`} style={{ backgroundColor: bgColor ?? "#ffffff" }}>
             <div className="grid md:grid-cols-2">

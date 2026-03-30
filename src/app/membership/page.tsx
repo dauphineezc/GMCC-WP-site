@@ -1,10 +1,13 @@
 // app/membership/page.tsx
+import { Suspense } from "react";
 import { wpFetch } from "@/lib/wp";
 import ExploreMembershipsClient, {
   Membership,
   Audience,
   ProgramArea,
 } from "./exploreMembershipsClient";
+import type { MembershipPageFields, SerializedAmenity } from "./exploreMembershipsClient";
+import { extractAmenitySlugs, fetchAmenitiesWithImages } from "@/lib/amenities";
 
 const EXPLORE_MEMBERSHIPS_QUERY = `
   query ExploreMemberships {
@@ -51,6 +54,116 @@ const EXPLORE_MEMBERSHIPS_QUERY = `
           programArea {
             nodes { name slug }
           }
+        }
+      }
+    }
+  }
+`;
+
+const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
+  query MembershipPage {
+    page(id: "membership", idType: URI) {
+      id
+      title
+      slug
+      membershipPageFields {
+        header
+        subheader
+        heroImage {
+          node {
+            sourceUrl
+            altText
+          }
+        }
+        primaryCta {
+          cta
+          ctaLabel
+        }
+        quizCta {
+          cta
+          ctaLabel
+        }
+        centers {
+          nodes {
+            ... on Center {
+              slug
+              title
+            }
+          }
+        }
+        membershipsHeader
+        membershipsDescription
+        quizHeader
+        quizDescription
+        benefitsHeader
+        benefitsDescription
+        amenities {
+          nodes {
+            name
+            slug
+            ... on Amenity {
+              amenitiesFields {
+                amenityImage1 {
+                  node {
+                    sourceUrl
+                    altText
+                  }
+                }
+                center1 {
+                  nodes {
+                    ... on Center {
+                      title
+                      slug
+                    }
+                  }
+                }
+                relevantLink
+                linkLabel
+                isService
+                additionalInformation
+                additionalImage {
+                  node {
+                    sourceUrl
+                    altText
+                  }
+                }
+              }
+            }
+          }
+        }
+        financialAssistanceHeader
+        financialAssistanceSubheader
+        financialAssistanceDescription
+        financialAssistanceCta {
+          cta
+          ctaLabel
+        }
+        contactHeader
+        contactDescription
+
+        campaign {
+          nodes{
+            ... on Campaign {
+              id
+              title
+              uri
+              featuredImage {
+                node { sourceUrl altText }
+              }
+              campaignFields {
+                headline
+                body
+                primaryCta { primaryCtaLabel primaryCtaUrl }
+                secondaryCta { secondaryCtaLabel secondaryCtaUrl }
+              }
+            }
+          }
+        }
+        campaignBgColor
+        campaignTextColor
+
+        footerPhoto {
+          node { sourceUrl altText }
         }
       }
     }
@@ -108,13 +221,78 @@ function mapMembershipNode(wp: any): Membership {
     },
     audience,
     programArea,
-    // if you later want to show benefit bullets in the cards:
     benefits: splitLines(f.benefits),
   };
 }
 
+function mapPageFields(wp: any): MembershipPageFields {
+  const f = wp?.membershipPageFields ?? {};
+
+  const centers =
+    f.centers?.nodes?.map((n: any) => ({
+      slug: (n?.slug as string) ?? "",
+      label: (n?.title as string) ?? "",
+    })).filter((c: any) => c.slug && c.label) ?? [];
+
+  const amenitySlugs: string[] = extractAmenitySlugs(f.amenities?.nodes);
+
+  return {
+    header: (f.header as string) ?? null,
+    subheader: (f.subheader as string) ?? null,
+    heroImage: f.heroImage?.node
+      ? {
+          url: f.heroImage.node.sourceUrl as string,
+          alt: (f.heroImage.node.altText as string) ?? "",
+        }
+      : null,
+    primaryCta: f.primaryCta
+      ? {
+          url: (f.primaryCta.cta as string) ?? "",
+          label: (f.primaryCta.ctaLabel as string) ?? "",
+        }
+      : null,
+    quizCta: f.quizCta
+      ? {
+          url: (f.quizCta.cta as string) ?? "",
+          label: (f.quizCta.ctaLabel as string) ?? "",
+        }
+      : null,
+    centers,
+    membershipsHeader: (f.membershipsHeader as string) ?? null,
+    membershipsDescription: (f.membershipsDescription as string) ?? null,
+    quizHeader: (f.quizHeader as string) ?? null,
+    quizDescription: (f.quizDescription as string) ?? null,
+    benefitsHeader: (f.benefitsHeader as string) ?? null,
+    benefitsDescription: (f.benefitsDescription as string) ?? null,
+    amenitySlugs,
+    financialAssistanceHeader: (f.financialAssistanceHeader as string) ?? null,
+    financialAssistanceSubheader: (f.financialAssistanceSubheader as string) ?? null,
+    financialAssistanceDescription: (f.financialAssistanceDescription as string) ?? null,
+    financialAssistanceCta: f.financialAssistanceCta
+      ? {
+          url: (f.financialAssistanceCta.cta as string) ?? "",
+          label: (f.financialAssistanceCta.ctaLabel as string) ?? "",
+        }
+      : null,
+    contactHeader: (f.contactHeader as string) ?? null,
+    contactDescription: (f.contactDescription as string) ?? null,
+    campaign: f.campaign?.nodes?.[0] ?? null,
+    campaignBgColor: (f.campaignBgColor as string) ?? null,
+    campaignTextColor: (f.campaignTextColor as string) ?? null,
+    footerPhoto: f.footerPhoto?.node
+      ? {
+          url: f.footerPhoto.node.sourceUrl as string,
+          alt: (f.footerPhoto.node.altText as string) ?? "",
+        }
+      : null,
+  };
+}
+
 export default async function ExploreMembershipsPage() {
-  const data = await wpFetch<any>(EXPLORE_MEMBERSHIPS_QUERY);
+  const [data, pageData] = await Promise.all([
+    wpFetch<any>(EXPLORE_MEMBERSHIPS_QUERY),
+    wpFetch<any>(MEMBERSHIP_PAGE_QUERY),
+  ]);
 
   const audiences: Audience[] =
     data?.audiences?.nodes?.map((n: any) => ({
@@ -131,20 +309,59 @@ export default async function ExploreMembershipsPage() {
   const memberships: Membership[] =
     data?.memberships?.nodes?.map(mapMembershipNode) ?? [];
 
-  // Center links now point directly to /membership/[center-slug]
-  const centerLinks = [
+  const fields = mapPageFields(pageData?.page);
+
+  const fallbackCenters = [
     { slug: "community-center", label: "Community Center" },
     { slug: "tennis-center", label: "Tennis Center" },
-    { slug: "north-family-center", label: "North Family Center" },
     { slug: "coleman-family-center", label: "Coleman Family Center" },
+    { slug: "north-family-center", label: "North Family Center" },
+    { slug: "corporate-wellness", label: "Corporate Wellness" },
   ];
 
+  const sourceCenters = fields.centers.length > 0 ? fields.centers : fallbackCenters;
+  const centerBySlug = new Map(sourceCenters.map((c) => [c.slug, c]));
+  const centerOrder = [
+    "community-center",
+    "tennis-center",
+    "coleman-family-center",
+    "north-family-center",
+    "corporate-wellness",
+  ];
+
+  const orderedCenters = centerOrder
+    .map((slug) => centerBySlug.get(slug))
+    .filter(Boolean) as typeof sourceCenters;
+
+  const remainingCenters = sourceCenters.filter((c) => !centerOrder.includes(c.slug));
+
+  const centerLinks = [...orderedCenters, ...remainingCenters];
+
+  const amenitiesWithImages = await fetchAmenitiesWithImages(fields.amenitySlugs);
+
+  const serializedAmenities: SerializedAmenity[] = amenitiesWithImages.map((a) => ({
+    name: a.name,
+    slug: a.slug,
+    description: a.description ?? null,
+    relevantLink: a.relevantLink ?? null,
+    linkLabel: a.linkLabel ?? null,
+    defaultImage: a.defaultImage,
+    centerImageCandidates: a.centerImageCandidates.map((c) => ({
+      centerSlug: c.centerSlug,
+      image: c.image,
+    })),
+  }));
+
   return (
-    <ExploreMembershipsClient
-      centerLinks={centerLinks}
-      audiences={audiences}
-      programAreas={programAreas}
-      memberships={memberships}
-    />
+    <Suspense fallback={null}>
+      <ExploreMembershipsClient
+        centerLinks={centerLinks}
+        audiences={audiences}
+        programAreas={programAreas}
+        memberships={memberships}
+        fields={fields}
+        amenities={serializedAmenities}
+      />
+    </Suspense>
   );
 }

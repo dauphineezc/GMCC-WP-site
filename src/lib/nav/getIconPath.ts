@@ -5,11 +5,14 @@
  * E.g., "Our Purpose" -> "/primaryNavIcons/OurPurposeIcon.png"
  */
 export function getIconPath(label: string): string {
-  // Remove spaces and special characters, keeping only alphanumeric
+  // Build a stable PascalCase filename so connector words ("and", "a", "an")
+  // map to the same casing expected by production's case-sensitive filesystem.
   const sanitized = label
-    .replace(/[^a-zA-Z0-9]/g, '')  // Remove non-alphanumeric
-    .replace(/\s+/g, '');           // Remove any remaining spaces
-  
+    .split(/[^a-zA-Z0-9]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join("");
+
   return `/primaryNavIcons/${sanitized}Icon.png`;
 }
 

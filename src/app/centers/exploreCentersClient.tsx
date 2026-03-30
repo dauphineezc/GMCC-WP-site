@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import ImageCarousel from "@/components/imageCarousel";
 import HeaderImage from "@/components/headerImage";
 
@@ -11,6 +12,88 @@ type Props = {
   centers: CenterNode[];
   programs: ProgramNode[];
 };
+
+// Paste Google Maps iframe src URLs here by center slug.
+// Example slug key: "community-center"
+const CENTER_MAP_IFRAME_SRC_BY_SLUG: Record<string, string> = {
+  "community-center":
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d5776.855550714916!2d-84.22995452416238!3d43.61845477110376!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8823d5a7ede2564d%3A0xe10e70ea4bf16259!2sGreater%20Midland%20Community%20Center!5e0!3m2!1sen!2sus!4v1774296990953!5m2!1sen!2sus",
+
+  "tennis-center":
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2886.7226574245065!2d-84.21931072416031!3d43.65393827110211!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88217e3ac90b3fd3%3A0x446ca88d55a55e29!2sGreater%20Midland%20Tennis%20Center!5e0!3m2!1sen!2sus!4v1774297428863!5m2!1sen!2sus",
+
+  "curling-center":
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d5777.059344094783!2d-84.2305027241625!3d43.616333571103894!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8823d5a810753f43%3A0x3308642093b40cbb!2sMidland%20Curling!5e0!3m2!1sen!2sus!4v1774297574461!5m2!1sen!2sus",
+
+  "coleman-family-center":
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2881.9681114039395!2d-84.57831382415455!3d43.75275897109748!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88218c93cb9606e9%3A0x7470a02186cb2c17!2sGreater%20Midland%20Coleman%20Family%20Center!5e0!3m2!1sen!2sus!4v1774297538605!5m2!1sen!2sus",
+  
+  "north-family-center":
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2880.374964317035!2d-84.26638902415257!3d43.78583187109614!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8821780c23184edb%3A0x1ba02b20d8839295!2sNorth%20Midland%20Family%20Center!5e0!3m2!1sen!2sus!4v1774297507483!5m2!1sen!2sus",
+
+  "corporate-wellness-center":
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2888.856505429373!2d-84.19133592416293!3d43.60952927110423!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8823d56848f2a8a3%3A0x8d994b386146db55!2sCorteva%20Fitness%20Center!5e0!3m2!1sen!2sus!4v1774297603740!5m2!1sen!2sus",
+  
+  "corteva-fitness-center":
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2888.856505429373!2d-84.19133592416293!3d43.60952927110423!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8823d56848f2a8a3%3A0x8d994b386146db55!2sCorteva%20Fitness%20Center!5e0!3m2!1sen!2sus!4v1774297603740!5m2!1sen!2sus",
+  };
+
+// Card media sizing (map or image fallback)
+const CARD_MEDIA_HEIGHT_CLASS = "h-[200px]";
+
+function CenterCardMedia({
+  slug,
+  title,
+  featuredImageUrl,
+  featuredImageAlt,
+}: {
+  slug: string;
+  title: string;
+  featuredImageUrl?: string | null;
+  featuredImageAlt?: string | null;
+}) {
+  const [mapFailed, setMapFailed] = useState(false);
+  const iframeSrc = CENTER_MAP_IFRAME_SRC_BY_SLUG[slug];
+  const showMap = Boolean(iframeSrc) && !mapFailed;
+
+  if (showMap) {
+    return (
+      <div className={`card-bleed relative aspect-[16/9] bg-neutral-100 overflow-hidden rounded-t-2xl ${CARD_MEDIA_HEIGHT_CLASS}`}>
+        <iframe
+          src={iframeSrc}
+          width="100%"
+          height="100%"
+          style={{ border: 0 }}
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          title={`Map for ${title}`}
+          onError={() => setMapFailed(true)}
+        />
+      </div>
+    );
+  }
+
+  if (featuredImageUrl) {
+    return (
+      <div className={`card-bleed relative aspect-[16/9] bg-neutral-100 overflow-hidden rounded-t-2xl ${CARD_MEDIA_HEIGHT_CLASS}`}>
+        <Image
+          src={featuredImageUrl}
+          alt={featuredImageAlt || `${title} featured image`}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`card-bleed w-full bg-neutral-100 flex items-center justify-center ${CARD_MEDIA_HEIGHT_CLASS}`}>
+      <span className="small">No image available</span>
+    </div>
+  );
+}
 
 export default function ExploreCentersClient({ centers, programs }: Props) {
   // Build a lookup: centerSlug -> { programs[], programAreas[] }
@@ -258,13 +341,6 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCenters.map((c: any) => {
               const cf = c.centersFields ?? {};
-              const lat = Number(cf.googleMap?.lat);
-              const lng = Number(cf.googleMap?.lng);
-              const zoom = Number(cf.googleMap?.zoom ?? 15);
-              const hasMap = Number.isFinite(lat) && Number.isFinite(lng);
-              const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(
-                `${lat},${lng}`
-              )}&z=${Number.isFinite(zoom) ? zoom : 15}&output=embed`;
 
               return (
                 <a
@@ -272,24 +348,12 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
                   href={`/centers/${c.slug}`}
                   className="group card card-hover overflow-hidden"
                 >
-                  {mapSrc ? (
-                    <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
-                      <iframe
-                        src={mapSrc}
-                        width="100%"
-                        height="100%"
-                        style={{ border: 0 }}
-                        allowFullScreen
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                        title={`Map for ${c.title}`}
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-40 w-full bg-neutral-100 flex items-center justify-center">
-                      <span className="small">No map available</span>
-                    </div>
-                  )}
+                  <CenterCardMedia
+                    slug={c.slug}
+                    title={c.title}
+                    featuredImageUrl={c?.featuredImage?.node?.sourceUrl}
+                    featuredImageAlt={c?.featuredImage?.node?.altText}
+                  />
 
                   <div className="pt-4 stack-2">
                     <h3 className="font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-1">{c.title}</h3>

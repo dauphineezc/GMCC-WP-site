@@ -40,15 +40,80 @@ const PERSONAL_TRAINING_PAGE_QUERY = /* GraphQL */ `
         }
       }
       personalTrainingDirectoryPageFields {
+        header
+        subheader
         heroImage {
           node {
             sourceUrl
             altText
           }
         }
-        header
-        subheader
+        
+        bodyHeader
         body
+
+        benefits {
+          benefit1 {
+            benefit
+            benefitIcon {
+              node {
+                sourceUrl
+                altText
+              }
+            }
+          }
+          benefit2 {
+            benefit
+            benefitIcon {
+              node {
+                sourceUrl
+                altText
+              }
+            }
+          }
+          benefit3 {
+            benefit
+            benefitIcon {
+              node {
+                sourceUrl
+                altText
+              }
+            }
+          }
+          benefit4 {
+            benefit
+            benefitIcon {
+              node {
+                sourceUrl
+                altText
+              }
+            }
+          }
+        }
+
+        trainingOptionsHeader
+        trainingOptionsSubheader
+
+        trainersHeader
+        trainersSubheader
+        trainers {
+          nodes {
+            ... on StaffProfile {
+              title
+              featuredImage {
+                node {
+                  sourceUrl
+                  altText
+                }
+              }
+              staffProfilesFields {
+                title
+                bio
+              }
+            }
+          }
+        }
+
         attachments {
           attachment1 {
             label
@@ -91,25 +156,31 @@ const PERSONAL_TRAINING_PAGE_QUERY = /* GraphQL */ `
             }
           }
         }
-        trainers {
-          nodes {
-            ... on StaffProfile {
-              title
-              featuredImage {
-                node {
-                  sourceUrl
-                  altText
-                }
-              }
-              staffProfilesFields {
-                title
-                bio
-              }
-            }
+
+        faqs {
+          faq1 {
+            question
+            answer
+          }
+          faq2 {
+            question
+            answer
+          }
+          faq3 {
+            question
+            answer
+          }
+          faq4 {
+            question
+            answer
           }
         }
+
+        inquiryFormHeader
+        inquiryFormSubheader
       }
     }
+
     programs(first: $first, where: { stati: PUBLISH }) {
       nodes {
         slug
@@ -216,28 +287,17 @@ function isPersonalTrainingProgram(program: WPProgram): boolean {
 }
 
 export default async function PersonalTrainingPage() {
-  const data = await wpFetch<{
-    page?: {
-      title?: string | null;
-      featuredImage?: {
-        node?: { sourceUrl?: string | null; altText?: string | null } | null;
-      } | null;
-      personalTrainingDirectoryPageFields?: {
-        heroImage?: {
-          node?: { sourceUrl?: string | null; altText?: string | null } | null;
-        } | null;
-        subheader?: string | null;
-      } | null;
-    } | null;
-    programs?: { nodes?: WPProgram[] | null } | null;
-  }>(PERSONAL_TRAINING_PAGE_QUERY, { uri: "/personal-training", first: 60 });
+  const data = await wpFetch<any>(PERSONAL_TRAINING_PAGE_QUERY, {
+    uri: "/personal-training",
+    first: 60,
+  });
 
   const rawFields = data?.page?.personalTrainingDirectoryPageFields ?? null;
   const fields = normalizeDirectoryData(rawFields);
 
   const ctas = normalizedAttachmentList(fields.attachments).slice(0, 2);
   const relatedPrograms = (data?.programs?.nodes ?? [])
-    .filter((program): program is WPProgram => !!program?.slug && !!program?.title)
+    .filter((program: WPProgram): program is WPProgram => !!program?.slug && !!program?.title)
     .filter(isPersonalTrainingProgram)
     .slice(0, 6);
 
@@ -247,6 +307,49 @@ export default async function PersonalTrainingPage() {
   const introBody =
     fields.body?.trim() ||
     "Get personalized support from expert trainers to build strength, improve confidence, and make progress you can sustain.";
+  const rawBenefits = data?.page?.personalTrainingDirectoryPageFields?.benefits;
+  const benefits = [rawBenefits?.benefit1, rawBenefits?.benefit2, rawBenefits?.benefit3, rawBenefits?.benefit4]
+    .map((item: any) => ({
+      label: (item?.benefit ?? "").trim(),
+      iconUrl: item?.benefitIcon?.node?.sourceUrl ?? "",
+      iconAlt: item?.benefitIcon?.node?.altText ?? "",
+    }))
+    .filter((item: { label: string; iconUrl: string; iconAlt: string }) => item.label || item.iconUrl);
+
+    const trainingOptionsHeader = data?.page?.personalTrainingDirectoryPageFields?.trainingOptionsHeader ?? "Training Options";
+    const trainingOptionsSubheader = data?.page?.personalTrainingDirectoryPageFields?.trainingOptionsSubheader ?? "Browse personal training options and check availability.";
+
+    const trainersHeader = data?.page?.personalTrainingDirectoryPageFields?.trainersHeader ?? "Meet our Trainers!";
+    const trainersSubheader = data?.page?.personalTrainingDirectoryPageFields?.trainersSubheader ?? "Learn from experienced coaches who personalize each session to your goals.";
+
+    const inquiryFormHeader = data?.page?.personalTrainingDirectoryPageFields?.inquiryFormHeader ?? "Ready to Get Started?";
+    const inquiryFormSubheader = data?.page?.personalTrainingDirectoryPageFields?.inquiryFormSubheader ?? "Fill out the inquiry form below.";
+
+    const faqs = data?.page?.personalTrainingDirectoryPageFields?.faqs;
+    const faqsList = [faqs?.faq1, faqs?.faq2, faqs?.faq3, faqs?.faq4]
+    .map((item: any) => ({
+      question: item?.question ?? "",
+      answer: item?.answer ?? "",
+    }))
+    .filter((item: { question: string; answer: string }) => item.question || item.answer);
+
+  const trainingOptionsOrder = [
+    "individual training sessions",
+    "buddy training sessions",
+    "small group training sessions",
+  ];
+
+  const trainingOptions = (programs: WPProgram[]): WPProgram[] => {
+    return programs
+      .filter((program: WPProgram) => program.programFields?.programArea?.nodes?.some((area: { slug?: string | null; name?: string | null } | null) => area?.slug === "personal-training" || area?.name === "Personal Training"))
+      .sort((a: WPProgram, b: WPProgram) => {
+        const aIndex = trainingOptionsOrder.indexOf(String(a?.title ?? "").trim().toLowerCase());
+        const bIndex = trainingOptionsOrder.indexOf(String(b?.title ?? "").trim().toLowerCase());
+        const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+        const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+        return normalizedA - normalizedB;
+      });
+  };
 
   return (
     <main className="overflow-x-clip">
@@ -318,43 +421,46 @@ export default async function PersonalTrainingPage() {
       </section>
 
       <section className="mx-auto mt-6 max-w-6xl px-6">
-        <h2 className="h2 text-gmcc-navy">Why Personal Training at Greater Midland?</h2>
-        <p className="body mt-4 max-w-4xl whitespace-pre-line">{introBody}</p>
+        <h2 className="h2 text-gmcc-navy">
+          {data?.page?.personalTrainingDirectoryPageFields?.bodyHeader ?? "Why Personal Training at Greater Midland?"}
+        </h2>
+        <p className="body mt-4 max-w-6xl whitespace-pre-line">{introBody}</p>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {["Beginner Friendly", "Goal Driven", "Rehab and Recovery", "Flexible Scheduling"].map(
-            (item) => (
-              <div key={item} className="text-center">
-                <img src={`/${item.replace(" ", "")}Icon.png`} alt={item} className="w-16 h-16" />
-                <p className="font-heading text-lg font-semibold text-gmcc-navy">{item}</p>
+        {benefits.length ? (
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {benefits.map((item) => (
+              <div key={`${item.label}-${item.iconUrl}`} className="text-center">
+                {item.iconUrl ? (
+                  <img src={item.iconUrl} alt={item.iconAlt || item.label} className="mx-auto h-24 w-24" />
+                ) : null}
+                {item.label ? (
+                  <p className="font-heading text-lg font-semibold text-gmcc-navy mt-2">{item.label}</p>
+                ) : null}
               </div>
-            ),
-          )}
-        </div>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <section className="mx-auto mt-12 max-w-6xl px-6">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
-            <h2 className="h2 text-gmcc-navy">Training Options</h2>
+            <h2 className="h2 text-gmcc-navy">{trainingOptionsHeader}</h2>
             <p className="body mt-2 text-neutral-700">
-              Browse personal training options and check availability.
+              {trainingOptionsSubheader}
             </p>
           </div>
-          {/* <a href="/programs?programArea=Personal%20Training" className="btn btn-primary">
-            Explore Options
-          </a> */}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {relatedPrograms.map((program) => {
+          {trainingOptions(relatedPrograms).map((program: WPProgram) => {
             const centers =
               program.programFields?.center?.nodes
-                ?.map((center) => ({
+                ?.map((center: { slug?: string | null; title?: string | null } | null) => ({
                   slug: center?.slug ?? "",
                   title: center?.title ?? "",
                 }))
-                .filter((center) => center.slug && center.title) ?? [];
+                .filter((center: { slug: string; title: string }) => center.slug && center.title) ?? [];
             const price = program.programFields?.priceFrom;
 
             return (
@@ -394,6 +500,8 @@ export default async function PersonalTrainingPage() {
                       <div className="text-sm">
                         <span className="text-neutral-500">From </span>
                         <span className="font-semibold text-neutral-900">${price.toFixed(2)}</span>
+                        {program.title?.includes("Group") ? <span className="text-neutral-500"> per person</span> : null }
+                        {program.title?.includes("Buddy") ? <span className="text-neutral-500"> per person</span> : null }
                       </div>
                     ) : (
                       <div />
@@ -431,9 +539,9 @@ export default async function PersonalTrainingPage() {
 
         <div className="-mt-px bg-gmcc-navy py-12 text-white">
           <div className="mx-auto max-w-6xl px-6">
-            <h2 className="h2 text-white">Meet our Trainers!</h2>
+            <h2 className="h2 text-white">{trainersHeader}</h2>
             <p className="mt-2 max-w-3xl text-white/90">
-              Learn from experienced coaches who personalize each session to your goals.
+              {trainersSubheader}
             </p>
             <div className="mt-6 rounded-2xl bg-gmcc-navy p-4 text-neutral-900 md:p-6">
               <PersonalTrainingDirectoryHeader
@@ -483,39 +591,11 @@ export default async function PersonalTrainingPage() {
         <h2 className="h2 text-gmcc-navy">FAQs</h2>
         <div className="mt-4">
           <Accordion
-            defaultOpenIds={["faq-1"]}
-            items={[
-              {
-                id: "faq-1",
-                title: "How much does personal training cost?",
-                content: (
-                  <p>
-                    Pricing varies by package and trainer. Browse options above, then inquire for
-                    current session rates and availability.
-                  </p>
-                ),
-              },
-              {
-                id: "faq-2",
-                title: "How do I schedule sessions?",
-                content: (
-                  <p>
-                    Select a program option and submit the inquiry form. Our team will contact you
-                    to match trainer availability with your preferred schedule.
-                  </p>
-                ),
-              },
-              {
-                id: "faq-3",
-                title: "Do I need a membership?",
-                content: (
-                  <p>
-                    Membership status depends on program type. Contact our team through the inquiry
-                    form and we will walk you through the best path.
-                  </p>
-                ),
-              },
-            ]}
+            items={ faqsList.map((item: { question: string; answer: string }) => ({
+              id: item.question,
+              title: item.question,
+              content: <p>{item.answer}</p>,
+            })) }
           />
         </div>
       </section>
@@ -537,8 +617,8 @@ export default async function PersonalTrainingPage() {
         </div>
 
         <div className="relative mx-auto max-w-3xl px-6">
-          <h2 className="h2 text-center text-gmcc-navy">Ready to Get Started?</h2>
-          <p className="body mt-2 text-center text-neutral-700">Fill out the inquiry form below.</p>
+          <h2 className="h2 text-center text-gmcc-navy">{inquiryFormHeader}</h2>
+          <p className="body mt-2 text-center text-neutral-700">{inquiryFormSubheader}</p>
 
           <form className="card mt-6 space-y-4 bg-neutral-100" aria-label="Personal training inquiry">
             <div className="grid gap-4 md:grid-cols-2">

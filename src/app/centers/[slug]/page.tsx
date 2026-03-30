@@ -1,19 +1,10 @@
 // src/app/centers/[slug]/page.tsx
+import AmenitiesGrid from "@/components/amenitiesGrid";
+import CenterCampaignModule from "@/components/centerCampaignModule";
+import PhoneLink from "@/components/phoneLink";
+import { extractAmenitySlugs, toAmenityDisplayForCenter } from "@/lib/amenities";
+import { fetchAmenitiesWithImages } from "@/lib/amenities";
 import { wpFetch } from "@/lib/wp";
-import {
-  fetchAmenitiesWithImages,
-  fetchAccessibilityAmenitiesWithImages,
-  extractAmenitySlugs,
-  AmenityWithImage,
-  pickAmenityImageForCenter,
-  toAmenityImagesForCenter,
-  toAmenityDisplayForCenter,
-  toAmenityDisplayDefault,
-} from "@/lib/amenities";
-import CenterTabs from "./centerTabs";
-import ImageCarousel from "../../../components/imageCarousel";
-import AmenitiesCarousel from "../../../components/amenitiesCarousel";
-import AmenitiesGrid from "../../../components/amenitiesGrid";
 
 const CENTER_BY_SLUG_QUERY = `
   query CenterBySlug($slug: ID!) {
@@ -35,6 +26,14 @@ const CENTER_BY_SLUG_QUERY = `
         longDescription
         centerType
         address
+        primaryCta {
+          ctaLabel
+          cta
+        }
+        secondaryCta {
+          ctaLabel
+          cta
+        }
         socialLinks
         amenities {
           nodes {
@@ -112,6 +111,8 @@ const CENTER_BY_SLUG_QUERY = `
                     }
                   }
                 }
+                relevantLink
+                linkLabel
                 isService
                 additionalInformation
                 additionalImage {
@@ -181,98 +182,55 @@ const CENTER_BY_SLUG_QUERY = `
           contactPhone
           contactEmail
         }
-        imagesforcarousel {
-          image1 {
-            image1Image {
-              node {
-                sourceUrl
-                altText
-              }
-            }
-            image1Cta
-            image1Url
-          }
-          image2 {
-            image2Image {
-              node {
-                sourceUrl
-                altText
-              }
-            }
-            image2Cta
-            image2Url
-          }
-          image3 {
-            image3Image {
-              node {
-                sourceUrl
-                altText
-              }
-            }
-            image3Cta
-            image3Url
-          }
+      }
+      centerCampaignModuleFields {
+        header
+        description
+        subheader
+        body
+        primaryCta {
+          ctaLabel
+          cta
         }
-        programAreas {
-          nodes {
-            name
-            slug
-            description
-            ... on ProgramArea {
-              programAreaFields {
-                programAreaImage {
-                node {
-                  sourceUrl
-                  altText
-                }
-                }
-              }
-              programAreaFields {
-                programAreaImage {
-                  node {
-                    sourceUrl
-                    altText
-                  }
-                }
-              }
+        secondaryCta {
+          ctaLabel
+          cta
+        }
+        gallery {
+          photo1 {
+            node {
+              sourceUrl
+              altText
             }
           }
-        }
-        upcomingEvents {
-          nodes {
-            ... on Event {
-              slug
-              title
-              featuredImage {
-                node {
-                  sourceUrl
-                  altText
-                }
-              }
-              eventFields {
-                summary
-                startDateTime
-                endDateTime
-                registrationLink
-                eventType
-                locationOverride
-              }
+          photo2 {
+            node {
+              sourceUrl
+              altText
             }
           }
-        }
-        policiesFaqs {
-          nodes {
-            ... on Policy {
-              slug
-              title
+          photo3 {
+            node {
+              sourceUrl
+              altText
             }
           }
-        }
-        announcements {
-          nodes {
-            ... on News {
-              slug
-              title
+          photo4 {
+            node {
+              sourceUrl
+              altText
+            }
+          }
+          photo5 {
+            node {
+              sourceUrl
+              altText
+            }
+          }
+          photo6 {
+            node {
+              sourceUrl
+              altText
             }
           }
         }
@@ -331,651 +289,376 @@ export default async function CenterPage(props: CenterPageProps) {
     );
   }
 
-  // NOTE: centersFields, not centerFields
-  const f = center.centersFields ?? {};
-
-  // Process carousel images
-  const carouselGroup = f.imagesforcarousel ?? {};
-  const carouselImages: Array<{
-    image: { sourceUrl: string; altText: string | null } | null;
-    cta: string | null;
-    url: string | null;
-  }> = [];
-
-  // Extract images from image1, image2, etc.
-  for (let i = 1; i <= 3; i++) {
-    const imageGroup = carouselGroup[`image${i}` as keyof typeof carouselGroup];
-    if (imageGroup) {
-      const imageNode = imageGroup[`image${i}Image` as keyof typeof imageGroup] as any;
-      const cta = imageGroup[`image${i}Cta` as keyof typeof imageGroup] as string | null;
-      const url = imageGroup[`image${i}Url` as keyof typeof imageGroup] as string | null;
-      
-      if (imageNode?.node?.sourceUrl) {
-        carouselImages.push({
-          image: {
-            sourceUrl: imageNode.node.sourceUrl,
-            altText: imageNode.node.altText ?? null,
-          },
-          cta: cta ?? null,
-          url: url ?? null,
-        });
-      }
-    }
-  }
-
-  const amenityNodes = f.amenities?.nodes ?? [];
-  const amenityNames =
-    amenityNodes.map((n: any) => n?.name).filter(Boolean) ?? [];
+  const amenityNodes = center.centersFields?.amenities?.nodes ?? [];
 
   // Fetch amenities for this center
   const amenitySlugs = extractAmenitySlugs(amenityNodes);
   const amenitiesWithImages = await fetchAmenitiesWithImages(amenitySlugs);
   const amenitiesForThisCenter = toAmenityDisplayForCenter(amenitiesWithImages, slug);
 
-  // Fetch accessibility amenities for this center
-  const accessibilityAmenitySlugs = extractAmenitySlugs(f.accessibilityAmenities?.nodes ?? []);
-  const accessibilityAmenitiesWithImages = await fetchAccessibilityAmenitiesWithImages(accessibilityAmenitySlugs);
-  const accessibilityAmenitiesForThisCenter = toAmenityDisplayDefault(accessibilityAmenitiesWithImages);
 
-  const policies = f.policiesFaqs?.nodes ?? [];
-  const announcements = f.announcements?.nodes ?? [];
+  const heroImageUrl = center.featuredImage?.node?.sourceUrl ?? null;
+  const heroHeader = center.title ?? null;
+  const heroSubheader = center.centersFields?.summary ?? null;
+  const centerFields = center.centersFields ?? {};
+  const campaign = center.centerCampaignModuleFields ?? {};
 
-  // Filter testimonials by center
-  const allTestimonials = data?.testimonials?.nodes ?? [];
-  const centerTestimonials = allTestimonials.filter((t: any) =>
-    t.testimonialFields?.relatedCenters?.nodes?.some(
-      (c: any) => c?.slug === slug
-    )
-  );
+  const firstNonEmptyString = (...values: unknown[]) => {
+    for (const value of values) {
+      if (typeof value === "string" && value.trim()) return value.trim();
+    }
+    return null;
+  };
 
-  // Filter memberships by center (just names)
-  const allMemberships = data?.memberships?.nodes ?? [];
-  const centerMemberships = allMemberships
-    .filter((m: any) =>
-      m.membershipFields?.centers?.nodes?.some(
-        (c: any) => c?.slug === slug
-      )
-    )
-    .map((m: any) => m.title)
-    .filter(Boolean);
+  const findStringByKeyMatch = (
+    input: unknown,
+    keyMatcher: (key: string) => boolean,
+    depth = 0
+  ): string | null => {
+    if (depth > 4 || !input || typeof input !== "object") return null;
+    const obj = input as Record<string, unknown>;
 
-  const hours = f.hours ?? {};
-
-  const days: {
-    key: string; // label-based key for open/close names
-    field: keyof typeof hours;
-    label: string;
-  }[] = [
-    { key: "monday", field: "mondayHours", label: "Monday" },
-    { key: "tuesday", field: "tuesdayHours", label: "Tuesday" },
-    { key: "wednesday", field: "wednesdayHours", label: "Wednesday" },
-    { key: "thursday", field: "thursdayHours", label: "Thursday" },
-    { key: "friday", field: "fridayHours", label: "Friday" },
-    { key: "saturday", field: "saturdayHours", label: "Saturday" },
-    { key: "sunday", field: "sundayHours", label: "Sunday" },
-  ];
-
-  const renderDayHours = (opts: {
-    dayKey: string;
-    dayData: any;
-    label: string;
-  }) => {
-    const { dayKey, dayData, label } = opts;
-    if (!dayData) return null;
-
-    // e.g. closedMonday, closedTuesday...
-    const closed =
-      dayData[`closed${label}` as keyof typeof dayData] ??
-      dayData.closed ??
-      false;
-
-    if (closed) {
-      return (
-        <div className="flex justify-between text-sm">
-          <span className="text-neutral-600">{label}</span>
-          <span className="text-neutral-500">Closed</span>
-        </div>
-      );
+    for (const [key, value] of Object.entries(obj)) {
+      if (keyMatcher(key) && typeof value === "string" && value.trim()) {
+        return value.trim();
+      }
     }
 
-    const openTime =
-      dayData[`${dayKey}OpenTime` as keyof typeof dayData] ??
-      dayData.openTime;
-    const closeTime =
-      dayData[`${dayKey}CloseTime` as keyof typeof dayData] ??
-      dayData.closeTime;
+    for (const value of Object.values(obj)) {
+      if (typeof value === "object" && value !== null) {
+        const nested = findStringByKeyMatch(value, keyMatcher, depth + 1);
+        if (nested) return nested;
+      }
+    }
 
-    if (!openTime || !closeTime) return null;
+    return null;
+  };
 
-    return (
-      <div className="flex justify-between text-sm">
-        <span className="text-neutral-600">{label}</span>
-        <span className="text-neutral-800">
-          {openTime} – {closeTime}
-        </span>
-      </div>
+  const normalizeCta = (cta: any) => {
+    if (!cta) return null;
+
+    const ctaLabel = firstNonEmptyString(
+      cta?.ctaLabel,
+      cta?.title,
+      cta?.label,
+      cta?.text,
+      cta?.primaryCtaLabel,
+      cta?.secondaryCtaLabel,
+      findStringByKeyMatch(cta, (key) => /label|title|text/i.test(key))
     );
+
+    const ctaHref = firstNonEmptyString(
+      typeof cta?.cta === "string" ? cta.cta : null,
+      cta?.cta?.url,
+      cta?.cta?.uri,
+      cta?.cta?.href,
+      cta?.url,
+      cta?.uri,
+      cta?.href,
+      cta?.primaryCtaUrl,
+      cta?.secondaryCtaUrl,
+      findStringByKeyMatch(cta, (key) => /url|uri|href/i.test(key))
+    );
+
+    if (!ctaHref) return null;
+    return { ctaLabel: ctaLabel ?? "Learn more", cta: ctaHref };
+  };
+
+  const heroPrimaryCta = normalizeCta(center.centersFields?.primaryCta);
+  const heroSecondaryCta = normalizeCta(center.centersFields?.secondaryCta);
+  const campaignPrimaryCta = normalizeCta(campaign.primaryCta) ?? heroPrimaryCta;
+  const campaignSecondaryCta = normalizeCta(campaign.secondaryCta) ?? heroSecondaryCta;
+
+  const campaignModule = {
+    header: campaign.header ?? null,
+    description: campaign.description ?? null,
+    subheader: campaign.subheader ?? null,
+    body: campaign.body ?? null,
+    primaryCta: campaignPrimaryCta,
+    secondaryCta: campaignSecondaryCta,
+    gallery: {
+      photo1: campaign.gallery?.photo1?.node ?? null,
+      photo2: campaign.gallery?.photo2?.node ?? null,
+      photo3: campaign.gallery?.photo3?.node ?? null,
+      photo4: campaign.gallery?.photo4?.node ?? null,
+    },
   };
 
   return (
     <main>
-      {/* HERO IMAGE CAROUSEL - Full Width */}
-      {carouselImages.length > 0 ? (
-        <div className="w-full">
-          <ImageCarousel images={carouselImages} />
-        </div>
-      ) : center.featuredImage?.node?.sourceUrl ? (
-        // Fallback to featured image if no carousel images
-        // eslint-disable-next-line @next/next/no-img-element
-        <div className="w-full">
-          <img
-            src={center.featuredImage.node.sourceUrl}
-            alt={center.featuredImage.node.altText ?? ""}
-            className="h-72 w-full object-cover sm:h-96"
-          />
-        </div>
-      ) : null}
-
-      {/* Content Container */}
-      <div className="mx-auto max-w-6xl px-4 section-y stack-8">
         {/* HERO */}
-        <section className="stack-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="stack-2">
-            <h1 className="h1">{center.title}</h1>
-            {f.summary && (
-              <p className="body max-w-2xl">{f.summary}</p>
-            )}
-          </div>
+        <section className="relative overflow-hidden md:mt-28 py-6">
+        <div
+          className="absolute inset-0"
+          aria-hidden
+          style={
+          heroImageUrl ? {
+              backgroundImage: `url(${heroImageUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }
+            : undefined
+          }
+        />
 
-          <div className="flex flex-col items-end gap-2">
-            {f.centerType && (
-              <span className="badge badge-neutral">{f.centerType}</span>
-            )}
-                {amenityNames.length > 0 && (
-                <span className="inline-flex flex-wrap justify-end gap-1">
-                    {amenityNames.map((name: string) => (
-                    <span key={name} className="badge badge-teal">{name}</span>
-                    ))}
-                </span>     
-                )}
+        {/* Left-side navy overlay */}
+        <div
+          className="absolute inset-0"
+          style={{
+          background:
+            "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
+          }}
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0" aria-hidden />
+        <div className="relative z-20 max-w-6xl px-8 pb-20 pt-10 md:py-16 md:px-12">
+          <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
+            {heroHeader}
+          </h1>
+
+          {heroSubheader ? (
+          <p className="mt-6 mb-4 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">
+            {heroSubheader}
+          </p>
+          ) : null}
+          <div className="flex flex-wrap gap-3">
+            {heroPrimaryCta ? (
+                <div className="mt-4 mb-6">
+                <a href={heroPrimaryCta.cta} className="btn btn-tertiary">
+                    {heroPrimaryCta.ctaLabel}
+                </a>
+                </div>
+            ) : null}
+            {heroSecondaryCta ? (
+                <div className="mt-4 mb-6">
+                <a href={heroSecondaryCta.cta} className="btn btn-secondary">
+                    {heroSecondaryCta.ctaLabel}
+                </a>
+                </div>
+            ) : null}
           </div>
+        </div>
+
+        {/* Wave */}
+        <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
+            <svg
+                viewBox="0 0 1440 120"
+                className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
+                preserveAspectRatio="none"
+            >
+              <path
+                d="
+                    M-20,110
+                    C750,-90  800,120  1200,80
+                    S1420,0 1460,0
+                    L1460,0 L-20,0 Z
+                "
+                transform="translate(0 120) scale(1 -1)"
+                fill="currentColor"
+                />
+            </svg>
+          <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gmcc-navy" />
         </div>
       </section>
 
-      {/* TABS */}
-      <CenterTabs
-        defaultTab="about"
-        tabs={[
-          {
-            id: "about",
-            label: "About",
-            content: (
-              <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)]">
-                {/* LEFT COLUMN */}
-                <div className="stack-8">
-                  {/* Overview */}
-                  {f.longDescription && (
-                    <article className="prose prose-sm max-w-none sm:prose-base">
-                      <p className="whitespace-pre-line">{f.longDescription}</p>
-                    </article>
-                  )}
-
-                  {/* Amenities Carousel */}
-                  {amenitiesWithImages.length > 0 && (
-                    <AmenitiesGrid amenities={amenitiesForThisCenter} title="Amenities" />
-                  )}
-
-                  {/* Accessibility Amenities Carousel */}
-                  {accessibilityAmenitiesForThisCenter.length > 0 && (
-                    <AmenitiesCarousel amenities={accessibilityAmenitiesForThisCenter} title="Accessibility Features" />
-                  )}
-
-                  {/* Policies & FAQs / Announcements */}
-                  {(policies.length > 0 || announcements.length > 0) && (
-                    <div className="grid gap-6 md:grid-cols-2">
-                      {policies.length > 0 && (
-                        <div>
-                          <h2 className="h2">Policies & FAQs</h2>
-                          <ul className="mt-2 stack-2 body">
-                            {policies.map((p: any, i: number) => (
-                              <li key={p.slug ?? i}>
-                                <a href={`/policies/${p.slug}`} className="link">
-                                  {p.title}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {announcements.length > 0 && (
-                        <div>
-                          <h2 className="h2">Announcements</h2>
-                          <ul className="mt-2 stack-2 body">
-                            {announcements.map((n: any, i: number) => (
-                              <li key={n.slug ?? i}>
-                                <a href={`/news/${n.slug}`} className="link">
-                                  {n.title}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
+      <section
+        className="relative w-screen -ml-[calc(50vw-50%)] overflow-x-clip scroll-mt-24"
+      >
+        <div className="bg-gmcc-navy py-10">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="grid gap-16 md:grid-cols-3 items-start">
+                <div className="stack-3 col-span-1 mb-8">
+                    <h2 className="h2 mb-4 text-white">Location</h2>
+                    <p className="body text-neutral-200">{centerFields.address}</p>
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(centerFields.address)}`} target="_blank" rel="noopener noreferrer" className="mt-2 btn btn-tertiary">View on Google Maps</a>
                 </div>
-
-                {/* RIGHT SIDEBAR */}
-                <aside className="stack-4">
-                  {/* Address & Contact Card */}
-                  {(f.address || f.contactInfo?.contactPhone || f.contactInfo?.contactEmail) && (
-                    <div className="card">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 stack-4">
-                          {/* Address */}
-                          {f.address && (
-                            <div>
-                              <h3 className="eyebrow mb-1">Address</h3>
-                              <p className="body whitespace-pre-line">{f.address}</p>
-                              <a
-                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.address)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="link small mt-2 inline-block"
-                              >
-                                Get directions →
-                              </a>
-                            </div>
-                          )}
-
-                          {/* Contact */}
-                          {(f.contactInfo?.contactPhone || f.contactInfo?.contactEmail) && (
-                            <div>
-                              <h3 className="eyebrow mb-1">Contact</h3>
-                              <div className="stack-2 body">
-                                {f.contactInfo?.contactPhone && (
-                                  <div>
-                                    <span className="text-neutral-500">Phone: </span>
-                                    <a href={`tel:${f.contactInfo.contactPhone}`} className="link">
-                                      {f.contactInfo.contactPhone}
-                                    </a>
-                                  </div>
-                                )}
-                                {f.contactInfo?.contactEmail && (
-                                  <div>
-                                    <span className="text-neutral-500">Email: </span>
-                                    <a href={`mailto:${f.contactInfo.contactEmail}`} className="link">
-                                      {f.contactInfo.contactEmail}
-                                    </a>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Make Preferred Center Button */}
-                        <button
-                          type="button"
-                          className="flex-shrink-0 p-2 text-neutral-400 hover:text-red-500 transition-colors"
-                          aria-label="Make preferred center"
-                          title="Make preferred center"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            className="w-6 h-6"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Hours card */}
-                  <div className="card">
-                    <h2 className="h3">Hours</h2>
-                    <div className="mt-3 stack-2">
-                      {days.map(({ key, field, label }) => (
-                        <div key={key}>
-                          {renderDayHours({
-                            dayKey: key,
-                            dayData: (hours as any)[field] ?? null,
-                            label,
-                          })}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Social links */}
-                  {f.socialLinks && (
-                    <div className="card">
-                      <h2 className="h3">Social</h2>
-                      <p className="mt-2 body whitespace-pre-line">{f.socialLinks}</p>
-                    </div>
-                  )}
-                </aside>
-              </div>
-            ),
-          },
-          {
-            id: "visit",
-            label: "Visit",
-            content: f.schedule ? (
-              <article className="prose prose-sm max-w-none sm:prose-base">
-                <p className="whitespace-pre-line">{f.schedule}</p>
-              </article>
-            ) : (
-              <div className="stack-4">
-                <div className="card">
-                  <h2 className="h3 mb-3">Hours</h2>
-                  <div className="stack-2">
-                    {days.map(({ key, field, label }) => (
-                      <div key={key}>
-                        {renderDayHours({
-                          dayKey: key,
-                          dayData: (hours as any)[field] ?? null,
-                          label,
-                        })}
-                      </div>
-                    ))}
-                  </div>
+                <div className="stack-3 col-span-1 mb-8">
+                    <h2 className="h2 mb-4 text-white">Contact</h2>
+                    <PhoneLink className="body text-neutral-200 hover:text-white hover:underline" phone={centerFields.contactInfo.contactPhone} /> <br />
+                    <a href={`mailto:${centerFields.contactInfo.contactEmail}`} className="body text-neutral-200 hover:text-white hover:underline mb-8">{centerFields.contactInfo.contactEmail}</a>
                 </div>
-
-                
-              </div>
-            ),
-          },
-          {
-            id: "programs",
-            label: "Programs",
-            content: (() => {
-              // Use program areas directly from the center's programAreas field
-              const programAreasRaw = f.programAreas?.nodes ?? [];
-              
-              // Helper to strip HTML tags from description
-              const stripHtml = (html: string) => {
-                if (!html) return "";
-                return html.replace(/<[^>]*>/g, "").trim();
-              };
-              
-              const programAreas = programAreasRaw
-                .filter((a: any) => a?.slug)
-                .map((a: any) => {
-                  // Try programAreaFields image first, then featuredImage as fallback
-                  const imageNode = 
-                    a.programAreaFields?.programAreaImage?.node ??
-                    a.featuredImage?.node ??
-                    null;
-                  
-                  return {
-                    slug: a.slug,
-                    name: a.name ?? a.slug,
-                    description: stripHtml(a.description ?? ""),
-                    imageUrl: imageNode?.sourceUrl,
-                    imageAlt: imageNode?.altText ?? "",
-                  };
-                })
-                .sort((x: any, y: any) => x.name.localeCompare(y.name));
-          
-              return programAreas.length > 0 ? (
-                <div className="stack-4">
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {programAreas.map((area: { slug: string; name: string; description: string; imageUrl?: string; imageAlt: string }) => (
-                      <a
-                        key={area.slug}
-                        href={`/programs?programArea=${encodeURIComponent(area.slug)}`}
-                        className="group card card-hover overflow-hidden"
-                      >
-                        <div className="stack-3">
-                          {/* Full-bleed image */}
-                          <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
-                            {area.imageUrl && (
-                              <img
-                                src={area.imageUrl}
-                                alt={area.imageAlt}
-                                className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                                loading="lazy"
-                                decoding="async"
-                              />
+                <div className="stack-3 col-span-1 mb-14 md:mb-0">
+                    <h2 className="h2 mb-4 text-white">Hours</h2>
+                    <div className="grid grid-cols-2 items-center">
+                        <div className="flex flex-col text-left">
+                            <p className="body text-neutral-200 font-bold tracking-wide">Monday</p>
+                            <p className="body text-neutral-200 font-bold tracking-wide">Tuesday</p>
+                            <p className="body text-neutral-200 font-bold tracking-wide">Wednesday</p>
+                            <p className="body text-neutral-200 font-bold tracking-wide">Thursday</p>
+                            <p className="body text-neutral-200 font-bold tracking-wide">Friday</p>
+                            <p className="body text-neutral-200 font-bold tracking-wide">Saturday</p>
+                            <p className="body text-neutral-200 font-bold tracking-wide">Sunday</p>
+                        </div>
+                        <div className="flex flex-col text-right">
+                            {centerFields.hours.mondayHours.closedMonday ? (
+                              <p className="body text-neutral-200">Closed</p>
+                            ) : (
+                              <p className="body text-neutral-200">{centerFields.hours.mondayHours.mondayOpenTime} - {centerFields.hours.mondayHours.mondayCloseTime}</p>
                             )}
-                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
-                          </div>
-          
-                          <div className="stack-4">
-                            <h3 className="h3 group-hover:text-gmcc-teal mt-2">{area.name}</h3>
-                            {area.description && (
-                              <p className="body text-sm">{area.description}</p>
+                            {centerFields.hours.tuesdayHours.closedTuesday ? (
+                              <p className="body text-neutral-200">Closed</p>
+                            ) : (
+                              <p className="body text-neutral-200">{centerFields.hours.tuesdayHours.tuesdayOpenTime} - {centerFields.hours.tuesdayHours.tuesdayCloseTime}</p>
                             )}
-                            <p className="link body text-sm group-hover:text-gmcc-teal group-hover:underline">View all {area.name} programs →</p>
-                          </div>
+                            {centerFields.hours.wednesdayHours.closedWednesday ? (
+                              <p className="body text-neutral-200">Closed</p>
+                            ) : (
+                              <p className="body text-neutral-200">{centerFields.hours.wednesdayHours.wednesdayOpenTime} - {centerFields.hours.wednesdayHours.wednesdayCloseTime}</p>
+                            )}
+                            {centerFields.hours.thursdayHours.closedThursday ? (
+                              <p className="body text-neutral-200">Closed</p>
+                            ) : (
+                              <p className="body text-neutral-200">{centerFields.hours.thursdayHours.thursdayOpenTime} - {centerFields.hours.thursdayHours.thursdayCloseTime}</p>
+                            )}
+                            {centerFields.hours.fridayHours.closedFriday ? (
+                              <p className="body text-neutral-200">Closed</p>
+                            ) : (
+                              <p className="body text-neutral-200">{centerFields.hours.fridayHours.fridayOpenTime} - {centerFields.hours.fridayHours.fridayCloseTime}</p>
+                            )}
+                            {centerFields.hours.saturdayHours.closedSaturday ? (
+                              <p className="body text-neutral-200">Closed</p>
+                            ) : (
+                              <p className="body text-neutral-200">{centerFields.hours.saturdayHours.saturdayOpenTime} - {centerFields.hours.saturdayHours.saturdayCloseTime}</p>
+                            )}
+                            {centerFields.hours.sundayHours.closedSunday ? (
+                              <p className="body text-neutral-200">Closed</p>
+                            ) : (
+                              <p className="body text-neutral-200">{centerFields.hours.sundayHours.sundayOpenTime} - {centerFields.hours.sundayHours.sundayCloseTime}</p>
+                            )}
                         </div>
-                      </a>
-                    ))}
-                  </div>
-          
-                  <div className="btn btn-secondary center-block mx-auto">
-                    <a href="/programs">
-                      View all {center.title} programs
-                    </a>
-                  </div>
+                    </div>
                 </div>
-              ) : (
-                <p className="body">No program areas available at this time.</p>
-              );
-            })(),
-          },          
-          {
-            id: "membership",
-            label: "Membership",
-            content: (
-              <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                {/* MAIN CONTENT */}
-                <div className="space-y-8">
-                  {/* Hero/Pitch Section */}
-                  {(f.membershipPitch || f.membershipBenefits) && (
-                    <div className="space-y-4">
-                      {f.membershipPitch && (
-                        <article className="prose prose-sm max-w-none sm:prose-base">
-                          <div className="whitespace-pre-line">{f.membershipPitch}</div>
-                        </article>
-                      )}
-                      {f.membershipBenefits && (
-                        <div>
-                          <h2 className="text-lg font-semibold text-neutral-900 mb-3">
-                            Membership Benefits
-                          </h2>
-                          <article className="prose prose-sm max-w-none sm:prose-base">
-                            <div className="whitespace-pre-line">{f.membershipBenefits}</div>
-                          </article>
-                        </div>
-                      )}
-                    </div>
-                  )}
+            </div>
 
-                  {/* Benefits */}
-                  <h2 className="h2 text-gmcc-navy mb-3">Facility</h2>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="stack-2">
-                      <h3 className="h3 text-gmcc-navy">Get access to the Community Center's brand new facility, built with your comfort and convenience in mind:</h3>
-                      <ul className="list-disc pl-5 body">
-                        <li>Double gymnasium</li>
-                        <li>24/7 Fitness Center</li>
-                        <li>Courts</li>
-                        <li>Swimming Pools</li>
-                        <li>Indoor Track</li>
-                        <li>Fitness Studios</li>
-                        <li>Family Activity Areas</li>
-                        <li>Secure Childcare Rooms</li>
-                      </ul>
-                    </div>
-                    <div className="stack-2">
-                      {amenitiesForThisCenter.length > 0 && (
-                        <AmenitiesCarousel amenities={amenitiesForThisCenter} title="" />
-                      )}
-                    </div>
-                  </div>
+            {/* Wave */}
+            <div className="pointer-events-none relative -mt-12 mb-8 -mx-52 w-[calc(100%+26rem)] overflow-hidden leading-none">
+              <svg
+                viewBox="0 0 1440 180"
+                className="block h-16 w-full md:h-20 lg:h-28"
+                preserveAspectRatio="none"
+              >
+                <defs>
+                  <linearGradient id="center-offers-wave-shadow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#000000" stopOpacity="0.35" />
+                    <stop offset="55%" stopColor="#000000" stopOpacity="0.16" />
+                    <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="
+                    M0,120
+                    C180,70 320,30 520,55
+                    C740,85 870,165 1080,145
+                    C1260,128 1370,70 1440,35
+                    L1440,180
+                    L0,180
+                    Z
+                  "
+                  fill="var(--gmcc-navy)"
+                />
+                <path
+                  d="
+                    M0,120
+                    C180,70 320,30 520,55
+                    C740,85 870,165 1080,145
+                    C1260,128 1370,70 1440,35
+                    L1440,180
+                    L0,180
+                    Z
+                  "
+                  fill="url(#center-offers-wave-shadow)"
+                />
+              </svg>
+            </div>
 
-                  <h2 className="h2 text-gmcc-navy mb-3">For Families</h2>
-                  <h3 className="h3 text-gmcc-navy">Find fitness and entertainment for the whole family:</h3>
-                  <div className="grid gap-4 md:grid-cols-[1fr_1.5fr] items-stretch">
-                    <div className="flex flex-col gap-2">
-                      <img src="/images/JungleGymPhoto.png" alt="Jungle Gym" className="w-full flex-1 object-cover rounded-md" />
-                      <img src="/images/ChildCarePhoto.png" alt="Child Care" className="w-full flex-1 object-cover rounded-md" />
-                    </div>
-                    <div className="stack-2">
-                      <h4 className="h3">The Zone</h4>
-                      <p className="body">A supervised hangout for kids ages 6–12, led by a certified K–12 teacher. Kids can get homework help, try STEM projects, play games, or enjoy 
-                        the Nintendo Switch and Nex Playground. Free for Center Plus Family and All Access Family members. Parents must remain on the property.</p>
-
-                      <h4 className="h3">Child Watch</h4>
-                      <p className="body">PA safe, fun space for kids (ages 3 months–9 years) while parents enjoy the Community Center. Staff lead play, crafts, and age-appropriate 
-                        activities that keep little ones engaged. Each visit is up to 90 minutes, and parents must stay on-site. Free for Center Plus Family and All 
-                        Access Family members, with drop-in rates available.</p>
-
-                      <h4 className="h3">Jungle Gym</h4>
-                      <p className="body">Parent-child playtime for ages under 6, featuring padded floors, balance beams, and soft gym equipment. Kids can climb, tumble, and explore 
-                        while building coordination and confidence. Free for Center Plus Family and All Access Family members, with drop-in options available.</p>
-
-                      <h4 className="h3">Family Fun Nights</h4>
-                      <p className="body">Bring everyone together for games, crafts, themed activities, and a photo booth. Each event is a little different and perfect for all ages. 
-                        Free for members; $7 per non-member participant.</p>
-                    </div>
-                  </div>
-
-                  <h2 className="h2 text-gmcc-navy mb-3">For Individuals</h2>
-                  <h3 className="h3 text-gmcc-navy">For teens, seniors, and everyone in between, see what the Community Center offers you:</h3>
-                  <div className="grid gap-4 md:grid-cols-[1.5fr_1fr] items-stretch">
-                    <div className="stack-2">
-                      <h4 className="h3">Group Fitness Classes</h4>
-                      <p className="body">Classes make it easy to stay motivated with options for every level—strength, cardio, cycling, yoga, dance, and more. Led by certified instructors, 
-                        classes are designed to energize, challenge, and build community. Free with All Access Membership.</p>
-
-                      <h4 className="h3">Strength & Weight Training</h4>
-                      <p className="body">Our strength and weight training areas feature free weights, squat racks, cable machines, benches, and functional training equipment. Whether you're 
-                        new to lifting or building a serious routine, you'll find everything you need to get stronger and train effectively.</p>
-
-                      <h4 className="h3">Cardio Training</h4>
-                      <p className="body">The cardio deck includes treadmills, ellipticals, and more! Perfect for warm-ups, endurance work, or full training sessions. Machines offer a variety 
-                        of programs and resistance levels so you can go at your own pace.</p>
-
-                      <h4 className="h3">Personal Training</h4>
-                      <p className="body">Our goal is to inspire and enable individuals of all ages and fitness levels to reach their health and wellness goals through personalized training 
-                        programs that foster long-term success and well-being. All our trainers are highly educated and certified and offer flexible schedules. Let them help you reach your goals! </p>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <img src="/images/GroupFitnessPhoto.png" alt="Group Fitness Classes" className="w-full flex-1 object-cover rounded-md" />
-                      <img src="/images/PersonalTrainingPhoto.png" alt="Personal Training" className="w-full flex-1 object-cover rounded-md" />
-                    </div>
-                  </div>
-
-
-                  {/* Testimonials */}
-                  {centerTestimonials.length > 0 && (
-                    <div className="stack-4">
-                      <h2 className="h2 text-gmcc-navy mb-3">
-                        More than a membership:
-                      </h2>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        {centerTestimonials.map((t: any) => {
-                          const tf = t.testimonialFields ?? {};
-                          return (
-                            <figure key={t.slug} className="card">
-                              {tf.quote && (
-                                <blockquote className="body whitespace-pre-line mb-4">
-                                  "{tf.quote}"
-                                </blockquote>
-                              )}
-                              <figcaption className="flex items-center gap-3">
-                                {t.photo?.node?.sourceUrl && (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
-                                    src={t.photo.node.sourceUrl}
-                                    alt={t.photo.node.altText ?? ""}
-                                    className="h-12 w-12 rounded-full object-cover flex-shrink-0"
-                                  />
-                                )}
-                                <div className="small">
-                                  {tf.personName && (
-                                    <div className="font-semibold text-neutral-900">
-                                      {tf.personName}
-                                    </div>
-                                  )}
-                                  {tf.personContext && (
-                                    <div>{tf.personContext}</div>
-                                  )}
-                                </div>
-                              </figcaption>
-                            </figure>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* <h2 className="text-xl font-bold text-gmcc-navy mb-3">Membership Options</h2>
-                  <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                    {centerMemberships.length > 0 ? (
-                      <div className="space-y-3">
-                        <ul className="space-y-2">
-                          {centerMemberships.map((name: string, i: number) => (
-                            <li key={i} className="text-sm text-neutral-700">
-                              {name}
-                            </li>
-                          ))}
-                        </ul>
-                        <a
-                          href={`/membership/center/${slug}`}
-                          className="block mt-4 text-sm text-blue-600 hover:underline text-center"
-                        >
-                          View details for all options →
-                        </a>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-neutral-500">
-                        Membership information coming soon.
-                      </p>
-                    )}
-                  </div> */}
-                </div>
-
-                {/* RIGHT SIDEBAR - STICKY */}
-                <aside className="lg:sticky lg:top-18 h-fit">
-                  {/* Call to Action */}
-                  <div className="card bg-gmcc-blue-light/20 max-w-xs text-center">
-                    <h2 className="h2 text-gmcc-navy mb-2 text-left">
-                      Ready to Join?
-                    </h2>
-                    <p className="body mb-4 text-left">
-                      Explore all membership options, compare pricing, and find the perfect fit for you or your family.
-                    </p>
-                    <a href={`/membership/center/${slug}`} className="btn btn-primary">
-                      View Membership Options
-                    </a>
-                    <p className="body mt-4 mb-4 text-left">
-                      Not sure yet? Schedule a free tour!
-                    </p>
-                    <a href={`/membership/center/${slug}`} className="btn btn-secondary">
-                      Schedule a Tour
-                    </a>
-                  </div>
-                </aside>
+            <div className="grid gap-10 md:gap-16 md:grid-cols-3 items-start">
+              <div className="stack-3 md:col-span-2">
+                <h2 className="h2 mb-4 text-white">What this center offers</h2>
+                <p className="body text-neutral-200 md:mb-8">{centerFields.longDescription}</p>
               </div>
-            ),
-          },
-        ]}
-      />
-      </div>
+              <div className="col-span-1">
+                <h3 className="h3 mb-4 text-white">Quick highlights</h3>
+                <div className="grid gap-4 grid-cols-2 items-start">
+                  <div className="stack-3 col-span-1">
+                    <ul className="text-neutral-200 space-y-2 text-center">
+                      <li className="rounded-full bg-gmcc-teal px-4 py-2">Lorem ipsum</li>
+                      <li className="rounded-full bg-gmcc-teal px-4 py-2">Lorem ipsum</li>
+                    </ul>
+                  </div>
+                  <div className="stack-3 col-span-1">
+                    <ul className="text-neutral-200 space-y-2 text-center">
+                      <li className="rounded-full bg-gmcc-teal px-4 py-2">Lorem ipsum</li>
+                      <li className="rounded-full bg-gmcc-teal px-4 py-2">Lorem ipsum</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom wave */}
+        <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
+          <svg
+            viewBox="0 0 390 120"
+            className="block h-14 w-full text-gmcc-navy md:hidden"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="
+                M0,98
+                C78,62 135,54 195,74
+                C255,96 322,88 390,60
+                L390,0 L0,0 Z
+              "
+              fill="currentColor"
+            />
+          </svg>
+
+          <svg
+            viewBox="0 0 1440 120"
+            className="hidden h-16 w-full text-gmcc-navy md:block"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="
+                M0,110
+                C300,-50  500,120  800,100
+                S1000,0 1440,0
+                L1440,0 L0,0 Z
+              "
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-8 section-y stack-4">
+        <h2 className="h2 mb-4">What you'll find here</h2>
+        <p className="body mb-8">{centerFields.longDescription}</p>
+        {/* Amenities Grid */}
+        {amenitiesForThisCenter.length > 0 && (
+          <AmenitiesGrid amenities={amenitiesForThisCenter} title="What we offer" />
+        )}
+        
+        <CenterCampaignModule module={campaignModule} />
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pt-4 pb-12 section-y stack-4">
+        <h2 className="h2 mb-2">Ready to join?</h2>
+        <p className="body mb-4">Join online or visit any of our centers to get started today.</p>
+        <div className="card bg-gmcc-green py-6">
+          <p className="text-3xl text-white font-bold tracking-wide ml-4">
+            Start your membership in minutes.
+            <a
+              href={`/membership?center=${encodeURIComponent(slug)}#plans`}
+              className="btn btn-primary justify-end float-right mr-4"
+            >
+              Join Now
+            </a>
+          </p>
+        </div>
+      </section>
     </main>
   );
 }
