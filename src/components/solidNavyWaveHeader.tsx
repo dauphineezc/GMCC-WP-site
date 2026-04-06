@@ -24,7 +24,9 @@ export default function SolidNavyWaveHeader({
       <div className={`relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-12 md:pb-38 md:pt-44 ${containerClassName}`}>
         {eyebrow ? <p className="text-base font-semibold tracking-wide text-white/90 md:text-lg">{eyebrow}</p> : null}
         {title ? <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-white md:text-5xl">{title}</h1> : null}
-        {description ? <p className="mt-4 max-w-3xl text-base leading-relaxed text-white/90 md:text-xl">{description}</p> : null}
+        {description ? (
+          <p className="mt-4 max-w-3xl whitespace-pre-line text-base leading-relaxed text-white/90 md:text-xl">{description}</p>
+        ) : null}
         {children ? <div className="mt-8">{children}</div> : null}
       </div>
 

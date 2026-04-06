@@ -1,6 +1,9 @@
 // src/app/amenities/[slug]/page.tsx
 import { wpFetch } from "@/lib/wp";
 import ImageCarousel from "@/components/imageCarousel";
+import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
+import { specialAmenities } from "@/lib/amenities/specialAmenities";
+import Link from "next/link";
 
 const AMENITY_BY_SLUG_QUERY = `
   query AmenityBySlug($slug: ID!) {
@@ -37,6 +40,63 @@ const AMENITY_BY_SLUG_QUERY = `
   }
 `;
 
+const AMENITIES_PAGE_SPECIAL_FIELDS_QUERY = `
+  query AmenitiesPageSpecialFields {
+    page(id: "amenities", idType: URI) {
+      amenityPageFields {
+        advantageProShopFields {
+          contactInformation {
+            phone
+            email
+            pointOfContactName
+          }
+          hours {
+            mondayHours
+            tuesdayHours
+            wednesdayHours
+            thursdayHours
+            fridayHours
+            saturdayHours
+            sundayHours
+          }
+          gallery {
+            photo1 {
+              node {
+                sourceUrl
+                altText
+              }
+            }
+            photo2 {
+              node {
+                sourceUrl
+                altText
+              }
+            }
+            photo3 {
+              node {
+                sourceUrl
+                altText
+              }
+            }
+            photo4 {
+              node {
+                sourceUrl
+                altText
+              }
+            }
+            photo5 {
+              node {
+                sourceUrl
+                altText
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 type AmenityPageProps = {
   params: Promise<{ slug: string }>;
 };
@@ -44,8 +104,8 @@ type AmenityPageProps = {
 export default async function AmenityPage(props: AmenityPageProps) {
   const { slug } = await props.params;
 
-  const data = await wpFetch<any>(AMENITY_BY_SLUG_QUERY, { slug });
-  const amenity = data?.amenity;
+  const amenityData = await wpFetch<any>(AMENITY_BY_SLUG_QUERY, { slug });
+  const amenity = amenityData?.amenity;
 
   if (!amenity) {
     return (
@@ -56,6 +116,16 @@ export default async function AmenityPage(props: AmenityPageProps) {
   }
 
   const af = amenity.amenitiesFields ?? {};
+  let amenityPageFields = null;
+  try {
+    const pageData = await wpFetch<any>(AMENITIES_PAGE_SPECIAL_FIELDS_QUERY, undefined, {
+      suppressGraphQLErrorLogging: true,
+    });
+    amenityPageFields = pageData?.page?.amenityPageFields ?? null;
+  } catch {
+    amenityPageFields = null;
+  }
+  const specialAmenity = specialAmenities[amenity.slug];
 
   // Collect all available images for the carousel
   const carouselImages: Array<{
@@ -118,31 +188,40 @@ export default async function AmenityPage(props: AmenityPageProps) {
 
   return (
     <main>
-      {/* Content Container */}
-      <div className="mx-auto mt-32 max-w-6xl px-4 section-y stack-8">
-        {/* Title Section */}
-        <section className="stack-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="stack-2">
-              <h1 className="h1">{amenity.name}</h1>
-              {af.isService && (
-                <span className="badge badge-teal">Service</span>
-              )}
+      <SolidNavyWaveHeader title={amenity.name}>
+        {/* {af.isService ? (
+          <span className="badge badge-teal">Service</span>
+        ) : null} */}
+      </SolidNavyWaveHeader>
+
+      <div className="mx-auto max-w-6xl px-4 section-y stack-8 pt-4">
+        {/* Centers with this amenity */}
+        {centersWithAmenity.length > 0 && (
+          <section className="stack-4">
+            <h2 className="eyebrow">Available at</h2>
+            <div className="mt-2 flex flex-wrap gap-2" aria-label="Available at these centers">
+              {centersWithAmenity.map((c: { slug: string; title: string }) => (
+                <Link
+                  key={c.slug}
+                  href={`/centers/${c.slug}`}
+                  className="badge badge-teal no-underline transition-opacity hover:opacity-90"
+                >
+                  {c.title}
+                </Link>
+              ))}
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <div className="grid gap-12 lg:grid-cols-[minmax(0,2fr)_minmax(0,2fr)]">
           {/* LEFT COLUMN: Description */}
           <div className="stack-4">
-            <h2 className="h2">Description</h2>
             {cleanDescription && (
               <article className="prose prose-sm max-w-none sm:prose-base">
                 <p className="whitespace-pre-line">{cleanDescription}</p>
               </article>
             )}
           </div>
-
           {/* RIGHT COLUMN: Image Carousel */}
             {carouselImages.length > 0 && (
             <div className="w-full">
@@ -151,25 +230,9 @@ export default async function AmenityPage(props: AmenityPageProps) {
             )}
         </div>
 
-        {/* Centers with this amenity */}
-        {centersWithAmenity.length > 0 && (
-          <section className="stack-4">
-            <h2 className="h2">Available at</h2>
-            <div className="flex flex-wrap gap-3">
-              {centersWithAmenity.map((center) => (
-                <a
-                  key={center.slug}
-                  href={`/centers/${center.slug}`}
-                  className="card card-hover px-4 py-3"
-                >
-                  <span className="font-medium text-neutral-900 hover:text-gmcc-teal">
-                    {center.title}
-                  </span>
-                </a>
-              ))}
-            </div>
-          </section>
-        )}
+        {specialAmenity
+          ? specialAmenity.renderSection({ amenityPageFields })
+          : null}
       </div>
     </main>
   );

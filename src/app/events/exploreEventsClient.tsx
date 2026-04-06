@@ -2,13 +2,11 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import HeaderImage from "@/components/headerImage";
 import Link from "next/link";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 
 type EventWP = any;
-
 type PageInfo = {
   hasNextPage: boolean;
   endCursor: string | null;
@@ -305,22 +303,9 @@ export default function ExploreEventsClient({
   
 
   return (
-    <main>
-      {/* HEADER IMAGE - Full Width */}
-      <div className="w-full">
-        <HeaderImage
-          src="/images/MembershipHeaderImage.png"
-          alt="Explore events"
-        />
-      </div>
-
+    <>
       {/* Page content - constrained width */}
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
-        <header className="stack-2">
-          <h1 className="h1">Explore our events</h1>
-          <p className="body">Browse all upcoming events.</p>
-        </header>
-
         <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
           {/* FILTER SIDEBAR */}
           <aside className="card h-fit sticky top-18">
@@ -605,6 +590,6 @@ export default function ExploreEventsClient({
           </section>
         </section>
       </div>
-    </main>
+    </>
   );
 }

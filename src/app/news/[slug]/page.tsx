@@ -1,7 +1,7 @@
 // src/app/news/[slug]/page.tsx
 import { wpFetch } from "@/lib/wp";
 import { notFound } from "next/navigation";
-import HeaderImage from "@/components/headerImage";
+import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 
 const NEWS_BY_SLUG_QUERY = /* GraphQL */ `
   query NewsBySlug($slug: ID!) {
@@ -78,10 +78,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
 
   return (
     <main>
-      {/* HEADER IMAGE - Full Width */}
-      <div className="w-full">
-        <HeaderImage src={n.featuredImage?.node?.sourceUrl ?? ""} alt={n.featuredImage?.node?.altText ?? ""} />
-      </div>
+      <SolidNavyWaveHeader title={n.title} description={n.newsFields?.summary} />
 
       {/* Page content - constrained width */}
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
@@ -93,7 +90,6 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
             <p className="text-sm text-neutral-600">{formatPublishDate(n.newsFields?.publishDate)}</p>
             <h1 className="h1 mt-4 mb-4">{n.title}</h1>
             <p className="text-sm text-neutral-600 mb-8">{n.newsFields?.author?.nodes?.map((a: any) => a.title + ", " + a.staffProfilesFields?.title).join(", ") ?? ""}</p>
-            {n.newsFields?.summary ? <p className="body text-neutral-700">{n.newsFields.summary}</p> : null}
             </header>
          
             {n.newsFields?.body ? (

@@ -37,6 +37,7 @@ const LEADERSHIP_PAGE_QUERY = /* GraphQL */ `
         tcBoardMembers
         cfcBoardMembers
         nfcBoardMembers
+        curlcBoardMembers
       }
     }
   }
@@ -77,6 +78,7 @@ type LeadershipFields = {
   tcBoardMembers?: string | null;
   cfcBoardMembers?: string | null;
   nfcBoardMembers?: string | null;
+  curlcBoardMembers?: string | null;
 };
 
 // Helper function to parse board members text into table rows
@@ -285,9 +287,9 @@ export default async function LeadershipPage() {
               <div className="max-w-4xl mx-auto mb-16">
                 <table className="w-full table-fixed">
                   <colgroup>
-                    <col className="w-1/3" />
-                    <col className="w-1/3" />
-                    <col className="w-1/3" />
+                    <col className="w-1/4" />
+                    <col className="w-2/4" />
+                    <col className="w-1/4" />
                   </colgroup>
                   <tbody>
                     {boardMembers.map((member, index) => (
@@ -326,6 +328,7 @@ export default async function LeadershipPage() {
               tcBoardMembers={fields?.tcBoardMembers}
               cfcBoardMembers={fields?.cfcBoardMembers}
               nfcBoardMembers={fields?.nfcBoardMembers}
+              curlcBoardMembers={fields?.curlcBoardMembers}
             />
           </div>
         </section>

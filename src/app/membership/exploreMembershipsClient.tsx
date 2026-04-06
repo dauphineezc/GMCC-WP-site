@@ -16,7 +16,9 @@ import MembershipQuiz from "@/components/membershipQuiz";
 import AmenitiesGrid from "@/components/amenitiesGrid";
 import type { AmenityDisplay } from "@/types/amenities";
 import { getBodyParts } from "@/components/centerCampaignModule";
-import FeaturedCampaignSection from "@/app/(home)/sections/featuredCampaign";
+import SimpleCampaign from "@/components/simpleCampaign";
+import PhotoWaveHeader from "@/components/photoWaveHeader";
+import type { HeroCta } from "@/components/photoWaveHeader";
 
 export type Audience = { name: string; slug: string };
 export type ProgramArea = { name: string; slug: string };
@@ -44,10 +46,6 @@ type CenterLink = {
 };
 
 export type MembershipPageFields = {
-  header: string | null;
-  subheader: string | null;
-  heroImage: { url: string; alt: string } | null;
-  primaryCta: { url: string; label: string } | null;
   quizCta: { url: string; label: string } | null;
   centers: CenterLink[];
   membershipsHeader: string | null;
@@ -72,10 +70,12 @@ export type MembershipPageFields = {
       body?: string | null;
       primaryCta?: { primaryCtaLabel?: string | null; primaryCtaUrl?: string | null } | null;
       secondaryCta?: { secondaryCtaLabel?: string | null; secondaryCtaUrl?: string | null } | null;
+      backgroundColor?: string | null;
+      textColor?: string | null;
+      primaryCtaButtonColor?: string | null;
+      secondaryCtaButtonColor?: string | null;
     } | null;
   } | null;
-  campaignBgColor: string | null;
-  campaignTextColor: string | null;
   footerPhoto: { url: string; alt: string } | null;
 };
 
@@ -99,6 +99,10 @@ type Props = {
   memberships: Membership[];
   fields: MembershipPageFields;
   amenities: SerializedAmenity[];
+  heroTitle: string;
+  heroSubheader?: string;
+  heroImageUrl?: string;
+  heroPrimaryCta?: HeroCta | null;
 };
 
 export default function ExploreMembershipsClient({
@@ -108,6 +112,10 @@ export default function ExploreMembershipsClient({
   memberships,
   fields,
   amenities,
+  heroTitle,
+  heroSubheader,
+  heroImageUrl,
+  heroPrimaryCta,
 }: Props) {
   const searchParams = useSearchParams();
 
@@ -314,86 +322,27 @@ export default function ExploreMembershipsClient({
     }, 100);
   };
 
+  const heroCtas: HeroCta[] = [];
+  if (heroPrimaryCta) heroCtas.push(heroPrimaryCta);
+
   return (
     <main>
-      {/* HERO */}
-      <section className="relative overflow-hidden md:mt-28 py-6">
-        <div
-          className="absolute inset-0"
-          aria-hidden
-          style={
-          fields.heroImage?.url ? {
-              backgroundImage: `url(${fields.heroImage.url})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }
-            : undefined
-          }
-        />
-
-        {/* Left-side navy overlay */}
-        <div
-          className="absolute inset-0"
-          style={{
-          background:
-            "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
-          }}
-          aria-hidden="true"
-        />
-        <div className="absolute inset-0" aria-hidden />
-        <div className="relative z-20 max-w-6xl px-8 pb-20 pt-10 md:py-16 md:px-12">
-          <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
-            {fields.header}
-          </h1>
-
-          {fields.subheader ? (
-          <p className="mt-6 mb-4 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">
-            {fields.subheader}
-          </p>
-          ) : null}
-          <div className="flex flex-wrap gap-3">
-            {fields.primaryCta ? (
-                <div className="mt-4 mb-6">
-                <a href={fields.primaryCta.url} className="btn btn-tertiary">
-                    {fields.primaryCta.label}
-                </a>
-                </div>
-            ) : null}
-            {fields.quizCta ? (
-                <div className="mt-4 mb-6">
-                <button
-                      type="button"
-                      onClick={scrollToQuiz}
-                      className="btn btn-secondary justify-center"
-                    >
-                      {fields.quizCta?.label || "Take our Membership Quiz"}
-                    </button>
-                </div>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Wave */}
-        <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
-            <svg
-                viewBox="0 0 1440 120"
-                className="-ml-px block h-10 w-[calc(100%+2px)] text-white md:h-16"
-                preserveAspectRatio="none"
-            >
-              <path
-                d="
-                    M-20,110
-                    C750,-90  800,120  1200,80
-                    S1420,0 1460,0
-                    L1460,0 L-20,0 Z
-                "
-                transform="translate(0 120) scale(1 -1)"
-                fill="currentColor"
-                />
-            </svg>
-          <div className="absolute bottom-0 left-0 h-[2px] w-full bg-white" />
-        </div>
-      </section>
+      <PhotoWaveHeader
+        title={heroTitle}
+        subheader={heroSubheader}
+        imageUrl={heroImageUrl}
+        ctas={heroCtas.length > 0 ? heroCtas : undefined}
+      >
+        {fields.quizCta ? (
+          <button
+            type="button"
+            onClick={scrollToQuiz}
+            className="btn btn-secondary justify-center"
+          >
+            {fields.quizCta.label || "Take our Membership Quiz"}
+          </button>
+        ) : null}
+      </PhotoWaveHeader>
 
       {/* COMPARE TAB CONTENT */}
       {activeTab === "compare" && (
@@ -573,9 +522,9 @@ export default function ExploreMembershipsClient({
 
           {/* FEATURED CAMPAIGN */}
           {fields.campaign && (
-            <section className="relative mt-12" style={{ backgroundColor: fields.campaignBgColor ?? "#ffffff" }}>
-              <FeaturedCampaignSection campaign={fields.campaign} bgColor={fields.campaignBgColor ?? "#ffffff"} textColor={fields.campaignTextColor ?? "#003A70"} />
-            </section>
+            <div className="relative mt-12">
+              <SimpleCampaign campaign={fields.campaign} />
+            </div>
           )}
 
           {/* CONTACT CTA */}
@@ -596,35 +545,34 @@ export default function ExploreMembershipsClient({
             </div>
           </section>
 
-        </div>
-      )}
-
-      {/* FOOTER PHOTO — wave overlaps top, photo tucks behind footer */}
-      {fields.footerPhoto && (
-        <section className="relative z-10 -mb-10 md:-mb-14">
-          <img
-            src={fields.footerPhoto.url}
-            alt={fields.footerPhoto.alt}
-            className="w-full h-[300px] md:h-[400px] object-cover"
-          />
-          <div className="pointer-events-none absolute top-0 left-0 z-20 w-full overflow-hidden leading-none">
-            <svg
-              viewBox="0 0 1440 120"
-              className="-ml-px block h-10 w-[calc(100%+2px)] text-white md:h-16"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="
-                  M-20,110
-                  C750,-90  800,120  1200,80
-                  S1420,0 1460,0
-                  L1460,0 L-20,0 Z
-                "
-                fill="currentColor"
+          {/* FOOTER PHOTO — wave overlaps top, photo tucks behind footer */}
+          {fields.footerPhoto && (
+            <section className="relative z-10 -mb-10 md:-mb-14">
+              <img
+                src={fields.footerPhoto.url}
+                alt={fields.footerPhoto.alt}
+                className="w-full h-[300px] md:h-[400px] object-cover"
               />
-            </svg>
-          </div>
-        </section>
+              <div className="pointer-events-none absolute top-0 left-0 z-20 w-full overflow-hidden leading-none">
+                <svg
+                  viewBox="0 0 1440 120"
+                  className="-ml-px block h-10 w-[calc(100%+2px)] text-white md:h-16"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="
+                      M-20,110
+                      C750,-90  800,120  1200,80
+                      S1420,0 1460,0
+                      L1460,0 L-20,0 Z
+                    "
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+            </section>
+          )}
+        </div>
       )}
 
       {/* QUIZ TAB CONTENT */}
@@ -634,7 +582,12 @@ export default function ExploreMembershipsClient({
             audiences={audiences}
             programAreas={programAreas}
             memberships={memberships}
-            onClose={() => setActiveTab("compare")}
+            onClose={() => {
+              setActiveTab("compare");
+              setTimeout(() => {
+                membershipsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 50);
+            }}
           />
         </div>
       )}
@@ -656,6 +609,10 @@ function TierCard({
   getAudienceFromTitle: (title: string) => string;
   secondary?: boolean;
 }) {
+  const showAnnualSavingsCallout = variants.some(
+    (v) => v.slug.toLowerCase().includes("tennis")
+  );
+
   const defaultIdx = variants.findIndex((v) => {
     const aud = getAudienceFromTitle(v.title).toLowerCase();
     return aud.includes("adult") && !aud.includes("young");
@@ -716,6 +673,12 @@ function TierCard({
             <div>
               <span className="text-neutral-500">Annual:</span>{" "}
               <span className="font-bold">${Math.round(selected.pricing.annually)}</span>
+              {showAnnualSavingsCallout ? (
+                <span className="ml-1.5 font-semibold text-xs text-gmcc-green">
+                  {" "}
+                  (Save 25%)
+                </span>
+              ) : null}
             </div>
           )}
           {selected.pricing.joiningFee != null && (

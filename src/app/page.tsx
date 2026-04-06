@@ -95,12 +95,13 @@ type HomeData = {
             body?: string | null;
             primaryCta?: { primaryCtaLabel?: string | null; primaryCtaUrl?: string | null } | null;
             secondaryCta?: { secondaryCtaLabel?: string | null; secondaryCtaUrl?: string | null } | null;
+            backgroundColor?: string | null;
+            textColor?: string | null;
+            primaryCtaButtonColor?: string | null;
+            secondaryCtaButtonColor?: string | null;
           } | null;
         }> | null;
       } | null;
-
-      campaignBgColor?: string | null;
-      campaignTextColor?: string | null;
 
       impact?: {
         impactHeader?: string | null;
@@ -393,13 +394,14 @@ query HomePage($uri: ID!) {
               body
               primaryCta { primaryCtaLabel primaryCtaUrl }
               secondaryCta { secondaryCtaLabel secondaryCtaUrl }
+              backgroundColor
+              textColor
+              primaryCtaButtonColor
+              secondaryCtaButtonColor
             }
           }
         }
       }
-
-      campaignBgColor
-      campaignTextColor
 
       impact {
         impactHeader
@@ -543,7 +545,7 @@ export default async function HomePage() {
 
       <ProgramsSection programs={programs} />
 
-      <FeaturedCampaignSection campaign={campaign} bgColor={f?.campaignBgColor ?? "#ffffff"} textColor={f?.campaignTextColor ?? "#003A70"} />
+      <FeaturedCampaignSection campaign={campaign}/>
 
       <EventsSection events={f?.upcomingEvents?.nodes?.map((e) => ({
         id: e.id,

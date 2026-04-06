@@ -1,10 +1,14 @@
 // src/app/news/page.tsx
+import {
+  fetchPageWithHeroFields,
+  resolvePhotoWaveHeaderProps,
+} from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
 import NewsListClient, { NewsListItem } from "./newsListClient";
-import HeaderImage from "@/components/headerImage";
+import PhotoWaveHeader from "@/components/photoWaveHeader";
 
-const NEWS_INDEX_QUERY = /* GraphQL */ `
-  query NewsIndex($first: Int!) {
+const NEWS_LIST_QUERY = /* GraphQL */ `
+  query NewsList($first: Int!) {
     allNews(first: $first) {
       nodes {
         id
@@ -27,14 +31,14 @@ const NEWS_INDEX_QUERY = /* GraphQL */ `
           body
           publishDate
         }
-
-        # Optional (only keep if these fields exist on your schema):
-        # author (if your News has an ACF relationship to Staff CPT, the field name may differ)
-        # audience, programArea, center (again: names must match your WPGraphQL schema)
       }
     }
   }
 `;
+
+type NewsListData = {
+  allNews?: { nodes?: any[] } | null;
+};
 
 function toDateValue(d?: string | null) {
   // ACF date field can be YYYYMMDD or YYYY-MM-DD depending on settings.
@@ -54,8 +58,12 @@ function toDateValue(d?: string | null) {
 }
 
 export default async function NewsPage() {
-    const data = await wpFetch<{ allNews?: { nodes?: any[] } }>(NEWS_INDEX_QUERY, { first: 250 });
-    const raw = data?.allNews?.nodes ?? [];    
+  const [heroPage, newsData] = await Promise.all([
+    fetchPageWithHeroFields("news"),
+    wpFetch<NewsListData>(NEWS_LIST_QUERY, { first: 250 }),
+  ]);
+
+  const raw = newsData?.allNews?.nodes ?? [];
 
   const items: NewsListItem[] = raw
     .map((n) => ({
@@ -75,23 +83,14 @@ export default async function NewsPage() {
     }))
     .sort((a, b) => toDateValue(b.publishDate) - toDateValue(a.publishDate));
 
+  const hero = resolvePhotoWaveHeaderProps(heroPage, "News");
+
   return (
     <main>
-      {/* HEADER IMAGE - Full Width */}
-      <div className="w-full">
-        <HeaderImage src="/images/MembershipHeaderImage.png" alt="Greater Midland Memberships" />
-      </div>
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
 
       {/* Page content - constrained width */}
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
-        
-        <header className="stack-2">
-          <h1 className="h1 text-gmcc-navy">News</h1>
-          <p className="body text-neutral-700 max-w-2xl">
-            Updates, announcements, and stories from across GMCC.
-          </p>
-        </header>
-
         <NewsListClient items={items} />
       </div>
     </main>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { AmenityDisplay } from "@/types/amenities";
 
@@ -71,6 +72,19 @@ export default function AmenitiesGrid({ amenities, title = "What we offer", numC
                   </button>
                 )}
                 </p>
+                {amenity.centers && amenity.centers.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2" aria-label="Available at these centers">
+                    {amenity.centers.map((c) => (
+                      <Link
+                        key={c.slug}
+                        href={`/centers/${c.slug}`}
+                        className="badge badge-grey no-underline transition-opacity hover:opacity-90"
+                      >
+                        {c.title}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           );

@@ -4,14 +4,7 @@
 import { wpFetch } from "@/lib/wp";
 import type { AmenityDisplay } from "@/types/amenities";
 
-const AMENITY_BY_SLUG_QUERY = `
-  query AmenityBySlug($slug: ID!) {
-    amenity(id: $slug, idType: SLUG) {
-      name
-      slug
-      description
-      amenitiesFields {
-
+const AMENITIES_FIELDS_BLOCK = `
         amenityImage1 { node { sourceUrl altText } }
         center1 { nodes { ... on Center { slug title } } }
 
@@ -37,6 +30,16 @@ const AMENITY_BY_SLUG_QUERY = `
             altText
           }
         }
+`;
+
+const AMENITY_BY_SLUG_QUERY = `
+  query AmenityBySlug($slug: ID!) {
+    amenity(id: $slug, idType: SLUG) {
+      name
+      slug
+      description
+      amenitiesFields {
+${AMENITIES_FIELDS_BLOCK}
       }
     }
   }
@@ -49,11 +52,21 @@ const ACCESSIBILITY_AMENITY_BY_SLUG_QUERY = `
       slug
       description
       amenitiesFields {
-        amenityImage1 {
-          node {
-            sourceUrl
-            altText
-          }
+${AMENITIES_FIELDS_BLOCK}
+      }
+    }
+  }
+`;
+
+const ALL_ACCESSIBILITY_AMENITIES_QUERY = `
+  query AllAccessibilityAmenities($first: Int!) {
+    accessibilityAmenities(first: $first) {
+      nodes {
+        name
+        slug
+        description
+        amenitiesFields {
+${AMENITIES_FIELDS_BLOCK}
         }
       }
     }
@@ -91,14 +104,18 @@ export function toAmenityDisplayDefault(
       const image = a.defaultImage ?? a.centerImageCandidates[0]?.image ?? null;
       if (!image) return null;
 
-      return {
+      const row: AmenityDisplay = {
         name: a.name,
         slug: a.slug,
         description: a.description ?? null,
         relevantLink: a.relevantLink ?? null,
         linkLabel: a.linkLabel ?? null,
         image,
-      } satisfies AmenityDisplay;
+      };
+      if (a.linkedCenters?.length) {
+        row.centers = a.linkedCenters;
+      }
+      return row;
     })
     .filter((x) => Boolean(x)) as AmenityDisplay[];
 }
@@ -122,7 +139,96 @@ export type AmenityWithImage = {
     relevantLink?: string | null;
     image: { sourceUrl: string; altText: string | null };
   }>;
+
+  /** All centers linked via center1–center5 (for aggregated accessibility views) */
+  linkedCenters?: Array<{ slug: string; title: string }>;
 };
+
+type MapAmenityFieldsOptions = {
+  includeLinkedCenters?: boolean;
+  /** When true, falls back to amenitiesFields.additionalInformation for description text */
+  includeAdditionalInformationInDescription?: boolean;
+};
+
+function collectLinkedCenters(af: Record<string, unknown>): Array<{ slug: string; title: string }> {
+  const seen = new Set<string>();
+  const out: Array<{ slug: string; title: string }> = [];
+  for (let i = 1; i <= 5; i++) {
+    const centerNodes = (af as any)[`center${i}`]?.nodes ?? [];
+    for (const c of centerNodes) {
+      if (c?.slug && c?.title && !seen.has(c.slug)) {
+        seen.add(c.slug);
+        out.push({ slug: c.slug, title: c.title });
+      }
+    }
+  }
+  return out;
+}
+
+function mapAmenityFieldsToWithImage(
+  amenity: { name: string; slug: string; description?: string | null },
+  af: Record<string, unknown> | null | undefined,
+  options?: MapAmenityFieldsOptions
+): AmenityWithImage | null {
+  if (!amenity || !af) return null;
+
+  const defaultNode = (af as any)?.amenityImage?.node ?? null;
+  const defaultImage =
+    defaultNode?.sourceUrl
+      ? { sourceUrl: defaultNode.sourceUrl, altText: defaultNode.altText ?? null }
+      : null;
+
+  const centerImageCandidates: AmenityWithImage["centerImageCandidates"] = [];
+
+  for (let i = 1; i <= 5; i++) {
+    const imageNode = (af as any)[`amenityImage${i}`]?.node;
+    const centerNodes = (af as any)[`center${i}`]?.nodes ?? [];
+
+    const centerSlug = centerNodes?.[0]?.slug;
+    const centerTitle = centerNodes?.[0]?.title ?? null;
+
+    if (centerSlug && imageNode?.sourceUrl) {
+      centerImageCandidates.push({
+        centerSlug,
+        centerTitle,
+        relevantLink: (af as any).relevantLink ?? null,
+        image: {
+          sourceUrl: imageNode.sourceUrl,
+          altText: imageNode.altText ?? null,
+        },
+      });
+    }
+  }
+
+  if (!defaultImage && !centerImageCandidates.length) return null;
+
+  let description: string | null = amenity.description ?? null;
+  if (options?.includeAdditionalInformationInDescription) {
+    const addl = (af as any).additionalInformation;
+    const d = typeof description === "string" && description.trim() ? description.trim() : null;
+    const a = typeof addl === "string" && addl.trim() ? addl.trim() : null;
+    description = d || a || null;
+    if (description) {
+      description = description.replace(/<[^>]*>/g, "").trim() || null;
+    }
+  }
+
+  const row: AmenityWithImage = {
+    name: amenity.name,
+    slug: amenity.slug,
+    description,
+    relevantLink: (af as any).relevantLink ?? null,
+    linkLabel: (af as any).linkLabel ?? null,
+    defaultImage,
+    centerImageCandidates,
+  };
+
+  if (options?.includeLinkedCenters) {
+    row.linkedCenters = collectLinkedCenters(af);
+  }
+
+  return row;
+}
 
 
 export function pickAmenityImageForCenter(
@@ -186,49 +292,8 @@ export async function fetchAmenitiesWithImages(
   for (const result of amenityResults) {
     const amenity = result?.amenity;
     const af = amenity?.amenitiesFields;
-
-    if (!amenity || !af) continue;
-
-    const defaultNode = af?.amenityImage?.node ?? null;
-    const defaultImage =
-      defaultNode?.sourceUrl
-        ? { sourceUrl: defaultNode.sourceUrl, altText: defaultNode.altText ?? null }
-        : null;
-
-    const centerImageCandidates: AmenityWithImage["centerImageCandidates"] = [];
-
-    for (let i = 1; i <= 5; i++) {
-      const imageNode = af?.[`amenityImage${i}`]?.node;
-      const centerNodes = af?.[`center${i}`]?.nodes ?? [];
-
-      const centerSlug = centerNodes?.[0]?.slug; // you expect 1 selected center
-      const centerTitle = centerNodes?.[0]?.title ?? null;
-
-      if (centerSlug && imageNode?.sourceUrl) {
-        centerImageCandidates.push({
-          centerSlug,
-          centerTitle,
-          relevantLink: af.relevantLink ?? null,
-          image: {
-            sourceUrl: imageNode.sourceUrl,
-            altText: imageNode.altText ?? null,
-          },
-        });
-      }
-    }
-
-    // keep the amenity even if it has no default image, as long as it has candidates
-    if (defaultImage || centerImageCandidates.length) {
-      amenities.push({
-        name: amenity.name,
-        slug: amenity.slug,
-        description: amenity.description ?? null,
-        relevantLink: af.relevantLink ?? null,
-        linkLabel: af.linkLabel ?? null,
-        defaultImage,
-        centerImageCandidates,
-      });
-    }
+    const mapped = mapAmenityFieldsToWithImage(amenity, af, {});
+    if (mapped) amenities.push(mapped);
   }
 
   return amenities;
@@ -244,28 +309,46 @@ export async function fetchAccessibilityAmenitiesWithImages(
 ): Promise<AmenityWithImage[]> {
   if (!amenitySlugs.length) return [];
 
-  const amenityPromises = amenitySlugs.map((slug) =>
-    wpFetch<any>(ACCESSIBILITY_AMENITY_BY_SLUG_QUERY, { slug })
+  const amenityResults = await Promise.all(
+    amenitySlugs.map((slug) => wpFetch<any>(ACCESSIBILITY_AMENITY_BY_SLUG_QUERY, { slug }))
   );
-  const amenityResults = await Promise.all(amenityPromises);
 
   const amenitiesWithImages: AmenityWithImage[] = [];
 
   for (const result of amenityResults) {
     const amenity = result?.accessibilityAmenity;
-    const imageNode = amenity?.amenitiesFields?.amenityImage?.node;
-    if (amenity && imageNode?.sourceUrl) {
-      amenitiesWithImages.push({
-        name: amenity.name,
-        slug: amenity.slug,
-        description: amenity.description ?? null,
-        defaultImage: imageNode ? { sourceUrl: imageNode.sourceUrl, altText: imageNode.altText ?? null } : null,
-        centerImageCandidates: [],
-      });
-    }
+    const af = amenity?.amenitiesFields;
+    const mapped = mapAmenityFieldsToWithImage(amenity, af, {
+      includeAdditionalInformationInDescription: true,
+    });
+    if (mapped) amenitiesWithImages.push(mapped);
   }
 
   return amenitiesWithImages;
+}
+
+const MAX_ACCESSIBILITY_AMENITIES = 100;
+
+/**
+ * Loads all accessibility amenities (accessibility taxonomy / CPT in WordPress) with images and center links.
+ */
+export async function fetchAllAccessibilityAmenitiesWithImages(): Promise<AmenityWithImage[]> {
+  const data = await wpFetch<any>(ALL_ACCESSIBILITY_AMENITIES_QUERY, {
+    first: MAX_ACCESSIBILITY_AMENITIES,
+  });
+  const nodes = data?.accessibilityAmenities?.nodes ?? [];
+  const out: AmenityWithImage[] = [];
+
+  for (const node of nodes) {
+    const mapped = mapAmenityFieldsToWithImage(node, node?.amenitiesFields, {
+      includeLinkedCenters: true,
+      includeAdditionalInformationInDescription: true,
+    });
+    if (mapped) out.push(mapped);
+  }
+
+  out.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+  return out;
 }
 
 /**

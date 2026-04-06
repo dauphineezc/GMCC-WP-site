@@ -1,12 +1,17 @@
 // src/app/events/page.tsx
 import { Suspense } from "react";
+import PhotoWaveHeader from "@/components/photoWaveHeader";
+import {
+  fetchPageWithHeroFields,
+  resolvePhotoWaveHeaderProps,
+} from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
 import ExploreEventsClient from "./exploreEventsClient";
 
 const PAGE_SIZE = 24;
 
-const EXPLORE_EVENTS_QUERY = `
-  query ExploreEvents($first: Int!, $after: String) {
+const EVENTS_LIST_QUERY = `
+  query EventsList($first: Int!, $after: String) {
     events(first: $first, after: $after) {
       pageInfo {
         hasNextPage
@@ -47,23 +52,34 @@ const EXPLORE_EVENTS_QUERY = `
   }
 `;
 
-export default async function ExploreEventsPage() {
-  const data = await wpFetch<any>(EXPLORE_EVENTS_QUERY, {
-    first: PAGE_SIZE,
-    after: null,
-  });   
+type EventsListData = {
+  events?: {
+    pageInfo?: { hasNextPage: boolean; endCursor: string | null };
+    nodes?: any[];
+  } | null;
+};
 
-  const events = data?.events?.nodes ?? [];
-  const pageInfo = data?.events?.pageInfo ?? { hasNextPage: false, endCursor: null };
+export default async function ExploreEventsPage() {
+  const [heroPage, eventsData] = await Promise.all([
+    fetchPageWithHeroFields("events"),
+    wpFetch<EventsListData>(EVENTS_LIST_QUERY, { first: PAGE_SIZE, after: null }),
+  ]);
+
+  const events = eventsData?.events?.nodes ?? [];
+  const pageInfo = eventsData?.events?.pageInfo ?? { hasNextPage: false, endCursor: null };
+  const hero = resolvePhotoWaveHeaderProps(heroPage, "Events");
 
   return (
-    <Suspense fallback={<EventsLoadingSkeleton />}>
-      <ExploreEventsClient
-        initialEvents={events}
-        initialPageInfo={pageInfo}
-        pageSize={PAGE_SIZE}
-      />
-    </Suspense>
+    <main>
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
+      <Suspense fallback={<EventsLoadingSkeleton />}>
+        <ExploreEventsClient
+          initialEvents={events}
+          initialPageInfo={pageInfo}
+          pageSize={PAGE_SIZE}
+        />
+      </Suspense>
+    </main>
   );
 }
 

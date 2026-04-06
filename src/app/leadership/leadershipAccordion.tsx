@@ -7,6 +7,7 @@ type LeadershipAccordionProps = {
   tcBoardMembers?: string | null;
   cfcBoardMembers?: string | null;
   nfcBoardMembers?: string | null;
+  curlcBoardMembers?: string | null;
 };
 
 // Helper function to parse board members text into table format
@@ -73,6 +74,7 @@ export default function LeadershipAccordion({
   tcBoardMembers,
   cfcBoardMembers,
   nfcBoardMembers,
+  curlcBoardMembers,
 }: LeadershipAccordionProps) {
   const accordionItems = [
     {
@@ -94,6 +96,11 @@ export default function LeadershipAccordion({
       id: "north-family-center",
       title: "North Family Center",
       content: renderBoardMembersTable(nfcBoardMembers),
+    },
+    {
+      id: "curling-center",
+      title: "Curling Center",
+      content: renderBoardMembersTable(curlcBoardMembers),
     },
   ];
 

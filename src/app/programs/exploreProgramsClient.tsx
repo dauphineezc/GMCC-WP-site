@@ -8,20 +8,7 @@ import {
   getProgramsDirectoryHeaderVariant,
   type ProgramsPageACF,
 } from "@/components/programs/programsDirectoryHeader";
-
 type ProgramWP = any;
-type ProgramDirectoryPageFields = {
-  header?: string | null;
-  subheader?: string | null;
-  heroImage?: {
-    sourceUrl?: string | null;
-    altText?: string | null;
-    node?: {
-      sourceUrl?: string | null;
-      altText?: string | null;
-    } | null;
-  } | null;
-};
 
 type PageInfo = {
   hasNextPage: boolean;
@@ -43,18 +30,6 @@ type ProgramCard = {
   priceFrom: number | null;
   campTypes: { slug: string; name: string }[];
 };
-
-function hasProgramDirectoryPageFieldsContent(
-  fields?: ProgramDirectoryPageFields | null
-) {
-  if (!fields) return false;
-  return Boolean(
-    fields.header?.trim() ||
-      fields.subheader?.trim() ||
-      fields.heroImage?.sourceUrl ||
-      fields.heroImage?.node?.sourceUrl
-  );
-}
 
 function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
   const f = wp.programFields ?? {};
@@ -108,13 +83,11 @@ export default function ExploreProgramsClient({
   initialPrograms,
   initialPageInfo,
   pageSize,
-  programDirectoryPageFields,
   directoryHeaderData,
 }: {
   initialPrograms: ProgramWP[];
   initialPageInfo: PageInfo;
   pageSize: number;
-  programDirectoryPageFields?: ProgramDirectoryPageFields | null;
   directoryHeaderData: ProgramsPageACF;
 }) {
   // Infinite scroll state
@@ -191,16 +164,6 @@ export default function ExploreProgramsClient({
 
   
   const all = useMemo(() => loadedPrograms.map(mapProgramForExplorer), [loadedPrograms]);
-  const hasHeroFields = hasProgramDirectoryPageFieldsContent(programDirectoryPageFields);
-  const heroHeader = (hasHeroFields ? programDirectoryPageFields?.header : null)?.trim() || "Explore our programs";
-  const heroSubheader =
-    (hasHeroFields ? programDirectoryPageFields?.subheader : null)?.trim() ||
-    "Browse all programs and filter by location, type, age, and more.";
-  const heroImageUrl = hasHeroFields
-    ? (programDirectoryPageFields?.heroImage?.sourceUrl ??
-      programDirectoryPageFields?.heroImage?.node?.sourceUrl ??
-      null)
-    : null;
 
   // --- build option lists ---
   const offeringTypeOptions = useMemo(() => {
@@ -523,68 +486,7 @@ export default function ExploreProgramsClient({
   ]);
 
   return (
-    <main>
-      {/* HERO */}
-    <section className="relative mb-8 overflow-hidden md:mt-28 py-6">
-      <div
-        className="absolute inset-0"
-        aria-hidden
-        style={
-          heroImageUrl
-            ? {
-                backgroundImage: `url(${heroImageUrl})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }
-            : undefined
-        }
-      />
-
-      {/* Left-side navy overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
-        }}
-        aria-hidden="true"
-      />
-
-      <div className="absolute inset-0" aria-hidden />
-      <div className="relative z-20 max-w-6xl px-8 pb-20 pt-10 md:py-16 md:px-12">
-        <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
-          {heroHeader}
-        </h1>
-
-        {heroSubheader ? (
-          <p className="mt-6 mb-12 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">
-            {heroSubheader}
-          </p>
-        ) : null}
-      </div>
-
-      {/* Wave */}
-      <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
-            <svg
-              viewBox="0 0 1440 120"
-              className="-ml-px block h-10 w-[calc(100%+2px)] text-white md:h-16"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="
-                  M-20,110
-                  C750,-90  800,120  1200,80
-                  S1420,0 1460,0
-                  L1460,0 L-20,0 Z
-                "
-                transform="translate(0 120) scale(1 -1)"
-                fill="currentColor"
-              />
-            </svg>
-            <div className="absolute bottom-0 left-0 h-[2px] w-full bg-white" />
-          </div>
-    </section>
-
+    <>
       {/* Page content - constrained width */}
       <div className="mx-auto max-w-6xl px-4 py-8 section-y stack-8">
         <header className="stack-2">
@@ -931,6 +833,6 @@ export default function ExploreProgramsClient({
         </section>
       </section>
       </div>
-    </main>
+    </>
   );
 }

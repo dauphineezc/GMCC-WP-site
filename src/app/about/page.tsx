@@ -365,13 +365,13 @@ export default async function AboutPage() {
       <section className="mx-auto max-w-6xl px-6 py-8 md:py-12 mt-4">
         <h2 className="text-center text-3xl font-extrabold text-gmcc-navy md:text-4xl mb-8">{mainContentHeader}</h2>
         <div className="grid items-center gap-10 md:grid-cols-2">
-          <div className="overflow-hidden bg-neutral-100">
+          <div className="order-2 overflow-hidden bg-neutral-100 md:order-1">
             <div className="aspect-[16/9] w-full">
               <ImageOrPlaceholder src={image1Url} alt={image1Alt} />
             </div>
           </div>
 
-          <div>
+          <div className="order-1 md:order-2">
             {bodySubheading1 ? (
               <h3 className="text-xl font-bold text-gmcc-navy md:text-2xl">{bodySubheading1}</h3>
             ) : null}
@@ -380,7 +380,7 @@ export default async function AboutPage() {
         </div>
 
         {/* BODY SECTION 2 (text left, image right) */}
-        <div className="mt-4 grid items-center gap-10 md:mt-8 md:grid-cols-2">
+        <div className="grid items-center gap-10 mt-8 md:grid-cols-2">
           <div className="md:order-1">
             {bodySubheading2 ? (
               <h3 className="text-xl font-bold text-gmcc-navy md:text-2xl">{bodySubheading2}</h3>

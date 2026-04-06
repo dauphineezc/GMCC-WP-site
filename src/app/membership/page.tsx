@@ -8,6 +8,10 @@ import ExploreMembershipsClient, {
 } from "./exploreMembershipsClient";
 import type { MembershipPageFields, SerializedAmenity } from "./exploreMembershipsClient";
 import { extractAmenitySlugs, fetchAmenitiesWithImages } from "@/lib/amenities";
+import {
+  fetchPageWithHeroFields,
+  resolvePhotoWaveHeaderProps,
+} from "@/lib/pageHeroFields";
 
 const EXPLORE_MEMBERSHIPS_QUERY = `
   query ExploreMemberships {
@@ -67,18 +71,6 @@ const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
       title
       slug
       membershipPageFields {
-        header
-        subheader
-        heroImage {
-          node {
-            sourceUrl
-            altText
-          }
-        }
-        primaryCta {
-          cta
-          ctaLabel
-        }
         quizCta {
           cta
           ctaLabel
@@ -155,13 +147,14 @@ const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
                 body
                 primaryCta { primaryCtaLabel primaryCtaUrl }
                 secondaryCta { secondaryCtaLabel secondaryCtaUrl }
+                backgroundColor
+                textColor
+                primaryCtaButtonColor
+                secondaryCtaButtonColor
               }
             }
           }
         }
-        campaignBgColor
-        campaignTextColor
-
         footerPhoto {
           node { sourceUrl altText }
         }
@@ -237,21 +230,7 @@ function mapPageFields(wp: any): MembershipPageFields {
   const amenitySlugs: string[] = extractAmenitySlugs(f.amenities?.nodes);
 
   return {
-    header: (f.header as string) ?? null,
-    subheader: (f.subheader as string) ?? null,
-    heroImage: f.heroImage?.node
-      ? {
-          url: f.heroImage.node.sourceUrl as string,
-          alt: (f.heroImage.node.altText as string) ?? "",
-        }
-      : null,
-    primaryCta: f.primaryCta
-      ? {
-          url: (f.primaryCta.cta as string) ?? "",
-          label: (f.primaryCta.ctaLabel as string) ?? "",
-        }
-      : null,
-    quizCta: f.quizCta
+    quizCta: f.quizCta?.cta && f.quizCta?.ctaLabel
       ? {
           url: (f.quizCta.cta as string) ?? "",
           label: (f.quizCta.ctaLabel as string) ?? "",
@@ -277,8 +256,6 @@ function mapPageFields(wp: any): MembershipPageFields {
     contactHeader: (f.contactHeader as string) ?? null,
     contactDescription: (f.contactDescription as string) ?? null,
     campaign: f.campaign?.nodes?.[0] ?? null,
-    campaignBgColor: (f.campaignBgColor as string) ?? null,
-    campaignTextColor: (f.campaignTextColor as string) ?? null,
     footerPhoto: f.footerPhoto?.node
       ? {
           url: f.footerPhoto.node.sourceUrl as string,
@@ -289,10 +266,13 @@ function mapPageFields(wp: any): MembershipPageFields {
 }
 
 export default async function ExploreMembershipsPage() {
-  const [data, pageData] = await Promise.all([
+  const [heroPage, data, pageData] = await Promise.all([
+    fetchPageWithHeroFields("membership"),
     wpFetch<any>(EXPLORE_MEMBERSHIPS_QUERY),
     wpFetch<any>(MEMBERSHIP_PAGE_QUERY),
   ]);
+
+  const hero = resolvePhotoWaveHeaderProps(heroPage, "Membership");
 
   const audiences: Audience[] =
     data?.audiences?.nodes?.map((n: any) => ({
@@ -361,6 +341,10 @@ export default async function ExploreMembershipsPage() {
         memberships={memberships}
         fields={fields}
         amenities={serializedAmenities}
+        heroTitle={hero.title}
+        heroSubheader={hero.subheader}
+        heroImageUrl={hero.imageUrl}
+        heroPrimaryCta={hero.primaryCta}
       />
     </Suspense>
   );
