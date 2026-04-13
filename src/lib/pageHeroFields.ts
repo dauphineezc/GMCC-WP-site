@@ -1,4 +1,4 @@
-import type { PhotoWaveHeaderFields, HeroCta } from "@/components/photoWaveHeader";
+import type { PhotoWaveHeaderFields, HeroCta, HeroFieldsCtaRaw } from "@/components/photoWaveHeader";
 import { wpFetch } from "@/lib/wp";
 
 /**
@@ -8,21 +8,26 @@ import { wpFetch } from "@/lib/wp";
  * with a custom post type archive (e.g. "programs", "events"). To handle this reliably
  * we first try URI, then fall back to resolving the `databaseId` via a `pages(where:)` query.
  */
+/** WordPress `Page` hero ACF — field names match Center CPT (`hero*` everywhere). */
 export const PAGE_HERO_FIELDS_GRAPHQL = `
-      heroFields {
-        header
-        subheader
-        heroImage {
-          node {
-            sourceUrl
-            altText
-          }
-        }
-        primaryCta {
-          ctaLabel
-          cta
-        }
+  heroFields {
+    heroHeader
+    heroSubheader
+    heroImage {
+      node {
+        sourceUrl
+        altText
       }
+    }
+    heroPrimaryCta {
+      ctaLabel
+      cta
+    }
+    heroSecondaryCta {
+      ctaLabel
+      cta
+    }
+  }
 `;
 
 export type WpPageWithHeroFields = {
@@ -129,13 +134,31 @@ export async function fetchPageWithHeroFields<
  * Build a CTA object from an ACF `{ ctaLabel, cta }` sub-group.
  * Returns `null` when both label and url are empty.
  */
+function heroCtaUrl(raw: HeroFieldsCtaRaw | null | undefined): string {
+  if (!raw) return "";
+  const c = raw.cta;
+  if (typeof c === "string") return c.trim();
+  if (c && typeof c === "object") {
+    const u = (c as { url?: string | null; uri?: string | null }).url ?? (c as { uri?: string | null }).uri;
+    if (u) return String(u).trim();
+  }
+  const direct = raw.url ?? raw.uri;
+  if (direct) return String(direct).trim();
+  return "";
+}
+
+function heroCtaLabel(raw: HeroFieldsCtaRaw | null | undefined): string {
+  if (!raw) return "";
+  return (raw.ctaLabel ?? raw.title ?? raw.label ?? "").trim();
+}
+
 export function resolveHeroCta(
-  raw: { ctaLabel?: string | null; cta?: string | null } | null | undefined,
+  raw: HeroFieldsCtaRaw | null | undefined,
   variant: HeroCta["variant"] = "primary",
 ): HeroCta | null {
-  const label = (raw?.ctaLabel ?? "").trim();
-  const url = (raw?.cta ?? "").trim();
-  if (!label || !url) return null;
+  const url = heroCtaUrl(raw);
+  if (!url) return null;
+  const label = heroCtaLabel(raw) || "Learn more";
   return { label, url, variant };
 }
 
@@ -144,13 +167,20 @@ export function resolvePhotoWaveHeaderProps(
   defaultTitle: string,
 ) {
   const fields = page?.heroFields ?? null;
-  const title = (fields?.header ?? "").trim() || (page?.title ?? "").trim() || defaultTitle;
-  const subRaw = (fields?.subheader ?? "").trim();
-  const primaryCta = resolveHeroCta(fields?.primaryCta, "primary");
+  const title =
+    (fields?.heroHeader ?? fields?.header ?? "").trim() ||
+    (page?.title ?? "").trim() ||
+    defaultTitle;
+  const subRaw = (fields?.heroSubheader ?? fields?.subheader ?? "").trim();
+  const primaryCta = resolveHeroCta(fields?.heroPrimaryCta ?? fields?.primaryCta, "primary");
+  const secondaryCta = resolveHeroCta(fields?.heroSecondaryCta ?? fields?.secondaryCta, "secondary");
+  const ctas = [primaryCta, secondaryCta].filter((c): c is HeroCta => c != null);
   return {
     title,
     subheader: subRaw ? subRaw : undefined,
     imageUrl: fields?.heroImage?.node?.sourceUrl ?? undefined,
     primaryCta,
+    secondaryCta,
+    ctas: ctas.length > 0 ? ctas : undefined,
   } as const;
 }

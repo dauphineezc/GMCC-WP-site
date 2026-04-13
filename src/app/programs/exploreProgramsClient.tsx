@@ -15,7 +15,7 @@ type PageInfo = {
   endCursor: string | null;
 };
 
-type ProgramCard = {
+export type ProgramCard = {
   slug: string;
   title: string;
   summary: string;
@@ -31,7 +31,7 @@ type ProgramCard = {
   campTypes: { slug: string; name: string }[];
 };
 
-function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
+export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
   const f = wp.programFields ?? {};
   const hero = wp.featuredImage?.node;
   const galleryHero = f?.mediaGallery?.image1?.node;

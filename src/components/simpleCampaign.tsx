@@ -26,6 +26,11 @@ export type SimpleCampaignData = {
 
 type Props = {
   campaign: SimpleCampaignData | null;
+  /**
+   * When true, image stacks above copy at all breakpoints (like mobile).
+   * When false, from `md` up uses side-by-side image + text (default).
+   */
+  stacked?: boolean;
 };
 
 /** ACF select values: primary | secondary | tertiary (see WP field config). */
@@ -65,7 +70,7 @@ function campaignButtonClass(
   return CAMPAIGN_BTN_CLASSES[fallback];
 }
 
-export default function SimpleCampaign({ campaign }: Props) {
+export default function SimpleCampaign({ campaign, stacked = false }: Props) {
   if (!campaign) return null;
 
   const title =
@@ -93,57 +98,91 @@ export default function SimpleCampaign({ campaign }: Props) {
     "secondary",
   );
 
+  const imageBlock = (
+    <div
+      className={
+        stacked
+          ? "relative aspect-[4/3] w-full sm:aspect-[16/10]"
+          : "relative min-h-[280px] md:min-h-[360px]"
+      }
+    >
+      {img ? (
+        <img
+          src={img}
+          alt={campaign.featuredImage?.node?.altText ?? ""}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 w-full bg-neutral-700" />
+      )}
+      <div className="absolute inset-0" aria-hidden />
+    </div>
+  );
+
+  const copyBlock = (
+    <div
+      className={
+        stacked
+          ? "flex flex-1 flex-col justify-center p-6 sm:p-8"
+          : "flex flex-col justify-center p-10 md:p-14 md:min-h-[360px]"
+      }
+    >
+      <h3
+        className={
+          stacked
+            ? "text-2xl font-semibold tracking-tight sm:text-3xl"
+            : "text-3xl font-semibold tracking-tight"
+        }
+        style={{ color: textColor }}
+      >
+        {title}
+      </h3>
+      {body ? (
+        <p
+          className="mt-8 whitespace-pre-line text-base leading-relaxed"
+          style={{ color: textColor }}
+        >
+          {body}
+        </p>
+      ) : null}
+
+      <div className="mt-8 flex flex-wrap gap-3">
+        <a href={primaryUrl} className={primaryClass}>
+          {primaryLabel}
+        </a>
+        {secondaryUrl ? (
+          <a href={secondaryUrl} className={secondaryClass}>
+            {secondaryLabel}
+          </a>
+        ) : null}
+      </div>
+    </div>
+  );
+
   return (
-    <section className="px-0 py-0">
-      <div className="mx-auto w-full">
+    <section
+      className={
+        stacked
+          ? "flex h-full min-h-0 w-full flex-col px-0 py-0"
+          : "px-0 py-0"
+      }
+    >
+      <div className={stacked ? "flex min-h-0 flex-1 flex-col" : "mx-auto w-full"}>
         <div
-          className="overflow-hidden"
+          className={stacked ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "overflow-hidden"}
           style={{
             backgroundColor: campaign.campaignFields?.backgroundColor ?? "#ffffff",
           }}
         >
-          <div className="grid md:grid-cols-2">
-            <div className="relative min-h-[280px] md:min-h-[360px]">
-              {img ? (
-                <img
-                  src={img}
-                  alt={campaign.featuredImage?.node?.altText ?? ""}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 w-full bg-neutral-700" />
-              )}
-              {/* <div className="absolute inset-0 bg-black/25" /> */}
-              <div className="absolute inset-0" />
-            </div>
-
-            <div className="flex flex-col justify-center p-10 md:p-14 md:min-h-[360px]">
-              <h3
-                className="text-3xl font-semibold tracking-tight"
-                style={{ color: textColor }}
-              >
-                {title}
-              </h3>
-              {body ? (
-                <p
-                  className="mt-4 whitespace-pre-line text-base leading-relaxed"
-                  style={{ color: textColor }}
-                >
-                  {body}
-                </p>
-              ) : null}
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <a href={primaryUrl} className={primaryClass}>
-                  {primaryLabel}
-                </a>
-                {secondaryUrl ? (
-                  <a href={secondaryUrl} className={secondaryClass}>
-                    {secondaryLabel}
-                  </a>
-                ) : null}
-              </div>
-            </div>
+          <div
+            className={
+              stacked
+                ? "flex min-h-0 flex-1 flex-col"
+                : "grid md:grid-cols-2"
+            }
+          >
+            {imageBlock}
+            {copyBlock}
           </div>
         </div>
       </div>

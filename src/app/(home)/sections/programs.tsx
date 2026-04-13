@@ -21,6 +21,8 @@ type ProgramsSectionProps = {
 const DESKTOP_COLS = 4;
 const COL_GAP_PX = 24; // gap-6
 const MOBILE_CARD_MAX_PX = 420;
+/** Subpixel / gap / floor(column width) can make the last snap a few px past maxScrollLeft; too small breaks the final desktop "page". */
+const SNAP_EPSILON_PX = { md: 32, sm: 12 } as const;
 
 export default function ProgramsSection({
   programs,
@@ -115,13 +117,22 @@ export default function ProgramsSection({
 
   // Last snap index actually reachable by scrollLeft.
   const getMaxReachableIndex = (scroller: HTMLDivElement, positions: number[]) => {
-    const epsilon = isMd ? 4 : 10;
+    const epsilon = isMd ? SNAP_EPSILON_PX.md : SNAP_EPSILON_PX.sm;
     const maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    const cap = getMaxIndex(positions.length);
     let reachable = 0;
     for (let i = 0; i < positions.length; i++) {
       if (positions[i] <= maxScrollLeft + epsilon) reachable = i;
     }
-    return Math.min(reachable, getMaxIndex(positions.length));
+    reachable = Math.min(reachable, cap);
+    // Last desktop frame: layout math can overshoot maxScrollLeft by more than epsilon; still allow scrolling to the end.
+    if (isMd && cap > reachable && positions.length > DESKTOP_COLS) {
+      const lastSnap = positions[cap];
+      if (lastSnap > maxScrollLeft && lastSnap - maxScrollLeft <= COL_GAP_PX * 2 + 8) {
+        reachable = cap;
+      }
+    }
+    return reachable;
   };
 
   const syncEdgeAndActive = () => {
@@ -131,7 +142,7 @@ export default function ProgramsSection({
     const positions = getSnapPositions();
     if (!positions.length) return;
 
-    const epsilon = isMd ? 4 : 10;
+    const epsilon = isMd ? SNAP_EPSILON_PX.md : SNAP_EPSILON_PX.sm;
     const current = scroller.scrollLeft;
 
     // nearest snap index (History-style)
@@ -167,10 +178,17 @@ export default function ProgramsSection({
     const positions = getSnapPositions();
     if (!positions.length) return;
 
+    const n = positions.length;
     const maxIdx = getMaxReachableIndex(scroller, positions);
     const targetIdx = Math.max(0, Math.min(idx, maxIdx));
     const maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
-    const targetLeft = Math.max(0, Math.min(positions[targetIdx], maxScrollLeft));
+    const lastFrameIdx = getMaxIndex(n);
+    const rawLeft = positions[targetIdx];
+    // Last desktop frame: ideal snap can sit barely beyond maxScrollLeft; scroll to the true end so card 8 is not clipped off the rail.
+    const targetLeft =
+      isMd && targetIdx === lastFrameIdx && n > DESKTOP_COLS && rawLeft > maxScrollLeft
+        ? maxScrollLeft
+        : Math.max(0, Math.min(rawLeft, maxScrollLeft));
 
     isProgrammaticScroll.current = true;
     scroller.scrollTo({ left: targetLeft, behavior: "smooth" });

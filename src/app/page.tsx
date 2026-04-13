@@ -30,8 +30,9 @@ type HomeData = {
         heroSecondaryCtaUrl?: string | null;
       } | null;
 
+      aboutHeader?: string | null;
       aboutBlurb?: string | null;
-      aboutImage?: GqlImage | null;
+      aboutCtaLabel?: string | null;
 
       programs?: {
         program1?: {
@@ -281,13 +282,9 @@ query HomePage($uri: ID!) {
         heroSecondaryCtaUrl
       }
 
+      aboutHeader
       aboutBlurb
-      aboutImage {
-        node {
-          sourceUrl
-          altText
-        }
-      }
+      aboutCtaLabel
 
       programs {
         program1 {
@@ -535,12 +532,9 @@ export default async function HomePage() {
       />
 
       <AboutSection
-        eyebrow="About Us"
-        heading="About Us"
+        heading={f?.aboutHeader ?? "About Us"}
         body={f?.aboutBlurb ?? ""}
-        imageUrl={f?.aboutImage?.node?.sourceUrl ?? null}
-        imageAlt={f?.aboutImage?.node?.altText ?? ""}
-        cta={{ title: "Learn more about our mission", url: "/about" }}
+        cta={{ title: f?.aboutCtaLabel ?? "Learn more about our mission", url: "/about" }}
       />
 
       <ProgramsSection programs={programs} />

@@ -2,18 +2,12 @@
 type Linkish = { title?: string | null; url?: string | null; target?: string | null };
 
 export default function AboutSection({
-  eyebrow,
   heading,
   body,
-  imageUrl,
-  imageAlt,
   cta,
 }: {
-  eyebrow: string;
   heading: string;
   body: string;
-  imageUrl: string | null;
-  imageAlt: string;
   cta?: Linkish | null;
 }) {
   return (

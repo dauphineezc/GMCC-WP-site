@@ -31,7 +31,7 @@ function normalizeWpUrlToPath(url: string) {
     "Youth Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "youth" }),
     "Adult Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "youth,family,adult,activeOlderAdult" }),
     "Fitness": "/programs?" + buildQuery({ programArea: "Fitness" }),
-    "Camps": "/programs?" + buildQuery({ offeringType: "Camp" }),
+    "Camps": "/camps",
     "Full Day Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "full-day" }),
     "Mini Day Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "mini-day" }),
     "Specialty/Art Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "specialty-art" }),

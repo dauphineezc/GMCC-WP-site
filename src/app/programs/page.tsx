@@ -12,56 +12,8 @@ import {
   resolvePhotoWaveHeaderProps,
 } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
+import { PROGRAMS_LIST_QUERY, PROGRAMS_PAGE_SIZE } from "@/lib/programsListQuery";
 import ExploreProgramsClient from "./exploreProgramsClient";
-
-const PAGE_SIZE = 24;
-
-const PROGRAMS_LIST_QUERY = `
-  query ProgramsList($first: Int!, $after: String) {
-    programs(first: $first, after: $after, where: { stati: PUBLISH }) {
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-      nodes {
-        id
-        slug
-        title
-        featuredImage {
-          node {
-            sourceUrl
-            altText
-          }
-        }
-        programFields {
-          summary
-          mediaGallery {
-            image1 {
-              node {
-                sourceUrl
-                altText
-              }
-            }
-          }
-          offeringType
-          skillLevel
-          priceFrom
-          audience { nodes { name slug } }
-          campType { nodes { name slug } }
-          center {
-            nodes {
-              ... on Center {
-                slug
-                title
-              }
-            }
-          }
-          programArea { nodes { name slug } }
-        }
-      }
-    }
-  }
-`;
 
 const DIRECTORY_HEADER_FIELDS = `
   header
@@ -251,7 +203,7 @@ export default async function ExploreProgramsPage() {
         pageInfo?: { hasNextPage: boolean; endCursor: string | null };
         nodes?: any[];
       } | null;
-    }>(PROGRAMS_LIST_QUERY, { first: PAGE_SIZE, after: null }),
+    }>(PROGRAMS_LIST_QUERY, { first: PROGRAMS_PAGE_SIZE, after: null }),
   ]);
 
   const hero = resolvePhotoWaveHeaderProps(heroPage, "Explore our programs");
@@ -327,7 +279,7 @@ export default async function ExploreProgramsPage() {
         <ExploreProgramsClient
           initialPrograms={programs}
           initialPageInfo={pageInfo}
-          pageSize={PAGE_SIZE}
+          pageSize={PROGRAMS_PAGE_SIZE}
           directoryHeaderData={directoryHeaderData}
         />
       </Suspense>

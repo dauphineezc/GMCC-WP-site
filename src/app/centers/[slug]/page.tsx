@@ -5,12 +5,39 @@ import PhoneLink from "@/components/phoneLink";
 import { extractAmenitySlugs, toAmenityDisplayForCenter } from "@/lib/amenities";
 import { fetchAmenitiesWithImages } from "@/lib/amenities";
 import { wpFetch } from "@/lib/wp";
+import { resolveHeroCta } from "@/lib/pageHeroFields";
+import type { HeroCta } from "@/components/photoWaveHeader";
+import PhotoWaveHeader from "@/components/photoWaveHeader";
+import {
+  coerceWpRichText,
+  fetchCenterDetailPageFields,
+  isCurlingCenterSlug,
+  resolveFeaturedProgramEventHref,
+} from "@/lib/centerDetailPageFields";
 
 const CENTER_BY_SLUG_QUERY = `
   query CenterBySlug($slug: ID!) {
     center(id: $slug, idType: SLUG) {
       title
       slug
+      heroFields {
+        heroHeader
+        heroSubheader
+        heroImage {
+          node {
+            sourceUrl
+            altText
+          }
+        }
+        heroPrimaryCta {
+          ctaLabel
+          cta
+        }
+        heroSecondaryCta {
+          ctaLabel
+          cta
+        }
+      }
       featuredImage {
         node {
           sourceUrl
@@ -26,14 +53,6 @@ const CENTER_BY_SLUG_QUERY = `
         longDescription
         centerType
         address
-        primaryCta {
-          ctaLabel
-          cta
-        }
-        secondaryCta {
-          ctaLabel
-          cta
-        }
         socialLinks
         amenities {
           nodes {
@@ -271,14 +290,31 @@ const CENTER_BY_SLUG_QUERY = `
   }
 `;
 
+function renderHoursReplacementContent(htmlOrText: string) {
+  const c = htmlOrText.trim();
+  if (!c) return null;
+  if (/<[a-z][\s\S]*>/i.test(c)) {
+    return (
+      <div
+        className="body text-neutral-200 space-y-3 [&_a]:text-white [&_a]:underline"
+        dangerouslySetInnerHTML={{ __html: c }}
+      />
+    );
+  }
+  return <p className="body text-neutral-200 whitespace-pre-line">{c}</p>;
+}
+
 type CenterPageProps = {
   params: Promise<{ slug: string }>;
 };
 
 export default async function CenterPage(props: CenterPageProps) {
   const { slug } = await props.params;
+  const [data, centerDetailFields] = await Promise.all([
+    wpFetch<any>(CENTER_BY_SLUG_QUERY, { slug }),
+    fetchCenterDetailPageFields(),
+  ]);
 
-  const data = await wpFetch<any>(CENTER_BY_SLUG_QUERY, { slug });
   const center = data?.center;
 
   if (!center) {
@@ -297,9 +333,19 @@ export default async function CenterPage(props: CenterPageProps) {
   const amenitiesForThisCenter = toAmenityDisplayForCenter(amenitiesWithImages, slug);
 
 
-  const heroImageUrl = center.featuredImage?.node?.sourceUrl ?? null;
-  const heroHeader = center.title ?? null;
-  const heroSubheader = center.centersFields?.summary ?? null;
+  const heroFields = center.heroFields ?? null;
+  const heroImageUrl =
+    heroFields?.heroImage?.node?.sourceUrl ?? center.featuredImage?.node?.sourceUrl ?? null;
+  const heroHeader =
+    (heroFields?.heroHeader ?? "").trim() || (center.title ?? "").trim() || "Center";
+  const heroSubheaderRaw = (heroFields?.heroSubheader ?? "").trim();
+  const heroSubheader = heroSubheaderRaw || center.centersFields?.summary || null;
+
+  const heroCtas: HeroCta[] = [
+    resolveHeroCta(heroFields?.heroPrimaryCta, "primary"),
+    resolveHeroCta(heroFields?.heroSecondaryCta, "secondary"),
+  ].filter((c): c is HeroCta => c != null);
+
   const centerFields = center.centersFields ?? {};
   const campaign = center.centerCampaignModuleFields ?? {};
 
@@ -364,10 +410,8 @@ export default async function CenterPage(props: CenterPageProps) {
     return { ctaLabel: ctaLabel ?? "Learn more", cta: ctaHref };
   };
 
-  const heroPrimaryCta = normalizeCta(center.centersFields?.primaryCta);
-  const heroSecondaryCta = normalizeCta(center.centersFields?.secondaryCta);
-  const campaignPrimaryCta = normalizeCta(campaign.primaryCta) ?? heroPrimaryCta;
-  const campaignSecondaryCta = normalizeCta(campaign.secondaryCta) ?? heroSecondaryCta;
+  const campaignPrimaryCta = normalizeCta(campaign.primaryCta);
+  const campaignSecondaryCta = normalizeCta(campaign.secondaryCta);
 
   const campaignModule = {
     header: campaign.header ?? null,
@@ -384,82 +428,52 @@ export default async function CenterPage(props: CenterPageProps) {
     },
   };
 
+  const isCurlingCenter = isCurlingCenterSlug(slug, center.slug ?? null);
+  const curlingLayout = centerDetailFields?.curlingCenterPageFields;
+  const readyToJoinLayout = centerDetailFields?.readyToJoinSection;
+  const hoursReplacement = coerceWpRichText(curlingLayout?.hoursReplacementStatement).trim();
+  const showCurlingHoursReplacement = isCurlingCenter && hoursReplacement.length > 0;
+
+  const replacementCta = curlingLayout?.membershipReplacementCta;
+  const membershipPlansHref = `/membership?center=${encodeURIComponent(slug)}#plans`;
+
+  let joinSectionHeader: string;
+  let joinSectionSubheader: string;
+  let joinCardText: string;
+  let joinCtaLabel: string;
+  let joinCtaHref: string | null;
+
+  if (isCurlingCenter) {
+    joinSectionHeader =
+      coerceWpRichText(replacementCta?.header).trim() || "Ready to join?";
+    joinSectionSubheader = coerceWpRichText(replacementCta?.subheader).trim();
+    joinCardText = coerceWpRichText(replacementCta?.cardText).trim();
+    joinCtaLabel = coerceWpRichText(replacementCta?.ctaLabel).trim() || "Learn more";
+    joinCtaHref =
+      resolveFeaturedProgramEventHref(replacementCta?.featuredProgramEvent?.node ?? undefined) ??
+      null;
+  } else {
+    joinSectionHeader = (readyToJoinLayout?.header ?? "").trim() || "Ready to join?";
+    joinSectionSubheader =
+      (readyToJoinLayout?.subheader ?? "").trim() ||
+      "Join online or stop in to get started today.";
+    joinCardText =
+      (readyToJoinLayout?.cardText ?? "").trim() || "Start your membership in minutes.";
+    joinCtaLabel = (readyToJoinLayout?.ctaLabel ?? "").trim() || "Join Now";
+    joinCtaHref = membershipPlansHref;
+  }
+
   return (
     <main>
-        {/* HERO */}
-        <section className="relative overflow-hidden md:mt-28 py-6">
-        <div
-          className="absolute inset-0"
-          aria-hidden
-          style={
-          heroImageUrl ? {
-              backgroundImage: `url(${heroImageUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }
-            : undefined
-          }
-        />
-
-        {/* Left-side navy overlay */}
-        <div
-          className="absolute inset-0"
-          style={{
-          background:
-            "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
-          }}
-          aria-hidden="true"
-        />
-        <div className="absolute inset-0" aria-hidden />
-        <div className="relative z-20 max-w-6xl px-8 pb-20 pt-10 md:py-16 md:px-12">
-          <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
-            {heroHeader}
-          </h1>
-
-          {heroSubheader ? (
-          <p className="mt-6 mb-4 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">
-            {heroSubheader}
-          </p>
-          ) : null}
-          <div className="flex flex-wrap gap-3">
-            {heroPrimaryCta ? (
-                <div className="mt-4 mb-6">
-                <a href={heroPrimaryCta.cta} className="btn btn-tertiary">
-                    {heroPrimaryCta.ctaLabel}
-                </a>
-                </div>
-            ) : null}
-            {heroSecondaryCta ? (
-                <div className="mt-4 mb-6">
-                <a href={heroSecondaryCta.cta} className="btn btn-secondary">
-                    {heroSecondaryCta.ctaLabel}
-                </a>
-                </div>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Wave */}
-        <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
-            <svg
-                viewBox="0 0 1440 120"
-                className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-                preserveAspectRatio="none"
-            >
-              <path
-                d="
-                    M-20,110
-                    C750,-90  800,120  1200,80
-                    S1420,0 1460,0
-                    L1460,0 L-20,0 Z
-                "
-                transform="translate(0 120) scale(1 -1)"
-                fill="currentColor"
-                />
-            </svg>
-          <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gmcc-navy" />
-        </div>
-      </section>
+      <PhotoWaveHeader
+        title={heroHeader}
+        subheader={heroSubheader}
+        imageUrl={heroImageUrl}
+        ctas={heroCtas.length > 0 ? heroCtas : undefined}
+        flushBottom
+        waveFillClassName="text-gmcc-navy"
+        waveEdgeClassName="bg-gmcc-navy"
+      />
 
       <section
         className="relative w-screen -ml-[calc(50vw-50%)] overflow-x-clip scroll-mt-24"
@@ -479,15 +493,18 @@ export default async function CenterPage(props: CenterPageProps) {
                 </div>
                 <div className="stack-3 col-span-1 mb-14 md:mb-0">
                     <h2 className="h2 mb-4 text-white">Hours</h2>
+                    {showCurlingHoursReplacement ? (
+                      renderHoursReplacementContent(hoursReplacement)
+                    ) : (
                     <div className="grid grid-cols-2 items-center">
                         <div className="flex flex-col text-left">
-                            <p className="body text-neutral-200 font-bold tracking-wide">Monday</p>
-                            <p className="body text-neutral-200 font-bold tracking-wide">Tuesday</p>
-                            <p className="body text-neutral-200 font-bold tracking-wide">Wednesday</p>
-                            <p className="body text-neutral-200 font-bold tracking-wide">Thursday</p>
-                            <p className="body text-neutral-200 font-bold tracking-wide">Friday</p>
-                            <p className="body text-neutral-200 font-bold tracking-wide">Saturday</p>
-                            <p className="body text-neutral-200 font-bold tracking-wide">Sunday</p>
+                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Monday</p>
+                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Tuesday</p>
+                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Wednesday</p>
+                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Thursday</p>
+                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Friday</p>
+                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Saturday</p>
+                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Sunday</p>
                         </div>
                         <div className="flex flex-col text-right">
                             {centerFields.hours.mondayHours.closedMonday ? (
@@ -527,111 +544,47 @@ export default async function CenterPage(props: CenterPageProps) {
                             )}
                         </div>
                     </div>
+                    )}
                 </div>
-            </div>
-
-            {/* Wave */}
-            <div className="pointer-events-none relative -mt-12 mb-8 -mx-52 w-[calc(100%+26rem)] overflow-hidden leading-none">
-              <svg
-                viewBox="0 0 1440 180"
-                className="block h-16 w-full md:h-20 lg:h-28"
-                preserveAspectRatio="none"
-              >
-                <defs>
-                  <linearGradient id="center-offers-wave-shadow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#000000" stopOpacity="0.35" />
-                    <stop offset="55%" stopColor="#000000" stopOpacity="0.16" />
-                    <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="
-                    M0,120
-                    C180,70 320,30 520,55
-                    C740,85 870,165 1080,145
-                    C1260,128 1370,70 1440,35
-                    L1440,180
-                    L0,180
-                    Z
-                  "
-                  fill="var(--gmcc-navy)"
-                />
-                <path
-                  d="
-                    M0,120
-                    C180,70 320,30 520,55
-                    C740,85 870,165 1080,145
-                    C1260,128 1370,70 1440,35
-                    L1440,180
-                    L0,180
-                    Z
-                  "
-                  fill="url(#center-offers-wave-shadow)"
-                />
-              </svg>
-            </div>
-
-            <div className="grid gap-10 md:gap-16 md:grid-cols-3 items-start">
-              <div className="stack-3 md:col-span-2">
-                <h2 className="h2 mb-4 text-white">What this center offers</h2>
-                <p className="body text-neutral-200 md:mb-8">{centerFields.longDescription}</p>
-              </div>
-              <div className="col-span-1">
-                <h3 className="h3 mb-4 text-white">Quick highlights</h3>
-                <div className="grid gap-4 grid-cols-2 items-start">
-                  <div className="stack-3 col-span-1">
-                    <ul className="text-neutral-200 space-y-2 text-center">
-                      <li className="rounded-full bg-gmcc-teal px-4 py-2">Lorem ipsum</li>
-                      <li className="rounded-full bg-gmcc-teal px-4 py-2">Lorem ipsum</li>
-                    </ul>
-                  </div>
-                  <div className="stack-3 col-span-1">
-                    <ul className="text-neutral-200 space-y-2 text-center">
-                      <li className="rounded-full bg-gmcc-teal px-4 py-2">Lorem ipsum</li>
-                      <li className="rounded-full bg-gmcc-teal px-4 py-2">Lorem ipsum</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Bottom wave */}
-        <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
-          <svg
-            viewBox="0 0 390 120"
-            className="block h-14 w-full text-gmcc-navy md:hidden"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
+      {/* Outside overflow-x-clip so width isn't clipped (same pattern as site footer: w-full under full-width main) */}
+      <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
+        <svg
+          viewBox="0 0 390 120"
+          className="-ml-px block h-14 w-[calc(100%+2px)] text-gmcc-navy md:hidden"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="
                 M0,98
                 C78,62 135,54 195,74
                 C255,96 322,88 390,60
                 L390,0 L0,0 Z
               "
-              fill="currentColor"
-            />
-          </svg>
+            fill="currentColor"
+          />
+        </svg>
 
-          <svg
-            viewBox="0 0 1440 120"
-            className="hidden h-16 w-full text-gmcc-navy md:block"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
+        <svg
+          viewBox="0 0 1440 120"
+          className="-ml-px hidden h-16 w-[calc(100%+2px)] text-gmcc-navy md:block"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="
                 M0,110
                 C300,-50  500,120  800,100
                 S1000,0 1440,0
                 L1440,0 L0,0 Z
               "
-              fill="currentColor"
-            />
-          </svg>
-        </div>
-      </section>
+            fill="currentColor"
+          />
+        </svg>
+      </div>
 
       <section className="mx-auto max-w-6xl px-4 py-8 section-y stack-4">
         <h2 className="h2 mb-4">What you'll find here</h2>
@@ -645,17 +598,22 @@ export default async function CenterPage(props: CenterPageProps) {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pt-4 pb-12 section-y stack-4">
-        <h2 className="h2 mb-2">Ready to join?</h2>
-        <p className="body mb-4">Join online or visit any of our centers to get started today.</p>
+        <h2 className="h2 mb-2">{joinSectionHeader}</h2>
+        {joinSectionSubheader ? (
+          <p className="body mb-4">{joinSectionSubheader}</p>
+        ) : null}
         <div className="card bg-gmcc-green py-6">
-          <p className="text-3xl text-white font-bold tracking-wide ml-4">
-            Start your membership in minutes.
-            <a
-              href={`/membership?center=${encodeURIComponent(slug)}#plans`}
-              className="btn btn-primary justify-end float-right mr-4"
-            >
-              Join Now
-            </a>
+          <p className="flex flex-col gap-4 text-3xl text-white font-bold tracking-wide sm:flex-row sm:items-center sm:justify-between sm:pl-4 sm:pr-4">
+            <span>{joinCardText}</span>
+            {joinCtaHref ? (
+              <a href={joinCtaHref} className="btn btn-primary shrink-0">
+                {joinCtaLabel}
+              </a>
+            ) : isCurlingCenter ? (
+              <span className="btn btn-primary shrink-0 cursor-not-allowed opacity-70" aria-disabled="true">
+                {joinCtaLabel}
+              </span>
+            ) : null}
           </p>
         </div>
       </section>

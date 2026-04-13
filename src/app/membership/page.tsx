@@ -344,7 +344,7 @@ export default async function ExploreMembershipsPage() {
         heroTitle={hero.title}
         heroSubheader={hero.subheader}
         heroImageUrl={hero.imageUrl}
-        heroPrimaryCta={hero.primaryCta}
+        heroCtas={hero.ctas}
       />
     </Suspense>
   );

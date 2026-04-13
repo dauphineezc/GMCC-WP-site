@@ -127,7 +127,7 @@ export default function NewsSection({
 
               <div className="col-span-1 flex h-full flex-col p-6">
                 <div className="text-3xl font-semibold leading-snug text-white line-clamp-2">
-                  {newsletterSubscriptionHeader || "Stay in the loop"}
+                  Subscribe to <span className='text-italic'>Greater Life</span>
                 </div>
 
                 <p className="mt-1 text-base leading-relaxed text-neutral-200 line-clamp-4">

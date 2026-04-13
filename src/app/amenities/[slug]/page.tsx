@@ -221,6 +221,12 @@ export default async function AmenityPage(props: AmenityPageProps) {
                 <p className="whitespace-pre-line">{cleanDescription}</p>
               </article>
             )}
+            {amenity.amenitiesFields?.additionalInformation && (
+              <article className="prose prose-sm max-w-none sm:prose-base mt-8">
+                <h3 className="h3 text-base font-bold text-neutral-700 mb-3">Pickleball Demo Program:</h3>
+                <p className="whitespace-pre-line">{amenity.amenitiesFields.additionalInformation}</p>
+              </article>
+            )}
           </div>
           {/* RIGHT COLUMN: Image Carousel */}
             {carouselImages.length > 0 && (

@@ -7,6 +7,9 @@ import type {
   DirectoryTrainer,
 } from "@/components/programs/directoryHeaderShared";
 import { wpFetch } from "@/lib/wp";
+import { PAGE_HERO_FIELDS_GRAPHQL } from "@/lib/pageHeroFields";
+import { resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
+import PhotoWaveHeader from "@/components/photoWaveHeader";
 
 type WPProgram = {
   slug?: string | null;
@@ -39,16 +42,8 @@ const PERSONAL_TRAINING_PAGE_QUERY = /* GraphQL */ `
           altText
         }
       }
+      ${PAGE_HERO_FIELDS_GRAPHQL}
       personalTrainingDirectoryPageFields {
-        header
-        subheader
-        heroImage {
-          node {
-            sourceUrl
-            altText
-          }
-        }
-        
         bodyHeader
         body
 
@@ -292,6 +287,8 @@ export default async function PersonalTrainingPage() {
     first: 60,
   });
 
+  const hero = resolvePhotoWaveHeaderProps(data?.page, "Personal Training");
+
   const rawFields = data?.page?.personalTrainingDirectoryPageFields ?? null;
   const fields = normalizeDirectoryData(rawFields);
 
@@ -301,9 +298,6 @@ export default async function PersonalTrainingPage() {
     .filter(isPersonalTrainingProgram)
     .slice(0, 6);
 
-  const heroImage = data?.page?.personalTrainingDirectoryPageFields?.heroImage?.node?.sourceUrl ?? data?.page?.featuredImage?.node?.sourceUrl ?? "";
-  const pageTitle = fields.header?.trim() || data?.page?.title?.trim() || "Personal Training";
-  const subheader = data?.page?.personalTrainingDirectoryPageFields?.subheader?.trim() || "";
   const introBody =
     fields.body?.trim() ||
     "Get personalized support from expert trainers to build strength, improve confidence, and make progress you can sustain.";
@@ -353,72 +347,7 @@ export default async function PersonalTrainingPage() {
 
   return (
     <main className="overflow-x-clip">
-      <section className="relative mb-8 overflow-hidden py-6 md:mt-28">
-        <div
-          className="absolute inset-0"
-          aria-hidden
-          style={
-            heroImage
-              ? {
-                  backgroundImage: `url(${heroImage})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }
-              : undefined
-          }
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
-          }}
-          aria-hidden="true"
-        />
-        <div className="relative z-20 mx-auto max-w-6xl px-8 pb-20 pt-10 md:px-12 md:py-16">
-          <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
-            {pageTitle}
-          </h1>
-          <p className="mb-10 mt-6 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">
-            {subheader}
-          </p>
-          {ctas.length ? (
-            <div className="flex flex-wrap gap-3">
-              {ctas.map((cta) => (
-                <a
-                  key={cta.url}
-                  href={cta.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-secondary"
-                >
-                  {cta.label}
-                </a>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
-          <svg
-            viewBox="0 0 1440 120"
-            className="-ml-px block h-10 w-[calc(100%+2px)] text-white md:h-16"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M-20,110
-                C750,-90  800,120  1200,80
-                S1420,0 1460,0
-                L1460,0 L-20,0 Z
-              "
-              transform="translate(0 120) scale(1 -1)"
-              fill="currentColor"
-            />
-          </svg>
-          <div className="absolute bottom-0 left-0 h-[2px] w-full bg-white" />
-        </div>
-      </section>
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
 
       <section className="mx-auto mt-6 max-w-6xl px-6">
         <h2 className="h2 text-gmcc-navy">

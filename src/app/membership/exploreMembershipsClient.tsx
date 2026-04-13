@@ -102,7 +102,8 @@ type Props = {
   heroTitle: string;
   heroSubheader?: string;
   heroImageUrl?: string;
-  heroPrimaryCta?: HeroCta | null;
+  /** From WP heroFields primary + secondary CTAs */
+  heroCtas?: HeroCta[] | null;
 };
 
 export default function ExploreMembershipsClient({
@@ -115,7 +116,7 @@ export default function ExploreMembershipsClient({
   heroTitle,
   heroSubheader,
   heroImageUrl,
-  heroPrimaryCta,
+  heroCtas,
 }: Props) {
   const searchParams = useSearchParams();
 
@@ -322,8 +323,7 @@ export default function ExploreMembershipsClient({
     }, 100);
   };
 
-  const heroCtas: HeroCta[] = [];
-  if (heroPrimaryCta) heroCtas.push(heroPrimaryCta);
+  const headerCtas = heroCtas?.length ? heroCtas : undefined;
 
   return (
     <main>
@@ -331,7 +331,7 @@ export default function ExploreMembershipsClient({
         title={heroTitle}
         subheader={heroSubheader}
         imageUrl={heroImageUrl}
-        ctas={heroCtas.length > 0 ? heroCtas : undefined}
+        ctas={headerCtas}
       >
         {fields.quizCta ? (
           <button

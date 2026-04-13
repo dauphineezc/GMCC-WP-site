@@ -1,15 +1,29 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
+/** Raw CTA from WP / ACF (string link or WPGraphQL link object). */
+export type HeroFieldsCtaRaw = {
+  ctaLabel?: string | null;
+  title?: string | null;
+  label?: string | null;
+  cta?: string | null | { url?: string | null; uri?: string | null };
+  url?: string | null;
+  uri?: string | null;
+};
+
 export type PhotoWaveHeaderFields = {
+  /** Center CPT (renamed to avoid clash with campaign fields) */
+  heroHeader?: string | null;
+  heroSubheader?: string | null;
+  heroPrimaryCta?: HeroFieldsCtaRaw | null;
+  heroSecondaryCta?: HeroFieldsCtaRaw | null;
+  /** Page CPT — typical WPGraphQL ACF names before hero* rename */
   header?: string | null;
   subheader?: string | null;
+  primaryCta?: HeroFieldsCtaRaw | null;
+  secondaryCta?: HeroFieldsCtaRaw | null;
   heroImage?: {
     node?: { sourceUrl?: string | null; altText?: string | null } | null;
-  } | null;
-  primaryCta?: {
-    ctaLabel?: string | null;
-    cta?: string | null;
   } | null;
 };
 
@@ -29,15 +43,32 @@ type PhotoWaveHeaderProps = {
   ctas?: HeroCta[];
   /** Extra content below subheader, inside the hero (rare) */
   children?: ReactNode;
+  /** Set when the next section is flush full-bleed (removes default `mb-8` gap). */
+  flushBottom?: boolean;
+  /** Wave SVG fill (Tailwind `text-*` → currentColor). Default white for pages whose content sits on white. */
+  waveFillClassName?: string;
+  /** 2px bar under the wave to hide subpixel seams; match `waveFillClassName` when docking to same-colored block. */
+  waveEdgeClassName?: string;
 };
 
 /**
  * Shared hero layout for directory pages — background image, navy gradient, bottom wave.
  * GraphQL: resolve the WP page with `page(id: $pageUri, idType: URI)` — try `pageUriCandidatesForSlug()` in `src/lib/pageHeroFields.ts`.
  */
-export default function PhotoWaveHeader({ title, subheader, imageUrl, ctas, children }: PhotoWaveHeaderProps) {
+export default function PhotoWaveHeader({
+  title,
+  subheader,
+  imageUrl,
+  ctas,
+  children,
+  flushBottom = false,
+  waveFillClassName = "text-white",
+  waveEdgeClassName = "bg-white",
+}: PhotoWaveHeaderProps) {
   return (
-    <section className="relative mb-8 overflow-hidden md:mt-28 py-6">
+    <section
+      className={`relative overflow-hidden md:mt-28 py-6 ${flushBottom ? "mb-0" : "mb-8"}`}
+    >
       <div
         className="absolute inset-0"
         aria-hidden
@@ -72,7 +103,7 @@ export default function PhotoWaveHeader({ title, subheader, imageUrl, ctas, chil
         ) : null}
 
         {(ctas && ctas.length > 0) || children ? (
-          <div className="mt-4 mb-6 flex flex-wrap items-center gap-3">
+          <div className="mt-6 mb-6 flex flex-wrap items-center gap-3">
             {ctas?.map((cta) => (
               <Link
                 key={cta.url}
@@ -90,7 +121,7 @@ export default function PhotoWaveHeader({ title, subheader, imageUrl, ctas, chil
       <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
         <svg
           viewBox="0 0 1440 120"
-          className="-ml-px block h-10 w-[calc(100%+2px)] text-white md:h-16"
+          className={`-ml-px block h-10 w-[calc(100%+2px)] md:h-16 ${waveFillClassName}`}
           preserveAspectRatio="none"
         >
           <path
@@ -104,7 +135,7 @@ export default function PhotoWaveHeader({ title, subheader, imageUrl, ctas, chil
             fill="currentColor"
           />
         </svg>
-        <div className="absolute bottom-0 left-0 h-[2px] w-full bg-white" />
+        <div className={`absolute bottom-0 left-0 h-[2px] w-full ${waveEdgeClassName}`} />
       </div>
     </section>
   );

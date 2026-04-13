@@ -8,6 +8,8 @@ type AccordionItemData = {
   content: ReactNode;
 };
 
+type AccordionVariant = "default" | "onDark";
+
 type AccordionProps = {
   items: AccordionItemData[];
   /** Allow multiple items to be open at once. Default: false */
@@ -16,6 +18,8 @@ type AccordionProps = {
   defaultOpenIds?: string[];
   /** Custom class for the accordion container */
   className?: string;
+  /** `onDark`: white titles and chevrons for navy (or other dark) backgrounds */
+  variant?: AccordionVariant;
 };
 
 type AccordionItemProps = {
@@ -25,9 +29,10 @@ type AccordionItemProps = {
   onToggle: () => void;
   isFirst?: boolean;
   isLast?: boolean;
+  variant?: AccordionVariant;
 };
 
-function ChevronIcon({ isOpen }: { isOpen: boolean }) {
+function ChevronIcon({ isOpen, variant = "default" }: { isOpen: boolean; variant?: AccordionVariant }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -35,9 +40,9 @@ function ChevronIcon({ isOpen }: { isOpen: boolean }) {
       viewBox="0 0 24 24"
       strokeWidth={2}
       stroke="currentColor"
-      className={`w-6 h-6 text-gmcc-navy transition-transform duration-300 ease-in-out ${
-        isOpen ? "rotate-[-180deg]" : "rotate-0"
-      }`}
+      className={`w-6 h-6 transition-transform duration-300 ease-in-out ${
+        variant === "onDark" ? "text-white" : "text-gmcc-navy"
+      } ${isOpen ? "rotate-[-180deg]" : "rotate-0"}`}
     >
       <path
         strokeLinecap="round"
@@ -55,22 +60,29 @@ function AccordionItem({
   onToggle,
   isFirst = false,
   isLast = false,
+  variant = "default",
 }: AccordionItemProps) {
+  const borderClass = variant === "onDark" ? "border-white/25" : "border-neutral-200";
+  const titleClass = variant === "onDark" ? "text-xl text-white" : "text-xl text-gmcc-navy";
+  const buttonHover =
+    variant === "onDark"
+      ? "hover:text-white/90 focus-visible:ring-white/60 focus-visible:ring-offset-gmcc-navy"
+      : "hover:text-gmcc-navy/80 focus-visible:ring-blue-500";
+  const bodyText = variant === "onDark" ? "text-white/90" : "text-neutral-700";
+
   return (
-    <div
-      className={`border-neutral-200 ${isFirst ? "border-t" : ""} border-b`}
-    >
+    <div className={`${borderClass} ${isFirst ? "border-t" : ""} border-b`}>
       {/* Header */}
       <button
         type="button"
         onClick={onToggle}
-        className={`flex w-full items-center justify-between py-4 px-1 text-left transition-colors hover:text-gmcc-navy/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
-          isLast && !isOpen ? "rounded-b-lg" : ""
-        } ${isFirst ? "rounded-t-lg" : ""}`}
+        className={`flex w-full items-center justify-between py-4 px-1 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+          variant === "onDark" ? "focus-visible:ring-offset-gmcc-navy" : ""
+        } ${buttonHover} ${isLast && !isOpen ? "rounded-b-lg" : ""} ${isFirst ? "rounded-t-lg" : ""}`}
         aria-expanded={isOpen}
       >
-        <span className="text-xl text-gmcc-navy">{title}</span>
-        <ChevronIcon isOpen={isOpen} />
+        <span className={titleClass}>{title}</span>
+        <ChevronIcon isOpen={isOpen} variant={variant} />
       </button>
 
       {/* Content */}
@@ -79,7 +91,7 @@ function AccordionItem({
           isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <div className="px-1 pb-4 text-neutral-700">{children}</div>
+        <div className={`px-1 pb-4 ${bodyText}`}>{children}</div>
       </div>
     </div>
   );
@@ -90,6 +102,7 @@ export default function Accordion({
   allowMultiple = false,
   defaultOpenIds = [],
   className = "",
+  variant = "default",
 }: AccordionProps) {
   const [openIds, setOpenIds] = useState<Set<string>>(
     new Set(defaultOpenIds)
@@ -124,6 +137,7 @@ export default function Accordion({
           onToggle={() => handleToggle(item.id)}
           isFirst={index === 0}
           isLast={index === items.length - 1}
+          variant={variant}
         >
           {item.content}
         </AccordionItem>
@@ -134,4 +148,4 @@ export default function Accordion({
 
 // Export individual AccordionItem for standalone use if needed
 export { AccordionItem };
-export type { AccordionItemData, AccordionProps, AccordionItemProps };
+export type { AccordionItemData, AccordionProps, AccordionItemProps, AccordionVariant };
