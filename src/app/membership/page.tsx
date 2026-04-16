@@ -155,9 +155,6 @@ const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
             }
           }
         }
-        footerPhoto {
-          node { sourceUrl altText }
-        }
       }
     }
   }
@@ -256,12 +253,6 @@ function mapPageFields(wp: any): MembershipPageFields {
     contactHeader: (f.contactHeader as string) ?? null,
     contactDescription: (f.contactDescription as string) ?? null,
     campaign: f.campaign?.nodes?.[0] ?? null,
-    footerPhoto: f.footerPhoto?.node
-      ? {
-          url: f.footerPhoto.node.sourceUrl as string,
-          alt: (f.footerPhoto.node.altText as string) ?? "",
-        }
-      : null,
   };
 }
 

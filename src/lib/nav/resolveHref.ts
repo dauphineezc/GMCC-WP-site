@@ -42,7 +42,7 @@ function normalizeWpUrlToPath(url: string) {
   // Event filter rules (label-based for navbar items)
   const EVENT_FILTER_BY_LABEL: Record<string, string> = {
     "Tournaments": "/events?" + buildQuery({ eventType: "Tournament" }),
-    "Races": "/events?" + buildQuery({ eventType: "Race" }),
+    "Races": "/races",
     "Socials": "/events?" + buildQuery({ eventType: "Social" }),
     "Trips": "/events?" + buildQuery({ eventType: "Trip" }),
   };

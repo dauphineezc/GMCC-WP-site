@@ -175,27 +175,6 @@ const CAMPS_PAGE_QUERY = /* GraphQL */ `
 
         contactHeader
         contactSubheader
-
-        campWorkHeader
-        campWorkBody
-        workOpportunity1 {
-          header
-          body
-          ctaLabel
-          cta
-        }
-        workOpportunity2 {
-          header
-          body
-          ctaLabel
-          cta
-        }
-        workOpportunity3 {
-          header
-          body
-          ctaLabel
-          cta
-        }
       }
     }
   }
@@ -321,6 +300,165 @@ type TextCard = {
   cta?: unknown;
 };
 
+type CampsImageField = {
+  node?: {
+    sourceUrl?: string | null;
+    altText?: string | null;
+  } | null;
+} | null;
+
+type CampsFaqItem = {
+  question: string;
+  answer: string;
+};
+
+type CampsFaqs = {
+  faq1: CampsFaqItem;
+  faq2: CampsFaqItem;
+  faq3: CampsFaqItem;
+  faq4: CampsFaqItem;
+};
+
+type CampsFormsAndLinks = {
+  header: string;
+  form1: MediaFieldInput;
+  form2: MediaFieldInput;
+  form3: MediaFieldInput;
+  form4: MediaFieldInput;
+  form5: MediaFieldInput;
+  form6: MediaFieldInput;
+  link1: { linkLabel: string; link: unknown };
+  link2: { linkLabel: string; link: unknown };
+  link3: { linkLabel: string; link: unknown };
+  link4: { linkLabel: string; link: unknown };
+  link5: { linkLabel: string; link: unknown };
+  link6: { linkLabel: string; link: unknown };
+};
+
+type CampsDirectoryPageFields = {
+  campsBrochure: MediaFieldInput;
+  financialAssistanceApplication: MediaFieldInput;
+  browseByCenterHeader: string;
+  browseByCenterSubheader: string;
+  ccCampsDescription: string;
+  ccCampsImage: CampsImageField;
+  tcCampsDescription: string;
+  tcCampsImage: CampsImageField;
+  cfcCampsDescription: string;
+  cfcCampsImage: CampsImageField;
+  nfcCampsDescription: string;
+  nfcCampsImage: CampsImageField;
+  formsAndLinks: CampsFormsAndLinks;
+  resultsHeader: string;
+  resultsBody: string;
+  whyGmCampsHeader: string;
+  whyGmCampsBody: string;
+  benefit1: TextCard;
+  benefit2: TextCard;
+  benefit3: TextCard;
+  faqs: CampsFaqs;
+  contactHeader: string;
+  contactSubheader: string;
+};
+
+function stringOrEmpty(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeTextCard(value: unknown): TextCard {
+  if (!value || typeof value !== "object") {
+    return { header: "", body: "", ctaLabel: "", cta: null };
+  }
+  const v = value as Record<string, unknown>;
+  return {
+    header: stringOrEmpty(v.header),
+    body: stringOrEmpty(v.body),
+    ctaLabel: stringOrEmpty(v.ctaLabel),
+    cta: v.cta ?? null,
+  };
+}
+
+function normalizeImageField(value: unknown): CampsImageField {
+  if (!value || typeof value !== "object") return null;
+  const node = (value as { node?: unknown }).node;
+  if (!node || typeof node !== "object") return null;
+  const n = node as Record<string, unknown>;
+  return {
+    node: {
+      sourceUrl: stringOrEmpty(n.sourceUrl),
+      altText: stringOrEmpty(n.altText),
+    },
+  };
+}
+
+function normalizeFormLink(value: unknown): { linkLabel: string; link: unknown } {
+  if (!value || typeof value !== "object") return { linkLabel: "", link: null };
+  const v = value as Record<string, unknown>;
+  return {
+    linkLabel: stringOrEmpty(v.linkLabel),
+    link: v.link ?? null,
+  };
+}
+
+function normalizeFaqItem(value: unknown): CampsFaqItem {
+  if (!value || typeof value !== "object") return { question: "", answer: "" };
+  const v = value as Record<string, unknown>;
+  return {
+    question: stringOrEmpty(v.question),
+    answer: stringOrEmpty(v.answer),
+  };
+}
+
+function initializeCampsDirectoryPageFields(raw: Record<string, unknown> | null | undefined): CampsDirectoryPageFields {
+  const f = raw ?? {};
+  const formsAndLinks = (f.formsAndLinks as Record<string, unknown> | undefined) ?? {};
+  const faqs = (f.faqs as Record<string, unknown> | undefined) ?? {};
+  return {
+    campsBrochure: (f.campsBrochure as MediaFieldInput) ?? null,
+    financialAssistanceApplication: (f.financialAssistanceApplication as MediaFieldInput) ?? null,
+    browseByCenterHeader: stringOrEmpty(f.browseByCenterHeader),
+    browseByCenterSubheader: stringOrEmpty(f.browseByCenterSubheader),
+    ccCampsDescription: stringOrEmpty(f.ccCampsDescription),
+    ccCampsImage: normalizeImageField(f.ccCampsImage),
+    tcCampsDescription: stringOrEmpty(f.tcCampsDescription),
+    tcCampsImage: normalizeImageField(f.tcCampsImage),
+    cfcCampsDescription: stringOrEmpty(f.cfcCampsDescription),
+    cfcCampsImage: normalizeImageField(f.cfcCampsImage),
+    nfcCampsDescription: stringOrEmpty(f.nfcCampsDescription),
+    nfcCampsImage: normalizeImageField(f.nfcCampsImage),
+    formsAndLinks: {
+      header: stringOrEmpty(formsAndLinks.header),
+      form1: (formsAndLinks.form1 as MediaFieldInput) ?? null,
+      form2: (formsAndLinks.form2 as MediaFieldInput) ?? null,
+      form3: (formsAndLinks.form3 as MediaFieldInput) ?? null,
+      form4: (formsAndLinks.form4 as MediaFieldInput) ?? null,
+      form5: (formsAndLinks.form5 as MediaFieldInput) ?? null,
+      form6: (formsAndLinks.form6 as MediaFieldInput) ?? null,
+      link1: normalizeFormLink(formsAndLinks.link1),
+      link2: normalizeFormLink(formsAndLinks.link2),
+      link3: normalizeFormLink(formsAndLinks.link3),
+      link4: normalizeFormLink(formsAndLinks.link4),
+      link5: normalizeFormLink(formsAndLinks.link5),
+      link6: normalizeFormLink(formsAndLinks.link6),
+    },
+    resultsHeader: stringOrEmpty(f.resultsHeader),
+    resultsBody: stringOrEmpty(f.resultsBody),
+    whyGmCampsHeader: stringOrEmpty(f.whyGmCampsHeader),
+    whyGmCampsBody: stringOrEmpty(f.whyGmCampsBody),
+    benefit1: normalizeTextCard(f.benefit1),
+    benefit2: normalizeTextCard(f.benefit2),
+    benefit3: normalizeTextCard(f.benefit3),
+    faqs: {
+      faq1: normalizeFaqItem(faqs.faq1),
+      faq2: normalizeFaqItem(faqs.faq2),
+      faq3: normalizeFaqItem(faqs.faq3),
+      faq4: normalizeFaqItem(faqs.faq4),
+    },
+    contactHeader: stringOrEmpty(f.contactHeader),
+    contactSubheader: stringOrEmpty(f.contactSubheader),
+  };
+}
+
 function blockHasContent(b: TextCard | null | undefined): boolean {
   if (!b) return false;
   return (
@@ -392,7 +530,6 @@ function TextCardBlock({
 }: {
   item: TextCard;
   className?: string;
-  /** `navy`: dark card with white copy (e.g. work opportunities) */
   variant?: "default" | "navy";
 }) {
   const href = acfCtaHref(item.cta);
@@ -456,9 +593,10 @@ export default async function CampsPage() {
   ]);
 
   const hero = resolvePhotoWaveHeaderProps(data?.page, "Camps");
-  const f = data?.page?.campsDirectoryPageFields ?? null;
-  const formsAndLinksHeader = (f?.formsAndLinksHeader as string | undefined)?.trim() ?? "Forms and links";
-  const formsAndLinks = f?.formsAndLinks as Record<string, unknown> | undefined;
+  const f = initializeCampsDirectoryPageFields(data?.page?.campsDirectoryPageFields);
+  const formsAndLinks = f.formsAndLinks as unknown as Record<string, unknown>;
+  const formsAndLinksHeader = f.formsAndLinks.header;
+  const formsAndLinksSectionTitle = formsAndLinksHeader || "Forms and links";
   const attachmentItems = collectFormsAndLinks(formsAndLinks);
 
   const programsNodes = programsData?.programs?.nodes ?? [];
@@ -467,11 +605,11 @@ export default async function CampsPage() {
     endCursor: null,
   };
 
-  const browseHeader = (f?.browseByCenterHeader as string | undefined)?.trim() ?? "";
-  const browseSubheader = (f?.browseByCenterSubheader as string | undefined)?.trim() ?? "";
+  const browseHeader = f.browseByCenterHeader;
+  const browseSubheader = f.browseByCenterSubheader;
 
   const browseCenterCards = CENTER_CAMPS_CONFIG.map((cfg) => {
-    const text = (f?.[cfg.descField] as string | undefined)?.trim() ?? "";
+    const text = stringOrEmpty((f as unknown as Record<string, unknown>)[cfg.descField]);
     const image = centerHeroImage(f, cfg.imageField);
     const href = `/camps?center=${encodeURIComponent(cfg.programsCenterSlug)}#camps-results`;
     return {
@@ -488,31 +626,23 @@ export default async function CampsPage() {
     !!browseSubheader ||
     browseCenterCards.some((c) => c.text || c.image);
 
-  const resultsHeader = (f?.resultsHeader as string | undefined)?.trim() || "Camp programs";
-  const resultsBody = (f?.resultsBody as string | undefined)?.trim() ?? "";
+  const resultsHeader = f.resultsHeader || "Camp programs";
+  const resultsBody = f.resultsBody;
 
-  const whyHeader = (f?.whyGmCampsHeader as string | undefined)?.trim() ?? "";
-  const whyBody = (f?.whyGmCampsBody as string | undefined)?.trim() ?? "";
+  const whyHeader = f.whyGmCampsHeader;
+  const whyBody = f.whyGmCampsBody;
 
-  const benefits = [f?.benefit1, f?.benefit2, f?.benefit3].filter((b) => blockHasContent(b as TextCard)) as TextCard[];
+  const benefits = [f.benefit1, f.benefit2, f.benefit3].filter((b) => blockHasContent(b as TextCard)) as TextCard[];
 
-  const faqs = f?.faqs as Record<string, { question?: string | null; answer?: string | null }> | undefined;
-  const faqsList = [faqs?.faq1, faqs?.faq2, faqs?.faq3, faqs?.faq4]
+  const faqsList = [f.faqs.faq1, f.faqs.faq2, f.faqs.faq3, f.faqs.faq4]
     .map((item) => ({
       question: item?.question ?? "",
       answer: item?.answer ?? "",
     }))
     .filter((item) => item.question.trim() || item.answer.trim());
 
-  const contactHeader = (f?.contactHeader as string | undefined)?.trim() ?? "";
-  const contactSubheader = (f?.contactSubheader as string | undefined)?.trim() ?? "";
-
-  const campWorkHeader = (f?.campWorkHeader as string | undefined)?.trim() ?? "";
-  const campWorkBody = (f?.campWorkBody as string | undefined)?.trim() ?? "";
-
-  const workOpportunities = [f?.workOpportunity1, f?.workOpportunity2, f?.workOpportunity3].filter((b) =>
-    blockHasContent(b as TextCard),
-  ) as TextCard[];
+  const contactHeader = f.contactHeader;
+  const contactSubheader = f.contactSubheader;
 
   return (
     <main className="overflow-x-clip">
@@ -572,10 +702,10 @@ export default async function CampsPage() {
       ) : null}
 
       {attachmentItems.length ? (
-        <section className="mx-auto mt-16 max-w-6xl px-6">
-          <div className="card bg-gmcc-navy p-6">
-          <h2 className="h2 text-white">{formsAndLinksHeader}</h2>
-          <div className="mt-4 flex flex-wrap gap-3">
+        <section className="mx-auto mt-16 max-w-5xl px-6">
+          <div className="justify-center items-center">
+          <h2 className="h2 text-gmcc-navy text-center">{formsAndLinksSectionTitle}</h2>
+          <div className="mt-4 flex flex-wrap gap-3 justify-center items-center">
             {attachmentItems.map((item, i) =>
               item.kind === "file" ? (
                 <a
@@ -583,15 +713,16 @@ export default async function CampsPage() {
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center gap-3 rounded-lg bg-gmcc-green px-4 py-3 transition-all hover:border-gmcc-green hover:bg-gmcc-green/80 hover:shadow-md"
+                  className="group flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 transition-all hover:border-gmcc-teal hover:bg-white hover:shadow-md"
                 >
                   <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-semibold text-white">
+                    <span className="truncate text-sm font-semibold text-gmcc-navy">
                       {item.label}
                     </span>
+                      {/* <span className="text-xs text-neutral-500">PDF • Click to download</span> */}
                   </div>
                   <svg
-                    className="ml-2 h-4 w-4 shrink-0 text-white transition-transform group-hover:translate-y-0.5 group-hover:text-gmcc-navy"
+                    className="ml-2 h-4 w-4 shrink-0 text-gmcc-navy transition-transform group-hover:translate-y-0.5 group-hover:text-gmcc-navy"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -611,10 +742,10 @@ export default async function CampsPage() {
                   {...(openLinkInNewTab(item.url, item.linkTarget)
                     ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
                     : {})}
-                  className="btn btn-tertiary"
+                  className="group flex items-center gap-3 rounded-full border border-neutral-200 bg-neutral-50 px-4 py-3 transition-all hover:border-gmcc-teal hover:bg-white hover:shadow-md"
                 >
                   <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate">
+                    <span className="truncate text-sm font-semibold text-gmcc-navy">
                       {item.label}
                     </span>
                   </div>
@@ -686,25 +817,21 @@ export default async function CampsPage() {
                   </div>
                 ) : null}
 
-                {faqsList.length ? (
-                  <div className={whyHeader || whyBody || benefits.length ? "mt-12" : ""}>
-                    <h2 className="h2 mb-6 text-white">Frequently asked questions</h2>
-                    <Accordion
-                      variant="onDark"
-                      items={faqsList.map((faq, i) => ({
-                        id: `camps-faq-${i}`,
-                        title: faq.question.trim() || `Question ${i + 1}`,
-                        content: (
-                          <div className="body whitespace-pre-line text-white/95">{faq.answer}</div>
-                        ),
-                      }))}
-                    />
-                  </div>
-                ) : null}
+                {/* ── FAQs ── */}
+                {faqsList.length > 0 && (
+                    <div className="mx-auto max-w-3xl px-6 mt-16">
+                        <h2 className="h1 mb-8 text-center text-white">FAQs</h2>
+                        <Accordion variant="onDark" items={faqsList.map((item) => ({
+                        id: item.question,
+                        title: item.question,
+                        content: <p className="body text-white/80">{item.answer}</p>,
+                        }))} allowMultiple />
+                    </div>
+                )}
               </div>
             </div>
 
-            {/* Bottom wave (below navy body) */}
+            {/* Bottom wave (below navy body)
             <div className="relative z-[1] pointer-events-none -mt-px w-full overflow-hidden leading-none">
               <svg
                 viewBox="0 0 390 120"
@@ -739,31 +866,14 @@ export default async function CampsPage() {
                   fill="currentColor"
                 />
               </svg>
-            </div>
-          </div>
-        </section>
-      ) : null}
-
-      {(campWorkHeader || campWorkBody) && (
-        <section className="mx-auto mt-12 max-w-6xl px-6">
-          {campWorkHeader ? <h2 className="h2 text-gmcc-navy">{campWorkHeader}</h2> : null}
-          {campWorkBody ? <p className="body mt-4 whitespace-pre-line text-neutral-700">{campWorkBody}</p> : null}
-        </section>
-      )}
-
-      {workOpportunities.length ? (
-        <section className="mx-auto mt-6 max-w-6xl px-6">
-          <div className="grid gap-6 md:grid-cols-3">
-            {workOpportunities.map((item, index) => (
-              <TextCardBlock key={`work-${index}`} item={item} variant="navy" />
-            ))}
+            </div> */}
           </div>
         </section>
       ) : null}
 
       {/* CONTACT CTA */}
       {(contactHeader || contactSubheader) && (
-        <section className="mx-auto mt-16 mb-8 max-w-6xl px-6">
+        <section className="mx-auto mt-24 mb-18 max-w-6xl px-6 text-center justify-center">
           {contactHeader ? <h2 className="h2 text-gmcc-navy">{contactHeader}</h2> : null}
           {contactSubheader ? (
             <p className="body mt-4 whitespace-pre-line text-neutral-700">{contactSubheader}</p>

@@ -76,7 +76,6 @@ export type MembershipPageFields = {
       secondaryCtaButtonColor?: string | null;
     } | null;
   } | null;
-  footerPhoto: { url: string; alt: string } | null;
 };
 
 export type SerializedAmenity = {
@@ -544,34 +543,6 @@ export default function ExploreMembershipsClient({
               </a>
             </div>
           </section>
-
-          {/* FOOTER PHOTO — wave overlaps top, photo tucks behind footer */}
-          {fields.footerPhoto && (
-            <section className="relative z-10 -mb-10 md:-mb-14">
-              <img
-                src={fields.footerPhoto.url}
-                alt={fields.footerPhoto.alt}
-                className="w-full h-[300px] md:h-[400px] object-cover"
-              />
-              <div className="pointer-events-none absolute top-0 left-0 z-20 w-full overflow-hidden leading-none">
-                <svg
-                  viewBox="0 0 1440 120"
-                  className="-ml-px block h-10 w-[calc(100%+2px)] text-white md:h-16"
-                  preserveAspectRatio="none"
-                >
-                  <path
-                    d="
-                      M-20,110
-                      C750,-90  800,120  1200,80
-                      S1420,0 1460,0
-                      L1460,0 L-20,0 Z
-                    "
-                    fill="currentColor"
-                  />
-                </svg>
-              </div>
-            </section>
-          )}
         </div>
       )}
 

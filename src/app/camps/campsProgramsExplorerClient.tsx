@@ -314,13 +314,16 @@ export default function CampsProgramsExplorerClient({
     [filtered, safePage],
   );
 
-  /** After changing page, move focus away from pagination (avoids browser scrolling focused button into view) and scroll to results top. */
-  const skipScrollOnPageFxMountRef = useRef(true);
+  /** Only scroll after explicit pagination clicks (not filter-driven `safePage` changes or first paint). */
+  const skipScrollOnFirstSafePageFxRef = useRef(true);
+  const scrollResultsAfterPageButtonRef = useRef(false);
   useEffect(() => {
-    if (skipScrollOnPageFxMountRef.current) {
-      skipScrollOnPageFxMountRef.current = false;
+    if (skipScrollOnFirstSafePageFxRef.current) {
+      skipScrollOnFirstSafePageFxRef.current = false;
       return;
     }
+    if (!scrollResultsAfterPageButtonRef.current) return;
+    scrollResultsAfterPageButtonRef.current = false;
     const el = document.getElementById("camps-results");
     if (!el) return;
     const active = document.activeElement;
@@ -335,19 +338,24 @@ export default function CampsProgramsExplorerClient({
 
   const activeFilterCount = centers.length + campTypes.length + (search.trim() ? 1 : 0);
 
-  const centerParamForScroll = searchParams.get("center");
-
-  /** Scroll to results when using browse-by-center links (`#camps-results`) or changing `center` in the URL. */
+  /**
+   * Deep-link scroll only for browse-by-center cards (`?center=…#camps-results`).
+   * Not `?center=` alone, not `#camps-results` alone — avoids jumping on normal /camps visits.
+   * Strip the hash after scrolling so filter-driven `searchParams` updates do not re-scroll.
+   */
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!centerParamForScroll) return;
+    if (window.location.hash !== "#camps-results") return;
+    if (!searchParams.get("center")) return;
     const el = document.getElementById("camps-results");
     if (!el) return;
     const id = window.requestAnimationFrame(() => {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
+      const pathAndQuery = `${window.location.pathname}${window.location.search}`;
+      window.history.replaceState(null, "", pathAndQuery);
     });
     return () => window.cancelAnimationFrame(id);
-  }, [centerParamForScroll]);
+  }, [pathname, searchParams]);
 
   const rangeStart = filtered.length === 0 ? 0 : (safePage - 1) * CAMPS_RESULTS_PER_PAGE + 1;
   const rangeEnd = filtered.length === 0 ? 0 : Math.min(safePage * CAMPS_RESULTS_PER_PAGE, filtered.length);
@@ -589,7 +597,10 @@ export default function CampsProgramsExplorerClient({
                   type="button"
                   className="btn btn-secondary"
                   disabled={safePage <= 1 || isBuildingDirectory}
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  onClick={() => {
+                    scrollResultsAfterPageButtonRef.current = true;
+                    setCurrentPage((p) => Math.max(1, p - 1));
+                  }}
                 >
                   Previous
                 </button>
@@ -600,7 +611,10 @@ export default function CampsProgramsExplorerClient({
                   type="button"
                   className="btn btn-secondary"
                   disabled={safePage >= totalPages || isBuildingDirectory}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => {
+                    scrollResultsAfterPageButtonRef.current = true;
+                    setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  }}
                 >
                   Next
                 </button>
