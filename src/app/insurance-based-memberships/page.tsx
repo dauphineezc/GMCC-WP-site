@@ -1,14 +1,20 @@
-// src/app/membership/discounts/page.tsx
-import HeaderImage from "@/components/headerImage";
+// src/app/membership/insurance-based/page.tsx
+import PhotoWaveHeader from "@/components/photoWaveHeader";
+import {
+  PAGE_HERO_FIELDS_GRAPHQL,
+  resolvePhotoWaveHeaderProps,
+  type WpPageWithHeroFields,
+} from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
 
-const MEMBERSHIP_DISCOUNTS_QUERY = `
-  query MembershipDiscountPageFields($uri: ID!) {
+const INSURANCE_BASED_MEMBERSHIPS_QUERY = `
+  query InsuranceBasedMembershipsPageFields($uri: ID!) {
     page(id: $uri, idType: URI) {
       id
       title
       uri
-      membershipDiscountPageFields {
+      ${PAGE_HERO_FIELDS_GRAPHQL}
+      insuranceBasedMembershipsPageFields {
         silversneakers {
           silversneakersTitle
           silversneakersDescription
@@ -27,19 +33,6 @@ const MEMBERSHIP_DISCOUNTS_QUERY = `
           renewActiveOnePassDescription
           renewActiveOnePassApplication
           renewActiveOnePassImage {
-            node {
-              sourceUrl
-              altText
-              mediaDetails { width height }
-            }
-          }
-        }
-
-        promotion {
-          promotionTitle
-          promotionDescription
-          promotionCta
-          promotionImage {
             node {
               sourceUrl
               altText
@@ -68,12 +61,12 @@ type MediaNode = {
   mediaDetails?: { width?: number | null; height?: number | null } | null;
 };
 
-type DiscountsData = {
-  page?: {
+type InsuranceBasedMembershipsData = {
+  page?: WpPageWithHeroFields & {
     id: string;
     title?: string | null;
     uri?: string | null;
-    membershipDiscountPageFields?: {
+    insuranceBasedMembershipsPageFields?: {
       silversneakers?: {
         silversneakersTitle?: string | null;
         silversneakersDescription?: string | null;
@@ -86,13 +79,6 @@ type DiscountsData = {
         renewActiveOnePassDescription?: string | null;
         renewActiveOnePassApplication?: string | null;
         renewActiveOnePassImage?: { node?: MediaNode | null } | null;
-      } | null;
-
-      promotion?: {
-        promotionTitle?: string | null;
-        promotionDescription?: string | null;
-        promotionCta?: string | null;
-        promotionImage?: { node?: MediaNode | null } | null;
       } | null;
 
       insuranceBasedMembershipBenefits?: string | null;
@@ -158,24 +144,24 @@ function InfoCard({
   const src = image?.sourceUrl ?? null;
 
   return (
-    <article className="card overflow-hidden p-0">
-      <div className="grid md:grid-cols-[240px_1fr]">
-        <div className="relative bg-neutral-100">
+    <article className="card h-full overflow-hidden p-0">
+      <div className="grid h-full items-stretch md:grid-cols-[240px_1fr]">
+        <div className="relative h-full overflow-hidden bg-neutral-100">
           {src ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={src}
               alt={image?.altText ?? ""}
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
               loading="lazy"
               decoding="async"
             />
           ) : (
-            <div className="h-full min-h-[160px]" />
+            <div className="h-full min-h-[200px] w-full" />
           )}
         </div>
 
-        <div className="p-5">
+        <div className="h-full p-5">
           {badge ? (
             <div className="mb-2">
               <span className="badge badge-teal">{badge}</span>
@@ -203,72 +189,17 @@ function InfoCard({
   );
 }
 
-function PromotionBanner({
-  title,
-  description,
-  ctaUrl,
-  image,
-}: {
-  title?: string | null;
-  description?: string | null;
-  ctaUrl?: string | null;
-  image?: MediaNode | null;
-}) {
-  if (!title && !description && !ctaUrl && !image?.sourceUrl) return null;
 
-  return (
-    <section className="card overflow-hidden p-0">
-      <div className="grid md:grid-cols-[1.2fr_0.8fr]">
-        <div className="p-6">
-          <div className="mb-3">
-            <span className="badge badge-green">Limited-time promotion</span>
-          </div>
+export default async function InsuranceBasedMembershipsPage() {
+  const uri = "/insurance-based-memberships";
 
-          <h2 className="h2">{title ?? "Promotion"}</h2>
-
-          {description ? (
-            <p className="mt-2 body max-w-prose">{description}</p>
-          ) : null}
-
-          {ctaUrl ? (
-            <div className="mt-5">
-              <a className="btn btn-primary" href={ctaUrl} target="_blank" rel="noreferrer">
-                View details
-              </a>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="relative min-h-[200px] bg-neutral-100">
-          {image?.sourceUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={image.sourceUrl}
-              alt={image.altText ?? ""}
-              className="h-full w-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-          ) : (
-            <div className="h-full w-full" />
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export default async function DiscountsPage() {
-  // Adjust this URI to match your actual route in WP
-  const uri = "/membership-discounts/";
-
-  const data = await wpFetch<DiscountsData>(MEMBERSHIP_DISCOUNTS_QUERY, {
+  const data = await wpFetch<InsuranceBasedMembershipsData>(INSURANCE_BASED_MEMBERSHIPS_QUERY, {
     uri,
   });
 
-  const fields = data?.page?.membershipDiscountPageFields;
-
-  const promo = fields?.promotion ?? null;
+  const page = data?.page ?? null;
+  const heroProps = resolvePhotoWaveHeaderProps(page, "Insurance-based memberships");
+  const fields = page?.insuranceBasedMembershipsPageFields;
 
   const silver = fields?.silversneakers ?? null;
   const silverImg = silver?.silversneakersImage?.node ?? null;
@@ -277,6 +208,14 @@ export default async function DiscountsPage() {
   const renewImg = renew?.renewActiveOnePassImage?.node ?? null;
 
   const insurance = fields?.insuranceBasedMembershipBenefits ?? null;
+  const insuranceLines = insurance
+    ? insurance
+        .split("\n")
+        .map((line: string) => line.trim())
+        .filter(Boolean)
+    : [];
+  const insuranceIntro = insuranceLines[0] ?? "";
+  const insuranceItems = insuranceLines.slice(1);
 
   const contact = fields?.contact ?? null;
   const contactPhone = ensureString(contact?.phoneNumber);
@@ -284,26 +223,14 @@ export default async function DiscountsPage() {
 
   return (
     <main>
-      <HeaderImage src="/images/MembershipDiscountsPhoto.png" alt="Discounts" />
+      <PhotoWaveHeader
+        title={heroProps.title}
+        subheader={heroProps.subheader ?? null}
+        imageUrl={heroProps.imageUrl ?? null}
+        ctas={heroProps.ctas}
+      />
 
       <div className="mx-auto max-w-6xl px-4 py-10 space-y-10">
-        {/* Header */}
-        <header className="space-y-3">
-          <h1 className="h1">Membership Discounts</h1>
-          <p className="body max-w-2xl">
-            Explore membership discounts and partner programs. If you have questions, our team can help you confirm eligibility and next steps.
-          </p>
-        </header>
-
-        {/* Promotion */}
-        {promo ? (
-          <PromotionBanner
-            title={promo.promotionTitle}
-            description={promo.promotionDescription}
-            ctaUrl={promo.promotionCta}
-            image={promo.promotionImage?.node ?? null}
-          />
-        ) : null}
 
         {/* Programs */}
         <section className="space-y-4">
@@ -314,7 +241,7 @@ export default async function DiscountsPage() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid items-stretch gap-6 md:grid-cols-2">
             <InfoCard
               title={silver?.silversneakersTitle ?? "SilverSneakers"}
               description={silver?.silversneakersDescription ?? ""}
@@ -333,15 +260,28 @@ export default async function DiscountsPage() {
           </div>
         </section>
 
+        <section>
         {/* Insurance benefits */}
         {insurance ? (
           <>
-            <h3 className="h3 mb-2">Insurance-based membership benefits</h3>
-            <p className="mt-3 body max-w-prose whitespace-pre-line">
-              {insurance}
-            </p>
+            <h2 className="h2 mb-2 mt-16">Insurance-based membership benefits</h2>
+            {insuranceIntro ? <p className="mt-3 text-base text-neutral-700">{insuranceIntro}</p> : null}
+            {insuranceItems.length > 0 ? (
+              <ul className="space-y-2 pl-6 mt-4">
+                {insuranceItems.map((item: string, i: number) => (
+                  <li key={i} className="flex items-center gap-2 text-base text-neutral-700">
+                    <svg className="h-4 w-4 shrink-0 text-gmcc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <p className="mt-3 pl-6 text-sm text-neutral-700">*Must reserve your spot within 48 hours of class time.</p>
           </>
         ) : null}
+        </section>
 
         {/* SilverSneakers classes link */}
         {classesUrl ? (
@@ -363,25 +303,25 @@ export default async function DiscountsPage() {
         {/* Contact */}
         {(contact?.contactName || contact?.personContext || contactPhone) ? (
           <>
-            <h3 className="h3 mb-2">Have Questions?</h3>
-            <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-start">
+            <h2 className="h2 mt-16 mb-4 text-center">Have Questions?</h2>
+            <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-start text-center">
               <div>
                 {contact?.contactName ? (
-                  <div className="font-secondary text-base font-semibold text-neutral-900">
+                  <div className="font-secondary text-base font-semibold text-neutral-700">
                     Contact {contact.contactName}
                   </div>
                 ) : null}
 
                 {contact?.personContext ? (
-                  <div className="small mt-1">
+                  <div className="small mt-2 text-neutral-700">
                     {contact.personContext}
                   </div>
                 ) : null}
 
                 {contactPhone ? (
-                  <div className="mt-3 text-sm text-neutral-700">
-                    <span className="text-neutral-500">Phone: </span>
-                    <a className="link" href={`tel:${toTel(contactPhone)}`}>
+                  <div className="mt-3 text-base text-neutral-700">
+                    <span className="text-neutral-700">Phone: </span>
+                    <a className="link text-gmcc-teal" href={`tel:${toTel(contactPhone)}`}>
                       {contactPhone}
                     </a>
                   </div>

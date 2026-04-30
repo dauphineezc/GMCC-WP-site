@@ -2,7 +2,11 @@
 
 import { useMemo, useState, useCallback } from "react";
 
-export type Audience = { name: string; slug: string };
+export type Audience = {
+  name: string;
+  slug: string;
+  quizProgramAreaKeys?: string[];
+};
 export type ProgramArea = { name: string; slug: string };
 
 export type Membership = {
@@ -31,6 +35,20 @@ type Props = {
 
 type Step = "audience" | "programArea" | "results";
 
+/** Match ACF checkbox values to taxonomy program areas (slug or display name). */
+function filterProgramAreasForQuiz(
+  all: ProgramArea[],
+  keys: string[] | undefined
+): ProgramArea[] {
+  if (!keys?.length) return all;
+  const wanted = new Set(keys.map((k) => k.toLowerCase()));
+  const matched = all.filter(
+    (p) =>
+      wanted.has(p.slug.toLowerCase()) || wanted.has(p.name.toLowerCase())
+  );
+  return matched.length > 0 ? matched : all;
+}
+
 export default function MembershipQuiz({
   audiences,
   programAreas,
@@ -44,6 +62,7 @@ export default function MembershipQuiz({
 
   const handleAudienceSelect = useCallback((slug: string) => {
     setAudienceFilter(slug);
+    setProgramAreaFilters([]);
     setStep("programArea");
   }, []);
 
@@ -95,8 +114,24 @@ export default function MembershipQuiz({
   );
 
   const stepNumber = step === "audience" ? 1 : step === "programArea" ? 2 : 3;
-  const selectedAudienceName =
-    audiences.find((a) => a.slug === audienceFilter)?.name ?? "Anyone";
+  const selectedAudience = audiences.find((a) => a.slug === audienceFilter);
+  const selectedAudienceName = selectedAudience?.name ?? "Anyone";
+
+  const audienceQuizKeys = selectedAudience?.quizProgramAreaKeys;
+
+  const quizProgramAreas = useMemo(
+    () =>
+      audienceFilter
+        ? filterProgramAreasForQuiz(programAreas, audienceQuizKeys)
+        : programAreas,
+    [programAreas, audienceFilter, audienceQuizKeys]
+  );
+
+  const quizUsesAudienceProgramAreas = Boolean(
+    audienceFilter &&
+      audienceQuizKeys?.length &&
+      quizProgramAreas.length < programAreas.length
+  );
 
   return (
     <div className="rounded-2xl mt-16 border border-neutral-200 bg-white shadow-lg overflow-hidden">
@@ -193,10 +228,12 @@ export default function MembershipQuiz({
             </div>
             <p className="text-xs text-neutral-500">
               Selected audience: <span className="font-semibold">{selectedAudienceName}</span>
-              {" · "}Select all that apply, or skip to see all.
+              {quizUsesAudienceProgramAreas
+                ? " · Only program areas that apply to this audience are shown. Select all that apply, or skip."
+                : " · Select all that apply, or skip to see all."}
             </p>
             <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
-              {programAreas.map((p) => {
+              {quizProgramAreas.map((p) => {
                 const isSelected = programAreaFilters.includes(p.slug);
                 return (
                   <button

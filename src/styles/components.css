@@ -7,10 +7,10 @@
 
       
     /* Type scale */
-    .h1 { @apply font-heading text-3xl font-medium tracking-tight text-gmcc-navy sm:text-4xl; }
-    .h1-strong { @apply font-heading text-3xl font-extrabold tracking-tight text-gmcc-navy sm:text-4xl; }
-    .h2 { @apply font-heading text-xl font-medium tracking-tight text-gmcc-navy sm:text-2xl; }
-    .h3 { @apply font-heading text-base font-medium text-gmcc-navy sm:text-lg; }
+    .h1 { @apply font-heading text-3xl font-bold text-gmcc-navy sm:text-4xl; }
+    .h1-strong { @apply font-heading text-3xl font-extrabold text-gmcc-navy sm:text-4xl; }
+    .h2 { @apply font-heading font-semibold text-2xl text-gmcc-navy sm:text-3xl; }
+    .h3 { @apply font-heading text-lg font-medium text-gmcc-navy sm:text-xl; }
   
     .eyebrow { @apply font-secondary text-xs font-semibold uppercase tracking-wide text-gmcc-grey-dark; }
     .body { @apply font-body text-sm leading-7 text-gmcc-grey-dark sm:text-base; }
@@ -60,7 +60,7 @@
     }
 
     .btn-primary { @apply bg-gmcc-navy text-white hover:bg-gmcc-navy/80; }
-    .btn-secondary { @apply border border-gmcc-navy bg-white text-gmcc-navy hover:bg-white/80; }
+    .btn-secondary { @apply border border-gmcc-navy bg-white text-gmcc-navy hover:bg-white/80 hover:border-gmcc-navy/80 hover:text-gmcc-navy/80; }
     .btn-tertiary { @apply bg-gmcc-green text-white hover:bg-gmcc-green/80; }
     .btn-hero { @apply relative overflow-hidden rounded-md px-4 py-2 bg-white text-gmcc-navy; }
 

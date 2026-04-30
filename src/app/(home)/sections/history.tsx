@@ -303,7 +303,7 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
       <div className="relative z-10 mx-auto max-w-6xl">
         {/* Header */}
         <div className="text-center">
-          <h2 className="h2 mt-24 mb-0 tracking-wide text-3xl font-semibold text-white">{heading}</h2>
+          <h2 className="h2 mt-24 mb-0 text-white">{heading}</h2>
         </div>
 
         {/* Desktop arrows */}

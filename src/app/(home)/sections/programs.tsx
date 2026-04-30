@@ -313,7 +313,7 @@ export default function ProgramsSection({
       <div className="relative z-10 mx-auto w-full min-w-0 max-w-7xl px-4">
         {/* Header */}
         <div className="mx-auto max-w-6xl px-4">
-          <h2 className="h2 tracking-wide text-gmcc-navy text-3xl text-center">{heading}</h2>
+          <h2 className="h2 text-center">{heading}</h2>
         </div>
 
         <a

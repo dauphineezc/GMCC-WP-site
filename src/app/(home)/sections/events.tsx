@@ -39,7 +39,7 @@ export default function EventsSection({ events }: { events?: EventItem[] | null 
   return (
     <section className="relative overflow-hidden pt-8 pb-8">
       <div className="mx-auto max-w-6xl">
-        <h2 className="h2 tracking-wide text-gmcc-navy text-3xl text-center">Upcoming Events</h2>
+        <h2 className="h2 text-center">Upcoming Events</h2>
 
         <a
           href={'/events'}

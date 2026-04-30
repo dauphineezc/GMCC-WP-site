@@ -34,12 +34,24 @@ const RACES_PAGE_QUERY = /* GraphQL */ `
               title
             }
           }
+          cardIcon {
+            node {
+              sourceUrl
+              altText
+            }
+          }
         }
         connectCard {
           header
           subheader
           linkLabel
           link
+          cardIcon {
+            node {
+              sourceUrl
+              altText
+            }
+          }
         }
 
         tripleChallenge {
@@ -321,12 +333,14 @@ type RacesPageFields = {
     header: string;
     subheader: string;
     schedulePdf: MediaFieldInput;
+    cardIcon: ImageField;
   };
   connectCard: {
     header: string;
     subheader: string;
     linkLabel: string;
     link: string;
+    cardIcon: ImageField;
   };
   tripleChallenge: {
     header: string;
@@ -444,12 +458,14 @@ function initializeRacesPageFields(raw: Record<string, unknown> | null | undefin
       header: asString(scheduleCard.header),
       subheader: asString(scheduleCard.subheader),
       schedulePdf: (scheduleCard.schedulePdf as MediaFieldInput) ?? null,
+      cardIcon: asImageField(scheduleCard.cardIcon),
     },
     connectCard: {
       header: asString(connectCard.header),
       subheader: asString(connectCard.subheader),
       linkLabel: asString(connectCard.linkLabel),
       link: asString(connectCard.link),
+      cardIcon: asImageField(connectCard.cardIcon),
     },
     tripleChallenge: {
       header: asString(tripleChallenge.header),
@@ -531,6 +547,16 @@ export default async function RacesPage() {
   const hero = resolvePhotoWaveHeaderProps(data?.page, "Races");
 
   const fields = initializeRacesPageFields(data?.page?.racesPageFields);
+
+  // Build the pdf registration form as a secondary hero CTA if available
+  const pdfHeroSecondary = mediaHref(fields.pdfRegistrationForm)
+    ? { label: "Download Registration Form", url: mediaHref(fields.pdfRegistrationForm), variant: "secondary" as const }
+    : null;
+  const heroCtas = [
+    ...(hero.ctas ?? []),
+    // Only add the pdf if no secondary CTA already came from the hero fields
+    ...(!hero.secondaryCta && pdfHeroSecondary ? [pdfHeroSecondary] : []),
+  ];
   const schedulePdfHref = mediaHref(fields.scheduleCard.schedulePdf) || mediaHref(fields.pdfRegistrationForm);
   const connectHref = fields.connectCard.link;
   const tripleChallengeHref = fields.tripleChallenge.cta;
@@ -594,13 +620,22 @@ export default async function RacesPage() {
 
   return (
     <main className="overflow-x-clip">
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} ctas={heroCtas.length ? heroCtas : undefined} />
       <section className="py-4">
         <div className="mx-auto grid max-w-6xl gap-6 px-6 md:grid-cols-2">
-          <article className="card card-hover border-gmcc-teal p-8">
-            {fields.scheduleCard.header ? <h2 className="h2">{fields.scheduleCard.header}</h2> : null}
+          <article className="relative card card-hover bg-gmcc-blue-light/30 overflow-hidden p-8">
+          {/* icon */}
+          {fields.scheduleCard.cardIcon?.node?.sourceUrl ? (
+            <img
+              src={fields.scheduleCard.cardIcon.node.sourceUrl}
+              alt={fields.scheduleCard.cardIcon.node.altText ?? "Schedule icon"}
+              aria-hidden
+              className="pointer-events-none absolute left-6 top-6 h-12 w-12"
+            />
+          ) : null}
+            {fields.scheduleCard.header ? <h2 className="h2 text-center pt-4">{fields.scheduleCard.header}</h2> : null}
             {fields.scheduleCard.subheader ? (
-              <p className="body mt-2 leading-6 text-gmcc-grey-dark">{fields.scheduleCard.subheader}</p>
+              <p className="body mt-2 leading-6 text-gmcc-grey-dark text-center">{fields.scheduleCard.subheader}</p>
             ) : null}
             {schedulePdfHref ? (
               <div className="mt-6 flex justify-center">
@@ -617,10 +652,19 @@ export default async function RacesPage() {
             ) : null}
           </article>
 
-          <article className="card card-hover border-gmcc-teal p-8">
-            {fields.connectCard.header ? <h2 className="h2">{fields.connectCard.header}</h2> : null}
+          <article className="relative card card-hover bg-gmcc-blue-light/30 overflow-hidden p-8">
+            {/* icon */}
+            {fields.connectCard.cardIcon?.node?.sourceUrl ? (
+              <img
+                src={fields.connectCard.cardIcon.node.sourceUrl}
+                alt={fields.connectCard.cardIcon.node.altText ?? "Connect icon"}
+                aria-hidden
+                className="pointer-events-none absolute left-6 top-6 h-12 w-12"
+              />
+            ) : null}
+            {fields.connectCard.header ? <h2 className="h2 text-center pt-4">{fields.connectCard.header}</h2> : null}
             {fields.connectCard.subheader ? (
-              <p className="body mt-2 leading-6 text-gmcc-grey-dark">{fields.connectCard.subheader}</p>
+              <p className="body mt-2 leading-6 text-gmcc-grey-dark text-center">{fields.connectCard.subheader}</p>
             ) : null}
             {connectHref ? (
               <div className="mt-6 flex justify-center">
@@ -717,7 +761,7 @@ export default async function RacesPage() {
 
       </section>
       {sortedRaces.length > 0 && (
-        <section className="mx-auto max-w-6xl px-6 pb-8 section-y">
+        <section id="browse-races" className="mx-auto max-w-6xl px-6 pb-8 section-y">
           {fields.racesHeader ? <h2 className="h2">{fields.racesHeader}</h2> : null}
           {fields.racesSubheader ? (
             <p className="body mt-2 text-neutral-700">{fields.racesSubheader}</p>
@@ -848,47 +892,7 @@ export default async function RacesPage() {
             {/* Full-bleed navy band; content aligned to max-w-6xl + horizontal padding */}
             <div className="relative z-0 -mt-px bg-gmcc-navy text-white">
               <div className="mx-auto grid max-w-6xl gap-6 px-6 py-12 md:grid-cols-2">
-                {fields.volunteerCard ? (
-                  <div className="card card-hover p-8">
-                    {fields.volunteerCard.header || fields.volunteerCard.body ? (
-                    <div>
-                      {fields.volunteerCard.header ? <h2 className="h2 text-gmcc-navy">{fields.volunteerCard.header}</h2> : null}
-                      {fields.volunteerCard.body ? <p className="body mt-4 mb-2 whitespace-pre-line text-neutral-700">{fields.volunteerCard.body}</p> : null}
-                    </div>
-                  ) : null}
-
-                    <div
-                      className={`${fields.volunteerCard.contactPrompt || fields.volunteerCard.personOfContact || fields.volunteerCard.ctaLabel || fields.volunteerCard.cta ? "mt-4" : ""}`}
-                    >
-                      {fields.volunteerCard.contactPrompt || fields.volunteerCard.personOfContact?.nodes?.length ? (
-                        <div className="body mt-4 text-neutral-700">
-                          {fields.volunteerCard.contactPrompt ? <span>{fields.volunteerCard.contactPrompt} </span> : null}
-                          {fields.volunteerCard.personOfContact?.nodes?.map((node, i) => {
-                            const sf = node.staffProfilesFields;
-                            return (
-                              <span key={i}>
-                                <span className="font-medium">{node.title}</span>
-                                {sf?.email || sf?.phone ? (
-                                  <span> at{" "}
-                                    {sf.email ? <a href={`mailto:${sf.email}`} className="link">{sf.email}</a> : null}
-                                    {sf.email && sf.phone ? <span> or </span> : null}
-                                    {sf.phone ? <a href={`tel:${sf.phone}`} className="link">{sf.phone}</a> : null}
-                                  </span>
-                                ) : null}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      ) : null}
-                      <div className="mt-6 flex justify-center">
-                        {fields.volunteerCard.cta ? <a href={fields?.volunteerCard?.cta} target="_blank" rel="noopener noreferrer" className="btn btn-tertiary text-center justify-self-start">
-                          {fields?.volunteerCard?.ctaLabel}
-                        </a> : null}
-                        </div>
-                      </div>
-                  </div>
-                ) : null}
-
+              
                 {fields.sponsorCard ? (
                   <div className="card card-hover p-8">
                     {fields.sponsorCard.header || fields.sponsorCard.body ? (
@@ -926,6 +930,47 @@ export default async function RacesPage() {
                           {fields?.sponsorCard?.ctaLabel}
                         </a>
                         {fields.sponsorCard.sponsorshipPdf ? <a href={mediaHref(fields.sponsorCard.sponsorshipPdf)} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">{fields.sponsorCard.sponsorshipPdfLabel}</a> : null}
+                        </div>
+                      </div>
+                  </div>
+                ) : null}
+
+                {fields.volunteerCard ? (
+                  <div className="card card-hover p-8">
+                    {fields.volunteerCard.header || fields.volunteerCard.body ? (
+                    <div>
+                      {fields.volunteerCard.header ? <h2 className="h2 text-gmcc-navy">{fields.volunteerCard.header}</h2> : null}
+                      {fields.volunteerCard.body ? <p className="body mt-4 mb-2 whitespace-pre-line text-neutral-700">{fields.volunteerCard.body}</p> : null}
+                    </div>
+                  ) : null}
+
+                    <div
+                      className={`${fields.volunteerCard.contactPrompt || fields.volunteerCard.personOfContact || fields.volunteerCard.ctaLabel || fields.volunteerCard.cta ? "mt-4" : ""}`}
+                    >
+                      {fields.volunteerCard.contactPrompt || fields.volunteerCard.personOfContact?.nodes?.length ? (
+                        <div className="body mt-4 text-neutral-700">
+                          {fields.volunteerCard.contactPrompt ? <span>{fields.volunteerCard.contactPrompt} </span> : null}
+                          {fields.volunteerCard.personOfContact?.nodes?.map((node, i) => {
+                            const sf = node.staffProfilesFields;
+                            return (
+                              <span key={i}>
+                                <span className="font-medium">{node.title}</span>
+                                {sf?.email || sf?.phone ? (
+                                  <span> at{" "}
+                                    {sf.email ? <a href={`mailto:${sf.email}`} className="link">{sf.email}</a> : null}
+                                    {sf.email && sf.phone ? <span> or </span> : null}
+                                    {sf.phone ? <a href={`tel:${sf.phone}`} className="link">{sf.phone}</a> : null}
+                                  </span>
+                                ) : null}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                      <div className="mt-6 flex justify-center">
+                        {fields.volunteerCard.cta ? <a href={fields?.volunteerCard?.cta} target="_blank" rel="noopener noreferrer" className="btn btn-tertiary text-center justify-self-start">
+                          {fields?.volunteerCard?.ctaLabel}
+                        </a> : null}
                         </div>
                       </div>
                   </div>
@@ -1122,7 +1167,7 @@ export default async function RacesPage() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {/* Race Director card */}
             {fields.raceDirectorContact?.nodes?.length ? (
-              <div className="card card-hover border-gmcc-teal p-6">
+              <div className="card card-hover p-6">
                 <p className="text-sm font-bold text-gmcc-navy">For Questions about Races</p>
                 <dl className="mt-3 space-y-1 text-sm text-neutral-800">
                   {fields.raceDirectorContact.nodes.map((node, i) => {
@@ -1162,7 +1207,7 @@ export default async function RacesPage() {
 
             {/* Volunteer contact card */}
             {fields.volunteerCard.personOfContact?.nodes?.length ? (
-              <div className="card card-hover border-gmcc-teal p-6">
+              <div className="card card-hover p-6">
                 <p className="text-sm font-bold text-gmcc-navy">For Questions about Volunteering</p>
                 <dl className="mt-3 space-y-1 text-sm text-neutral-800">
                   {fields.volunteerCard.personOfContact.nodes.map((node, i) => {

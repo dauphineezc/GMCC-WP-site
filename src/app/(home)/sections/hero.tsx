@@ -1,13 +1,9 @@
 // src/app/(home)/sections/hero.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Linkish = { title?: string | null; url?: string | null };
-
-function isLikelyHtml(str: string) {
-  return /<iframe|<video|<embed|<blockquote/i.test(str);
-}
 
 function useReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -24,46 +20,18 @@ function useReducedMotion() {
   return reduced;
 }
 
-function toYouTubeEmbed(url: string) {
-  try {
-    const u = new URL(url);
-    let id: string | null = null;
-
-    if (u.hostname.includes("youtu.be")) {
-      id = u.pathname.split("/").filter(Boolean)[0] ?? null;
-    } else if (u.hostname.includes("youtube.com")) {
-      id = u.searchParams.get("v");
-    }
-
-    if (!id) return url;
-
-    const params = new URLSearchParams({
-      autoplay: "1",
-      mute: "1",
-      loop: "1",
-      playlist: id,
-      playsinline: "1",
-      controls: "0",
-      rel: "0",
-      modestbranding: "1",
-    });
-
-    return `https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`;
-  } catch {
-    return url;
-  }
-}
-
 export default function HeroSection({
   headline,
   subheadline,
-  mediaOEmbed,
+  mediaUrl,
+  mediaMimeType,
   primaryCta,
   secondaryCta,
 }: {
   headline: string;
   subheadline: string;
-  mediaOEmbed?: string | null;
+  mediaUrl?: string | null;
+  mediaMimeType?: string | null;
   primaryCta: Linkish;
   secondaryCta?: Linkish | null;
 }) {
@@ -71,14 +39,7 @@ export default function HeroSection({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [inView, setInView] = useState(false);
 
-  const embedUrl = useMemo(() => {
-    const v = mediaOEmbed?.trim();
-    if (!v) return null;
-    if (isLikelyHtml(v)) return null;
-    return toYouTubeEmbed(v);
-  }, [mediaOEmbed]);
-
-  const hasVideo = !!mediaOEmbed?.trim();
+  const hasVideo = !!mediaUrl?.trim();
 
   useEffect(() => {
     const el = containerRef.current;
@@ -103,50 +64,31 @@ export default function HeroSection({
             className="relative isolate h-[100svh] min-h-[700px] w-full overflow-hidden bg-neutral-200 select-none"
           >
             {/* Video layer */}
-            <div className="absolute inset-x-0 -top-24 bottom-0 z-0 overflow-hidden md:top-0">              {hasVideo && !reducedMotion && inView ? (
-                isLikelyHtml(mediaOEmbed!) ? (
-                  <div className="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2">
-                    <div
-                      className="
-                        absolute left-1/2 top-1/2
-                        h-[56.25vw] min-h-full
-                        w-[177.78vh] min-w-full
-                        -translate-x-1/2 -translate-y-1/2
-                        [&_iframe]:pointer-events-none
-                        [&_iframe]:absolute
-                        [&_iframe]:left-0
-                        [&_iframe]:top-0
-                        [&_iframe]:h-full
-                        [&_iframe]:w-full
-                        [&_video]:pointer-events-none
-                        [&_video]:absolute
-                        [&_video]:left-0
-                        [&_video]:top-0
-                        [&_video]:h-full
-                        [&_video]:w-full
-                        [&_video]:object-cover
-                      "
-                      dangerouslySetInnerHTML={{ __html: mediaOEmbed! }}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    className="
-                      absolute left-1/2 top-1/2
-                      h-[56.25vw] min-h-full
-                      w-[177.78vh] min-w-full
-                      -translate-x-1/2 -translate-y-1/2
-                    "
+            <div className="absolute inset-x-0 -top-24 bottom-0 z-0 overflow-hidden md:top-0">
+              {hasVideo && !reducedMotion && inView ? (
+                <div
+                  className="
+                    absolute left-1/2 top-1/2
+                    h-[56.25vw] min-h-full
+                    w-[177.78vh] min-w-full
+                    -translate-x-1/2 -translate-y-1/2
+                  "
+                >
+                  <video
+                    className="h-full w-full object-cover pointer-events-none"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    aria-hidden="true"
                   >
-                    <iframe
-                      className="pointer-events-none absolute left-0 top-0 h-full w-full"
-                      src={embedUrl ?? mediaOEmbed!}
-                      title={headline}
-                      allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
+                    <source
+                      src={mediaUrl ?? undefined}
+                      type={mediaMimeType ?? (mediaUrl?.toLowerCase().endsWith(".mp4") ? "video/mp4" : undefined)}
                     />
-                  </div>
-                )
+                  </video>
+                </div>
               ) : null}
             </div>
 

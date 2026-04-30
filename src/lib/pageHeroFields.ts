@@ -1,5 +1,5 @@
 import type { PhotoWaveHeaderFields, HeroCta, HeroFieldsCtaRaw } from "@/components/photoWaveHeader";
-import { wpFetch } from "@/lib/wp";
+import { resolveWpMediaUrl, wpFetch } from "@/lib/wp";
 
 /**
  * ACF group "Hero Fields" on WordPress pages — must stay identical across directory pages.
@@ -175,10 +175,12 @@ export function resolvePhotoWaveHeaderProps(
   const primaryCta = resolveHeroCta(fields?.heroPrimaryCta ?? fields?.primaryCta, "primary");
   const secondaryCta = resolveHeroCta(fields?.heroSecondaryCta ?? fields?.secondaryCta, "secondary");
   const ctas = [primaryCta, secondaryCta].filter((c): c is HeroCta => c != null);
+  const heroImg = fields?.heroImage?.node;
+  const rawHeroImg = heroImg?.sourceUrl ?? heroImg?.mediaItemUrl ?? undefined;
   return {
     title,
     subheader: subRaw ? subRaw : undefined,
-    imageUrl: fields?.heroImage?.node?.sourceUrl ?? undefined,
+    imageUrl: resolveWpMediaUrl(rawHeroImg) ?? undefined,
     primaryCta,
     secondaryCta,
     ctas: ctas.length > 0 ? ctas : undefined,

@@ -15,12 +15,24 @@ import FinancialAidEstimator from "@/components/financialAidEstimator";
 import MembershipQuiz from "@/components/membershipQuiz";
 import AmenitiesGrid from "@/components/amenitiesGrid";
 import type { AmenityDisplay } from "@/types/amenities";
+import {
+  pickAmenityImageForCenter,
+  type AmenityWithImage,
+} from "@/lib/amenities";
 import { getBodyParts } from "@/components/centerCampaignModule";
 import SimpleCampaign from "@/components/simpleCampaign";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import type { HeroCta } from "@/components/photoWaveHeader";
 
-export type Audience = { name: string; slug: string };
+export type Audience = {
+  name: string;
+  slug: string;
+  /**
+   * Selected values from audience taxonomy ACF (`audienceFields.programAreas` checkbox).
+   * Matched against program area `slug` or `name` (case-insensitive) in the membership quiz.
+   */
+  quizProgramAreaKeys?: string[];
+};
 export type ProgramArea = { name: string; slug: string };
 
 export type Membership = {
@@ -43,6 +55,8 @@ export type Membership = {
 type CenterLink = {
   slug: string;
   label: string;
+  /** From each center's `centersFields.amenities` in WordPress */
+  amenitySlugs: string[];
 };
 
 export type MembershipPageFields = {
@@ -54,14 +68,44 @@ export type MembershipPageFields = {
   quizDescription: string | null;
   benefitsHeader: string | null;
   benefitsDescription: string | null;
-  amenitySlugs: string[];
   financialAssistanceHeader: string | null;
   financialAssistanceSubheader: string | null;
   financialAssistanceDescription: string | null;
-  financialAssistanceCta: { url: string; label: string } | null;
+  financialAssistanceCtas: { estimatorLabel: string; applicationCtaLabel: string; applicationPdf: string } | null;
   contactHeader: string | null;
   contactDescription: string | null;
+  showCurrentPromotion: boolean;
+  currentPromotion: {
+    title?: string | null;
+    uri?: string | null;
+    featuredImage?: { node?: { sourceUrl: string; altText?: string | null } | null } | null;
+    campaignFields?: {
+      headline?: string | null;
+      body?: string | null;
+      primaryCta?: { primaryCtaLabel?: string | null; primaryCtaUrl?: string | null } | null;
+      secondaryCta?: { secondaryCtaLabel?: string | null; secondaryCtaUrl?: string | null } | null;
+      backgroundColor?: string | null;
+      textColor?: string | null;
+      primaryCtaButtonColor?: string | null;
+      secondaryCtaButtonColor?: string | null;
+    } | null;
+  } | null;
   campaign: {
+    title?: string | null;
+    uri?: string | null;
+    featuredImage?: { node?: { sourceUrl: string; altText?: string | null } | null } | null;
+    campaignFields?: {
+      headline?: string | null;
+      body?: string | null;
+      primaryCta?: { primaryCtaLabel?: string | null; primaryCtaUrl?: string | null } | null;
+      secondaryCta?: { secondaryCtaLabel?: string | null; secondaryCtaUrl?: string | null } | null;
+      backgroundColor?: string | null;
+      textColor?: string | null;
+      primaryCtaButtonColor?: string | null;
+      secondaryCtaButtonColor?: string | null;
+    } | null;
+  } | null;
+  healthy100Challenge: {
     title?: string | null;
     uri?: string | null;
     featuredImage?: { node?: { sourceUrl: string; altText?: string | null } | null } | null;
@@ -84,9 +128,13 @@ export type SerializedAmenity = {
   description: string | null;
   relevantLink: string | null;
   linkLabel: string | null;
+  isService: boolean;
+  isFeatured: boolean;
   defaultImage: { sourceUrl: string; altText: string | null } | null;
   centerImageCandidates: {
     centerSlug: string;
+    centerTitle?: string | null;
+    relevantLink?: string | null;
     image: { sourceUrl: string; altText: string | null };
   }[];
 };
@@ -119,13 +167,14 @@ export default function ExploreMembershipsClient({
 }: Props) {
   const searchParams = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<"compare" | "quiz">("compare");
+  const [activeTab, setActiveTab] = useState<"compare" | "quiz" | "estimator">("compare");
   const [activeCenter, setActiveCenter] = useState(centerLinks[0]?.slug ?? "");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const quizRef = useRef<HTMLDivElement>(null);
   const membershipsRef = useRef<HTMLDivElement>(null);
   const plansSectionRef = useRef<HTMLElement | null>(null);
+  const estimatorRef = useRef<HTMLDivElement>(null);
 
   /** Deep link: /membership?center=tennis-center#plans */
   useLayoutEffect(() => {
@@ -167,12 +216,14 @@ export default function ExploreMembershipsClient({
   }, [activeTab, searchParams]);
 
   const amenityDisplayItems: AmenityDisplay[] = useMemo(() => {
+    const slugSet = new Set(
+      centerLinks.find((c) => c.slug === activeCenter)?.amenitySlugs ?? []
+    );
     return amenities
       .map((a) => {
-        const centerMatch = a.centerImageCandidates.find(
-          (c) => c.centerSlug === activeCenter
-        );
-        if (!centerMatch) return null;
+        if (!slugSet.has(a.slug) || a.isService) return null;
+        const image = pickAmenityImageForCenter(a as AmenityWithImage, activeCenter);
+        if (!image) return null;
 
         return {
           name: a.name,
@@ -180,11 +231,11 @@ export default function ExploreMembershipsClient({
           description: a.description ?? null,
           relevantLink: a.relevantLink ?? null,
           linkLabel: a.linkLabel ?? null,
-          image: centerMatch.image,
+          image,
         };
       })
       .filter(Boolean) as AmenityDisplay[];
-  }, [amenities, activeCenter]);
+  }, [amenities, activeCenter, centerLinks]);
 
   const getMembershipTierName = useCallback((title: string): string => {
     let separatorIndex = title.indexOf(" – ");
@@ -322,6 +373,13 @@ export default function ExploreMembershipsClient({
     }, 100);
   };
 
+  const scrollToEstimator = () => {
+    setActiveTab("estimator");
+    setTimeout(() => {
+      estimatorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      estimatorRef.current?.focus();
+    }, 100);
+  };
   const headerCtas = heroCtas?.length ? heroCtas : undefined;
 
   return (
@@ -343,21 +401,81 @@ export default function ExploreMembershipsClient({
         ) : null}
       </PhotoWaveHeader>
 
+      {/* CURRENT PROMOTION */}
+      {fields.showCurrentPromotion && fields.currentPromotion && (
+        <div className="relative mt-16 mx-auto max-w-6xl p-0 card bg-gmcc-navy text-white">
+          <div className="grid gap-y-4 md:grid-cols-5 md:items-stretch md:gap-x-0">
+            <div className="col-span-3 flex flex-col justify-center gap-4 p-8">
+              <h2 className="h2 mb-4 text-white">
+                {fields.currentPromotion.campaignFields?.headline}
+              </h2>
+              <p className="body max-w-2xl text-neutral-200">
+                {fields.currentPromotion.campaignFields?.body}
+              </p>
+              <div className="flex flex-row items-start gap-2 justify-start mt-4">
+                {fields.currentPromotion.campaignFields?.primaryCta?.primaryCtaUrl ? (
+                  <a
+                    href={fields.currentPromotion.campaignFields.primaryCta.primaryCtaUrl}
+                    className="btn btn-tertiary"
+                  >
+                    {fields.currentPromotion.campaignFields?.primaryCta?.primaryCtaLabel || "Learn More"}
+                  </a>
+                ) : null}
+                {fields.currentPromotion.campaignFields?.secondaryCta?.secondaryCtaUrl ? (
+                  <a
+                    href={fields.currentPromotion.campaignFields.secondaryCta.secondaryCtaUrl}
+                    className="btn btn-secondary"
+                  >
+                    {fields.currentPromotion.campaignFields?.secondaryCta?.secondaryCtaLabel || "Learn More"}
+                  </a>
+                ) : null}
+              </div>
+            </div>
+            <div className="relative col-span-2 min-h-[200px] overflow-hidden rounded-tr-[calc(1rem-1px)] rounded-br-[calc(1rem-1px)] md:min-h-0">
+              <img
+                src={fields.currentPromotion.featuredImage?.node?.sourceUrl ?? ""}
+                alt={fields.currentPromotion.featuredImage?.node?.altText ?? ""}
+                className="absolute inset-0 h-full w-full object-cover object-center"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* COMPARE TAB CONTENT */}
       {activeTab === "compare" && (
         <div>
 
           {/* SEE WHAT YOU CAN GET — Amenities */}
           {amenityDisplayItems.length > 0 && (
-            <section className="mx-auto max-w-6xl px-4 py-8 pt-12">
+            <section className="mx-auto max-w-6xl px-4 py-12 pt-16">
               <h2 className="h2 mb-2">
                 {fields.benefitsHeader || "See What You Can Get with Your Membership"}
               </h2>
               {fields.benefitsDescription && (
-                <p className="body mb-8 max-w-2xl">
+                <p className="body mb-8">
                   {fields.benefitsDescription}
                 </p>
               )}
+              {/* Center tabs */}
+              <div className="mb-8 flex flex-wrap gap-2 scroll-mt-24">
+                {centerLinks.map((c) => (
+                  <button
+                    key={c.slug}
+                    type="button"
+                    onClick={() => {
+                      setActiveCenter(c.slug);
+                    }}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                      activeCenter === c.slug
+                        ? "bg-gmcc-navy text-white shadow-md"
+                        : "bg-white text-gmcc-navy border border-neutral-200 hover:border-gmcc-navy/40"
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
               <AmenitiesGrid amenities={amenityDisplayItems} title="" numCols={4} />
             </section>
           )}
@@ -370,7 +488,7 @@ export default function ExploreMembershipsClient({
           >
             <div className="mx-auto max-w-6xl px-4 py-8">
               <h2 className="h2 mb-2">{fields.membershipsHeader}</h2>
-              <p className="body mb-8 max-w-2xl">
+              <p className="body mb-8">
                 {fields.membershipsDescription}
               </p>
 
@@ -423,17 +541,17 @@ export default function ExploreMembershipsClient({
                     </div>
                   ) : null}
                   {activityPassTier ? (
-                      <div className="flex justify-center lg:justify-start">
-                        <div className="w-full max-w-sm">
-                          <TierCard
-                            key={`${activeCenter}-${activityPassTier.tierName}`}
-                            tierName={activityPassTier.tierName}
-                            variants={activityPassTier.variants}
-                            getAudienceFromTitle={getAudienceFromTitle}
-                            secondary
-                          />
-                        </div>
+                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="lg:col-start-2">
+                        <TierCard
+                          key={`${activeCenter}-${activityPassTier.tierName}`}
+                          tierName={activityPassTier.tierName}
+                          variants={activityPassTier.variants}
+                          getAudienceFromTitle={getAudienceFromTitle}
+                          secondary
+                        />
                       </div>
+                    </div>
                   ) : null}
                 </div>
               ) : (
@@ -452,7 +570,7 @@ export default function ExploreMembershipsClient({
 
           {/* QUIZ CTA SECTION */}
           <section>
-            <div className="mt-12 card bg-gmcc-navy text-white mx-auto max-w-6xl px-12 py-8">
+            <div className="mt-8 card bg-gmcc-navy text-white mx-auto max-w-6xl px-12 py-8">
               <div className="grid gap-4 md:grid-cols-2 items-center">
                 <div className="col-span-1 gap-4">
                   <h2 className="h2 mb-4 text-white">
@@ -464,7 +582,7 @@ export default function ExploreMembershipsClient({
                   <ul className="mt-4 space-y-2">
                     {bullets.map((item: string, i: number) => (
                       <li key={i} className="flex items-center gap-2 text-base text-neutral-200">
-                        <svg className="h-4 w-4 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <svg className="h-4 w-4 shrink-0 text-gmcc-green-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                         {item}
@@ -490,46 +608,114 @@ export default function ExploreMembershipsClient({
 
           {/* FINANCIAL ASSISTANCE */}
           <section>
-            <div className="mx-auto max-w-6xl px-4 py-16 sm:py-16">
-              <div className="grid gap-8 md:grid-cols-[1fr_auto] items-center">
-                <div>
-                  <h2 className="h2">
-                    {fields.financialAssistanceHeader || "Financial Assistance"}
-                  </h2>
-                  <p className="eyebrow mt-2">
-                    {fields.financialAssistanceSubheader || "Need help covering membership costs?"}
+            <div className="mt-12 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip">
+              {/* Top wave (above navy body; not covered by background) */}
+              <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
+                <svg
+                  viewBox="0 0 1440 120"
+                  className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
+                  preserveAspectRatio="none"
+                  aria-hidden
+                >
+                  <path
+                    d="
+                      M-20,110
+                      C750,-90  800,120  1200,80
+                      S1420,0 1460,0
+                      L1460,0 L-20,0 Z
+                    "
+                    transform="translate(0 120) scale(1 -1)"
+                    fill="var(--gmcc-navy)"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="relative z-0 -mt-px pb-4 mb-0 bg-gmcc-navy text-white">
+            <div className="mx-auto max-w-6xl px-4 pt-16 sm:py-16 text-center justify-center items-center">
+                <h2 className="h2 text-white">
+                  {fields.financialAssistanceHeader || "Financial Assistance"}
+                </h2>
+                <p className="eyebrow mt-6 text-gmcc-green-light">
+                  {fields.financialAssistanceSubheader || "Need help covering membership costs?"}
+                </p>
+                {fields.financialAssistanceDescription && (
+                  <p className="body mt-6 max-w-4xl text-neutral-200 mx-auto">
+                    {fields.financialAssistanceDescription}
                   </p>
-                  {fields.financialAssistanceDescription && (
-                    <p className="body mt-3 max-w-xl">
-                      {fields.financialAssistanceDescription}
-                    </p>
-                  )}
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  {fields.financialAssistanceCta?.url ? (
-                    <a
-                      href={fields.financialAssistanceCta.url}
-                      className="btn btn-primary"
-                    >
-                      {fields.financialAssistanceCta.label || "Apply / Get Started"}
-                    </a>
-                  ) : null}
-                </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={scrollToEstimator}
+                  className="btn btn-tertiary mt-8 mx-auto mr-1"
+                >
+                  {fields.financialAssistanceCtas?.estimatorLabel || "Apply / Get Started"}
+                </button>
+
+                {fields.financialAssistanceCtas?.applicationPdf ? (
+                  <a
+                    href={fields.financialAssistanceCtas.applicationPdf}
+                    className="btn btn-secondary mt-8 mx-auto ml-1"
+                  >
+                    {fields.financialAssistanceCtas.applicationCtaLabel || "Apply / Get Started"}
+                  </a>
+                ) : null}
               </div>
             </div>
           </section>
 
           {/* FEATURED CAMPAIGN */}
           {fields.campaign && (
-            <div className="relative mt-12">
+            <div className="relative mt-0">
               <SimpleCampaign campaign={fields.campaign} />
+            </div>
+          )}
+
+          {/* HEALTHY 100 CHALLENGE */}
+          {fields.healthy100Challenge && (
+            <div className="relative mt-16 mx-auto max-w-6xl p-0 card bg-gmcc-navy text-white">
+              <div className="grid gap-y-4 md:grid-cols-5 md:items-stretch md:gap-x-0">
+                <div className="col-span-3 flex flex-col justify-center gap-4 p-8">
+                  <h2 className="h2 mb-4 text-white">
+                    {fields.healthy100Challenge.campaignFields?.headline}
+                  </h2>
+                  <p className="body max-w-2xl text-neutral-200">
+                    {fields.healthy100Challenge.campaignFields?.body}
+                  </p>
+                  <div className="flex flex-row items-start gap-2 justify-start mt-4">
+                    {fields.healthy100Challenge.campaignFields?.primaryCta?.primaryCtaUrl ? (
+                      <a
+                        href={fields.healthy100Challenge.campaignFields.primaryCta.primaryCtaUrl}
+                        className="btn btn-tertiary"
+                      >
+                        {fields.healthy100Challenge.campaignFields?.primaryCta?.primaryCtaLabel || "Learn More"}
+                      </a>
+                    ) : null}
+                    {fields.healthy100Challenge.campaignFields?.secondaryCta?.secondaryCtaUrl ? (
+                      <a
+                        href={fields.healthy100Challenge.campaignFields.secondaryCta.secondaryCtaUrl}
+                        className="btn btn-secondary"
+                      >
+                        {fields.healthy100Challenge.campaignFields?.secondaryCta?.secondaryCtaLabel || "Learn More"}
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="relative col-span-2 min-h-[200px] overflow-hidden rounded-tr-[calc(1rem-1px)] rounded-br-[calc(1rem-1px)] md:min-h-0">
+                  <img
+                    src={fields.healthy100Challenge.featuredImage?.node?.sourceUrl ?? ""}
+                    alt={fields.healthy100Challenge.featuredImage?.node?.altText ?? ""}
+                    className="absolute inset-0 h-full w-full object-cover object-center"
+                  />
+                </div>
+              </div>
             </div>
           )}
 
           {/* CONTACT CTA */}
           <section>
-            <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16 text-center">
-              <h2 className="font-heading text-2xl font-bold text-gmcc-navy sm:text-3xl">
+            <div className="mx-auto max-w-6xl px-4 mt-16 mb-8 text-center">
+              <h2 className="h2">
                 {fields.contactHeader}
               </h2>
               <p className="mt-3 text-gmcc-navy/70 max-w-xl mx-auto">
@@ -553,6 +739,21 @@ export default function ExploreMembershipsClient({
             audiences={audiences}
             programAreas={programAreas}
             memberships={memberships}
+            onClose={() => {
+              setActiveTab("compare");
+              setTimeout(() => {
+                membershipsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 50);
+            }}
+          />
+        </div>
+      )}
+
+
+      {/* ESTIMATOR TAB CONTENT */}
+      {activeTab === "estimator" && (
+        <div ref={estimatorRef} className="mx-auto max-w-4xl px-4 py-10 sm:py-14">
+          <FinancialAidEstimator
             onClose={() => {
               setActiveTab("compare");
               setTimeout(() => {

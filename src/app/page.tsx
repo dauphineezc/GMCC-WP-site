@@ -23,7 +23,13 @@ type HomeData = {
       hero?: {
         heroHeadline?: string | null;
         heroSubheadline?: string | null;
-        heroMedia?: string | null;
+        heroMedia?: {
+          node?: {
+            sourceUrl?: string | null;
+            mediaItemUrl?: string | null;
+            mimeType?: string | null;
+          } | null;
+        } | null;
         heroPrimaryCtaLabel?: string | null;
         heroPrimaryCtaUrl?: string | null;
         heroSecondaryCtaLabel?: string | null;
@@ -156,6 +162,8 @@ type HomeData = {
           } | null;
         }> | null;
       } | null;
+      corporateWellnessCentersCaption?: string | null;
+      corporateWellnessCentersImage?: GqlImage | null;
 
       upcomingEvents?: {
         nodes?: Array<{
@@ -275,7 +283,13 @@ query HomePage($uri: ID!) {
       hero {
         heroHeadline
         heroSubheadline
-        heroMedia
+        heroMedia {
+          node {
+            sourceUrl
+            mediaItemUrl
+            mimeType
+          }
+        }
         heroPrimaryCtaLabel
         heroPrimaryCtaUrl
         heroSecondaryCtaLabel
@@ -460,6 +474,8 @@ query HomePage($uri: ID!) {
           }
         }
       }
+      corporateWellnessCentersCaption
+      corporateWellnessCentersImage { node { sourceUrl altText } }
 
       upcomingEvents {
         nodes {
@@ -502,6 +518,8 @@ export default async function HomePage() {
   const campaign = safeFirst(f?.campaignBanner?.nodes);
   const testimonial = safeFirst(f?.testimonial?.nodes);
   const centers = f?.centers?.nodes ?? [];
+  const corporateWellnessCentersCaption = f?.corporateWellnessCentersCaption;
+  const corporateWellnessCentersImage = f?.corporateWellnessCentersImage;
   const news = f?.newsHighlights?.nodes ?? [];
 
   const impactStats = normalizeImpactStats(f?.impact?.impactStats);
@@ -519,7 +537,8 @@ export default async function HomePage() {
       <HeroSection
         headline={hero?.heroHeadline ?? "Serving Greater Midland for Over a Century"}
         subheadline={hero?.heroSubheadline ?? "Building healthier people, stronger families, and a more connected community."}
-        mediaOEmbed={hero?.heroMedia ?? null}
+        mediaUrl={hero?.heroMedia?.node?.sourceUrl ?? hero?.heroMedia?.node?.mediaItemUrl ?? null}
+        mediaMimeType={hero?.heroMedia?.node?.mimeType ?? null}
         primaryCta={{
           title: hero?.heroPrimaryCtaLabel ?? "Explore Programs",
           url: hero?.heroPrimaryCtaUrl ?? "/programs",
@@ -569,7 +588,12 @@ export default async function HomePage() {
         items={timeline}
       />
 
-      <CentersSection heading="Centers" centers={centers} />
+      <CentersSection 
+        heading="Centers"
+        centers={centers} 
+        corporateWellnessCentersCaption={corporateWellnessCentersCaption} 
+        corporateWellnessCentersImage={corporateWellnessCentersImage}
+      />
 
       <NewsSection heading="Latest News" items={news.map((n) => ({
         id: n.id,

@@ -171,6 +171,31 @@ export default function MobileMenu({
     }
   }, [isOpen]);
 
+  // Prevent background page scroll while mobile menu is open.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const { body, documentElement } = document;
+    const prevBodyOverflow = body.style.overflow;
+    const prevBodyOverscroll = body.style.overscrollBehavior;
+    const prevHtmlOverflow = documentElement.style.overflow;
+    const prevHtmlOverscroll = documentElement.style.overscrollBehavior;
+
+    if (isOpen) {
+      body.style.overflow = "hidden";
+      body.style.overscrollBehavior = "none";
+      documentElement.style.overflow = "hidden";
+      documentElement.style.overscrollBehavior = "none";
+    }
+
+    return () => {
+      body.style.overflow = prevBodyOverflow;
+      body.style.overscrollBehavior = prevBodyOverscroll;
+      documentElement.style.overflow = prevHtmlOverflow;
+      documentElement.style.overscrollBehavior = prevHtmlOverscroll;
+    };
+  }, [isOpen]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -204,7 +229,7 @@ export default function MobileMenu({
 
       {/* Side Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-out ${
+        className={`fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col overflow-hidden ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -237,43 +262,47 @@ export default function MobileMenu({
         {/* Gradient line */}
         <div className="h-0.5 w-full bg-gradient-to-r from-gmcc-teal-light via-gmcc-teal to-gmcc-teal-light" />
 
-        {/* Search box */}
-        <div className="border-b border-gray-100 px-4 py-3">
-          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        <div
+          className="flex-1 overflow-y-auto overscroll-contain"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          {/* Search box */}
+          <div className="border-b border-gray-100 px-4 py-3">
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search..."
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gmcc-teal focus:ring-1 focus:ring-gmcc-teal/30 font-body"
                 />
-              </svg>
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search..."
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gmcc-teal focus:ring-1 focus:ring-gmcc-teal/30 font-body"
-              />
-            </div>
-            <button
-              type="submit"
-              className="px-3 py-2 bg-gmcc-teal text-white text-sm font-medium rounded-lg hover:bg-gmcc-teal-dark transition-colors"
-            >
-              Go
-            </button>
-          </form>
-        </div>
+              </div>
+              <button
+                type="submit"
+                className="px-3 py-2 bg-gmcc-teal text-white text-sm font-medium rounded-lg hover:bg-gmcc-teal-dark transition-colors"
+              >
+                Go
+              </button>
+            </form>
+          </div>
 
-        {/* Accessibility Section */}
-        <div className="border-b border-gray-100">
+          {/* Accessibility Section */}
+          <div className="border-b border-gray-100">
           <button
             onClick={() => setA11yExpanded(!a11yExpanded)}
             className="w-full flex items-center justify-between pl-6 pr-4 py-2 text-sm font-medium text-neutral-700 hover:bg-gray-50 transition-colors"
@@ -332,10 +361,10 @@ export default function MobileMenu({
               </div>
             </div>
           </div>
-        </div>
+          </div>
 
-        {/* Language Section */}
-        <div className="border-b border-gray-100">
+          {/* Language Section */}
+          <div className="border-b border-gray-100">
           <button
             onClick={() => setLangExpanded(!langExpanded)}
             className="w-full flex items-center justify-between pl-6 pr-4 py-2 text-sm font-medium text-neutral-700 hover:bg-gray-50 transition-colors"
@@ -395,41 +424,37 @@ export default function MobileMenu({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Utility links (filtered) */}
-        {showUtility && (
-          <div className="border-b border-gray-100 bg-white">
-            <nav aria-label="Utility" className="py-2">
-              <ul className="px-6">
-                {utilityItems
-                  .filter((u) => {
-                    const label = u.label.toLowerCase();
-                    return label !== "search" && label !== "accessibility" && label !== "language";
-                  })
-                  .map((u) => (
-                    <li key={u.id}>
-                      <Link
-                        href={resolveTranslatedHref(u.href)}
-                        onClick={onClose}
-                        className="block py-2 text-sm font-medium text-neutral-700 hover:text-gmcc-navy transition-colors"
-                      >
-                        {u.label}
-                      </Link>
-                    </li>
-                  ))}
-              </ul>
-            </nav>
           </div>
-        )}
 
-        {/* Navigation */}
-        <nav
-          className={`overflow-y-auto ${
-            showUtility ? "h-[calc(100%-64px-56px)]" : "h-[calc(100%-64px)]"
-          }`}
-        >
-          <ul className="py-2">
+          {/* Utility links (filtered) */}
+          {showUtility && (
+            <div className="border-b border-gray-100 bg-white">
+              <nav aria-label="Utility" className="py-2">
+                <ul className="px-6">
+                  {utilityItems
+                    .filter((u) => {
+                      const label = u.label.toLowerCase();
+                      return label !== "search" && label !== "accessibility" && label !== "language";
+                    })
+                    .map((u) => (
+                      <li key={u.id}>
+                        <Link
+                          href={resolveTranslatedHref(u.href)}
+                          onClick={onClose}
+                          className="block py-2 text-sm font-medium text-neutral-700 hover:text-gmcc-navy transition-colors"
+                        >
+                          {u.label}
+                        </Link>
+                      </li>
+                    ))}
+                </ul>
+              </nav>
+            </div>
+          )}
+
+          {/* Navigation */}
+          <nav>
+            <ul className="py-2">
             {items.map((item) => {
               const hasChildren = item.children.length > 0;
               const isExpanded = expandedId === item.id;
@@ -515,8 +540,9 @@ export default function MobileMenu({
                 </li>
               );
             })}
-          </ul>
-        </nav>
+            </ul>
+          </nav>
+        </div>
       </div>
     </>
   );

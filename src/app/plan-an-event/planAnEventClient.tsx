@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Accordion from "@/components/accordion";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import type { RoomData, PartyPackageData } from "./page";
@@ -90,6 +90,28 @@ function getFirstPhoto(room: RoomData): string | null {
   );
 }
 
+function getRoomGalleryPhotos(room: RoomData): { src: string; alt: string }[] {
+  const gallery = room.rentableRoomFields?.gallery;
+  const fallbackName = room.rentableRoomFields?.name ?? room.title ?? "Room";
+  const rawPhotos = [
+    gallery?.photo1,
+    gallery?.photo2,
+    gallery?.photo3,
+    gallery?.photo4,
+  ];
+
+  return rawPhotos
+    .map((photo, index) => {
+      const src = photo?.node?.sourceUrl;
+      if (!src) return null;
+      return {
+        src,
+        alt: photo?.node?.altText ?? `${fallbackName} photo ${index + 1}`,
+      };
+    })
+    .filter((photo): photo is { src: string; alt: string } => Boolean(photo));
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SectionCard({ card, href }: { card: SectionCard; href?: string }) {
@@ -98,102 +120,359 @@ function SectionCard({ card, href }: { card: SectionCard; href?: string }) {
   const imgAlt = card.sectionImage?.node?.altText ?? card.sectionHeader ?? "";
 
   return (
-    <div className="card stack-4 flex flex-col overflow-hidden">
+    <div className="card card-hover stack-4 flex flex-col overflow-hidden h-[410px] w-[340px]">
       {imgSrc && (
-        <div className="card-bleed aspect-[4/3] bg-neutral-100">
+        <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
           <img src={imgSrc} alt={imgAlt} className="h-full w-full object-cover" loading="lazy" />
         </div>
       )}
-      <h3 className="h2">{card.sectionHeader}</h3>
+      <h3 className="h3 mt-2 mb-2 font-semibold">{card.sectionHeader}</h3>
       {card.sectionDescription && (
-        <p className="body whitespace-pre-line flex-grow">{card.sectionDescription}</p>
+        <p className="body text-sm flex-grow">{card.sectionDescription}</p>
       )}
+      <div className="flex flex-wrap justify-center items-center">
       {card.buttonLabel && (
-        <a href={href ?? "#"} className="btn btn-primary self-start mt-auto">
+        <a href={href ?? "#"} className="btn btn-primary">
           {card.buttonLabel}
         </a>
       )}
+      </div>
     </div>
   );
 }
 
 function RoomCard({ room }: { room: RoomData }) {
   const f = room.rentableRoomFields;
-  const photo = getFirstPhoto(room);
+  const galleryPhotos = getRoomGalleryPhotos(room);
+  const fallbackPhoto = getFirstPhoto(room);
   const centers = getCenterNames(f?.center?.nodes);
   const amenities = normalizeAmenities(f?.roomAmenities);
   const name = f?.name ?? room.title ?? "Room";
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+
+  const hasCarousel = galleryPhotos.length > 0;
+  const normalizedActivePhotoIndex =
+    galleryPhotos.length > 0 ? activePhotoIndex % galleryPhotos.length : 0;
+  const activePhoto = hasCarousel
+    ? galleryPhotos[normalizedActivePhotoIndex]
+    : fallbackPhoto
+      ? { src: fallbackPhoto, alt: name }
+      : null;
+
+  const showNavigation = galleryPhotos.length > 1;
+
+  const goToPreviousPhoto = () => {
+    setActivePhotoIndex((prev) =>
+      prev === 0 ? galleryPhotos.length - 1 : prev - 1
+    );
+  };
+
+  const goToNextPhoto = () => {
+    setActivePhotoIndex((prev) =>
+      prev === galleryPhotos.length - 1 ? 0 : prev + 1
+    );
+  };
 
   return (
-    <div className="card flex flex-col gap-4">
-      {photo && (
-        <div className="card-bleed aspect-[16/9] bg-neutral-100">
-          <img src={photo} alt={name} className="h-full w-full object-cover" loading="lazy" />
+    <div className="card flex flex-col gap-4 overflow-hidden">
+      {activePhoto && (
+        <div className="card-bleed relative aspect-[16/9] overflow-hidden rounded-t-2xl bg-neutral-100">
+          <img
+            src={activePhoto.src}
+            alt={activePhoto.alt}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+          {showNavigation && (
+            <>
+              <button
+                type="button"
+                onClick={goToPreviousPhoto}
+                className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gmcc-navy shadow transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-gmcc-teal"
+                aria-label={`View previous photo of ${name}`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="h-4 w-4"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={goToNextPhoto}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gmcc-navy shadow transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-gmcc-teal"
+                aria-label={`View next photo of ${name}`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="h-4 w-4"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+              <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5 rounded-full bg-black/35 px-2 py-1">
+                {galleryPhotos.map((photo, index) => (
+                  <button
+                    key={`${photo.src}-${index}`}
+                    type="button"
+                    onClick={() => setActivePhotoIndex(index)}
+                    className={`h-2 w-2 rounded-full transition ${
+                      index === normalizedActivePhotoIndex ? "bg-white" : "bg-white/60 hover:bg-white/80"
+                    }`}
+                    aria-label={`View photo ${index + 1} of ${galleryPhotos.length} for ${name}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
       <div className="flex flex-col gap-2 flex-grow">
-        <h3 className="h2">{name}</h3>
-        {centers.length > 0 && (
-          <p className="small text-gmcc-grey-dark">
-            <span className="font-semibold">Location:</span> {centers.join(", ")}
+        <h3 className="h3 text-2xl font-semibold mt-2">{name}</h3>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+          {centers.length > 0 && (
+            <p className="small text-gmcc-grey-dark">
+              <span className="font-semibold">Location:</span> {centers.join(", ")}
+            </p>
+          )}
+          {f?.capacity && (
+            <p className="small text-gmcc-grey-dark mt-2">
+              <span className="font-semibold">Capacity:</span> {f.capacity}
+            </p>
+          )}
+          </div>
+          <div>
+          {f?.price && (
+            <p className="small text-gmcc-grey-dark">
+              <span className="font-semibold">Price:</span> {f.price}
+            </p>
+          )}
+          {amenities.length > 0 && (
+            <p className="small text-gmcc-grey-dark mt-2">
+            <span className="font-semibold">Amenities:</span> {amenities.join(", ")}
           </p>
-        )}
-        {f?.capacity && (
-          <p className="small text-gmcc-grey-dark">
-            <span className="font-semibold">Capacity:</span> {f.capacity}
-          </p>
-        )}
+          )}
+          </div>
+        </div>
         {f?.description && (
           <p className="body whitespace-pre-line">{f.description}</p>
         )}
-        {amenities.length > 0 && (
-          <ul className="mt-1 space-y-1">
-            {amenities.map((a, i) => (
-              <li key={i} className="small flex gap-2 items-start">
-                <span className="mt-1 shrink-0 w-1.5 h-1.5 rounded-full bg-gmcc-teal inline-block" />
-                {a}
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
-      <div className="flex flex-wrap gap-3 pt-2 border-t border-neutral-100">
+      <div className="flex flex-wrap justify-center items-center">
         <a href="#contact" className="btn btn-primary text-sm">
-          View Availability
-        </a>
-        <a href="#contact" className="btn btn-secondary text-sm">
-          Contact About this Space
+          Contact us about this space
         </a>
       </div>
     </div>
   );
 }
 
-function PartyPackageCard({ pkg }: { pkg: PartyPackageData }) {
-  const f = pkg.partyPackageFields;
-  const name = f?.name ?? pkg.title ?? "Package";
-  const centers = getCenterNames(f?.center?.nodes);
+const PARTY_PACKAGE_CENTERS = [
+  { slug: "community-center", label: "Community Center", aliases: ["community center", "community"] },
+  { slug: "tennis-center", label: "Tennis Center", aliases: ["tennis center", "tennis"] },
+  { slug: "north-family-center", label: "North Family Center", aliases: ["north family center", "north"] },
+  { slug: "coleman-family-center", label: "Coleman Family Center", aliases: ["coleman family center", "coleman"] },
+] as const;
+
+function getPartyTypeValues(pkg: PartyPackageData): string[] {
+  const raw = pkg.partyPackageFields?.partyType;
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.map((v) => String(v).trim().toLowerCase()).filter(Boolean);
+  return [String(raw).trim().toLowerCase()].filter(Boolean);
+}
+
+function hasPartyCategory(pkg: PartyPackageData, category: "birthday" | "sport"): boolean {
+  const values = getPartyTypeValues(pkg);
+  if (values.length === 0) return false;
+  if (category === "birthday") return values.some((v) => v.includes("birthday"));
+  return values.some((v) => v.includes("sport"));
+}
+
+function getPartyPillLabel(pkg: PartyPackageData): string {
+  const name = (pkg.partyPackageFields?.name ?? pkg.title ?? "").trim();
+  if (name) return name.replace(/\s*party$/i, "").trim() || name;
+  const firstType = getPartyTypeValues(pkg)[0] ?? "";
+  return firstType ? firstType.charAt(0).toUpperCase() + firstType.slice(1) : "Package";
+}
+
+function packageMatchesCenter(
+  pkg: PartyPackageData,
+  centerConfig: (typeof PARTY_PACKAGE_CENTERS)[number]
+): boolean {
+  const nodes = pkg.partyPackageFields?.center?.nodes ?? [];
+  return nodes.some((node) => {
+    const slug = (node.slug ?? "").toLowerCase();
+    const title = (node.title ?? "").toLowerCase();
+    return slug === centerConfig.slug || centerConfig.aliases.some((alias) => title.includes(alias));
+  });
+}
+
+function CenterPartyPackageCard({
+  centerLabel,
+  packages,
+}: {
+  centerLabel: string;
+  packages: PartyPackageData[];
+}) {
+  const [selectedIdx, setSelectedIdx] = useState(0);
+
+  useEffect(() => {
+    setSelectedIdx(0);
+  }, [packages]);
+
+  if (packages.length === 0) {
+    return (
+      <article className="card flex flex-col gap-4 bg-white">
+        <h3 className="h2 text-2xl">{centerLabel}</h3>
+        <p className="body text-gmcc-grey-dark">No party package details available for this center yet.</p>
+        <a href="#contact" className="btn btn-primary self-start mt-auto">
+          Contact Us
+        </a>
+      </article>
+    );
+  }
+
+  const safeIdx = Math.min(selectedIdx, packages.length - 1);
+  const selected = packages[safeIdx];
+  const selectedFields = selected.partyPackageFields;
+  const selectedName = selectedFields?.name ?? selected.title ?? "Package";
+  const selectedImage = selectedFields?.photo?.node ?? selected.featuredImage?.node;
 
   return (
-    <div className="card stack-4 flex flex-col bg-gmcc-blue-light/20">
-      <div>
-        <h3 className="h2">{name}</h3>
-        {centers.length > 0 && (
-          <p className="small mt-1">
-            <span className="font-semibold">Available at:</span> {centers.join(", ")}
-          </p>
+    <article className="card flex h-full flex-col overflow-hidden bg-white">
+      {selectedImage?.sourceUrl && (
+        <div className="card-bleed relative aspect-[16/9] overflow-hidden rounded-t-2xl bg-neutral-100">
+          <img
+            src={selectedImage.sourceUrl}
+            alt={selectedImage.altText ?? selectedName}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+          {/* <div className="absolute inset-x-0 top-0 flex items-center justify-center bg-gmcc-teal py-2">
+            <span className="text-lg font-semibold uppercase tracking-wide text-white">
+              {centerLabel}
+            </span>
+          </div> */}
+        </div>
+      )}
+      {/* {!selectedImage?.sourceUrl && (
+        // <div className="card-bleed flex items-center justify-center rounded-t-2xl bg-gmcc-teal py-2">
+        //   <span className="text-sm font-semibold uppercase tracking-wide text-white">
+        //     {centerLabel}
+        //   </span>
+        // </div>
+      )} */}
+
+      <div className="flex flex-1 flex-col gap-3 mt-4">
+        <h3 className="h3 text-2xl font-semibold">{centerLabel}</h3>
+        {packages.length > 1 && (
+          <div className="flex flex-wrap gap-2">
+            {packages.map((pkg, index) => (
+              <button
+                key={pkg.slug ?? `${centerLabel}-${index}`}
+                type="button"
+                onClick={() => setSelectedIdx(index)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  safeIdx === index
+                    ? "bg-gmcc-navy text-white"
+                    : "bg-neutral-100 text-gmcc-navy hover:bg-neutral-200"
+                }`}
+              >
+                {getPartyPillLabel(pkg)}
+              </button>
+            ))}
+          </div>
         )}
+
+        <h4 className="h3 text-xl">{selectedName}</h4>
+        {selectedFields?.price && <p className="eyebrow text-gmcc-navy">Price: ${selectedFields.price}</p>}
+        {selectedFields?.description && (
+          <p className="body whitespace-pre-line flex-grow">{selectedFields.description}</p>
+        )}
+        <a href="#contact" className="btn btn-primary self-center mt-auto">
+          Book this party
+        </a>
       </div>
-      {f?.description && (
-        <p className="body whitespace-pre-line flex-grow">{f.description}</p>
-      )}
-      {f?.price && (
-        <p className="eyebrow text-gmcc-navy">{f.price}</p>
-      )}
-      <a href="#contact" className="btn btn-primary self-start mt-auto">
-        Book your Party Now
-      </a>
+    </article>
+  );
+}
+
+function PartyPackagesByCenterGrid({ packages }: { packages: PartyPackageData[] }) {
+  const centerCards = useMemo(
+    () =>
+      PARTY_PACKAGE_CENTERS.map((center) => {
+        const centerPackages = packages
+          .filter((pkg) => packageMatchesCenter(pkg, center))
+          .sort((a, b) => {
+            const aLabel = getPartyPillLabel(a);
+            const bLabel = getPartyPillLabel(b);
+            return aLabel.localeCompare(bLabel, undefined, { sensitivity: "base" });
+          });
+        return { ...center, packages: centerPackages };
+      }),
+    [packages]
+  );
+
+  return (
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      {centerCards.map((center) => (
+        <CenterPartyPackageCard
+          key={center.slug}
+          centerLabel={center.label}
+          packages={center.packages}
+        />
+      ))}
     </div>
+  );
+}
+
+function SportsPartyPackageCard({ pkg }: { pkg: PartyPackageData }) {
+  const f = pkg.partyPackageFields;
+  const name = f?.name ?? pkg.title ?? "Sports Party";
+  const image = f?.photo?.node ?? pkg.featuredImage?.node;
+
+  return (
+    <article className="card flex h-full flex-col overflow-hidden bg-white">
+      {image?.sourceUrl && (
+        <div className="card-bleed relative aspect-[16/9] overflow-hidden rounded-t-2xl bg-neutral-100">
+          <img
+            src={image.sourceUrl}
+            alt={image.altText ?? name}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+
+        {name.toLowerCase().includes("curling") && (
+        <div className="absolute inset-x-0 top-0 flex items-center justify-center bg-gmcc-teal/85 py-2">
+          <span className="text-sm font-semibold uppercase tracking-wide text-white">
+            Available October-March only
+          </span>
+        </div>
+      )}
+        </div>
+      )}
+
+      <div className="flex flex-1 flex-col gap-3">
+        <h3 className="h3 text-xl font-semibold mt-4">{name}</h3>
+        {f?.price && <p className="eyebrow text-gmcc-navy">Price: ${f.price}</p>}
+        {f?.description && (
+          <p className="body whitespace-pre-line flex-grow">{f.description}</p>
+        )}
+        <a href="#contact" className="btn btn-primary self-center mt-auto">
+          Book this event
+        </a>
+      </div>
+    </article>
   );
 }
 
@@ -209,13 +488,29 @@ const CAPACITY_OPTIONS = [
 
 function capacityInRange(capacityStr: string | null | undefined, range: string): boolean {
   if (!range || !capacityStr) return true;
-  const numMatch = capacityStr.match(/\d+/g);
-  if (!numMatch) return true;
-  const cap = parseInt(numMatch[0], 10);
-  if (range === "0-30") return cap <= 30;
-  if (range === "31-60") return cap >= 31 && cap <= 60;
-  if (range === "61-100") return cap >= 61 && cap <= 100;
-  if (range === "100+") return cap > 100;
+  const matches = capacityStr.match(/\d+/g);
+  if (!matches || matches.length === 0) return true;
+
+  const nums = matches.map((n) => parseInt(n, 10)).filter((n) => Number.isFinite(n));
+  if (nums.length === 0) return true;
+
+  const isExplicitRange = capacityStr.includes("-") && nums.length >= 2;
+  const baseMin = nums[0];
+  const baseMax = isExplicitRange ? nums[1] : nums[0];
+  const minCapacity = Math.min(baseMin, baseMax);
+  const maxCapacity = Math.max(baseMin, baseMax);
+
+  const overlaps = (filterMin: number, filterMax: number): boolean => {
+    // For values like "30-63", treat the lower edge as exclusive so the room
+    // does not get bucketed into the smaller 0-30 range on a boundary-only match.
+    const effectiveMin = isExplicitRange ? minCapacity + 1 : minCapacity;
+    return effectiveMin <= filterMax && maxCapacity >= filterMin;
+  };
+
+  if (range === "0-30") return overlaps(0, 30);
+  if (range === "31-60") return overlaps(31, 60);
+  if (range === "61-100") return overlaps(61, 100);
+  if (range === "100+") return maxCapacity > 100;
   return true;
 }
 
@@ -223,6 +518,8 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
   const [centerFilter, setCenterFilter] = useState("");
   const [capacityFilter, setCapacityFilter] = useState("");
   const [amenityFilter, setAmenityFilter] = useState<string[]>([]);
+  const [showAllRooms, setShowAllRooms] = useState(false);
+  const [resultColumns, setResultColumns] = useState(1);
 
   const allCenters = useMemo(() => {
     const names = new Set<string>();
@@ -241,19 +538,25 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
   }, [rooms]);
 
   const filtered = useMemo(() => {
-    return rooms.filter((r) => {
-      const f = r.rentableRoomFields;
-      if (centerFilter) {
-        const centers = getCenterNames(f?.center?.nodes);
-        if (!centers.includes(centerFilter)) return false;
-      }
-      if (capacityFilter && !capacityInRange(f?.capacity, capacityFilter)) return false;
-      if (amenityFilter.length > 0) {
-        const roomAmenities = normalizeAmenities(f?.roomAmenities);
-        if (!amenityFilter.every((a) => roomAmenities.includes(a))) return false;
-      }
-      return true;
-    });
+    return rooms
+      .filter((r) => {
+        const f = r.rentableRoomFields;
+        if (centerFilter) {
+          const centers = getCenterNames(f?.center?.nodes);
+          if (!centers.includes(centerFilter)) return false;
+        }
+        if (capacityFilter && !capacityInRange(f?.capacity, capacityFilter)) return false;
+        if (amenityFilter.length > 0) {
+          const roomAmenities = normalizeAmenities(f?.roomAmenities);
+          if (!amenityFilter.every((a) => roomAmenities.includes(a))) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const nameA = (a.rentableRoomFields?.name ?? a.title ?? "").trim();
+        const nameB = (b.rentableRoomFields?.name ?? b.title ?? "").trim();
+        return nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
+      });
   }, [rooms, centerFilter, capacityFilter, amenityFilter]);
 
   const toggleAmenity = (amenity: string) => {
@@ -263,6 +566,31 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
   };
 
   const hasFilters = centerFilter || capacityFilter || amenityFilter.length > 0;
+  const maxVisibleRooms = Math.max(1, resultColumns * 2);
+  const hasHiddenRooms = filtered.length > maxVisibleRooms;
+  const visibleRooms = showAllRooms ? filtered : filtered.slice(0, maxVisibleRooms);
+
+  useEffect(() => {
+    const updateColumns = () => {
+      if (window.innerWidth >= 1024) {
+        setResultColumns(3);
+        return;
+      }
+      if (window.innerWidth >= 768) {
+        setResultColumns(2);
+        return;
+      }
+      setResultColumns(1);
+    };
+
+    updateColumns();
+    window.addEventListener("resize", updateColumns);
+    return () => window.removeEventListener("resize", updateColumns);
+  }, []);
+
+  useEffect(() => {
+    setShowAllRooms(false);
+  }, [centerFilter, capacityFilter, amenityFilter]);
 
   return (
     <div>
@@ -271,13 +599,13 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Center filter */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold uppercase tracking-wide text-white/70">
+            <label className="text-xs font-semibold uppercase tracking-wide text-white">
               Center
             </label>
             <select
               value={centerFilter}
               onChange={(e) => setCenterFilter(e.target.value)}
-              className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-gmcc-teal"
+              className="rounded-lg border border-gmcc-teal bg-gmcc-teal/50 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-gmcc-teal"
             >
               <option value="">All Centers</option>
               {allCenters.map((c) => (
@@ -290,13 +618,13 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
 
           {/* Capacity filter */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold uppercase tracking-wide text-white/70">
+            <label className="text-xs font-semibold uppercase tracking-wide text-white">
               Capacity
             </label>
             <select
               value={capacityFilter}
               onChange={(e) => setCapacityFilter(e.target.value)}
-              className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-gmcc-teal"
+              className="rounded-lg border border-gmcc-teal bg-gmcc-teal/50 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-gmcc-teal"
             >
               {CAPACITY_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value} className="text-gmcc-navy bg-white">
@@ -309,7 +637,7 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
           {/* Amenities filter */}
           {allAmenities.length > 0 && (
             <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
-              <label className="text-xs font-semibold uppercase tracking-wide text-white/70">
+              <label className="text-xs font-semibold uppercase tracking-wide text-white">
                 Amenities
               </label>
               <div className="flex flex-wrap gap-2">
@@ -321,7 +649,7 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
                     className={`rounded-full px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gmcc-teal ${
                       amenityFilter.includes(a)
                         ? "bg-gmcc-teal text-white"
-                        : "bg-white/10 text-white hover:bg-white/20"
+                        : "bg-gmcc-teal/50 text-white hover:bg-gmcc-teal"
                     }`}
                   >
                     {a}
@@ -341,7 +669,7 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
               setCapacityFilter("");
               setAmenityFilter([]);
             }}
-            className="mt-4 text-xs text-white/60 underline hover:text-white/90"
+            className="mt-4 text-xs text-white/70 underline hover:text-white"
           >
             Clear all filters
           </button>
@@ -354,11 +682,24 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
           No spaces match your filters. Try adjusting your selections.
         </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((room, i) => (
-            <RoomCard key={room.slug ?? i} room={room} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleRooms.map((room, i) => (
+              <RoomCard key={room.slug ?? i} room={room} />
+            ))}
+          </div>
+          {hasHiddenRooms && (
+            <div className="pt-4 flex justify-center items-center">
+              <button
+                type="button"
+                onClick={() => setShowAllRooms((prev) => !prev)}
+                className="text-gmcc-navy hover:underline text-sm font-semibold"
+              >
+                {showAllRooms ? "Show less" : `Show more (${filtered.length - maxVisibleRooms} more)`}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -394,9 +735,11 @@ function CenterOfferingsSection({ data }: { data: CenterOfferingsData }) {
           ? text.split(/\n/).map((l) => l.trim()).filter(Boolean)
           : [];
 
+        const centerSlug = label.toLowerCase().replace(/ /g, "-");
+
         return (
           <div key={key} className="card stack-4 flex flex-col">
-            <h3 className="h2">{label}</h3>
+            <h3 className="h3">{label}</h3>
             {lines.length > 0 ? (
               <ul className="space-y-1 flex-grow">
                 {lines.map((line, i) => (
@@ -409,8 +752,8 @@ function CenterOfferingsSection({ data }: { data: CenterOfferingsData }) {
             ) : (
               <p className="body whitespace-pre-line flex-grow">{text}</p>
             )}
-            <a href="/centers" className="btn btn-secondary self-start mt-auto">
-              View Center Details
+            <a href={`/centers/${centerSlug}`} className="btn btn-secondary self-center mt-auto">
+              View center details
             </a>
           </div>
         );
@@ -423,16 +766,8 @@ function CenterOfferingsSection({ data }: { data: CenterOfferingsData }) {
 
 export default function PlanAnEventClient({ heroProps, fields, rooms, partyPackages }: Props) {
 
-  const getPartyType = (p: PartyPackageData): string => {
-    const raw = p.partyPackageFields?.partyType;
-    if (!raw) return "";
-    if (typeof raw === "string") return raw.toLowerCase();
-    if (Array.isArray(raw)) return (raw[0] ?? "").toString().toLowerCase();
-    return String(raw).toLowerCase();
-  };
-
-  const birthdayPackages = partyPackages.filter((p) => getPartyType(p) === "birthday");
-  const sportsPackages = partyPackages.filter((p) => getPartyType(p) === "sport");
+  const birthdayPackages = partyPackages.filter((p) => hasPartyCategory(p, "birthday"));
+  const sportsPackages = partyPackages.filter((p) => hasPartyCategory(p, "sport"));
 
   const faqItems = useMemo(() => {
     const faqs = fields?.faqs;
@@ -442,7 +777,7 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
       .map((f, i) => ({
         id: `faq-${i}`,
         title: f?.question ?? "",
-        content: <p className="body whitespace-pre-line">{f?.answer ?? ""}</p>,
+        content: f?.answer ?? "",
       }));
   }, [fields?.faqs]);
 
@@ -467,10 +802,10 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
       </section>
 
       {/* ── FIND YOUR PERFECT RENTAL SPACE ── */}
-      <section id="rent-a-space" className="bg-gmcc-grey-light/40 py-12 sm:py-16">
+      <section id="rent-a-space" className="py-10">
         <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-8 max-w-3xl">
-            <h2 className="h1 mb-3">
+          <div className="mb-8 max-w-6xl">
+            <h2 className="h2 mb-3">
               {fields?.roomRentalResultsHeader ?? "Find Your Perfect Rental Space"}
             </h2>
             {fields?.roomRentalResultsBody && (
@@ -487,18 +822,38 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
 
       {/* ── BIRTHDAY PARTY PACKAGES ── */}
       <section id="birthday-packages" className="py-12 sm:py-16">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-3">
-            <span className="eyebrow">Party Packages</span>
+        <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip">
+          {/* Top wave (above navy body; not covered by background) */}
+          <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
+            <svg
+              viewBox="0 0 1440 120"
+              className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              <path
+                d="
+                  M-20,110
+                  C750,-90  800,120  1200,80
+                  S1420,0 1460,0
+                  L1460,0 L-20,0 Z
+                "
+                transform="translate(0 120) scale(1 -1)"
+                fill="var(--gmcc-navy)"
+              />
+            </svg>
           </div>
-          <div className="mb-8 max-w-3xl">
-            <h2 className="h1 mb-3">Birthday Party Packages</h2>
+        </div>
+        <div className="relative z-0 -mt-px bg-gmcc-navy text-white">
+        <div className="mx-auto max-w-6xl px-6 py-12">
+          <div className="mb-4 max-w-6xl">
+            <h2 className="h2 text-white">Birthday Party Packages</h2>
             {fields?.birthdayPackagesBody && (
-              <p className="body whitespace-pre-line">{fields.birthdayPackagesBody}</p>
+              <p className="body whitespace-pre-line text-neutral-200 mt-4">{fields.birthdayPackagesBody}</p>
             )}
           </div>
           {fields?.allPackagesInclude && (
-            <div className="mb-8 rounded-xl bg-gmcc-blue-light/30 px-6 py-4">
+            <div className="mb-8 rounded-xl bg-white px-6 py-4">
               <p className="body">
                 <span className="font-semibold text-gmcc-navy">All packages include: </span>
                 {fields.allPackagesInclude}
@@ -506,55 +861,78 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
             </div>
           )}
           {birthdayPackages.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {birthdayPackages.map((pkg, i) => (
-                <PartyPackageCard key={pkg.slug ?? i} pkg={pkg} />
-              ))}
-            </div>
+            <PartyPackagesByCenterGrid packages={birthdayPackages} />
           ) : (
             <p className="body text-gmcc-grey">Birthday packages coming soon.</p>
           )}
-          <div className="mt-10 rounded-2xl border-2 border-dashed border-gmcc-navy/30 p-8 text-center">
-            <p className="h2 mb-4">Contact Us for Custom Packages</p>
-            <a href="#contact" className="btn btn-primary">
-              Get in Touch
-            </a>
-          </div>
+        </div>
+        </div>
+
+        {/* Bottom wave (below navy body) */}
+        <div className="relative z-[1] pointer-events-none -mt-px w-full overflow-hidden leading-none">
+          <svg
+            viewBox="0 0 390 120"
+            className="block h-14 w-full text-gmcc-navy md:hidden"
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <path
+              d="
+            M0,98
+            C78,62 135,54 195,74
+            C255,96 322,88 390,60
+            L390,0 L0,0 Z
+          "
+              fill="currentColor"
+            />
+          </svg>
+
+          <svg
+            viewBox="0 0 1440 120"
+            className="hidden h-16 w-full text-gmcc-navy md:block"
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <path
+              d="
+            M0,110
+            C300,-50  500,120  800,100
+            S1000,0 1440,0
+            L1440,0 L0,0 Z
+          "
+              fill="currentColor"
+            />
+          </svg>
         </div>
       </section>
 
       {/* ── SPORTS EVENTS ── */}
-      <section id="sports-events" className="bg-gmcc-navy py-12 sm:py-16">
+      <section id="sports-events" className="pb-10">
         <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-3">
-            <span className="eyebrow text-white/60">Sports Events</span>
-          </div>
-          <div className="mb-8 max-w-3xl">
-            <h2 className="h1 mb-3 text-white">Sports Events</h2>
+          <div className="mb-8 max-w-6xl">
+            <h2 className="h2 mb-3 text-gmcc-navy">Sports Events</h2>
             {fields?.sportsPackagesBody && (
-              <p className="body whitespace-pre-line text-white/80">{fields.sportsPackagesBody}</p>
+              <p className="body whitespace-pre-line text-neutral-700">{fields.sportsPackagesBody}</p>
             )}
           </div>
           {sportsPackages.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {sportsPackages.map((pkg, i) => (
-                <div key={pkg.slug ?? i} className="card stack-4 flex flex-col">
-                  <PartyPackageCard pkg={pkg} />
-                </div>
+                <SportsPartyPackageCard key={pkg.slug ?? i} pkg={pkg} />
               ))}
             </div>
           ) : (
-            <p className="body text-white/70">Sports event packages coming soon.</p>
+            <p className="body text-gmcc-navy">Sports event packages coming soon.</p>
           )}
         </div>
       </section>
 
       {/* ── LOCATION OFFERINGS ── */}
       {(fields?.locationOfferingsHeader || fields?.offeringsByCenter) && (
-        <section className="py-12 sm:py-16">
+        <section className="pb-10 pt-10 sm:pb-16">
           <div className="mx-auto max-w-6xl px-6">
-            <div className="mb-8 max-w-3xl">
-              <h2 className="h1 mb-3">
+            <div className="mb-8 max-w-6xl">
+              <h2 className="h2 mb-3">
                 {fields?.locationOfferingsHeader ?? "See What Each Location has to Offer"}
               </h2>
               {fields?.locationOfferingsBody && (
@@ -567,11 +945,35 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
       )}
 
       {/* ── START PLANNING / CONTACT ── */}
-      <section id="contact" className="bg-gmcc-navy py-12 sm:py-16">
+      <section id="contact" className="">
+      <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip">
+          {/* Top wave (above navy body; not covered by background) */}
+          <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
+            <svg
+              viewBox="0 0 1440 120"
+              className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              <path
+                d="
+                  M-20,110
+                  C750,-90  800,120  1200,80
+                  S1420,0 1460,0
+                  L1460,0 L-20,0 Z
+                "
+                transform="translate(0 120) scale(1 -1)"
+                fill="var(--gmcc-navy)"
+              />
+            </svg>
+          </div>
+        </div>
+        <div className="relative z-0 -mt-px bg-gmcc-navy text-white ">
+        <div className="mx-auto max-w-6xl px-6 py-12">
         {/* ── FAQs ── */}
       {faqItems.length > 0 && (
           <div className="mx-auto max-w-3xl px-6">
-            <h2 className="h1 mb-8 text-center text-white">FAQs</h2>
+            <h2 className="h2 mb-8 text-center text-white">FAQs</h2>
             <Accordion variant="onDark" items={faqItems.map((item) => ({
               id: item.id,
               title: item.title,
@@ -579,18 +981,20 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
             }))} allowMultiple />
           </div>
       )}
+      </div>
+      </div>
       </section>
 
-      <section className="py-12 sm:py-16">
+      <section className="pt-16 pb-10 sm:pt-16">
       <div className="mx-auto max-w-3xl px-6 text-center">
-          <h2 className="h1 mb-4 text-gmcc-navy">
+          <h2 className="h2 mb-4 text-gmcc-navy">
             {fields?.contactHeader ?? "Start Planning Your Event"}
           </h2>
           {fields?.contactSubheader && (
             <p className="body mb-8 text-neutral-700 whitespace-pre-line">{fields.contactSubheader}</p>
           )}
-          <a href="/contact" className="btn btn-hero px-8 py-3 text-base">
-            Contact Us About Your Event
+          <a href="/contact" className="btn btn-primary">
+            Contact us about your event
           </a>
         </div>
     </section>

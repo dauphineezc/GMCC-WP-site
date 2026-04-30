@@ -1,5 +1,8 @@
 // src/app/about/page.tsx
 import UtilityMenu from "@/components/nav/utilityMenu";
+import PhotoWaveHeader from "@/components/photoWaveHeader";
+import { TestimonialSection, normalizeTestimonials } from "@/components/testimonials";
+import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
 
 // ---- Types ----
@@ -108,19 +111,6 @@ function buildStats(stats: AboutFieldsData["stats"]): Stat[] {
     .filter((s) => (s.value || s.label || s.context) && (s.value || s.label));
 }
 
-function normalizeTestimonials(testimonials: AboutFieldsData["testimonials"]) {
-  return (
-    testimonials?.nodes?.map((t) => ({
-      id: t?.id ?? "",
-      quote: t?.testimonialFields?.quote ?? "",
-      personName: t?.testimonialFields?.personName ?? "",
-      personContext: t?.testimonialFields?.personContext ?? "",
-      photoUrl: t?.testimonialFields?.photo?.node?.sourceUrl ?? null,
-      photoAlt: t?.testimonialFields?.photo?.node?.altText ?? "",
-    })) ?? []
-  );
-}
-
 /**
  * NOTE: Your original query was missing a closing brace after stats {...}.
  * That will throw WPGraphQL 500 Syntax Error.
@@ -131,18 +121,8 @@ const ABOUT_PAGE_QUERY = /* GraphQL */ `
       title
       uri
 
+      ${PAGE_HERO_FIELDS_GRAPHQL}
       aboutPageFields {
-        header
-        purposeStatement
-        heroCta {
-          nodes {
-            ... on ContentNode {
-              uri
-            }
-          }
-        }
-        heroImage { node { sourceUrl altText } }
-
         impactHeader
         stats {
           stat1 { statValue statLabel statContext }
@@ -227,11 +207,7 @@ export default async function AboutPage() {
   const data = await wpFetch<AboutPageFields>(ABOUT_PAGE_QUERY, { uri: "/about" });
   const f = data?.page?.aboutPageFields;
 
-  const header = f?.header ?? "";
-  const purposeStatement = f?.purposeStatement ?? "";
-  const heroCtaNode = f?.heroCta?.nodes?.find((n) => !!n?.uri) ?? null;
-  const heroCta = heroCtaNode?.uri ?? "";
-  const heroCtaLabel = "Get involved";
+  const heroProps = resolvePhotoWaveHeaderProps(data?.page, "Get Involved");
 
   const impactHeader = f?.impactHeader ?? "Our Community Impact";
   const stats = buildStats(f?.stats);
@@ -271,87 +247,40 @@ export default async function AboutPage() {
   const sponsorImageAlt = f?.sponsorImage?.node?.altText ?? "";
 
   const testimonialsHeader = f?.testimonialsHeader ?? "";
-  const testimonials = normalizeTestimonials(f?.testimonials);
+  const testimonials = normalizeTestimonials(f?.testimonials?.nodes ?? []);
 
   const hasStats = stats.length > 0;
 
   return (
     <main>
       {/* HERO */}
-      <section className="relative mb-8 overflow-hidden md:mt-28">
-        <div
-          className="absolute inset-0"
-          aria-hidden
-          style={
-            f?.heroImage?.node?.sourceUrl
-              ? {
-                  backgroundImage: `url(${f.heroImage.node.sourceUrl})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }
-              : undefined
-          }
+      <PhotoWaveHeader
+          title={heroProps.title ?? ""}
+          subheader={heroProps.subheader ?? null}
+          imageUrl={heroProps.imageUrl ?? null}
+          ctas={heroProps.ctas}
+          waveFillClassName="text-gmcc-navy"
+          waveEdgeClassName="bg-gmcc-navy"
+          flushBottom={true}
         />
-
-        {/* Left-side navy overlay */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)" 
-          }}
-          aria-hidden="true"
-        />
-
-        <div className="absolute inset-0" aria-hidden />
-
-        <div className="relative z-20 max-w-6xl px-8 pb-20 pt-10 md:py-16 md:px-12">
-
-          <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
-            {header || data?.page?.title || "About"}
-          </h1>
-
-          {purposeStatement ? (
-            <p className="mt-6 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">{purposeStatement}</p>
-          ) : null}
-
-          {heroCta && heroCtaLabel ? (
-            <div className="btn btn-secondary mt-8 justify-center mx-auto">
-              <a href={heroCta} >
-                {heroCtaLabel}
-              </a>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="pointer-events-none absolute md:bottom-[-32px] bottom-[-22px] left-0 z-30 w-full overflow-hidden leading-none">
-          <svg
-            viewBox="0 -60 1440 180"
-            className="block h-16 w-full origin-center text-gmcc-navy [transform:scale(-1,-1)] md:h-24"
-            preserveAspectRatio="none"
-          >
-            <path d="M0,110 C300,-50 500,120 800,100 S1000,0 1440,0 L1440,0 L0,0 Z" fill="currentColor" />
-          </svg>
-        </div>
-      </section>
 
       {/* IMPACT STATS */}
-      <section className="pt-0">
+      <section className="pt-16 bg-gmcc-navy">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="text-center text-3xl font-extrabold text-white md:text-4xl z-20 relative mb-8">{impactHeader}</h2>
+          <h2 className="h2 text-center text-white z-20 relative">{impactHeader}</h2>
         </div>
 
         {hasStats ? (
           <div className="relative mt-8">
             {/* Navy backdrop behind the teal stat cards */}
-            <div aria-hidden className="absolute inset-x-0 bottom-0 h-389 bg-gmcc-navy md:h-130" />
+            <div aria-hidden className="absolute inset-x-0 bottom-0" />
 
             <div className="relative z-10 mx-auto max-w-6xl px-6 pb-10">
               <div className="grid gap-6 md:grid-cols-4">
                 {stats.map((s, idx) => (
                   <div key={idx} className="bg-gmcc-teal rounded-2xl shadow-lg p-6 text-center md:text-left">
                     <div className="text-4xl font-bold text-white">{s.value}</div>
-                    <div className="mb-3 mt-1 text-2xl font-bold text-white">{s.label}</div>
+                    <div className="mb-3 mt-1 text-xl font-bold text-white">{s.label}</div>
                     {s.context ? <div className="text-sm text-neutral-200">{s.context}</div> : null}
                   </div>
                 ))}
@@ -362,8 +291,8 @@ export default async function AboutPage() {
       </section>
 
       {/* BODY SECTION 1 (image left, text right) */}
-      <section className="mx-auto max-w-6xl px-6 py-8 md:py-12 mt-4">
-        <h2 className="text-center text-3xl font-extrabold text-gmcc-navy md:text-4xl mb-8">{mainContentHeader}</h2>
+      <section className="mx-auto max-w-6xl px-6 py-8 md:py-16 mt-4 mb-4">
+        <h2 className="h2 text-center mb-8">{mainContentHeader}</h2>
         <div className="grid items-center gap-10 md:grid-cols-2">
           <div className="order-2 overflow-hidden bg-neutral-100 md:order-1">
             <div className="aspect-[16/9] w-full">
@@ -373,7 +302,7 @@ export default async function AboutPage() {
 
           <div className="order-1 md:order-2">
             {bodySubheading1 ? (
-              <h3 className="text-xl font-bold text-gmcc-navy md:text-2xl">{bodySubheading1}</h3>
+              <h3 className="h3 font-semibold">{bodySubheading1}</h3>
             ) : null}
             {body1 ? <p className="mt-4 leading-relaxed text-neutral-700">{body1}</p> : null}
           </div>
@@ -383,7 +312,7 @@ export default async function AboutPage() {
         <div className="grid items-center gap-10 mt-8 md:grid-cols-2">
           <div className="md:order-1">
             {bodySubheading2 ? (
-              <h3 className="text-xl font-bold text-gmcc-navy md:text-2xl">{bodySubheading2}</h3>
+              <h3 className="h3 font-semibold">{bodySubheading2}</h3>
             ) : null}
             {body2 ? <p className="mt-4 leading-relaxed text-neutral-700">{body2}</p> : null}
           </div>
@@ -417,12 +346,12 @@ export default async function AboutPage() {
         {/* (Accessibility: keep alt available if needed elsewhere) */}
         <span className="sr-only">{annualBgAlt}</span>
 
-        <div className="relative mx-auto max-w-6xl px-6 py-8 text-center text-white md:py-8">
-          <h2 className="text-3xl font-extrabold md:text-4xl mt-4">{annualHeader}</h2>
-          {annualSubtext ? <p className="mx-auto mt-4 max-w-2xl text-sm text-neutral-200">{annualSubtext}</p> : null}
+        <div className="relative mx-auto max-w-6xl px-6 py-8 text-center text-white md:py-12">
+          <h2 className="h2 text-white mt-6">{annualHeader}</h2>
+          {annualSubtext ? <p className="mx-auto mt-6 max-w-2xl text-sm text-neutral-200">{annualSubtext}</p> : null}
 
           {/* Annual report link */}
-          <div className="mt-10 mb-18 flex justify-center">
+          <div className="mt-8 mb-20 flex justify-center">
             <a
               href={annualReportUrl ?? "#"}
               target="_blank"
@@ -471,10 +400,10 @@ export default async function AboutPage() {
       </section>
 
       {/* GET INVOLVED */}
-      <section className="mx-auto max-w-6xl px-6 mt-4">
-        <h2 className="text-center text-3xl font-extrabold text-gmcc-navy md:text-4xl">{getInvolvedHeader}</h2>
+      <section className="mx-auto max-w-6xl px-6 pt-12">
+        <h2 className="h2 text-center">{getInvolvedHeader}</h2>
         {getInvolvedBody ? (
-          <p className="mx-auto mt-4 max-w-2xl text-center text-neutral-700">{getInvolvedBody}</p>
+          <p className="mx-auto mt-4 max-w-4xl text-center text-neutral-700">{getInvolvedBody}</p>
         ) : null}
 
         <div className="mt-6 grid gap-8 md:grid-cols-3">
@@ -517,21 +446,13 @@ export default async function AboutPage() {
       </section>
 
       {/* TESTIMONIALS */}
-      {testimonialsHeader || testimonials.length ? (
-        <section className="mx-auto max-w-6xl px-6 pb-8 pt-8">
+      {testimonialsHeader || testimonials?.length ? (
+        <section className="mx-auto max-w-6xl px-6 pb-12 pt-16 mt-4">
           {testimonialsHeader ? (
-            <h2 className="text-center text-xl font-extrabold text-gmcc-navy md:text-2xl mt-8">{testimonialsHeader}</h2>
+            <h2 className="h2 text-center">{testimonialsHeader}</h2>
           ) : null}
 
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
-            {testimonials.slice(0, 2).map((t) => (
-              <div key={t.id} className="card p-8">
-                <div className="text-sm leading-relaxed text-neutral-700">{t.quote}</div>
-                <div className="mt-6 text-sm font-bold text-gmcc-navy">{t.personName}</div>
-                {t.personContext ? <div className="text-xs text-neutral-500">{t.personContext}</div> : null}
-              </div>
-            ))}
-          </div>
+          <TestimonialSection testimonials={testimonials ?? []} />
         </section>
       ) : null}
     </main>

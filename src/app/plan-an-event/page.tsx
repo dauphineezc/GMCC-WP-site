@@ -96,6 +96,7 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
               }
             }
             capacity
+            price
             roomAmenities
             gallery {
               photo1 {
@@ -132,8 +133,15 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
         ... on PartyPackage {
           title
           slug
+          featuredImage {
+            node {
+              sourceUrl
+              altText
+            }
+          }
           partyPackageFields {
             name
+            photo { node { sourceUrl altText } }
             description
             price
             center {
@@ -176,6 +184,7 @@ export type RoomData = {
     description?: string | null;
     center?: { nodes?: CenterRef[] | null } | null;
     capacity?: string | null;
+    price?: string | null;
     roomAmenities?: string[] | string | null;
     gallery?: {
       photo1?: MaybeImage;
@@ -189,8 +198,10 @@ export type RoomData = {
 export type PartyPackageData = {
   title?: string | null;
   slug?: string | null;
+  featuredImage?: MaybeImage;
   partyPackageFields?: {
     name?: string | null;
+    photo?: MaybeImage;
     description?: string | null;
     price?: string | null;
     center?: { nodes?: CenterRef[] | null } | null;

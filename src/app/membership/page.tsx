@@ -7,7 +7,7 @@ import ExploreMembershipsClient, {
   ProgramArea,
 } from "./exploreMembershipsClient";
 import type { MembershipPageFields, SerializedAmenity } from "./exploreMembershipsClient";
-import { extractAmenitySlugs, fetchAmenitiesWithImages } from "@/lib/amenities";
+import { fetchAmenitiesWithImages } from "@/lib/amenities";
 import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
@@ -19,6 +19,9 @@ const EXPLORE_MEMBERSHIPS_QUERY = `
       nodes {
         name
         slug
+        audienceFields {
+          programAreas
+        }
       }
     }
 
@@ -53,7 +56,10 @@ const EXPLORE_MEMBERSHIPS_QUERY = `
             }
           }
           audience {
-            nodes { name slug }
+            nodes {
+              name
+              slug
+            }
           }
           programArea {
             nodes { name slug }
@@ -80,6 +86,14 @@ const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
             ... on Center {
               slug
               title
+              centersFields {
+                amenities {
+                  nodes {
+                    name
+                    slug
+                  }
+                }
+              }
             }
           }
         }
@@ -89,51 +103,66 @@ const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
         quizDescription
         benefitsHeader
         benefitsDescription
-        amenities {
-          nodes {
-            name
-            slug
-            ... on Amenity {
-              amenitiesFields {
-                amenityImage1 {
-                  node {
-                    sourceUrl
-                    altText
-                  }
-                }
-                center1 {
-                  nodes {
-                    ... on Center {
-                      title
-                      slug
-                    }
-                  }
-                }
-                relevantLink
-                linkLabel
-                isService
-                additionalInformation
-                additionalImage {
-                  node {
-                    sourceUrl
-                    altText
-                  }
-                }
-              }
-            }
-          }
-        }
+        
         financialAssistanceHeader
         financialAssistanceSubheader
         financialAssistanceDescription
-        financialAssistanceCta {
-          cta
-          ctaLabel
+        financialAssistanceCtas {
+          estimatorLabel
+          applicationCtaLabel
+          applicationPdf { node { sourceUrl mediaItemUrl title } }
         }
         contactHeader
         contactDescription
 
+        showCurrentPromotion
+        currentPromotion {
+          nodes{
+            ... on Campaign {
+              id
+              title
+              uri
+              featuredImage {
+                node { sourceUrl altText }
+              }
+              campaignFields {
+                headline
+                body
+                primaryCta { primaryCtaLabel primaryCtaUrl }
+                secondaryCta { secondaryCtaLabel secondaryCtaUrl }
+                backgroundColor
+                textColor
+                primaryCtaButtonColor
+                secondaryCtaButtonColor
+              }
+            }
+          }
+        }
+
         campaign {
+          nodes{
+            ... on Campaign {
+              id
+              title
+              uri
+              featuredImage {
+                node { sourceUrl altText }
+              }
+              campaignFields {
+                headline
+                body
+                primaryCta { primaryCtaLabel primaryCtaUrl }
+                secondaryCta { secondaryCtaLabel secondaryCtaUrl }
+                backgroundColor
+                textColor
+                primaryCtaButtonColor
+                secondaryCtaButtonColor
+              }
+            }
+          }
+        }
+
+        healthy100Challenge {
           nodes{
             ... on Campaign {
               id
@@ -164,6 +193,46 @@ function splitLines(val: unknown): string[] {
   return typeof val === "string"
     ? val.split("\n").map((s) => s.trim()).filter(Boolean)
     : [];
+}
+
+/**
+ * ACF checkbox on audience taxonomy — WPGraphQL may return string[], a single string, or related objects.
+ */
+function normalizeAudienceProgramAreas(raw: unknown): string[] {
+  if (raw == null) return [];
+  if (Array.isArray(raw)) {
+    const out: string[] = [];
+    for (const item of raw) {
+      if (typeof item === "string" && item.trim()) {
+        out.push(item.trim());
+        continue;
+      }
+      if (item && typeof item === "object") {
+        const o = item as Record<string, unknown>;
+        if (typeof o.slug === "string" && o.slug.trim()) {
+          out.push(o.slug.trim());
+          continue;
+        }
+        if (typeof o.name === "string" && o.name.trim()) {
+          out.push(o.name.trim());
+        }
+      }
+    }
+    return out;
+  }
+  if (typeof raw === "string") {
+    const s = raw.trim();
+    if (!s) return [];
+    try {
+      const parsed = JSON.parse(s) as unknown;
+      if (Array.isArray(parsed) || (parsed && typeof parsed === "object")) {
+        return normalizeAudienceProgramAreas(parsed);
+      }
+    } catch {
+      return s.split(",").map((x) => x.trim()).filter(Boolean);
+    }
+  }
+  return [];
 }
 
 function mapMembershipNode(wp: any): Membership {
@@ -215,16 +284,38 @@ function mapMembershipNode(wp: any): Membership {
   };
 }
 
+type MediaRef = {
+  sourceUrl?: string | null;
+  mediaItemUrl?: string | null;
+  title?: string | null;
+} | null;
+
+/** Shape returned by WPGraphQL for ACF file fields (nested `node`) or a flat media object. */
+type MediaFieldInput = { node?: MediaRef } | MediaRef | undefined;
+
+/** ACF file fields often return `{ node: MediaItem }` from WPGraphQL; unwrap when present. */
+function mediaHref(m: MediaFieldInput): string {
+  if (m && typeof m === "object" && "node" in m && m.node) {
+    return mediaHref(m.node);
+  }
+  const flat = m as MediaRef | undefined;
+  const u = flat?.sourceUrl ?? flat?.mediaItemUrl;
+  return typeof u === "string" ? u.trim() : "";
+}
+
 function mapPageFields(wp: any): MembershipPageFields {
   const f = wp?.membershipPageFields ?? {};
 
   const centers =
-    f.centers?.nodes?.map((n: any) => ({
-      slug: (n?.slug as string) ?? "",
-      label: (n?.title as string) ?? "",
-    })).filter((c: any) => c.slug && c.label) ?? [];
-
-  const amenitySlugs: string[] = extractAmenitySlugs(f.amenities?.nodes);
+    f.centers?.nodes?.map((n: any) => {
+      const slug = (n?.slug as string) ?? "";
+      const label = (n?.title as string) ?? "";
+      const amenityNodes = n?.centersFields?.amenities?.nodes ?? [];
+      const amenitySlugs = amenityNodes
+        .map((an: any) => an?.slug as string)
+        .filter(Boolean);
+      return { slug, label, amenitySlugs };
+    }).filter((c: any) => c.slug && c.label) ?? [];
 
   return {
     quizCta: f.quizCta?.cta && f.quizCta?.ctaLabel
@@ -240,19 +331,22 @@ function mapPageFields(wp: any): MembershipPageFields {
     quizDescription: (f.quizDescription as string) ?? null,
     benefitsHeader: (f.benefitsHeader as string) ?? null,
     benefitsDescription: (f.benefitsDescription as string) ?? null,
-    amenitySlugs,
     financialAssistanceHeader: (f.financialAssistanceHeader as string) ?? null,
     financialAssistanceSubheader: (f.financialAssistanceSubheader as string) ?? null,
     financialAssistanceDescription: (f.financialAssistanceDescription as string) ?? null,
-    financialAssistanceCta: f.financialAssistanceCta
+    financialAssistanceCtas: f.financialAssistanceCtas
       ? {
-          url: (f.financialAssistanceCta.cta as string) ?? "",
-          label: (f.financialAssistanceCta.ctaLabel as string) ?? "",
+          estimatorLabel: (f.financialAssistanceCtas.estimatorLabel as string) ?? "",
+          applicationCtaLabel: (f.financialAssistanceCtas.applicationCtaLabel as string) ?? "",
+          applicationPdf: mediaHref((f.financialAssistanceCtas.applicationPdf as MediaRef)) ?? null,
         }
       : null,
     contactHeader: (f.contactHeader as string) ?? null,
     contactDescription: (f.contactDescription as string) ?? null,
+    showCurrentPromotion: (f.showCurrentPromotion as boolean) ?? false,
+    currentPromotion: f.currentPromotion?.nodes?.[0] ?? null,
     campaign: f.campaign?.nodes?.[0] ?? null,
+    healthy100Challenge: f.healthy100Challenge?.nodes?.[0] ?? null,
   };
 }
 
@@ -266,10 +360,16 @@ export default async function ExploreMembershipsPage() {
   const hero = resolvePhotoWaveHeaderProps(heroPage, "Membership");
 
   const audiences: Audience[] =
-    data?.audiences?.nodes?.map((n: any) => ({
-      name: n?.name as string,
-      slug: n?.slug as string,
-    })).filter(Boolean) ?? [];
+    data?.audiences?.nodes
+      ?.map((n: any) => {
+        const keys = normalizeAudienceProgramAreas(n?.audienceFields?.programAreas);
+        return {
+          name: n?.name as string,
+          slug: n?.slug as string,
+          ...(keys.length ? { quizProgramAreaKeys: keys } : {}),
+        };
+      })
+      .filter((a: Audience) => a.name && a.slug) ?? [];
 
   const programAreas: ProgramArea[] =
     data?.programAreas?.nodes?.map((n: any) => ({
@@ -283,11 +383,11 @@ export default async function ExploreMembershipsPage() {
   const fields = mapPageFields(pageData?.page);
 
   const fallbackCenters = [
-    { slug: "community-center", label: "Community Center" },
-    { slug: "tennis-center", label: "Tennis Center" },
-    { slug: "coleman-family-center", label: "Coleman Family Center" },
-    { slug: "north-family-center", label: "North Family Center" },
-    { slug: "corporate-wellness", label: "Corporate Wellness" },
+    { slug: "community-center", label: "Community Center", amenitySlugs: [] as string[] },
+    { slug: "tennis-center", label: "Tennis Center", amenitySlugs: [] as string[] },
+    { slug: "coleman-family-center", label: "Coleman Family Center", amenitySlugs: [] as string[] },
+    { slug: "north-family-center", label: "North Family Center", amenitySlugs: [] as string[] },
+    { slug: "corporate-wellness", label: "Corporate Wellness", amenitySlugs: [] as string[] },
   ];
 
   const sourceCenters = fields.centers.length > 0 ? fields.centers : fallbackCenters;
@@ -308,7 +408,10 @@ export default async function ExploreMembershipsPage() {
 
   const centerLinks = [...orderedCenters, ...remainingCenters];
 
-  const amenitiesWithImages = await fetchAmenitiesWithImages(fields.amenitySlugs);
+  const allAmenitySlugs = [
+    ...new Set(fields.centers.flatMap((c) => c.amenitySlugs)),
+  ];
+  const amenitiesWithImages = await fetchAmenitiesWithImages(allAmenitySlugs);
 
   const serializedAmenities: SerializedAmenity[] = amenitiesWithImages.map((a) => ({
     name: a.name,
@@ -316,6 +419,8 @@ export default async function ExploreMembershipsPage() {
     description: a.description ?? null,
     relevantLink: a.relevantLink ?? null,
     linkLabel: a.linkLabel ?? null,
+    isService: a.isService ?? false,
+    isFeatured: a.isFeatured ?? false,
     defaultImage: a.defaultImage,
     centerImageCandidates: a.centerImageCandidates.map((c) => ({
       centerSlug: c.centerSlug,

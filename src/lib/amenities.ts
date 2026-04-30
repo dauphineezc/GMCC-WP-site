@@ -23,6 +23,7 @@ const AMENITIES_FIELDS_BLOCK = `
         relevantLink
         linkLabel
         isService
+        isFeatured
         additionalInformation
         additionalImage {
           node {
@@ -86,6 +87,7 @@ export function toAmenityDisplayForCenter(
       return {
         name: a.name,
         slug: a.slug,
+        isFeatured: a.isFeatured ?? false,
         description: a.description ?? null,
         relevantLink: a.relevantLink ?? null,
         linkLabel: a.linkLabel ?? null,
@@ -107,6 +109,7 @@ export function toAmenityDisplayDefault(
       const row: AmenityDisplay = {
         name: a.name,
         slug: a.slug,
+        isFeatured: a.isFeatured ?? false,
         description: a.description ?? null,
         relevantLink: a.relevantLink ?? null,
         linkLabel: a.linkLabel ?? null,
@@ -128,7 +131,8 @@ export type AmenityWithImage = {
   description?: string | null;
   relevantLink?: string | null;
   linkLabel?: string | null;
-
+  isService?: boolean;
+  isFeatured?: boolean;
   // default/fallback image (old behavior)
   defaultImage: { sourceUrl: string; altText: string | null } | null;
 
@@ -202,6 +206,20 @@ function mapAmenityFieldsToWithImage(
 
   if (!defaultImage && !centerImageCandidates.length) return null;
 
+  const rawIsService = (af as any).isService;
+  const isService =
+    rawIsService === true ||
+    rawIsService === 1 ||
+    (typeof rawIsService === "string" &&
+      ["true", "1", "yes"].includes(rawIsService.trim().toLowerCase()));
+
+  const rawIsFeatured = (af as any).isFeatured;
+  const isFeatured =
+    rawIsFeatured === true ||
+    rawIsFeatured === 1 ||
+    (typeof rawIsFeatured === "string" &&
+      ["true", "1", "yes"].includes(rawIsFeatured.trim().toLowerCase()));
+
   let description: string | null = amenity.description ?? null;
   if (options?.includeAdditionalInformationInDescription) {
     const addl = (af as any).additionalInformation;
@@ -219,6 +237,8 @@ function mapAmenityFieldsToWithImage(
     description,
     relevantLink: (af as any).relevantLink ?? null,
     linkLabel: (af as any).linkLabel ?? null,
+    isService,
+    isFeatured,
     defaultImage,
     centerImageCandidates,
   };

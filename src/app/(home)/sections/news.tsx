@@ -62,7 +62,7 @@ export default function NewsSection({
   return (
     <section className="relative overflow-hidden pb-0 pt-16 pb-10">
       <div className="mx-auto max-w-6xl px-4">
-        <h2 className="h2 tracking-wide text-gmcc-navy text-3xl text-center">
+        <h2 className="h2 text-center">
           {heading}
         </h2>
 
@@ -126,7 +126,7 @@ export default function NewsSection({
             <div className="grid h-full grid-cols-1 bg-gmcc-navy">
 
               <div className="col-span-1 flex h-full flex-col p-6">
-                <div className="text-3xl font-semibold leading-snug text-white line-clamp-2">
+                <div className="text-2xl font-semibold leading-snug text-white line-clamp-2">
                   Subscribe to <span className='text-italic'>Greater Life</span>
                 </div>
 

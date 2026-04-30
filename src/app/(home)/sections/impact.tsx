@@ -170,12 +170,12 @@ export default function ImpactSection({
 
             <div ref={statsRef} className="relative z-10 grid w-full gap-8 px-6 pb-6 md:grid-cols-4">
               {stats.slice(0, 4).map((s, idx) => (
-                <div key={idx} className="bg-gmcc-teal rounded-2xl shadow-lg p-6 text-center md:text-left">
+                <div key={idx} className="bg-gmcc-teal rounded-2xl shadow-lg p-6 justify-start md:text-left">
                   <div className="text-4xl font-bold text-white">
                     <AnimatedStat value={s.value || ""} isInView={isInView} />
                   </div>
                   <div className="mb-4 mt-1 text-2xl font-bold text-white">{s.label}</div>
-                  {s.context ? <div className="text-sm text-neutral-200 text-center">{s.context}</div> : null}
+                  {s.context ? <div className="text-sm text-neutral-200 justify-start">{s.context}</div> : null}
                 </div>
               ))}
             </div>
@@ -185,7 +185,7 @@ export default function ImpactSection({
         {/* Content + image */}
         <div className="grid gap-6 md:grid-cols-2 md:items-start pt-8">
           <div className="flex flex-col items-center text-center md:items-start md:text-left">
-            <h2 className="h2 mt-8 mb-0 text-3xl font-semibold tracking-wide text-gmcc-navy">{heading}</h2>
+            <h2 className="h2 mt-8 mb-0">{heading}</h2>
 
             {body ? <p className="mt-4 text-base leading-relaxed text-neutral-700">{body}</p> : null}
 

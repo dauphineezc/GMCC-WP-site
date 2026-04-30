@@ -35,6 +35,8 @@ const AMENITY_BY_SLUG_QUERY = `
             altText
           }
         }
+        relevantLink
+        linkLabel
       }
     }
   }
@@ -175,8 +177,8 @@ export default async function AmenityPage(props: AmenityPageProps) {
     }
   }
 
-  // Use description or additionalInformation for the description text
-  const description = amenity.description || af.additionalInformation || null;
+  // Keep primary description separate from additional details.
+  const description = amenity.description || null;
 
   // Strip HTML tags from description if needed
   const stripHtml = (html: string) => {
@@ -185,6 +187,10 @@ export default async function AmenityPage(props: AmenityPageProps) {
   };
 
   const cleanDescription = description ? stripHtml(description) : null;
+  const cleanAdditionalInformation = af.additionalInformation
+    ? stripHtml(af.additionalInformation)
+    : null;
+  const cleanLinkLabel = af.linkLabel ? stripHtml(af.linkLabel) : null;
 
   return (
     <main>
@@ -221,11 +227,22 @@ export default async function AmenityPage(props: AmenityPageProps) {
                 <p className="whitespace-pre-line">{cleanDescription}</p>
               </article>
             )}
-            {amenity.amenitiesFields?.additionalInformation && (
-              <article className="prose prose-sm max-w-none sm:prose-base mt-8">
-                <h3 className="h3 text-base font-bold text-neutral-700 mb-3">Pickleball Demo Program:</h3>
-                <p className="whitespace-pre-line">{amenity.amenitiesFields.additionalInformation}</p>
+            {cleanAdditionalInformation && (
+              <article className="prose prose-sm max-w-none sm:prose-base">
+                <p className="whitespace-pre-line">{cleanAdditionalInformation}</p>
               </article>
+            )}
+            {af.relevantLink && cleanLinkLabel && (
+              <div>
+                <Link
+                  href={af.relevantLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gmcc-teal font-semibold hover:opacity-90 hover:underline underline-offset-2"
+                >
+                  {cleanLinkLabel}
+                </Link>
+              </div>
             )}
           </div>
           {/* RIGHT COLUMN: Image Carousel */}

@@ -1,4 +1,27 @@
 // src/lib/wp.ts
+
+/**
+ * WordPress / WPGraphQL sometimes returns upload paths as site-relative strings
+ * (e.g. `/wp-content/uploads/...`). Browsers resolve those against the Next.js
+ * origin, so backgrounds and <img> break unless we prefix the WP host.
+ */
+export function resolveWpMediaUrl(url: string | null | undefined): string | undefined {
+  if (url == null) return undefined;
+  const trimmed = String(url).trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith("//")) return trimmed;
+  if (trimmed.startsWith("/")) {
+    const endpoint = process.env.WP_GRAPHQL_ENDPOINT;
+    if (!endpoint) return trimmed;
+    try {
+      return `${new URL(endpoint).origin}${trimmed}`;
+    } catch {
+      return trimmed;
+    }
+  }
+  return trimmed;
+}
+
 const MAX_CONCURRENT_REQUESTS = Number(process.env.WP_GRAPHQL_MAX_CONCURRENCY ?? 4);
 const MAX_ATTEMPTS = Number(process.env.WP_GRAPHQL_MAX_ATTEMPTS ?? 5);
 const inFlightRequests = new Map<string, Promise<unknown>>();

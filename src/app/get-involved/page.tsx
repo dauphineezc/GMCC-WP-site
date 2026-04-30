@@ -2,6 +2,8 @@
 import HeaderImage from "@/components/headerImage";
 import { wpFetch } from "@/lib/wp";
 import GetInvolvedClient from "./getInvolvedClient";
+import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
+import PhotoWaveHeader from "@/components/photoWaveHeader";
 
 const GET_INVOLVED_PAGE_QUERY = /* GraphQL */ `
 query GetInvolvedPage($uri: ID!) {
@@ -10,16 +12,8 @@ query GetInvolvedPage($uri: ID!) {
     title
     slug
 
+    ${PAGE_HERO_FIELDS_GRAPHQL}
     getInvolvedPageFields {
-      heroImage {
-        node {
-          sourceUrl
-          altText
-        }
-        }
-
-      header
-      subheader
       impactBlurb
 
       volunteerGroup {
@@ -60,69 +54,23 @@ query GetInvolvedPage($uri: ID!) {
         sponsorCardSummary
         sponsorLongDescription
 
-        raceSponsorship {
-          raceSponsorshipSummary
-
-          race1 {
-            raceName
-            raceDetails
-          }
-          race2 {
-            raceName
-            raceDetails
-          }
-          race3 {
-            raceName
-            raceDetails
-          }
-          race4 {
-            raceName
-            raceDetails
-          }
-          race5 {
-            raceName
-            raceDetails
-          }
-
-          raceSponsorshipApplication
-          raceSponsorshipImage {
-            node {
-              sourceUrl
-              altText
-              mediaDetails {
-                width
-                height
-              }
+        sponsorImage {
+          node {
+            sourceUrl
+            altText
+            mediaDetails {
+              width
+              height
             }
           }
         }
-
-        leagueSponsorship {
-          leagueSponsorshipDetails
-          leagueSponsorshipApplication
-          leagueSponsorshipImage {
-            node {
-              sourceUrl
-              altText
-              mediaDetails {
-                width
-                height
-              }
-            }
-          }
-        }
-
-        centerSponsorship {
-          centerSponsorshipDetails
-          centerSponsorshipApplication
-          centerSponsorshipImage {
-            node {
-              sourceUrl
-              altText
-              mediaDetails {
-                width
-                height
-              }
+        sponsorApplication {
+          node {
+            sourceUrl
+            altText
+            mediaDetails {
+              width
+              height
             }
           }
         }
@@ -143,9 +91,11 @@ type MaybeImage = { node?: WPImageNode | null } | null;
 type Race = { raceName?: string | null; raceDetails?: string | null } | null;
 
 type GetInvolvedFields = {
-  heroImage?: MaybeImage;
-  header?: string | null;
-  subheader?: string | null;
+  heroFields?: {
+    heroHeader?: string | null;
+    heroSubheader?: string | null;
+    heroImage?: MaybeImage;
+  } | null;
   impactBlurb?: string | null;
 
   volunteerGroup?: {
@@ -167,29 +117,8 @@ type GetInvolvedFields = {
   sponsorGroup?: {
     sponsorCardSummary?: string | null;
     sponsorLongDescription?: string | null;
-
-    raceSponsorship?: {
-      raceSponsorshipSummary?: string | null;
-      race1?: Race;
-      race2?: Race;
-      race3?: Race;
-      race4?: Race;
-      race5?: Race;
-      raceSponsorshipApplication?: string | null;
-      raceSponsorshipImage?: MaybeImage;
-    } | null;
-
-    leagueSponsorship?: {
-      leagueSponsorshipDetails?: string | null;
-      leagueSponsorshipApplication?: string | null;
-      leagueSponsorshipImage?: MaybeImage;
-    } | null;
-
-    centerSponsorship?: {
-      centerSponsorshipDetails?: string | null;
-      centerSponsorshipApplication?: string | null;
-      centerSponsorshipImage?: MaybeImage;
-    } | null;
+    sponsorImage?: MaybeImage;
+    sponsorApplication?: string | null;
   } | null;
 };
 
@@ -205,9 +134,15 @@ export default async function GetInvolvedPage() {
   }>(GET_INVOLVED_PAGE_QUERY, { uri });
 
   const fields = data?.page?.getInvolvedPageFields ?? null;
-
+  const heroProps = resolvePhotoWaveHeaderProps(data?.page, "Get Involved");
   return (
     <main>
+        <PhotoWaveHeader
+          title={heroProps.title}
+          subheader={heroProps.subheader ?? null}
+          imageUrl={heroProps.imageUrl ?? null}
+          ctas={heroProps.ctas}
+        />
         <GetInvolvedClient fields={fields} />
     </main>
   );

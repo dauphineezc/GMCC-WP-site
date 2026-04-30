@@ -470,7 +470,7 @@ export default async function CenterPage(props: CenterPageProps) {
         subheader={heroSubheader}
         imageUrl={heroImageUrl}
         ctas={heroCtas.length > 0 ? heroCtas : undefined}
-        flushBottom
+        flushBottom={true}
         waveFillClassName="text-gmcc-navy"
         waveEdgeClassName="bg-gmcc-navy"
       />

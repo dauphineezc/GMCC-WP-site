@@ -14,12 +14,23 @@ type AmenitiesGridProps = {
 
 export default function AmenitiesGrid({ amenities, title = "What we offer", numCols = 3 }: AmenitiesGridProps) {
   const [selectedAmenity, setSelectedAmenity] = useState<AmenityDisplay | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
 
   if (!amenities || amenities.length === 0) return null;
 
-  const handleAmenityClick = (amenity: AmenityDisplay) => {
-    if (amenity.description) {
+  const sortedAmenities = [...amenities].sort((a, b) => {
+    const featuredDiff = Number(Boolean(b.isFeatured)) - Number(Boolean(a.isFeatured));
+    if (featuredDiff !== 0) return featuredDiff;
+
+    return a.name.localeCompare(b.name);
+  });
+  const maxVisibleItems = Math.max(1, numCols * 2);
+  const hasHiddenAmenities = sortedAmenities.length > maxVisibleItems;
+  const visibleAmenities = showAll ? sortedAmenities : sortedAmenities.slice(0, maxVisibleItems);
+
+  const handleAmenityClick = (amenity: AmenityDisplay, forceOpen = false) => {
+    if (forceOpen || amenity.description) {
       setSelectedAmenity(amenity);
     }
   };
@@ -27,8 +38,31 @@ export default function AmenitiesGrid({ amenities, title = "What we offer", numC
   return (
     <div className="space-y-3">
       {/* <h2 className="h2">{title}</h2> */}
-      <div className={`grid gap-8 grid-cols-1 md:grid-cols-${numCols}`}>
-        {amenities.map((amenity) => {
+      <div className="md:hidden">
+        <div className="space-y-2">
+          {visibleAmenities.map((amenity) => {
+            const hasDescription = !!amenity.description;
+            return (
+              <button
+                key={amenity.slug}
+                type="button"
+                onClick={() => handleAmenityClick(amenity, true)}
+                className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-left transition hover:border-gmcc-teal/60"
+              >
+                <span className="flex items-center justify-between gap-4">
+                  <span className="text-base font-semibold text-gmcc-navy">{amenity.name}</span>
+                  <span className="text-sm font-medium text-gmcc-teal">
+                    {hasDescription ? "View details" : "View image"}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className={`hidden gap-8 md:grid md:grid-cols-${numCols}`}>
+        {visibleAmenities.map((amenity) => {
           const hasDescription = !!amenity.description;
           return (
             <div key={amenity.slug} className="relative card card-hover">
@@ -91,6 +125,18 @@ export default function AmenitiesGrid({ amenities, title = "What we offer", numC
         })}
       </div>
 
+      {hasHiddenAmenities && (
+        <div className="pt-4 flex justify-center items-center">
+          <button
+            type="button"
+            onClick={() => setShowAll((prev) => !prev)}
+            className="text-gmcc-navy hover:underline text-sm font-semibold"
+          >
+            {showAll ? "Show less" : `Show more (${sortedAmenities.length - maxVisibleItems} more)`}
+          </button>
+        </div>
+      )}
+
       {/* Modal for description */}
       {selectedAmenity && (
         <div
@@ -116,13 +162,17 @@ export default function AmenitiesGrid({ amenities, title = "What we offer", numC
               <h3 className="text-xl font-semibold text-gmcc-navy mb-3">
                 {selectedAmenity.name}
               </h3>
-              <p className="text-neutral-700 text-sm whitespace-pre-line">
-                {selectedAmenity.description} {selectedAmenity.relevantLink && (
-                  <a href={selectedAmenity.relevantLink} className="text-gmcc-teal hover:underline text-sm font-semibold">
-                    {selectedAmenity.linkLabel ? `${selectedAmenity.linkLabel} →` : "Learn more →"}
-                  </a>
-                )}
-              </p>
+              {selectedAmenity.description ? (
+                <p className="text-neutral-700 text-sm whitespace-pre-line">
+                  {selectedAmenity.description} {selectedAmenity.relevantLink && (
+                    <a href={selectedAmenity.relevantLink} className="text-gmcc-teal hover:underline text-sm font-semibold">
+                      {selectedAmenity.linkLabel ? `${selectedAmenity.linkLabel} →` : "Learn more →"}
+                    </a>
+                  )}
+                </p>
+              ) : (
+                <p className="text-neutral-700 text-sm">More details coming soon for this amenity.</p>
+              )}
             </div>
 
             {/* Close button */}

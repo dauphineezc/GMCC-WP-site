@@ -16,9 +16,9 @@ export default function AboutSection({
       <div className="relative z-20 mx-auto max-w-6xl pb-20 md:pb-24">
 
       <div className="flex flex-col text-center items-center">
-        <h2 className="h2 mb-0 text-3xl font-semibold tracking-wide text-white">{heading}</h2>
+        <h2 className="h2 text-white">{heading}</h2>
 
-        {body ? <p className="mt-6 text-lg leading-relaxed text-neutral-200">{body}</p> : null}
+        {body ? <p className="mt-6 text-lg text-neutral-200">{body}</p> : null}
 
         {cta?.url ? (
           <div className="mt-8 mb-8 md:mb-16 flex w-full justify-center">

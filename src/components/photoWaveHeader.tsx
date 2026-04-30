@@ -23,7 +23,7 @@ export type PhotoWaveHeaderFields = {
   primaryCta?: HeroFieldsCtaRaw | null;
   secondaryCta?: HeroFieldsCtaRaw | null;
   heroImage?: {
-    node?: { sourceUrl?: string | null; altText?: string | null } | null;
+    node?: { sourceUrl?: string | null; mediaItemUrl?: string | null; altText?: string | null } | null;
   } | null;
 };
 
@@ -43,12 +43,12 @@ type PhotoWaveHeaderProps = {
   ctas?: HeroCta[];
   /** Extra content below subheader, inside the hero (rare) */
   children?: ReactNode;
-  /** Set when the next section is flush full-bleed (removes default `mb-8` gap). */
-  flushBottom?: boolean;
   /** Wave SVG fill (Tailwind `text-*` → currentColor). Default white for pages whose content sits on white. */
   waveFillClassName?: string;
   /** 2px bar under the wave to hide subpixel seams; match `waveFillClassName` when docking to same-colored block. */
   waveEdgeClassName?: string;
+  /** Whether to flush the bottom of the header with the content below it */
+  flushBottom?: boolean;
 };
 
 /**
@@ -67,7 +67,7 @@ export default function PhotoWaveHeader({
 }: PhotoWaveHeaderProps) {
   return (
     <section
-      className={`relative overflow-hidden lg:mt-28 py-6 ${flushBottom ? "mb-0" : "mb-8"}`}
+      className={`relative overflow-hidden lg:mt-28 z-10 py-6 ${flushBottom ? "mb-0" : "mb-8"}`}
     >
       <div
         className="absolute inset-0"
@@ -99,7 +99,7 @@ export default function PhotoWaveHeader({
         </h1>
 
         {subheader ? (
-          <p className="mt-6 mb-4 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">{subheader}</p>
+          <p className={`mt-6 ${ctas && ctas.length > 0 ? "mb-4" : "mb-8"} max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg`}>{subheader}</p>
         ) : null}
 
         {(ctas && ctas.length > 0) || children ? (
@@ -118,7 +118,7 @@ export default function PhotoWaveHeader({
         ) : null}
       </div>
 
-      <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
+      <div className={`pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none`}>
         <svg
           viewBox="0 0 1440 120"
           className={`-ml-px block h-10 w-[calc(100%+2px)] md:h-16 ${waveFillClassName}`}

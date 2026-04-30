@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import Accordion from "@/components/accordion";
 import Tabs from "@/components/tabs";
+import PhotoWaveHeader from "@/components/photoWaveHeader";
 
 type WPImageNode = {
   sourceUrl?: string | null;
@@ -12,12 +13,12 @@ type WPImageNode = {
 
 type MaybeImage = { node?: WPImageNode | null } | null;
 
-type Race = { raceName?: string | null; raceDetails?: string | null } | null;
-
 type GetInvolvedFields = {
-  heroImage?: MaybeImage;
-  header?: string | null;
-  subheader?: string | null;
+  heroFields?: {
+    heroHeader?: string | null;
+    heroSubheader?: string | null;
+    heroImage?: MaybeImage;
+  } | null;
   impactBlurb?: string | null;
 
   volunteerGroup?: {
@@ -39,29 +40,8 @@ type GetInvolvedFields = {
   sponsorGroup?: {
     sponsorCardSummary?: string | null;
     sponsorLongDescription?: string | null;
-
-    raceSponsorship?: {
-      raceSponsorshipSummary?: string | null;
-      race1?: Race;
-      race2?: Race;
-      race3?: Race;
-      race4?: Race;
-      race5?: Race;
-      raceSponsorshipApplication?: string | null;
-      raceSponsorshipImage?: MaybeImage;
-    } | null;
-
-    leagueSponsorship?: {
-      leagueSponsorshipDetails?: string | null;
-      leagueSponsorshipApplication?: string | null;
-      leagueSponsorshipImage?: MaybeImage;
-    } | null;
-
-    centerSponsorship?: {
-      centerSponsorshipDetails?: string | null;
-      centerSponsorshipApplication?: string | null;
-      centerSponsorshipImage?: MaybeImage;
-    } | null;
+    sponsorImage?: MaybeImage;
+    sponsorApplication?: string | null;
   } | null;
 };
 
@@ -90,92 +70,14 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
   const donate = fields?.donateGroup ?? null;
   const sponsor = fields?.sponsorGroup ?? null;
 
-  // Sponsor: races accordion items
-  const raceItems = useMemo(() => {
-    const rs = sponsor?.raceSponsorship ?? null;
-    const races: Array<{ key: string; race: Race }> = [
-      { key: "race1", race: rs?.race1 ?? null },
-      { key: "race2", race: rs?.race2 ?? null },
-      { key: "race3", race: rs?.race3 ?? null },
-      { key: "race4", race: rs?.race4 ?? null },
-      { key: "race5", race: rs?.race5 ?? null },
-    ];
-
-    return races
-      .filter((r) => (r.race?.raceName || "").trim().length > 0 || (r.race?.raceDetails || "").trim().length > 0)
-      .map((r, idx) => ({
-        id: `race-${idx + 1}`,
-        title: r.race?.raceName ?? `Race ${idx + 1}`,
-        content: <p className="body whitespace-pre-line">{r.race?.raceDetails ?? ""}</p>,
-      }));
-  }, [sponsor]);
-
   return (
     <div className="overflow-x-clip">
-
-    {/* HERO */}
-    <section className="relative mb-8 overflow-hidden md:mt-28 py-6">
-      <div
-        className="absolute inset-0"
-        aria-hidden
-        style={
-          fields?.heroImage?.node?.sourceUrl
-            ? {
-                backgroundImage: `url(${fields?.heroImage?.node?.sourceUrl})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }
-            : undefined
-        }
-      />
-
-      {/* Left-side navy overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
-        }}
-        aria-hidden="true"
-      />
-
-      <div className="absolute inset-0" aria-hidden />
-      <div className="relative z-20 max-w-6xl px-8 pb-20 pt-10 md:py-16 md:px-12">
-        <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
-          {fields?.header ?? "Get Involved"}
-        </h1>
-
-        <p className="mt-6 mb-12 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">{fields?.subheader ?? ""}</p>
-      </div>
-
-      {/* Wave */}
-      <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
-            <svg
-              viewBox="0 0 1440 120"
-              className="-ml-px block h-10 w-[calc(100%+2px)] text-white md:h-16"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="
-                  M-20,110
-                  C750,-90  800,120  1200,80
-                  S1420,0 1460,0
-                  L1460,0 L-20,0 Z
-                "
-                transform="translate(0 120) scale(1 -1)"
-                fill="currentColor"
-              />
-            </svg>
-            <div className="absolute bottom-0 left-0 h-[2px] w-full bg-white" />
-          </div>
-    </section>
-
 
     <section className="mx-auto max-w-6xl px-6 mt-6">
       {/* TOP 3 CARDS */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 items-start">
         {/* Volunteer */}
-        <div className="relative card bg-gmcc-blue-light/30 stack-4 flex flex-col overflow-hidden">
+        <div className="relative card card-hover bg-gmcc-blue-light/30 stack-4 flex flex-col overflow-hidden">
           {/* icon */}
           <img
             src="/images/VolunteerIcon.png"
@@ -194,7 +96,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
         </div>
 
         {/* Donate */}
-        <div className="relative card bg-gmcc-blue-light/30 stack-4 flex flex-col overflow-hidden">
+        <div className="relative card card-hover bg-gmcc-blue-light/30 stack-4 flex flex-col overflow-hidden">
           {/* icon */}
           <img
             src="/images/DonateIcon.png"
@@ -213,7 +115,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
         </div>
 
         {/* Sponsor */}
-        <div className="relative card bg-gmcc-blue-light/30 stack-4 flex flex-col overflow-hidden">
+        <div className="relative card card-hover bg-gmcc-blue-light/30 stack-4 flex flex-col overflow-hidden">
           {/* icon */}
           <img
             src="/images/SponsorshipIcon.png"
@@ -253,17 +155,17 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
 
             {/* physical donation content */}
             <div className="stack-3">
-              <h3 className="h3 tracking-wide text-gmcc-navy mt-4 mb-2">Support us with a physical donation:</h3>
+              <h3 className="h3 mt-6 mb-4">Support us with a physical donation:</h3>
 
               <TextBlock text={donate?.physicalDonationDescription} />
 
-              <p className="body whitespace-pre-line mt-2 mb-2">Popular items always in need:</p>
+              <p className="body whitespace-pre-line font-bold mt-4 mb-2">Popular items always in need:</p>
               {donate?.physicalDonationList ? (
                 <div className="body whitespace-pre-line ml-4">{donate.physicalDonationList}</div>
               ) : null}
 
               {donate?.physicalDonationWishlist ? (
-                <div className="pt-2">
+                <div className="pt-4">
                   <a
                     href={donate.physicalDonationWishlist}
                     className="btn btn-secondary"
@@ -323,7 +225,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
                 <TextBlock text={volunteer?.volunteerLongDescription} />
 
                 {volunteer?.volunteerApplication ? (
-                  <div className="pt-2 text-center mx-auto">
+                  <div className="pt-4 text-center mx-auto">
                     <a
                       href={volunteer.volunteerApplication}
                       className="btn btn-secondary"
@@ -392,118 +294,36 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
         <h2 className="h2 mb-2">Sponsor</h2>
 
         <TextBlock text={sponsor?.sponsorLongDescription} />
-
-        {/* Tabs */}
-        <Tabs tabs={[
-          { id: "race", label: "Sponsor a race", content:
             <div className="stack-6 pt-4">
               <div className="grid gap-16 md:grid-cols-2 items-start">
                 <div className="stack-3">
-                    <TextBlock text={sponsor?.raceSponsorship?.raceSponsorshipSummary} />
+                    <TextBlock text={sponsor?.sponsorLongDescription} />
     
-                    {sponsor?.raceSponsorship?.raceSponsorshipApplication ? (
-                    <div className="pt-2 text-center mx-auto">
+                    {sponsor?.sponsorApplication ? (
+                    <div className="pt-4 text-center mx-auto">
                         <a
-                        href={sponsor.raceSponsorship.raceSponsorshipApplication}
+                        href={sponsor.sponsorApplication}
                         className="btn btn-primary"
                         target="_blank"
                         rel="noopener noreferrer"
                         >
-                        Sponsorship Application
+                        Apply to sponsor
                         </a>
                     </div>
                     ) : null}
-
-                  <div className="mt-8">
-                    {raceItems.length > 0 ? <Accordion items={raceItems} /> : null}
-                  </div>
                 </div>
     
-                {sponsor?.raceSponsorship?.raceSponsorshipImage?.node?.sourceUrl ? (
-                <img
-                  src={sponsor?.raceSponsorship?.raceSponsorshipImage?.node?.sourceUrl}
-                  alt={sponsor?.raceSponsorship?.raceSponsorshipImage?.node?.altText || ""}
-                  className="block h-full w-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : (
-                <div className="aspect-square bg-neutral-200" />
-              )}
+                {sponsor?.sponsorImage?.node?.sourceUrl && (
+                  <img
+                    src={sponsor?.sponsorImage?.node?.sourceUrl}
+                    alt={sponsor?.sponsorImage?.node?.altText || ""}
+                    className="block h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                )}
               </div>
             </div>
-            },
-
-          { id: "league", label: "Sponsor a sports league", content:
-            <div className="stack-6 pt-4">
-                <div className="grid gap-16 md:grid-cols-2 items-start">
-                <div className="stack-3">
-                    <TextBlock text={sponsor?.leagueSponsorship?.leagueSponsorshipDetails} />
-
-                    {sponsor?.leagueSponsorship?.leagueSponsorshipApplication ? (
-                    <div className="pt-2 text-center mx-auto">
-                        <a
-                        href={sponsor.leagueSponsorship.leagueSponsorshipApplication}
-                        className="btn btn-primary mx-auto"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        >
-                        Sponsorship Application
-                        </a>
-                    </div>
-                    ) : null}
-                </div>
-
-                {sponsor?.leagueSponsorship?.leagueSponsorshipImage?.node?.sourceUrl ? (
-                <img
-                  src={sponsor?.leagueSponsorship?.leagueSponsorshipImage?.node?.sourceUrl}
-                  alt={sponsor?.leagueSponsorship?.leagueSponsorshipImage?.node?.altText || ""}
-                  className="block h-full w-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : (
-                <div className="aspect-square bg-neutral-200" />
-              )}
-                </div>
-            </div>
-          },
-
-          { id: "center", label: "Sponsor a center", content: 
-            <div className="stack-6 pt-4">
-              <div className="grid gap-16 md:grid-cols-2 items-start">
-                <div className="stack-3">
-                    <TextBlock text={sponsor?.centerSponsorship?.centerSponsorshipDetails} />
-
-                    {sponsor?.centerSponsorship?.centerSponsorshipApplication ? (
-                    <div className="pt-2 text-center mx-auto">
-                        <a
-                        href={sponsor.centerSponsorship.centerSponsorshipApplication}
-                        className="btn btn-primary"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        >
-                        Sponsorship Application
-                        </a>
-                    </div>
-                    ) : null}
-                </div>
-
-                {sponsor?.centerSponsorship?.centerSponsorshipImage?.node?.sourceUrl ? (
-                <img
-                  src={sponsor?.centerSponsorship?.centerSponsorshipImage?.node?.sourceUrl}
-                  alt={sponsor?.centerSponsorship?.centerSponsorshipImage?.node?.altText || ""}
-                  className="block h-full w-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : (
-                <div className="aspect-square bg-neutral-200" />
-              )}
-              </div>
-            </div>
-           },
-        ]} defaultTab={"race"} />
       </section>
 
     </section>

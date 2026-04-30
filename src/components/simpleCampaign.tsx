@@ -127,7 +127,7 @@ export default function SimpleCampaign({ campaign, stacked = false }: Props) {
           : "flex flex-col justify-center p-10 md:p-14 md:min-h-[360px]"
       }
     >
-      <h3
+      <h2
         className={
           stacked
             ? "text-2xl font-semibold tracking-tight sm:text-3xl"
@@ -136,7 +136,7 @@ export default function SimpleCampaign({ campaign, stacked = false }: Props) {
         style={{ color: textColor }}
       >
         {title}
-      </h3>
+      </h2>
       {body ? (
         <p
           className="mt-8 whitespace-pre-line text-base leading-relaxed"

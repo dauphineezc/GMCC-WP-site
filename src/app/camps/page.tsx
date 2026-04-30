@@ -647,7 +647,7 @@ export default async function CampsPage() {
   return (
     <main className="overflow-x-clip">
       <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} children={<div className="mt-6 mb-6 flex flex-wrap items-center gap-3">
-        <a href={mediaHref(f?.campsBrochure as MediaFieldInput)} className="btn btn-tertiary">{hero.primaryCta?.label ?? "Camps brochure"}</a>
+        <a href={mediaHref(f?.campsBrochure as MediaFieldInput)} target="_blank" rel="noopener noreferrer" className="btn btn-tertiary">{hero.primaryCta?.label ?? "Camps brochure"}</a>
         <a href={mediaHref(f?.financialAssistanceApplication as MediaFieldInput)} className="btn btn-secondary">{hero.secondaryCta?.label ?? "Financial assistance application"}</a>
       </div>} />
 
@@ -704,7 +704,7 @@ export default async function CampsPage() {
       {attachmentItems.length ? (
         <section className="mx-auto mt-16 max-w-5xl px-6">
           <div className="justify-center items-center">
-          <h2 className="h2 text-gmcc-navy text-center">{formsAndLinksSectionTitle}</h2>
+          <h2 className="h2 mb-2 text-gmcc-navy text-center">{formsAndLinksSectionTitle}</h2>
           <div className="mt-4 flex flex-wrap gap-3 justify-center items-center">
             {attachmentItems.map((item, i) =>
               item.kind === "file" ? (

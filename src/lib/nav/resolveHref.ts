@@ -19,10 +19,10 @@ function normalizeWpUrlToPath(url: string) {
 
   const MEMBERSHIP_PAGES: Record<string, string> = {
     "Join Now": "/membership",
-    "Take a Tour": "/membership/tour",
-    "Membership Discounts": "/membership/discounts",
-    "Corporate Memberships": "/membership/corporate",
-    "Cancellation Policy": "/membership/policies",
+    "Take a Tour": "/take-a-tour",
+    "Insurance-based memberships": "/insurance-based-memberships",
+    "Corporate Memberships": "/corporate-memberships",
+    "Cancellation Policy": "/policies",
   };
   
   // program filter rules

@@ -19,6 +19,8 @@ type Center = {
 type Props = {
   heading: string;
   centers: Center[];
+  corporateWellnessCentersCaption?: string | null;
+  corporateWellnessCentersImage?: { node?: { sourceUrl: string; altText?: string | null } | null } | null;
 };
 
 function getSlug(c: { slug?: string | null; uri?: string | null }) {
@@ -30,17 +32,21 @@ function getSlug(c: { slug?: string | null; uri?: string | null }) {
 
 function CenterAccordionItem({
   center,
+  corporateWellnessCentersCaption,
   isActive,
   onSelect,
 }: {
   center: Center;
+  corporateWellnessCentersCaption?: string | null;
   isActive: boolean;
   onSelect: () => void;
 }) {
   const title = center.title ?? "Center";
+  const slug = getSlug(center);
+  const isCorporateWellness = slug === "corporate-wellness-centers";
   const address = center.centersFields?.address ?? null;
   const phone = center.centersFields?.contactInfo?.contactPhone ?? null;
-  const href = center.uri ?? "#";
+  const href = isCorporateWellness ? "/corporate-wellness-centers" : center.uri ?? "#";
 
   return (
     <li>
@@ -68,7 +74,13 @@ function CenterAccordionItem({
 
             {isActive ? (
               <div className="mt-2 text-sm text-white/90">
-                {address ? (
+                {isCorporateWellness ? (
+                  <p className="text-white/90">
+                    {corporateWellnessCentersCaption}
+                  </p>
+                ) : null}
+
+                {!isCorporateWellness && address ? (
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
                     target="_blank"
@@ -80,7 +92,7 @@ function CenterAccordionItem({
                   </a>
                 ) : null}
 
-                {phone ? (
+                {!isCorporateWellness && phone ? (
                   <div className="mt-2">
                     <PhoneLink
                       phone={phone}
@@ -112,11 +124,11 @@ const ORDERED_SLUGS = [
   "tennis-center",
   "coleman-family-center",
   "north-family-center",
-  "corteva-fitness-center",
   "curling-center",
+  "corporate-wellness-centers",
 ] as const;
 
-export default function CentersSection({ heading, centers }: Props) {
+export default function CentersSection({ heading, centers, corporateWellnessCentersCaption, corporateWellnessCentersImage }: Props) {
   const items = useMemo(() => {
     const bySlug = new Map<string, Center>();
     for (const c of centers ?? []) {
@@ -124,16 +136,33 @@ export default function CentersSection({ heading, centers }: Props) {
       if (slug) bySlug.set(slug, c); // last wins, but typically unique
     }
 
-    // only the 6 we care about, in fixed order, no duplicates
-    return ORDERED_SLUGS.map((slug) => bySlug.get(slug)).filter(Boolean) as Center[];
-  }, [centers]);
+    // Include only known center slugs from WP data.
+    const orderedCenters = ORDERED_SLUGS
+      .filter((slug) => slug !== "corporate-wellness-centers")
+      .map((slug) => bySlug.get(slug))
+      .filter(Boolean) as Center[];
+
+    // Corporate wellness is a page, not a Center CPT, so append it manually.
+    orderedCenters.push({
+      id: "corporate-wellness-centers",
+      slug: "corporate-wellness-centers",
+      title: "Corporate Wellness Centers",
+      uri: "/corporate-wellness-centers",
+      featuredImage: corporateWellnessCentersImage,
+      centersFields: null,
+    });
+
+    return orderedCenters;
+  }, [centers, corporateWellnessCentersImage]);
 
   if (!items.length) return null;
 
   const [selectedId, setSelectedId] = useState(items[0].id);
   const selected = items.find((c) => c.id === selectedId) ?? items[0];
-
-  const bgUrl = selected.featuredImage?.node?.sourceUrl ?? null;
+  const selectedIsCorporateWellness = getSlug(selected) === "corporate-wellness-centers";
+  const bgUrl = selectedIsCorporateWellness
+    ? (corporateWellnessCentersImage?.node?.sourceUrl ?? selected.featuredImage?.node?.sourceUrl ?? null)
+    : (selected.featuredImage?.node?.sourceUrl ?? null);
 
   return (
     // no top padding; full-width section handled inside
@@ -155,6 +184,7 @@ export default function CentersSection({ heading, centers }: Props) {
                   <CenterAccordionItem
                     key={c.id}
                     center={c}
+                    corporateWellnessCentersCaption={corporateWellnessCentersCaption}
                     isActive={c.id === selectedId}
                     onSelect={() => setSelectedId(c.id)}
                   />
@@ -235,15 +265,17 @@ export default function CentersSection({ heading, centers }: Props) {
                 <div />
 
                 <div className="flex flex-col justify-center">
-                  <h2 className="h2 mt-0 mb-0 text-3xl font-semibold tracking-wide text-white">{heading}</h2>
+                  <h2 className="h2 mt-0 mb-0 text-white">{heading}</h2>
 
                   <ul className="mt-4 space-y-2">
                     {items.map((c) => {
                       const isActive = c.id === selectedId;
                       const title = c.title ?? "Center";
+                      const slug = getSlug(c);
+                      const isCorporateWellness = slug === "corporate-wellness-centers";
                       const address = c.centersFields?.address ?? null;
                       const phone = c.centersFields?.contactInfo?.contactPhone ?? null;
-                      const href = c.uri ?? "#";
+                      const href = isCorporateWellness ? "/corporate-wellness-centers" : c.uri ?? "#";
 
                       return (
                         <li key={c.id}>
@@ -276,7 +308,13 @@ export default function CentersSection({ heading, centers }: Props) {
                                   ].join(" ")}
                                 >
                                   <div className="text-sm text-neutral-200">
-                                    {address ? (
+                                    {isCorporateWellness ? (
+                                      <p className="text-neutral-200">
+                                        {corporateWellnessCentersCaption}
+                                      </p>
+                                    ) : null}
+
+                                    {!isCorporateWellness && address ? (
                                       <a
                                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
                                         target="_blank"
@@ -288,7 +326,7 @@ export default function CentersSection({ heading, centers }: Props) {
                                       </a>
                                     ) : null}
 
-                                    {phone ? (
+                                    {!isCorporateWellness && phone ? (
                                       <div className="mt-1">
                                         <PhoneLink
                                           phone={phone}

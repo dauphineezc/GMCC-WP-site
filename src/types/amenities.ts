@@ -1,6 +1,7 @@
 export type AmenityDisplay = {
     name: string;
     slug: string;
+    isFeatured?: boolean | null;
     description?: string | null;
     relevantLink?: string | null;
     linkLabel?: string | null;

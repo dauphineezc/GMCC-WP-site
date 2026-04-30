@@ -25,7 +25,7 @@ export default function TestimonialSection({
     <section className="px-4 py-10">
       <div className="mx-auto max-w-6xl">
         <div className="relative text-center">
-          <h2 className="h2 tracking-wide text-gmcc-navy text-3xl">{heading}</h2>
+          <h2 className="h2 text-gmcc-navy">{heading}</h2>
         </div>
 
         <div>
