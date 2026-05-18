@@ -5,6 +5,8 @@ import HeaderImage from "@/components/headerImage";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import ImageCarousel from "@/components/imageCarousel";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
+import { TestimonialSection, normalizeTestimonials } from "@/components/testimonials";
+import PhoneLink from "@/components/phoneLink";
 
 /** Map age range to audience slug(s) for filtering */
 function getAudienceSlugFromAge(min: number | null, max: number | null): string | null {
@@ -58,15 +60,6 @@ const PROGRAM_BY_SLUG_QUERY = `
             }
           }
         }
-        registrationSystem {
-          nodes { name slug }
-        }
-        externalSchedule {
-          activityCode
-          sectionCodes
-          deepLink
-          nextStartDate
-        }
           
         center {
           nodes {
@@ -117,6 +110,42 @@ const PROGRAM_BY_SLUG_QUERY = `
             attachment5Label
             attachment5File { node { mediaItemUrl } }
           }
+          }
+
+          testimonials {
+            nodes {
+              ... on Testimonial {
+                id
+                title
+                testimonialFields {
+                  quote
+                  personName
+                  personContext
+                  photo { node { sourceUrl altText } }
+                }
+              }
+            }
+          }
+
+          registrationInformation {
+            instructionalSubheader
+            registrationLink
+            phoneNumber
+            email
+          }
+          additionalInformationLinks {
+            link1 {
+              linkLabel
+              link
+            }
+            link2 {
+              linkLabel
+              link
+            }
+            link3 {
+              linkLabel
+              link
+            }
           }
 
           relatedPrograms {
@@ -194,24 +223,13 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
   return (
     <main>
       <SolidNavyWaveHeader title={p.title} description={p.summary} />
-      {/* <SolidNavyWaveHeader/> */}
-
 
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
 
       {/* MAIN GRID: content + sidebar */}
       <section className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)]">
 
-      <div className="stack-4">
-
-        {/* <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="stack-2">
-            <h1 className="h1">{p.title}</h1>
-              {p.summary && (
-                <p className="body max-w-2xl">{p.summary}</p>
-              )}
-          </div>
-        </div> */}
+      <div className="min-w-0 stack-4">
 
         {/* Chips row - all clickable, linking to /programs with filters */}
         <div className="flex flex-wrap gap-2">
@@ -291,7 +309,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
 
 
         {/* LEFT COLUMN */}
-        <div className="stack-8">
+        <div className="stack-8 pt-4">
           {/* Long description */}
           {p.longDescription && (
             <article className="prose prose-sm max-w-none sm:prose-base">
@@ -337,7 +355,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
           )}
 
           {/* Details card */}
-          <h2 className="h2 mb-2">Program details</h2>
+          <h2 className="h2 pt-8 mb-2">Program details</h2>
           <div className="card">
             <dl className="mt-3 stack-2 body">
               {p.duration && (
@@ -376,7 +394,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
           </div>
 
           {/* Benefits + What to bring */}
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(0,1fr))]">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(0,1fr))] pt-8">
               {p.benefits?.length > 0 && (
               <div>
                 <h2 className="h2 mb-2">Benefits</h2>
@@ -407,32 +425,32 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
           </div>
 
           {p.developmentalAssets && p.developmentalAssets.length > 0 && (
-                <div>
-                  <h2 className="h2 mb-3">Developmental assets</h2>
-                  <ul className="space-y-2 body">
-                    {p.developmentalAssets.map((da: string, i: number) => {
-                      // Split on em dash (—) to bold the part before it
-                      const dashIndex = da.indexOf("—");
-                      if (dashIndex > 0) {
-                        const before = da.substring(0, dashIndex).trim();
-                        const after = da.substring(dashIndex + 1).trim();
-                        return (
-                          <li key={i}>
-                            <span className="font-semibold text-neutral-700">{before} — </span>
-                            <span className="text-neutral-600">{after}</span>
-                          </li>
-                        );
-                      }
-                      return <li key={i}>{da}</li>;
-                    })}
-                  </ul>
-                </div>
-              )}
+            <div>
+              <h2 className="h2 pt-8 mb-3">Developmental assets</h2>
+              <ul className="space-y-2 body mt-4 pl-6">
+                {p.developmentalAssets.map((da: string, i: number) => {
+                  // Split on em dash (—) to bold the part before it
+                  const dashIndex = da.indexOf("—");
+                  if (dashIndex > 0) {
+                    const before = da.substring(0, dashIndex).trim();
+                    const after = da.substring(dashIndex + 1).trim();
+                    return (
+                      <li key={i}>
+                        <span className="font-semibold text-neutral-700">{before} — </span>
+                        <span className="text-neutral-600">{after}</span>
+                      </li>
+                    );
+                  }
+                  return <li key={i}>{da}</li>;
+                })}
+              </ul>
+            </div>
+          )}
 
           {/* Instructors (optional) */}
           {p.instructors?.length > 0 && (
             <div>
-              <h2 className="h2 mb-3">Instructors</h2>
+              <h2 className="h2 pt-8 mb-3">Instructors</h2>
               <div>
                   <ul className="stack-2 body">
                     {p.instructors.map((name: string, i: number) => (
@@ -442,12 +460,18 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                 </div>
             </div>
           )}
+
+        {wp.programFields?.testimonials?.nodes?.length > 0 && (
+          <div>
+            <h2 className="h2 pt-8 mb-4">Testimonials</h2>
+            <TestimonialSection testimonials={normalizeTestimonials(wp.programFields.testimonials.nodes)} />
+          </div>
+        )}
+        </div>
         </div>
 
-        </div>
-
-        {/* RIGHT SIDEBAR */}
-        <div>
+        {/* RIGHT: stretch to row height like /programs filters (default grid align) so sticky has a tall scroll span */}
+        <div className="flex min-h-0 min-w-0 flex-col gap-6">
 
           {/* Media Gallery Carousel */}
           {(() => {
@@ -481,42 +505,60 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             );
           })()}
 
-          {/* Registration card */}
-          <aside className="sticky top-18">
-            <div className="card bg-gmcc-blue-light/30 border-gmcc-teal/40">
-            <h2 className="h2 text-gmcc-navy">Ready to register?</h2>
-            <p className="mt-1 small">
-              You&apos;ll be taken to our secure registration system to
-              complete signup.
-            </p>
 
-            {p.externalSchedule?.deepLink ? (
+          <aside className="card h-fit sticky top-18 z-10 w-full min-w-0 shrink-0 border-gmcc-teal/40 bg-gmcc-blue-light/30 p-6">
+            <h2 className="h2 text-gmcc-navy">Ready to register?</h2>
+            <p className="mt-2 small mb-2">{p.registrationInformation?.instructionalSubheader}</p>
+
+            {p.registrationInformation?.registrationLink || p.registrationInformation?.phoneNumber || p.registrationInformation?.email ? (
+              <>
+              {p.registrationInformation?.registrationLink && (
               <a
-                className="btn btn-primary w-full mt-4"
-                href={p.externalSchedule.deepLink}
+                className="btn btn-primary w-full mt-4 mb-4"
+                href={p.registrationInformation.registrationLink}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 Register now
               </a>
+              )}
+              {p.registrationInformation?.phoneNumber && (
+                <PhoneLink className="mt-4 small text-gmcc-teal font-bold hover:text-gmcc-navy hover:underline" phone={p.registrationInformation.phoneNumber}></PhoneLink>
+              )}
+              <br />
+              {p.registrationInformation?.email && (
+                <a href={`mailto:${p.registrationInformation.email}`} className="mt-4 small text-gmcc-teal font-bold hover:text-gmcc-navy hover:underline">{p.registrationInformation.email}</a>
+              )}
+              </>
             ) : (
-              <p className="mt-3 small">
+              <p className="mt-4 small">
                 Registration details will be posted soon.
               </p>
             )}
 
-            <h2 className="h3 text-gmcc-navy mt-4">Need more information?</h2>
-            <a href={`/visit/session-calendar`} className="link body block text-sm">➜ View session calendars</a>
-            <a href={`/centers`} className="link body block text-sm">➜ Compare centers</a>
-            <a href={`#similar-programs`} className="link body block text-sm">➜ Explore similar programs</a>
-            </div>
+            {(() => {
+              const { link1, link2, link3 } = p.additionalInformationLinks ?? {};
+              const links = [link1, link2, link3].filter((l: any) => l?.link && l?.linkLabel);
+              if (links.length === 0) return null;
+              return (
+                <div className="mt-4">
+                  <h2 className="h3">Need more information?</h2>
+                  <ul className="text-sm mt-2">
+                    {links.map((link: any, i: number) => (
+                      <li key={i}><a href={link.link} className="link body block text-sm">➜ {link.linkLabel}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
           </aside>
         </div>
       </section>
 
+
       {p.relatedPrograms && p.relatedPrograms.length > 0 && (
         <section className="stack-4 scroll-mt-24" id="similar-programs">
-          <h2 className="h2 mb-2">Explore similar programs</h2>
+          <h2 className="h2 pt-8 mb-2">Explore Similar Programs</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {p.relatedPrograms.map((p) => (
           <a
@@ -539,7 +581,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             </div>
 
             <div className="flex flex-1 flex-col min-h-0 mt-5">
-              <h3 className="font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-2">
+              <h3 className="font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-1">
                 {p.title}
               </h3>
 

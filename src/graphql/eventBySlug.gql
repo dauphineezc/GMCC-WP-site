@@ -15,7 +15,9 @@ query EventBySlug($slug: ID!) {
       startDateTime
       endDateTime
       cost
-      registrationLink
+      registrationInformation {
+        registrationLink
+      }
       eventType
       locationOverride
 

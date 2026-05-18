@@ -401,7 +401,10 @@ export default function ExploreMembershipsClient({
         ) : null}
       </PhotoWaveHeader>
 
-      {/* CURRENT PROMOTION */}
+      {/* COMPARE TAB CONTENT */}
+      {activeTab === "compare" && (
+        <div>
+          {/* CURRENT PROMOTION */}
       {fields.showCurrentPromotion && fields.currentPromotion && (
         <div className="relative mt-16 mx-auto max-w-6xl p-0 card bg-gmcc-navy text-white">
           <div className="grid gap-y-4 md:grid-cols-5 md:items-stretch md:gap-x-0">
@@ -441,10 +444,6 @@ export default function ExploreMembershipsClient({
           </div>
         </div>
       )}
-
-      {/* COMPARE TAB CONTENT */}
-      {activeTab === "compare" && (
-        <div>
 
           {/* SEE WHAT YOU CAN GET — Amenities */}
           {amenityDisplayItems.length > 0 && (

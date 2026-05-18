@@ -536,7 +536,7 @@ export default function CampsProgramsExplorerClient({
               <a
                 key={p.slug}
                 href={`/programs/${p.slug}`}
-                className="group card card-hover card-link flex h-[380px] flex-col overflow-hidden"
+                className="group card card-hover card-link flex flex flex-col overflow-hidden"
               >
                 <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
                   {p.heroUrl ? (

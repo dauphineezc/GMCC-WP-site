@@ -37,14 +37,16 @@ function normalizeWpUrlToPath(url: string) {
     "Specialty/Art Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "specialty-art" }),
     "Sport/Aquatics Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "sport-aquatics" }),
     "Childcare": "/programs?" + buildQuery({ programArea: "Childcare" }),
+    "Youth Sports Leagues": "/programs?" + buildQuery({ programArea: "Middle School Sports" }),
   };
 
   // Event filter rules (label-based for navbar items)
   const EVENT_FILTER_BY_LABEL: Record<string, string> = {
-    "Tournaments": "/events?" + buildQuery({ eventType: "Tournament" }),
+    "Tournaments": "/tournaments",
     "Races": "/races",
     "Socials": "/events?" + buildQuery({ eventType: "Social" }),
     "Trips": "/events?" + buildQuery({ eventType: "Trip" }),
+    "Food Distributions": "/events?" + buildQuery({ eventType: "Food Distribution" }),
   };
 
   // Unique program pages that link directly to /programs/[slug]

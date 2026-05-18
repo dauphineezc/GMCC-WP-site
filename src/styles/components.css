@@ -25,9 +25,21 @@
         @apply transition
         hover:-translate-y-0.5 hover:shadow-xl hover:border-neutral-300;
     }
-    /* For clickable cards */
+    /* For clickable cards — use as the card wrapper element (<a>) */
     .card-link {
         @apply block focus:outline-none focus-visible:ring-2 focus-visible:ring-gmcc-teal focus-visible:ring-offset-2;
+    }
+    /* Stretched link: place inside a `relative` card; the ::after fills the entire card hit area.
+       Any interactive children (buttons, links) need `relative z-10` to sit above it. */
+    .card-stretched-link {
+        @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-gmcc-teal focus-visible:ring-offset-2;
+    }
+    .card-stretched-link::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        border-radius: inherit;
     }
     /* Full-bleed section inside a padded card */
     .card-bleed {

@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-type GalleryPhoto = {
+export type GalleryPhoto = {
   url: string;
   alt: string;
+  /** Optional caption pill on the thumbnail (e.g. early childhood gallery). */
+  label?: string | null;
 };
 
 type PhotoSpan = {
@@ -54,7 +56,7 @@ const MOSAIC_PATTERNS: Record<number, PhotoSpan[]> = {
   ],
 };
 
-export default function RaceGallery({ photos }: { photos: GalleryPhoto[] }) {
+export default function PhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const close = useCallback(() => setLightboxIndex(null), []);
@@ -114,15 +116,20 @@ export default function RaceGallery({ photos }: { photos: GalleryPhoto[] }) {
                   ? `${span.rowStart} / span ${span.row}`
                   : `span ${span.row}`,
               }}
-              aria-label={photo.alt || `Race photo ${i + 1}`}
+              aria-label={photo.alt || `Photo ${i + 1}`}
             >
               <img
                 src={photo.url}
-                alt={photo.alt || `Race photo ${i + 1}`}
+                alt={photo.alt || `Photo ${i + 1}`}
                 className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04] group-hover:brightness-90"
                 loading="lazy"
                 decoding="async"
               />
+              {photo.label?.trim() ? (
+                <span className="pointer-events-none absolute bottom-2 right-2 max-w-[calc(100%-1rem)] truncate rounded-full bg-black/65 px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
+                  {photo.label.trim()}
+                </span>
+              ) : null}
               {/* Hover overlay hint */}
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition duration-200 group-hover:opacity-100">
                 <div className="rounded-full bg-black/40 p-2">
@@ -163,13 +170,15 @@ export default function RaceGallery({ photos }: { photos: GalleryPhoto[] }) {
             {/* Image */}
             <img
               src={photos[lightboxIndex].url}
-              alt={photos[lightboxIndex].alt || `Race photo ${lightboxIndex + 1}`}
+              alt={photos[lightboxIndex].alt || `Photo ${lightboxIndex + 1}`}
               className="max-h-[80vh] w-auto rounded-xl object-contain shadow-2xl"
             />
 
             {/* Caption */}
-            {photos[lightboxIndex].alt && (
-              <p className="mt-3 text-sm text-white/75">{photos[lightboxIndex].alt}</p>
+            {photos[lightboxIndex].label?.trim() && (
+              <p className="mt-3 text-sm text-white/75">
+                {photos[lightboxIndex].label?.trim()}
+              </p>
             )}
 
             {/* Prev / Next */}

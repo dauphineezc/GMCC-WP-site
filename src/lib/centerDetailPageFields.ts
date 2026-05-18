@@ -25,6 +25,7 @@ export function coerceWpRichText(input: unknown): string {
 /** Core layout: avoids heavy / fragile fragments so hours + ready-to-join still load. */
 const CENTER_DETAIL_PAGE_FIELDS_CORE = `
       centerPageFields {
+        testimonialHeader
         readyToJoinSection {
           header
           subheader
@@ -99,6 +100,7 @@ export type CenterPageCurlingFields = {
 };
 
 export type CenterDetailPageFields = {
+  testimonialHeader?: string | null;
   readyToJoinSection?: CenterPageReadyToJoinSection | null;
   curlingCenterPageFields?: CenterPageCurlingFields | null;
 };
@@ -140,6 +142,8 @@ function mergeCenterDetailParts(
     membershipReplacementCta != null;
 
   return {
+    testimonialHeader:
+      core?.testimonialHeader ?? curlingCtaCopy?.testimonialHeader ?? curlingCtaLink?.testimonialHeader,
     readyToJoinSection:
       core?.readyToJoinSection ?? curlingCtaCopy?.readyToJoinSection ?? curlingCtaLink?.readyToJoinSection,
     curlingCenterPageFields: hasCurlingBlock

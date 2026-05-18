@@ -74,6 +74,10 @@ query GetInvolvedPage($uri: ID!) {
             }
           }
         }
+        viewSponsorsPageCta {
+          ctaLabel
+          cta
+        }
       }
     }
   }
@@ -87,8 +91,6 @@ type WPImageNode = {
 };
 
 type MaybeImage = { node?: WPImageNode | null } | null;
-
-type Race = { raceName?: string | null; raceDetails?: string | null } | null;
 
 type GetInvolvedFields = {
   heroFields?: {
@@ -119,6 +121,10 @@ type GetInvolvedFields = {
     sponsorLongDescription?: string | null;
     sponsorImage?: MaybeImage;
     sponsorApplication?: string | null;
+    viewSponsorsPageCta?: {
+      ctaLabel?: string | null;
+      cta?: string | null;
+    } | null;
   } | null;
 };
 

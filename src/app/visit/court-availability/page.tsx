@@ -31,6 +31,34 @@ export default function CourtAvailabilityPage() {
         </div>
       ),
     },
+    {
+      id: "3", 
+      title: "Coleman Family Center",
+      content: (
+        <div className="gmcc-schedule-embed mt-4">
+            <iframe
+            src="https://gmcc-drop-in-schedule.vercel.app/?type=fitness&sub=aquatics"
+            style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
+        </div>
+      ),
+    },
+    {
+      id: "4",
+      title: "North Family Center",
+      content: (
+        <div className="gmcc-schedule-embed mt-4">
+            <iframe
+            src="https://gmcc-drop-in-schedule.vercel.app/?type=fitness&sub=aquatics"
+            style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
+        </div>
+      ),
+    },  
   ];
 
   return (

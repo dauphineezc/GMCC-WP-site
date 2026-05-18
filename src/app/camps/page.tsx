@@ -7,6 +7,7 @@ import CampsProgramsExplorerClient from "./campsProgramsExplorerClient";
 import { PAGE_HERO_FIELDS_GRAPHQL, type WpPageWithHeroFields } from "@/lib/pageHeroFields";
 import { resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
+import SponsorsGrid, { normalizeSponsorsByType } from "@/components/sponsorsGrid";
 
 const CAMPS_PAGE_QUERY = /* GraphQL */ `
   query CampsPage($uri: ID!) {
@@ -135,6 +136,11 @@ const CAMPS_PAGE_QUERY = /* GraphQL */ `
           }
         }
 
+        workAtCampHeader
+        workAtCampSubheader
+        counselorLink { linkLabel link }
+        volunteerLink { linkLabel link }
+
         resultsHeader
         resultsBody
         whyGmCampsHeader
@@ -175,6 +181,27 @@ const CAMPS_PAGE_QUERY = /* GraphQL */ `
 
         contactHeader
         contactSubheader
+      }
+    }
+  }
+`;
+
+const CAMP_SPONSORS_QUERY = /* GraphQL */ `
+  query CampSponsors {
+    sponsors(first: 100) {
+      nodes {
+        name
+        sponsorFields {
+          sponsorType
+          tier
+          link
+          logo {
+            node {
+              sourceUrl
+              altText
+            }
+          }
+        }
       }
     }
   }
@@ -292,6 +319,20 @@ function collectFormsAndLinks(formsAndLinks: Record<string, unknown> | null | un
   return out;
 }
 
+function collectWorkAtCampLinks(
+  counselor: { linkLabel: string; link: unknown },
+  volunteer: { linkLabel: string; link: unknown },
+): FormsAttachmentItem[] {
+  const out: FormsAttachmentItem[] = [];
+  const c = resolveAcfLink(counselor.link);
+  const cLabel = counselor.linkLabel.trim();
+  if (c.url && cLabel) out.push({ kind: "link", label: cLabel, url: c.url, linkTarget: c.target });
+  const v = resolveAcfLink(volunteer.link);
+  const vLabel = volunteer.linkLabel.trim();
+  if (v.url && vLabel) out.push({ kind: "link", label: vLabel, url: v.url, linkTarget: v.target });
+  return out;
+}
+
 type TextCard = {
   header?: string | null;
   body?: string | null;
@@ -349,6 +390,10 @@ type CampsDirectoryPageFields = {
   nfcCampsDescription: string;
   nfcCampsImage: CampsImageField;
   formsAndLinks: CampsFormsAndLinks;
+  workAtCampHeader: string;
+  workAtCampSubheader: string;
+  counselorLink: { linkLabel: string; link: unknown };
+  volunteerLink: { linkLabel: string; link: unknown };
   resultsHeader: string;
   resultsBody: string;
   whyGmCampsHeader: string;
@@ -441,6 +486,10 @@ function initializeCampsDirectoryPageFields(raw: Record<string, unknown> | null 
       link5: normalizeFormLink(formsAndLinks.link5),
       link6: normalizeFormLink(formsAndLinks.link6),
     },
+    workAtCampHeader: stringOrEmpty(f.workAtCampHeader),
+    workAtCampSubheader: stringOrEmpty(f.workAtCampSubheader),
+    counselorLink: normalizeFormLink(f.counselorLink),
+    volunteerLink: normalizeFormLink(f.volunteerLink),
     resultsHeader: stringOrEmpty(f.resultsHeader),
     resultsBody: stringOrEmpty(f.resultsBody),
     whyGmCampsHeader: stringOrEmpty(f.whyGmCampsHeader),
@@ -571,7 +620,7 @@ function TextCardBlock({
 }
 
 export default async function CampsPage() {
-  const [data, programsData] = await Promise.all([
+  const [data, programsData, sponsorsData] = await Promise.all([
     wpFetch<{
       page?:
         | (WpPageWithHeroFields & {
@@ -590,7 +639,10 @@ export default async function CampsPage() {
       first: CAMPS_PROGRAMS_FIRST,
       after: null,
     }),
+    wpFetch<{ sponsors?: unknown }>(CAMP_SPONSORS_QUERY, {}),
   ]);
+
+  const campSponsors = normalizeSponsorsByType(sponsorsData?.sponsors, "camp");
 
   const hero = resolvePhotoWaveHeaderProps(data?.page, "Camps");
   const f = initializeCampsDirectoryPageFields(data?.page?.campsDirectoryPageFields);
@@ -644,6 +696,10 @@ export default async function CampsPage() {
   const contactHeader = f.contactHeader;
   const contactSubheader = f.contactSubheader;
 
+  const workAtCampItems = collectWorkAtCampLinks(f.counselorLink, f.volunteerLink);
+  const workAtCampSectionTitle = f.workAtCampHeader || "Work at camp";
+  const showWorkAtCampSection = !!(f.workAtCampHeader || f.workAtCampSubheader || workAtCampItems.length);
+
   return (
     <main className="overflow-x-clip">
       <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} children={<div className="mt-6 mb-6 flex flex-wrap items-center gap-3">
@@ -652,7 +708,7 @@ export default async function CampsPage() {
       </div>} />
 
       {hasBrowseByCenterSection ? (
-        <section className="mx-auto max-w-6xl px-6">
+        <section className="mx-auto max-w-6xl px-6 pt-16">
           {browseHeader ? <h2 className="h2">{browseHeader}</h2> : null}
           {browseSubheader ? (
             <div className="body mt-4 text-neutral-700">
@@ -702,7 +758,7 @@ export default async function CampsPage() {
       ) : null}
 
       {attachmentItems.length ? (
-        <section className="mx-auto mt-16 max-w-5xl px-6">
+        <section className="mx-auto mt-16 max-w-5xl pt-16 px-6">
           <div className="justify-center items-center">
           <h2 className="h2 mb-2 text-gmcc-navy text-center">{formsAndLinksSectionTitle}</h2>
           <div className="mt-4 flex flex-wrap gap-3 justify-center items-center">
@@ -757,6 +813,7 @@ export default async function CampsPage() {
         </section>
       ) : null}
 
+
       <section className="mx-auto max-w-6xl px-6 mt-16">
       {resultsHeader ? <h2 className="h2 text-gmcc-navy">{resultsHeader}</h2> : null}
       {resultsBody ? <p className="body mt-4 text-neutral-700">{resultsBody}</p> : null}
@@ -771,6 +828,41 @@ export default async function CampsPage() {
         />
       </Suspense>
       </section>
+
+      {showWorkAtCampSection ? (
+        <section className="mx-auto mt-16 max-w-5xl px-6">
+          <div className="justify-center items-center">
+            <h2 className="h2 mb-2 text-gmcc-navy text-center">{workAtCampSectionTitle}</h2>
+            {f.workAtCampSubheader ? (
+              <div className="body mt-4 text-center text-neutral-700">
+                {f.workAtCampSubheader.split(/\n\n+/).map((para, i) => (
+                  <p key={i} className={i > 0 ? "mt-4 whitespace-pre-line" : "whitespace-pre-line"}>
+                    {para}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+            {workAtCampItems.length ? (
+              <div className="mt-4 flex flex-wrap gap-3 justify-center items-center">
+                {workAtCampItems.map((item, i) => (
+                  <a
+                    key={`work-at-camp-${item.url}-${i}`}
+                    href={item.url}
+                    {...(openLinkInNewTab(item.url, item.kind === "link" ? item.linkTarget : undefined)
+                      ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
+                      : {})}
+                    className="group flex items-center gap-3 rounded-full border border-neutral-200 bg-neutral-50 px-4 py-3 transition-all hover:border-gmcc-teal hover:bg-white hover:shadow-md"
+                  >
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-sm font-semibold text-gmcc-navy">{item.label}</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
 
       {(whyHeader || whyBody || benefits.length || faqsList.length) ? (
@@ -799,7 +891,7 @@ export default async function CampsPage() {
 
             {/* Full-bleed navy band; content aligned to max-w-6xl + horizontal padding */}
             <div className="relative z-0 -mt-px bg-gmcc-navy text-white">
-              <div className="mx-auto w-full max-w-6xl px-6 pb-12 pt-8 md:pt-10 justify-center">
+              <div className="mx-auto w-full max-w-6xl px-6 pb-12 pt-8 md:pt-16 justify-center">
                 {(whyHeader || whyBody) ? (
                   <div>
                     {whyHeader ? <h2 className="h2 text-white">{whyHeader}</h2> : null}
@@ -870,6 +962,13 @@ export default async function CampsPage() {
           </div>
         </section>
       ) : null}
+
+      {/* CAMP SPONSORS */}
+      {campSponsors.length > 0 && (
+        <section className="mx-auto mt-20 max-w-6xl px-6">
+          <SponsorsGrid sponsors={campSponsors} title="Thank You to Our Camp Sponsors" />
+        </section>
+      )}
 
       {/* CONTACT CTA */}
       {(contactHeader || contactSubheader) && (

@@ -201,6 +201,21 @@ const CENTER_BY_SLUG_QUERY = `
           contactPhone
           contactEmail
         }
+
+        featuredTestimonial {
+          nodes {
+            ... on Testimonial {
+              id
+              title
+              testimonialFields {
+                quote
+                personName
+                personContext
+                photo { node { sourceUrl altText } }
+              }
+            }
+          }
+        }
       }
       centerCampaignModuleFields {
         header
@@ -250,24 +265,6 @@ const CENTER_BY_SLUG_QUERY = `
             node {
               sourceUrl
               altText
-            }
-          }
-        }
-      }
-    }
-    testimonials(first: 100) {
-      nodes {
-        slug
-        testimonialFields {
-          quote
-          personName
-          personContext
-          photo { node { sourceUrl altText } }
-          relatedCenters {
-            nodes {
-              ... on Center {
-                slug
-              }
             }
           }
         }
@@ -347,6 +344,7 @@ export default async function CenterPage(props: CenterPageProps) {
   ].filter((c): c is HeroCta => c != null);
 
   const centerFields = center.centersFields ?? {};
+  const featuredTestimonial = centerFields.featuredTestimonial?.nodes?.[0] ?? null;
   const campaign = center.centerCampaignModuleFields ?? {};
 
   const firstNonEmptyString = (...values: unknown[]) => {
@@ -431,6 +429,7 @@ export default async function CenterPage(props: CenterPageProps) {
   const isCurlingCenter = isCurlingCenterSlug(slug, center.slug ?? null);
   const curlingLayout = centerDetailFields?.curlingCenterPageFields;
   const readyToJoinLayout = centerDetailFields?.readyToJoinSection;
+  const testimonialHeader = centerDetailFields?.testimonialHeader;
   const hoursReplacement = coerceWpRichText(curlingLayout?.hoursReplacementStatement).trim();
   const showCurlingHoursReplacement = isCurlingCenter && hoursReplacement.length > 0;
 
@@ -596,6 +595,46 @@ export default async function CenterPage(props: CenterPageProps) {
         
         <CenterCampaignModule module={campaignModule} />
       </section>
+
+      <section className="px-4 pt-4 pb-12">
+      <div className="mx-auto max-w-6xl">
+        <div className="relative text-center">
+          <h2 className="h2 text-gmcc-navy">{testimonialHeader}</h2>
+        </div>
+
+        <div>
+          <figure className="mx-auto max-w-3xl">
+            <div className="text-5xl mb-0 leading-none text-gmcc-teal/50">“</div>
+
+            <blockquote className="mt-0 text-lg leading-relaxed text-neutral-700 text-center">
+              {featuredTestimonial?.testimonialFields?.quote ?? ""}
+            </blockquote>
+
+            {(featuredTestimonial?.testimonialFields?.personName || featuredTestimonial?.testimonialFields?.personContext || featuredTestimonial?.testimonialFields?.photo?.node?.sourceUrl) ? (
+              <figcaption className="mt-6 flex items-center justify-center gap-3 text-left">
+                {featuredTestimonial?.testimonialFields?.photo?.node?.sourceUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={featuredTestimonial.testimonialFields.photo.node.sourceUrl}
+                    alt={featuredTestimonial?.testimonialFields?.photo?.node?.altText ?? ""}
+                    className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : null}
+
+                <div className="small text-center">
+                  {featuredTestimonial?.testimonialFields?.personName ? (
+                    <div className="font-semibold text-neutral-900">{featuredTestimonial.testimonialFields.personName}</div>
+                  ) : null}
+                  {featuredTestimonial?.testimonialFields?.personContext ? <div>{featuredTestimonial.testimonialFields.personContext}</div> : null}
+                </div>
+              </figcaption>
+            ) : null}
+          </figure>
+        </div>
+      </div>
+    </section>
 
       <section className="mx-auto max-w-6xl px-4 pt-4 pb-12 section-y stack-4">
         <h2 className="h2 mb-2">{joinSectionHeader}</h2>

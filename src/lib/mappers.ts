@@ -110,6 +110,8 @@ export function mapProgram(wp: any) {
     registrationSystem: f.registrationSystem ?? [],
     externalSchedule: f.externalSchedule ?? null,
     attachments: attachments,
+    registrationInformation: f.registrationInformation ?? null,
+    additionalInformationLinks: f.additionalInformationLinks ?? null,
     taxonomies,
     centers,
     relatedPrograms,

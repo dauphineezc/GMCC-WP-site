@@ -165,10 +165,6 @@ const PERSONAL_TRAINING_PAGE_QUERY = /* GraphQL */ `
             question
             answer
           }
-          faq4 {
-            question
-            answer
-          }
         }
 
         inquiryFormHeader
@@ -320,7 +316,7 @@ export default async function PersonalTrainingPage() {
     const inquiryFormSubheader = data?.page?.personalTrainingDirectoryPageFields?.inquiryFormSubheader ?? "Fill out the inquiry form below.";
 
     const faqs = data?.page?.personalTrainingDirectoryPageFields?.faqs;
-    const faqsList = [faqs?.faq1, faqs?.faq2, faqs?.faq3, faqs?.faq4]
+    const faqsList = [faqs?.faq1, faqs?.faq2, faqs?.faq3]
     .map((item: any) => ({
       question: item?.question ?? "",
       answer: item?.answer ?? "",
@@ -446,7 +442,7 @@ export default async function PersonalTrainingPage() {
         </div>
       </section>
 
-      <section className="relative mt-14 w-[100dvw] -ml-[calc(50dvw-50%)] overflow-x-clip">
+      <section id="trainers" className="relative mt-14 w-[100dvw] -ml-[calc(50dvw-50%)] overflow-x-clip">
         <div className="pointer-events-none w-full overflow-hidden leading-none">
           <svg
             viewBox="0 0 1440 120"
@@ -469,7 +465,7 @@ export default async function PersonalTrainingPage() {
         <div className="-mt-px bg-gmcc-navy py-12 text-white">
           <div className="mx-auto max-w-6xl px-6">
             <h2 className="h2 text-white">{trainersHeader}</h2>
-            <p className="mt-2 max-w-3xl text-white/90">
+            <p className="mt-2 text-white/90">
               {trainersSubheader}
             </p>
             <div className="mt-6 rounded-2xl bg-gmcc-navy p-4 text-neutral-900 md:p-6">

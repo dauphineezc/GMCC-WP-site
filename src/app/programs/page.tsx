@@ -12,7 +12,12 @@ import {
   resolvePhotoWaveHeaderProps,
 } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
-import { PROGRAMS_LIST_QUERY, PROGRAMS_PAGE_SIZE } from "@/lib/programsListQuery";
+import {
+  PROGRAMS_LIST_QUERY,
+  PROGRAMS_PAGE_SIZE,
+  PROGRAMS_ALL_AT_ONCE,
+  LAZY_LOAD_PROGRAMS,
+} from "@/lib/programsListQuery";
 import ExploreProgramsClient from "./exploreProgramsClient";
 
 const DIRECTORY_HEADER_FIELDS = `
@@ -65,6 +70,29 @@ const GROUP_FITNESS_DIRECTORY_HEADER_QUERY = `
     }
   }
 `;
+
+const MIDDLE_SCHOOL_SPORTS_DIRECTORY_HEADER_QUERY = `
+  query MiddleSchoolSportsDirectoryHeader($uri: ID!) {
+    page(id: $uri, idType: URI) {
+      middleSchoolSportsDirectoryPageFields {
+        ${DIRECTORY_HEADER_FIELDS}
+        sponsors {
+          nodes {
+            ... on Sponsor {
+              name
+              sponsorFields {
+                tier
+                link
+                logo { node { sourceUrl altText } }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 
 const PERSONAL_TRAINING_DIRECTORY_HEADER_QUERY = `
   query PersonalTrainingDirectoryHeader($uri: ID!) {
@@ -147,6 +175,19 @@ function normalizeDirectoryHeaderData(
       bio: trainer?.staffProfilesFields?.bio ?? null,
     })).filter((t: DirectoryTrainer) => t.name || t.jobTitle || t.photo?.sourceUrl || t.bio) ?? [];
 
+  const sponsorNodes = field?.sponsors?.nodes ?? [];
+  const sponsors = sponsorNodes.flatMap((node: any) => {
+    const logoUrl = node?.sponsorFields?.logo?.node?.sourceUrl?.trim();
+    if (!logoUrl) return [];
+    return [{
+      name: node.name ?? null,
+      logoUrl,
+      logoAlt: node?.sponsorFields?.logo?.node?.altText ?? null,
+      link: node?.sponsorFields?.link ?? null,
+      tier: node?.sponsorFields?.tier ?? null,
+    }];
+  });
+
   return {
     header: field.header ?? null,
     body: field.body ?? null,
@@ -159,19 +200,24 @@ function normalizeDirectoryHeaderData(
         }
       : null,
     trainers,
+    sponsors: sponsors.length ? sponsors : null,
   };
 }
 
-function hasDirectoryHeaderContent(field?: DirectoryHeaderData | null) {
+function hasDirectoryHeaderContent(field?: any) {
+  if (!field) return false;
   const header = (field?.header ?? "").trim();
   const body = (field?.body ?? "").trim();
-  const attachments = field?.attachments;
-  const hasAttachment =
-    !!attachments?.attachment1 ||
-    !!attachments?.attachment2 ||
-    !!attachments?.attachment3 ||
-    !!attachments?.attachment4;
-  return Boolean(header || body || hasAttachment || (field?.trainers?.length ?? 0) > 0);
+
+  // Check attachments — treat as present only when label or file url is non-empty
+  const atts = field?.attachments;
+  const hasAttachment = [atts?.attachment1, atts?.attachment2, atts?.attachment3, atts?.attachment4]
+    .some((a: any) => (a?.label ?? "").trim() || (a?.file?.node?.sourceUrl ?? a?.file?.sourceUrl ?? a?.file?.mediaItemUrl ?? "").trim());
+
+  const hasTrainers = (field?.trainers?.nodes ?? field?.trainers ?? []).length > 0;
+  const hasSponsors = (field?.sponsors?.nodes ?? field?.sponsors ?? []).length > 0;
+
+  return Boolean(header || body || hasAttachment || hasTrainers || hasSponsors);
 }
 
 async function fetchFieldFromUris<TPage extends Record<string, any>>(
@@ -195,6 +241,7 @@ async function fetchFieldFromUris<TPage extends Record<string, any>>(
   return undefined;
 }
 
+
 export default async function ExploreProgramsPage() {
   const [heroPage, programsData] = await Promise.all([
     fetchPageWithHeroFields("programs"),
@@ -203,7 +250,10 @@ export default async function ExploreProgramsPage() {
         pageInfo?: { hasNextPage: boolean; endCursor: string | null };
         nodes?: any[];
       } | null;
-    }>(PROGRAMS_LIST_QUERY, { first: PROGRAMS_PAGE_SIZE, after: null }),
+    }>(PROGRAMS_LIST_QUERY, {
+      first: LAZY_LOAD_PROGRAMS ? PROGRAMS_PAGE_SIZE : PROGRAMS_ALL_AT_ONCE,
+      after: null,
+    }),
   ]);
 
   const hero = resolvePhotoWaveHeaderProps(heroPage, "Explore our programs");
@@ -213,6 +263,7 @@ export default async function ExploreProgramsPage() {
     campsRaw,
     childcareRaw,
     groupFitnessRaw,
+    middleSchoolSportsRaw,
     personalTrainingRaw,
     tennisLessonsRaw,
   ] = await Promise.all([
@@ -244,6 +295,20 @@ export default async function ExploreProgramsPage() {
       "groupFitnessDirectoryPageFields"
     ),
     fetchFieldFromUris<
+      { middleSchoolSportsDirectoryPageFields?: DirectoryHeaderData | null }
+    >(
+      MIDDLE_SCHOOL_SPORTS_DIRECTORY_HEADER_QUERY,
+      [
+        "/youth-sports-leagues",
+        "/youth-sports-leagues/",
+        "/youth-sports-league",
+        "/youth-sports-league/",
+        "/middle-school-sports",
+        "/middle-school-sports/",
+      ],
+      "middleSchoolSportsDirectoryPageFields"
+    ),
+    fetchFieldFromUris<
       { personalTrainingDirectoryPageFields?: DirectoryHeaderData | null }
     >(
       PERSONAL_TRAINING_DIRECTORY_HEADER_QUERY,
@@ -265,6 +330,7 @@ export default async function ExploreProgramsPage() {
     campsDirectoryPageFields: normalizeDirectoryHeaderData(campsRaw),
     childcareDirectoryPageFields: normalizeDirectoryHeaderData(childcareRaw),
     groupFitnessDirectoryPageFields: normalizeDirectoryHeaderData(groupFitnessRaw),
+    middleSchoolSportsDirectoryPageFields: normalizeDirectoryHeaderData(middleSchoolSportsRaw),
     personalTrainingDirectoryPageFields: normalizeDirectoryHeaderData(personalTrainingRaw, "trainers"),
     tennisLessonsDirectoryPageFields: normalizeDirectoryHeaderData(tennisLessonsRaw, "tennisInstructors"),
   };

@@ -83,8 +83,18 @@ export default function PhotoWaveHeader({
         }
       />
 
+      {/* Mobile gradient — covers more of the header */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 md:hidden"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 20%, rgba(0,34,68,0.60) 75%, rgba(0,0,0,.30) 90%)",
+        }}
+        aria-hidden="true"
+      />
+      {/* Desktop gradient — original */}
+      <div
+        className="absolute inset-0 hidden md:block"
         style={{
           background:
             "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",

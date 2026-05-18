@@ -50,6 +50,7 @@ export function getProgramsDirectoryHeaderVariant(
   if (hasAny(programAreaValues, ["aquatics"])) return "aquatics";
   if (hasAny(programAreaValues, ["childcare"])) return "childcare";
   if (hasAny(programAreaValues, ["group fitness"])) return "group-fitness";
+  if (hasAny(programAreaValues, ["middle school sports", "middle-school-sports", "middleschoolsports"])) return "middle-school-sports";
   if (hasAny(programAreaValues, ["personal training"])) return "personal-training";
   if (hasAny(offeringTypeValues, [
     "lessons/training",

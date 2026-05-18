@@ -25,6 +25,14 @@ export type DirectoryTrainer = {
   bio?: Maybe<string>;
 };
 
+export type DirectorySponsor = {
+  name?: Maybe<string>;
+  logoUrl?: Maybe<string>;
+  logoAlt?: Maybe<string>;
+  link?: Maybe<string>;
+  tier?: Maybe<string>;
+};
+
 export type DirectoryHeaderData = {
   header?: Maybe<string>;
   body?: Maybe<string>;
@@ -35,6 +43,7 @@ export type DirectoryHeaderData = {
     attachment4?: Maybe<DirectoryAttachment>;
   }>;
   trainers?: Maybe<DirectoryTrainer[]>;
+  sponsors?: Maybe<DirectorySponsor[]>;
 };
 
 function fileUrl(file: Maybe<ACFFile>) {

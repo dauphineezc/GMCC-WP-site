@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { buildEventHref } from "@/lib/events/buildEventHref";
+import { formatEventDate } from "@/lib/events/formatEventDate";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 
 type EventWP = any;
@@ -52,33 +53,6 @@ type EventCard = {
         eventType: toStringArray(f.eventType),
     };
   }  
-
-  function formatEventDate(start?: string | null, end?: string | null) {
-    if (!start) return null;
-  
-    const startDate = new Date(start);
-    const endDate = end ? new Date(end) : null;
-  
-    const date = startDate.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  
-    const time = startDate.toLocaleTimeString(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  
-    if (!endDate) return `${date} • ${time}`;
-  
-    const endTime = endDate.toLocaleTimeString(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  
-    return `${date} • ${time}–${endTime}`;
-  }
 
   function toStringArray(val: unknown): string[] {
     if (!val) return [];
@@ -272,7 +246,7 @@ export default function ExploreEventsClient({
     const q = search.trim().toLowerCase();
     const now = new Date();
   
-    return all.filter(e => {
+    const list = all.filter(e => {
       // text search
       if (q) {
         const hay = `${e.title} ${e.summary}`.toLowerCase();
@@ -299,6 +273,17 @@ export default function ExploreEventsClient({
   
       return true;
     });
+
+    const startKey = (e: EventCard) => {
+      if (!e.startDateTime) {
+        return dateFilter === "past" ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
+      }
+      return new Date(e.startDateTime).getTime();
+    };
+
+    return [...list].sort((a, b) =>
+      dateFilter === "past" ? startKey(b) - startKey(a) : startKey(a) - startKey(b)
+    );
   }, [all, search, audience, eventTypes, dateFilter]);  
   
 

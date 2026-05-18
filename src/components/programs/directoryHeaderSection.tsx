@@ -6,6 +6,7 @@ import { GroupFitnessDirectoryHeader } from "./directory-sections/groupFitnessDi
 import { PersonalTrainingDirectoryHeader } from "./directory-sections/personalTrainingDirectoryHeader";
 import { TennisLessonsDirectoryHeader } from "./directory-sections/tennisLessonsDirectoryHeader";
 import type { DirectoryHeaderData, DirectoryTrainer } from "./directoryHeaderShared";
+import { MiddleSchoolSportsDirectoryHeader } from "./directory-sections/middleSchoolSportsDirectoryHeader";
 
 export type { DirectoryHeaderData, DirectoryTrainer };
 
@@ -14,6 +15,7 @@ export type ProgramsPageACF = {
   campsDirectoryPageFields?: DirectoryHeaderData | null;
   childcareDirectoryPageFields?: DirectoryHeaderData | null;
   groupFitnessDirectoryPageFields?: DirectoryHeaderData | null;
+  middleSchoolSportsDirectoryPageFields?: DirectoryHeaderData | null;
   personalTrainingDirectoryPageFields?: DirectoryHeaderData | null;
   tennisLessonsDirectoryPageFields?: DirectoryHeaderData | null;
 };
@@ -23,6 +25,7 @@ export type DirectoryHeaderVariant =
   | "aquatics"
   | "childcare"
   | "group-fitness"
+  | "middle-school-sports"
   | "personal-training"
   | "tennis-lessons";
 
@@ -61,6 +64,13 @@ export function DirectoryHeaderSection({
       return (
         <GroupFitnessDirectoryHeader
           data={{ header: "Group Fitness", ...(acf.groupFitnessDirectoryPageFields ?? {}) }}
+          className={className}
+        />
+      );
+    case "middle-school-sports":
+      return (
+        <MiddleSchoolSportsDirectoryHeader
+          data={{ header: "Middle School Sports", ...(acf.middleSchoolSportsDirectoryPageFields ?? {}) }}
           className={className}
         />
       );

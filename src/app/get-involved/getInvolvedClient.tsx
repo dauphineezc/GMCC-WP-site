@@ -42,6 +42,10 @@ type GetInvolvedFields = {
     sponsorLongDescription?: string | null;
     sponsorImage?: MaybeImage;
     sponsorApplication?: string | null;
+    viewSponsorsPageCta?: {
+      ctaLabel?: string | null;
+      cta?: string | null;
+    } | null;
   } | null;
 };
 
@@ -83,7 +87,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
             src="/images/VolunteerIcon.png"
             alt=""
             aria-hidden
-            className="pointer-events-none absolute left-4 top-4 h-12 w-12"
+            className="pointer-events-none absolute left-4 top-4 h-14 w-14"
           />
 
           <h3 className="h2 text-center mb-2 pt-4">Volunteer</h3>
@@ -102,7 +106,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
             src="/images/DonateIcon.png"
             alt=""
             aria-hidden
-            className="pointer-events-none absolute left-4 top-4 h-12 w-12"
+            className="pointer-events-none absolute left-4 top-4 h-14 w-14"
           />
 
           <h3 className="h2 text-center mb-2 pt-4">Donate</h3>
@@ -121,7 +125,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
             src="/images/SponsorshipIcon.png"
             alt=""
             aria-hidden
-            className="pointer-events-none absolute left-4 top-4 h-12 w-12"
+            className="pointer-events-none absolute left-4 top-4 h-14 w-14"
           />
 
           <h3 className="h2 text-center mb-2 pt-4">Sponsor</h3>
@@ -298,19 +302,34 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
               <div className="grid gap-16 md:grid-cols-2 items-start">
                 <div className="stack-3">
                     <TextBlock text={sponsor?.sponsorLongDescription} />
-    
-                    {sponsor?.sponsorApplication ? (
-                    <div className="pt-4 text-center mx-auto">
-                        <a
-                        href={sponsor.sponsorApplication}
-                        className="btn btn-primary"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        >
-                        Apply to sponsor
-                        </a>
+
+                    <div className="flex justify-center gap-4 mt-4">
+                      {sponsor?.sponsorApplication ? (
+                      <div>
+                          <a
+                          href={sponsor.sponsorApplication}
+                          className="btn btn-primary"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          >
+                          Apply to sponsor
+                          </a>
+                      </div>
+                      ) : null}
+
+                      {sponsor?.viewSponsorsPageCta?.cta ? (
+                        <div>
+                          <a
+                          href={sponsor.viewSponsorsPageCta.cta}
+                          className="btn btn-secondary"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          >
+                          {sponsor.viewSponsorsPageCta.ctaLabel}
+                          </a>
+                        </div>
+                      ) : null}
                     </div>
-                    ) : null}
                 </div>
     
                 {sponsor?.sponsorImage?.node?.sourceUrl && (

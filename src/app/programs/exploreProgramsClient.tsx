@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { LAZY_LOAD_PROGRAMS } from "@/lib/programsListQuery";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import {
@@ -27,6 +28,7 @@ export type ProgramCard = {
   audience: { slug: string; name: string }[];
   centers: { slug: string; title: string }[];
   programAreas: { slug: string; name: string }[];
+  specialtyGroupFitness: string[];
   priceFrom: number | null;
   campTypes: { slug: string; name: string }[];
 };
@@ -76,6 +78,7 @@ export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
       name: n?.name,
     })).filter((x: any) => x?.slug && x?.name) ?? [],
 
+    specialtyGroupFitness: Array.isArray(f.specialtyGroupFitness) ? f.specialtyGroupFitness : [],
   };
 }
 
@@ -139,8 +142,10 @@ export default function ExploreProgramsClient({
     }
   }, [isLoadingMore, pageInfo.hasNextPage, pageInfo.endCursor, pageSize]);
 
-  // IntersectionObserver triggers loadMore near bottom
+  // IntersectionObserver triggers loadMore near bottom (only when lazy loading is enabled)
   useEffect(() => {
+    if (!LAZY_LOAD_PROGRAMS) return;
+
     const el = sentinelRef.current;
     if (!el) return;
 
@@ -763,6 +768,15 @@ export default function ExploreProgramsClient({
                 />
               )}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
+              {p.specialtyGroupFitness.includes("SilverSneakers Exclusive") ? (
+                <span className="absolute top-2 right-2 rounded-full bg-[#6DB626] px-2.5 py-0.75 text-xs font-semibold text-white shadow">
+                  SilverSneakers Exclusive
+                </span>
+              ) : p.specialtyGroupFitness.includes("Specialty Fitness Program") ? (
+                <span className="absolute top-2 right-2 rounded-full bg-[#FF004D] px-2.5 py-0.75 text-xs font-semibold text-white shadow">
+                  Specialty Program
+                </span>
+              ) : null}
             </div>
 
             <div className="flex flex-1 flex-col min-h-0 mt-5">

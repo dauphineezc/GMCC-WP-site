@@ -1,7 +1,12 @@
 // src/app/events/[yyyy]/[mm]/[slug]/page.tsx
 import { wpFetch } from "@/lib/wp";
-import HeaderImage from "@/components/headerImage";
+import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
+import { formatEventDate } from "@/lib/events/formatEventDate";
+import ImageCarousel from "@/components/imageCarousel";
+import { TestimonialSection, normalizeTestimonials } from "@/components/testimonials";
+import PhoneLink from "@/components/phoneLink";
+import SponsorsGrid, { normalizeSponsors } from "@/components/sponsorsGrid";
 
 const EVENT_BY_SLUG_QUERY = `
   query EventBySlug($slug: ID!) {
@@ -21,9 +26,17 @@ const EVENT_BY_SLUG_QUERY = `
         startDateTime
         endDateTime
         cost
-        registrationLink
         eventType
         locationOverride
+        whatToBring
+
+        mediaGallery {
+          photo1 { node { sourceUrl altText } }
+          photo2 { node { sourceUrl altText } }
+          photo3 { node { sourceUrl altText } }
+          photo4 { node { sourceUrl altText } }
+          photo5 { node { sourceUrl altText } }
+        }
 
         attachments {
           attachment1 {
@@ -66,6 +79,60 @@ const EVENT_BY_SLUG_QUERY = `
         contactEmail
         contactPhone
 
+        registrationInformation {
+          instructionalSubheader
+          registrationLink
+          phoneNumber
+          email
+        }
+        additionalInformationLinks {
+          link1 {
+            linkLabel
+            link
+          }
+          link2 {
+            linkLabel
+            link
+          }
+          link3 {
+            linkLabel
+            link
+          }
+        }
+
+        testimonials {
+            nodes {
+              ... on Testimonial {
+                id
+                title
+                testimonialFields {
+                  quote
+                  personName
+                  personContext
+                  photo { node { sourceUrl altText } }
+                }
+              }
+            }
+          }
+
+        sponsors {
+          nodes {
+            ... on Sponsor {
+              name
+              sponsorFields {
+                tier
+                link
+                logo {
+                  node {
+                    sourceUrl
+                    altText
+                  }
+                }
+              }
+            }
+          }
+        }
+
         relatedEvents {
           nodes {
             ... on Event {
@@ -74,6 +141,7 @@ const EVENT_BY_SLUG_QUERY = `
               eventFields {
                 summary
                 startDateTime
+                endDateTime
               }
               featuredImage {
                 node {
@@ -112,49 +180,29 @@ export default async function EventPage(props: EventPageProps) {
   }
 
   const f = event.eventFields ?? {};
-
-  const start = f.startDateTime ? new Date(f.startDateTime) : null;
-  const end = f.endDateTime ? new Date(f.endDateTime) : null;
+  const whatToBringItems = Array.isArray(f.whatToBring)
+    ? f.whatToBring.filter((item: unknown): item is string => typeof item === "string" && item.trim().length > 0)
+    : typeof f.whatToBring === "string"
+    ? f.whatToBring
+        .split("\n")
+        .map((item: string) => item.trim())
+        .filter(Boolean)
+    : [];
 
   const centers = (f.center?.nodes ?? []).map((c: any) => ({ title: c.title, slug: c.slug }));
 
-  const dateRangeLabel =
-    start && end
-      ? `${start.toLocaleDateString()} ${start.toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-        })} – ${end.toLocaleDateString()} ${end.toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-        })}`
-      : start
-      ? `${start.toLocaleDateString()} ${start.toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-        })}`
-      : null;
+  const dateRangeLabel = formatEventDate(f.startDateTime ?? null, f.endDateTime ?? null);
 
   return (
     <main>
-
-      {/* HEADER IMAGE - Full Width */}
-      <div className="w-full">
-        <HeaderImage src={event.featuredImage?.node?.sourceUrl ?? ""} alt={event.featuredImage?.node?.altText ?? ""} />
-      </div>
+      <SolidNavyWaveHeader title={event.title} description={f.summary} />
 
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
 
-      {/* HERO */}
-      <section className="stack-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="stack-2">
-          <h1 className="h1">{event.title}</h1>
-          {f.summary && (
-            <p className="body max-w-2xl">{f.summary}</p>
-          )}
-        </div>
-      </div>
+      {/* MAIN GRID: content + sidebar */}
+      <section className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)]">
 
+      <div className="min-w-0 stack-4">
 
         {/* Chips row - all clickable, linking to /events with filters */}
         <div className="flex flex-wrap gap-2">
@@ -199,12 +247,10 @@ export default async function EventPage(props: EventPageProps) {
             </a>
           ))}
         </div>
-      </section>
 
-      {/* MAIN GRID */}
-      <section className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)]">
+
         {/* LEFT COLUMN */}
-        <div className="stack-8">
+        <div className="stack-8 pt-4">
           {/* Description */}
           {f.longDescription && (
             <article className="prose prose-sm max-w-none sm:prose-base">
@@ -250,7 +296,7 @@ export default async function EventPage(props: EventPageProps) {
           )}
 
           {/* Details card */}
-          <h2 className="h2 mb-2">Event details</h2>
+          <h2 className="h2 pt-8 mb-2">Event details</h2>
           <div className="card">
             <dl className="mt-3 stack-2 body">
               {dateRangeLabel && (
@@ -292,13 +338,30 @@ export default async function EventPage(props: EventPageProps) {
                 <dt className="text-neutral-500">Type</dt>
                 <dd className="text-right">{f.eventType}</dd>
               </div>
-            )}
-          </dl>
+              )}
+            </dl>
           </div>
 
+          {/* What to bring card */}
+          {whatToBringItems.length > 0 && (
+                <div>
+                <h2 className="h2 pt-8 mb-2">What to bring</h2>
+                <div className="card">
+                  <ul className="list-disc pl-5 body">
+                    {whatToBringItems.length
+                      ? whatToBringItems.map((x: string, i: number) => (
+                          <li key={i}>{x}</li>
+                        ))
+                      : <li>No specific items required.</li>}
+                  </ul>
+                </div>
+              </div>
+            )}
+
           {/* Contact card */}
-          <h2 className="h2 mb-2">Contact</h2>
           {(f.contactName || f.contactEmail || f.contactPhone) && (
+            <div className="pt-8">
+            <h2 className="h2 mb-2">Contact</h2>
             <div className="card">
               <div className="stack-2 body">
                 {f.contactName && <div>{f.contactName}</div>}
@@ -321,60 +384,121 @@ export default async function EventPage(props: EventPageProps) {
                       {f.contactPhone}
                     </a>
                   </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           )}
+
+          {f.testimonials?.nodes?.length > 0 && (
+            <div>
+              <h2 className="h2 pt-8 mb-4">Testimonials</h2>
+              <TestimonialSection testimonials={normalizeTestimonials(f.testimonials.nodes)} />
+            </div>
+          )}
+
+        </div>
         </div>
 
-        {/* RIGHT SIDEBAR */}
-        <aside className="lg:sticky lg:top-18 h-fit">
-          {/* Registration card */}
-          <div className="sticky top-8 card bg-gmcc-blue-light/30 border-gmcc-teal/40">
-            <h2 className="h2 text-gmcc-navy">Ready to register?</h2>
-            <p className="mt-1 small">
-              You&apos;ll be taken to our secure registration system to
-              complete signup.
-            </p>
+        {/* RIGHT: stretch to row height like /events filters so sticky has a tall scroll span */}
+        <div className="flex min-h-0 min-w-0 flex-col gap-6">
+          {/* Media Gallery Carousel */}
+          {(() => {
+            const gallery = f.mediaGallery;
+            if (!gallery) return null;
+            
+            // Transform media gallery images into carousel format
+            const carouselImages = [
+              gallery.photo1,
+              gallery.photo2,
+              gallery.photo3,
+              gallery.photo4,
+              gallery.photo5,
+            ]
+              .filter((img) => img?.node?.sourceUrl)
+              .map((img) => ({
+                image: {
+                  sourceUrl: img.node.sourceUrl,
+                  altText: img.node.altText ?? null,
+                },
+                cta: null,
+                url: null,
+              }));
+            
+            if (carouselImages.length === 0) return null;
+            
+            return (
+              <div>
+                {/* <h2 className="h2 mb-2">See {p.title} in action</h2> */}
+                <ImageCarousel images={carouselImages} />
+              </div>
+            );
+          })()}
 
-            {f.registrationLink ? (
+
+          <aside className="card h-fit sticky top-18 z-10 w-full min-w-0 shrink-0 border-gmcc-teal/40 bg-gmcc-blue-light/30 p-6">
+            <h2 className="h2 text-gmcc-navy">Ready to register?</h2>
+            <p className="mt-2 small mb-2">{f.registrationInformation?.instructionalSubheader}</p>
+
+            {f.registrationInformation?.registrationLink || f.registrationInformation?.phoneNumber || f.registrationInformation?.email ? (
+              <>
+              {f.registrationInformation?.registrationLink && (
               <a
-                className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
-                href={f.registrationLink}
+                className="btn btn-primary w-full mt-4 mb-4"
+                href={f.registrationInformation.registrationLink}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 Register now
               </a>
+              )}
+              {f.registrationInformation?.phoneNumber && (
+                <PhoneLink className="mt-4 small text-gmcc-teal font-bold hover:text-gmcc-navy hover:underline" phone={f.registrationInformation.phoneNumber}></PhoneLink>
+              )}
+              <br />
+              {f.registrationInformation?.email && (
+                <a href={`mailto:${f.registrationInformation.email}`} className="mt-4 small text-gmcc-teal font-bold hover:text-gmcc-navy hover:underline">{f.registrationInformation.email}</a>
+              )}
+              </>
             ) : (
-              <p className="mt-3 text-xs text-emerald-900/70">
+              <p className="mt-4 small">
                 Registration details will be posted soon.
               </p>
             )}
-            <br />
-            <br />
-            <a href={``} className="link body block text-sm">➜ Explore similar events</a>
-          </div>
-        </aside>
+
+            {(() => {
+              const { link1, link2, link3 } = f.additionalInformationLinks ?? {};
+              const links = [link1, link2, link3].filter((l: any) => l?.link && l?.linkLabel);
+              if (links.length === 0) return null;
+              return (
+                <div className="mt-4">
+                  <h2 className="h3">Need more information?</h2>
+                  <ul className="text-sm mt-2">
+                    {links.map((link: any, i: number) => (
+                      <li key={i}><a href={link.link} className="link body block text-sm">➜ {link.linkLabel}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
+          </aside>
+        </div>
       </section>
 
+
       {f.relatedEvents?.nodes && f.relatedEvents.nodes.length > 0 && (
-        <section className="stack-4">
-          <h2 className="h2 mb-2">
-            Similar events
-          </h2>
+        <section className="stack-4 scroll-mt-24" id="similar-events">
+          <h2 className="h2 pt-8 mb-2">Explore Similar Events</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {f.relatedEvents.nodes.map((re: any) => {
               const reEventFields = re.eventFields ?? {};
-              const reStart = reEventFields.startDateTime ? new Date(reEventFields.startDateTime) : null;
-              const yyyy = reStart ? reStart.getFullYear() : "2025";
-              const mm = reStart ? String(reStart.getMonth() + 1).padStart(2, "0") : "01";
+              const reEndIso = reEventFields.endDateTime ?? null;
               const featuredImage = re.featuredImage?.node;
-              
+
               return (
                 <a
                   key={re.slug}
-                  href={buildEventHref(re.slug, reStart?.toISOString() ?? "")}
+                  href={buildEventHref(re.slug, reEventFields.startDateTime ?? "")}
                   className="group card card-hover card-link overflow-hidden h-[380px] flex flex-col"
                 >
                 {/* Full-bleed image */}
@@ -392,13 +516,13 @@ export default async function EventPage(props: EventPageProps) {
                   </div>
 
                   <div className="flex flex-1 flex-col min-h-0 mt-5">
-                    <h3 className="font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-2">
+                    <h3 className="font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-1">
                         {re.title}
                     </h3>
 
-                    {(reStart?.toISOString() ?? "") && (
-                    <span className="mt-2 inline-flex w-fit rounded-full bg-gmcc-blue-light/30 px-3 py-1 text-xs font-medium text-gmcc-navy">
-                        {reStart?.toLocaleDateString()} {reStart?.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                    {(reEventFields.startDateTime || reEndIso) && (
+                    <span className="mt-2 badge badge-green w-fit">
+                        {formatEventDate(reEventFields.startDateTime ?? null, reEndIso)}
                     </span>
                     )}
 
@@ -417,9 +541,16 @@ export default async function EventPage(props: EventPageProps) {
                 </a>
               );
             })}
-            </div>
+          </div>
         </section>
       )}
+
+      {f.sponsors?.nodes?.length > 0 && (
+            <div className="stack-4 pt-16" id="sponsors">
+              {/* <h2 className="h2 pt-8 mb-4">Sponsors</h2> */}
+              <SponsorsGrid sponsors={normalizeSponsors(f.sponsors.nodes)} title="Thank You to Our Sponsors" />
+            </div>
+          )}
       </div>
     </main>
   );

@@ -3,7 +3,7 @@ import { wpFetch } from "@/lib/wp";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
-import RaceGallery from "./raceGallery";
+import PhotoGallery from "@/components/photoGallery";
 
 const RACES_PAGE_QUERY = /* GraphQL */ `
   query RacesPage($uri: ID!) {
@@ -133,7 +133,6 @@ const RACES_PAGE_QUERY = /* GraphQL */ `
           photo7 { node { sourceUrl altText } }
           photo8 { node { sourceUrl altText } }
           photo9 { node { sourceUrl altText } }
-          photo10 { node { sourceUrl altText } }
         }
       
         runnersPromo {
@@ -182,7 +181,9 @@ const RACE_EVENTS_QUERY = /* GraphQL */ `
           summary
           startDateTime
           endDateTime
-          registrationLink
+          registrationInformation {
+            registrationLink
+          }
           center {
             nodes {
               ... on Center {
@@ -213,7 +214,7 @@ type RaceEventWP = {
     summary?: string | null;
     startDateTime?: string | null;
     endDateTime?: string | null;
-    registrationLink?: string | null;
+    registrationInformation?: { registrationLink?: string | null } | null;
     center?: { nodes?: { slug?: string | null; title?: string | null }[] | null } | null;
     audience?: { nodes?: { name?: string | null; slug?: string | null }[] | null } | null;
     eventType?: string | string[] | null;
@@ -258,7 +259,7 @@ function mapRaceEvent(wp: RaceEventWP, now: Date): RaceCard {
       (f.audience?.nodes ?? [])
         .filter((a) => a.slug && a.name)
         .map((a) => ({ slug: a.slug!, name: a.name! })),
-    registrationLink: f.registrationLink ?? "",
+    registrationLink: f.registrationInformation?.registrationLink ?? "",
     isPast,
   };
 }
@@ -389,7 +390,6 @@ type RacesPageFields = {
     photo7: ImageField;
     photo8: ImageField;
     photo9: ImageField;
-    photo10: ImageField;
   };
   runnersPromo: {
     header: string;
@@ -514,7 +514,6 @@ function initializeRacesPageFields(raw: Record<string, unknown> | null | undefin
       photo7: asImageField(gallery.photo7),
       photo8: asImageField(gallery.photo8),
       photo9: asImageField(gallery.photo9),
-      photo10: asImageField(gallery.photo10),
     },
     runnersPromo: {
       header: asString(runnersPromo.header),
@@ -630,12 +629,12 @@ export default async function RacesPage() {
               src={fields.scheduleCard.cardIcon.node.sourceUrl}
               alt={fields.scheduleCard.cardIcon.node.altText ?? "Schedule icon"}
               aria-hidden
-              className="pointer-events-none absolute left-6 top-6 h-12 w-12"
+              className="pointer-events-none absolute left-6 top-6 h-14 w-14"
             />
           ) : null}
             {fields.scheduleCard.header ? <h2 className="h2 text-center pt-4">{fields.scheduleCard.header}</h2> : null}
             {fields.scheduleCard.subheader ? (
-              <p className="body mt-2 leading-6 text-gmcc-grey-dark text-center">{fields.scheduleCard.subheader}</p>
+              <p className="body mt-2 leading-6 text-neutral-700 text-center">{fields.scheduleCard.subheader}</p>
             ) : null}
             {schedulePdfHref ? (
               <div className="mt-6 flex justify-center">
@@ -659,12 +658,12 @@ export default async function RacesPage() {
                 src={fields.connectCard.cardIcon.node.sourceUrl}
                 alt={fields.connectCard.cardIcon.node.altText ?? "Connect icon"}
                 aria-hidden
-                className="pointer-events-none absolute left-6 top-6 h-12 w-12"
+                className="pointer-events-none absolute left-6 top-6 h-14 w-14"
               />
             ) : null}
             {fields.connectCard.header ? <h2 className="h2 text-center pt-4">{fields.connectCard.header}</h2> : null}
             {fields.connectCard.subheader ? (
-              <p className="body mt-2 leading-6 text-gmcc-grey-dark text-center">{fields.connectCard.subheader}</p>
+              <p className="body mt-2 leading-6 text-neutral-700 text-center">{fields.connectCard.subheader}</p>
             ) : null}
             {connectHref ? (
               <div className="mt-6 flex justify-center">
@@ -776,7 +775,7 @@ export default async function RacesPage() {
               return (
                 <div
                   key={race.id}
-                  className="group card card-hover overflow-hidden flex flex-col h-[410px] w-[340px]"
+                  className="group card card-hover relative flex flex-col overflow-hidden"
                 >
                   {/* Hero image */}
                   <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
@@ -803,7 +802,7 @@ export default async function RacesPage() {
 
                   {/* Card body */}
                   <div className="flex flex-1 flex-col min-h-0 mt-4">
-                    <h3 className="font-heading text-lg font-medium leading-snug text-neutral-900 line-clamp-1">
+                    <h3 className="font-heading text-lg font-medium leading-snug text-neutral-900 line-clamp-1 group-hover:text-gmcc-teal">
                       {race.title}
                     </h3>
 
@@ -814,13 +813,13 @@ export default async function RacesPage() {
                     )}
 
                     {race.summary && (
-                      <p className="mt-3 text-xs leading-6 text-neutral-600 line-clamp-3">
+                      <p className="mt-3 mb-3 text-xs leading-6 text-neutral-600 line-clamp-3">
                         {race.summary}
                       </p>
                     )}
 
                     {/* Footer actions */}
-                    <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
+                    <div className="relative z-10 mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
                       {race.isPast ? (
                         resultsUrl ? (
                           <a
@@ -849,14 +848,18 @@ export default async function RacesPage() {
                         )
                       )}
 
-                      <a
-                        href={eventHref}
-                        className="text-sm font-semibold text-gmcc-navy underline-offset-4 hover:underline"
-                      >
-                        View details →
-                      </a>
+                      <span className="text-sm font-semibold text-gmcc-navy underline-offset-4 group-hover:underline">
+                        View →
+                      </span>
                     </div>
                   </div>
+
+                  {/* Stretched link covers the full card; action buttons above it via z-10 */}
+                  <a
+                    href={eventHref}
+                    aria-label={race.title}
+                    className="card-stretched-link"
+                  />
                 </div>
               );
             })}
@@ -1021,13 +1024,6 @@ export default async function RacesPage() {
 
       {/* PREVIOUS RACES */}
       {(() => {
-        const resultLinks = [
-          { label: "DOW Run/Walk Results", url: fields.dowRunWalkResults },
-          { label: "Tri Kids Try Results", url: fields.triKidsTryResults },
-          { label: "Run the River Results", url: fields.runTheRiverResults },
-          { label: "Loons Pennant Race Results", url: fields.loonsPennantRaceResults },
-        ].filter((r) => r.url);
-
         const galleryPhotos = [
           fields.gallery.photo1,
           fields.gallery.photo2,
@@ -1038,12 +1034,11 @@ export default async function RacesPage() {
           fields.gallery.photo7,
           fields.gallery.photo8,
           fields.gallery.photo9,
-          fields.gallery.photo10,
         ]
           .filter((p) => !!p?.node?.sourceUrl)
           .map((p) => ({ url: p!.node!.sourceUrl!, alt: p!.node!.altText ?? "" }));
 
-        if (!fields.previousRacesHeader && !fields.previousRacesBody && !resultLinks.length && !galleryPhotos.length) {
+        if (!fields.previousRacesHeader && !fields.previousRacesBody && !galleryPhotos.length) {
           return null;
         }
 
@@ -1056,24 +1051,8 @@ export default async function RacesPage() {
               <p className="body mt-3 whitespace-pre-line text-neutral-700">{fields.previousRacesBody}</p>
             ) : null}
 
-            {resultLinks.length ? (
-              <div className="mt-6 flex flex-wrap gap-3">
-                {resultLinks.map((r) => (
-                  <a
-                    key={r.url}
-                    href={r.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-secondary"
-                  >
-                    {r.label}
-                  </a>
-                ))}
-              </div>
-            ) : null}
-
             {galleryPhotos.length ? (
-              <RaceGallery photos={galleryPhotos} />
+              <PhotoGallery photos={galleryPhotos} />
             ) : null}
           </section>
         );

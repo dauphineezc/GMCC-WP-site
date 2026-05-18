@@ -65,12 +65,12 @@ query CorporateMembershipsPage($uri: ID!) {
       becomeAPartnerHeader
       becomeAPartnerSubheader
 
-      partnerLogos {
-        logo1 { node { sourceUrl mediaItemUrl altText } }
-        logo2 { node { sourceUrl mediaItemUrl altText } }
-        logo3 { node { sourceUrl mediaItemUrl altText } }
-        logo4 { node { sourceUrl mediaItemUrl altText } }
-        logo5 { node { sourceUrl mediaItemUrl altText } }
+      corporatePartners {
+        partner1 { pageLink logo { node { sourceUrl altText } } }
+        partner2 { pageLink logo { node { sourceUrl altText } } }
+        partner3 { pageLink logo { node { sourceUrl altText } } }
+        partner4 { pageLink logo { node { sourceUrl altText } } }
+        partner5 { pageLink logo { node { sourceUrl altText } } }
       }
     }   
   }
@@ -116,12 +116,12 @@ type CorporateMembershipsPageData = {
                     } | null;
                 } | null> | null;
             } | null;
-            partnerLogos?: {
-                logo1?: { node?: WpImageNode | null } | null;
-                logo2?: { node?: WpImageNode | null } | null;
-                logo3?: { node?: WpImageNode | null } | null;
-                logo4?: { node?: WpImageNode | null } | null;
-                logo5?: { node?: WpImageNode | null } | null;
+            corporatePartners?: {
+                partner1?: { pageLink?: string | null; logo?: { node?: WpImageNode | null } | null } | null;
+                partner2?: { pageLink?: string | null; logo?: { node?: WpImageNode | null } | null } | null;
+                partner3?: { pageLink?: string | null; logo?: { node?: WpImageNode | null } | null } | null;
+                partner4?: { pageLink?: string | null; logo?: { node?: WpImageNode | null } | null } | null;
+                partner5?: { pageLink?: string | null; logo?: { node?: WpImageNode | null } | null } | null;
             } | null;
             becomeAPartnerHeader?: string | null;
             becomeAPartnerSubheader?: string | null;
@@ -137,6 +137,36 @@ type WpImageNode = {
 
 const AMENITY_KEYS = ["amenity1", "amenity2", "amenity3", "amenity4", "amenity5"] as const;
 const BENEFIT_KEYS = ["benefit1", "benefit2", "benefit3", "benefit4", "benefit5"] as const;
+const PARTNER_KEYS = ["partner1", "partner2", "partner3", "partner4", "partner5"] as const;
+
+type PartnerLogoItem = {
+    resolvedUrl: string;
+    altText?: string | null;
+    pageLink: string | null;
+};
+
+function corporatePartnerLogoItems(
+    corporatePartners:
+        | NonNullable<
+              NonNullable<CorporateMembershipsPageData["page"]>["corporateMembershipPageFields"]
+          >["corporatePartners"]
+        | null
+        | undefined,
+): PartnerLogoItem[] {
+    if (!corporatePartners) return [];
+    return PARTNER_KEYS.flatMap((key) => {
+        const p = corporatePartners[key];
+        const logoNode = p?.logo?.node;
+        const url = resolveWpMediaUrl(logoNode?.sourceUrl ?? logoNode?.mediaItemUrl);
+        if (!url || !logoNode) return [];
+        const pageLink = (p?.pageLink ?? "").trim() || null;
+        return [{ resolvedUrl: url, altText: logoNode.altText, pageLink }];
+    });
+}
+
+function isExternalHref(href: string): boolean {
+    return /^https?:\/\//i.test(href);
+}
 
 function corporateAmenityStrings(
     amenities: NonNullable<
@@ -177,7 +207,6 @@ export default async function CorporateMembershipsPage() {
     const amenities = page?.corporateMembershipPageFields?.amenities;
     const benefitsHeader = page?.corporateMembershipPageFields?.benefitsHeader;
     const benefits = page?.corporateMembershipPageFields?.benefits;
-    const partnerLogos = page?.corporateMembershipPageFields?.partnerLogos;
     const becomeAPartnerHeader = page?.corporateMembershipPageFields?.becomeAPartnerHeader;
     const becomeAPartnerSubheader = page?.corporateMembershipPageFields?.becomeAPartnerSubheader;
     const amenityStrings = corporateAmenityStrings(amenities);
@@ -185,19 +214,8 @@ export default async function CorporateMembershipsPage() {
     const testimonialsHeader = page?.corporateMembershipPageFields?.testimonialsHeader;
     const testimonials = page?.corporateMembershipPageFields?.testimonials;
     const normalizedTestimonials = normalizeTestimonials(testimonials?.nodes ?? []);
-    const partnerLogoNodes = [
-        partnerLogos?.logo1?.node,
-        partnerLogos?.logo2?.node,
-        partnerLogos?.logo3?.node,
-        partnerLogos?.logo4?.node,
-        partnerLogos?.logo5?.node,
-      ]
-        .map((logo) => {
-          const url = resolveWpMediaUrl(logo?.sourceUrl ?? logo?.mediaItemUrl);
-          if (!url || !logo) return null;
-          return { ...logo, resolvedUrl: url } as WpImageNode & { resolvedUrl: string };
-        })
-        .filter((logo): logo is WpImageNode & { resolvedUrl: string } => logo != null);
+    const corporatePartners = page?.corporateMembershipPageFields?.corporatePartners;
+    const partnerLogoNodes = corporatePartnerLogoItems(corporatePartners);
 
     return (
 
@@ -221,27 +239,48 @@ export default async function CorporateMembershipsPage() {
         ) : null}
 
         {/* TESTIMONIALS */}
-        {testimonialsHeader || normalizedTestimonials.length ? (
+        {testimonialsHeader || normalizedTestimonials.length || partnerLogoNodes.length > 0 ? (
             <section className="mx-auto max-w-6xl px-6 pt-16 mt-4">
             {testimonialsHeader ? (
                 <h2 className="h2 text-center">{testimonialsHeader}</h2>
             ) : null}
             {partnerLogoNodes.length > 0 ? (
             <div className="mx-auto mt-6 grid w-full max-w-6xl grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-                {partnerLogoNodes.map((logo, index) => (
-                <div
-                    key={`${logo.resolvedUrl}-${index}`}
-                    className="flex h-20 items-center justify-center rounded-lg border border-neutral-200 bg-white p-0"
-                >
-                    <Image
-                    src={logo.resolvedUrl}
-                    alt={logo.altText?.trim() || `Corporate partner logo ${index + 1}`}
-                    width={180}
-                    height={72}
-                    className="h-full w-full object-contain"
-                    />
-                </div>
-                ))}
+                {partnerLogoNodes.map((logo, index) => {
+                    const alt = logo.altText?.trim() || `Corporate partner logo ${index + 1}`;
+                    const key = `${logo.resolvedUrl}-${index}`;
+                    const cellClass =
+                        "flex h-20 items-center justify-center rounded-lg border border-neutral-200 bg-white p-0";
+                    const image = (
+                        <Image
+                            src={logo.resolvedUrl}
+                            alt={alt}
+                            width={180}
+                            height={72}
+                            className="h-full w-full object-contain"
+                        />
+                    );
+                    if (logo.pageLink) {
+                        const external = isExternalHref(logo.pageLink);
+                        return (
+                            <a
+                                key={key}
+                                href={logo.pageLink}
+                                className={`${cellClass} text-inherit no-underline transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gmcc-teal`}
+                                {...(external
+                                    ? { target: "_blank" as const, rel: "noopener noreferrer" }
+                                    : {})}
+                            >
+                                {image}
+                            </a>
+                        );
+                    }
+                    return (
+                        <div key={key} className={cellClass}>
+                            {image}
+                        </div>
+                    );
+                })}
             </div>
             ) : null}
             <TestimonialSection testimonials={normalizedTestimonials} />

@@ -34,9 +34,12 @@ export default async function RootLayout({
       className={`${headingFont.variable} ${secondaryFont.variable} ${bodyFont.variable} ${scriptFont.variable}`}
     >
       <body className="min-h-screen bg-white text-neutral-900 flex flex-col">
-        <Navbar items={nav} utilityItems={utilityItems} />
-        <main className="flex-1">{children}</main>
-        <Footer items={footerNav} />
+        {/* Do not set overflow-x here: paired with default overflow-y it becomes a scrollport and breaks position:sticky in <main>. */}
+        <div className="flex flex-col flex-1">
+          <Navbar items={nav} utilityItems={utilityItems} />
+          <main className="flex-1 min-w-0">{children}</main>
+          <Footer items={footerNav} />
+        </div>
       </body>
     </html>
   );
