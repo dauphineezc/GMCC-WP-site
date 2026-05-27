@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
+import { computeMembershipPricingSavings } from "@/lib/membershipPricingSavings";
 
 export type Audience = {
   name: string;
@@ -327,7 +328,9 @@ export default function MembershipQuiz({
                 </p>
 
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredMemberships.map((m) => (
+                  {filteredMemberships.map((m) => {
+                    const pricingSavings = computeMembershipPricingSavings(m.pricing);
+                    return (
                     <article key={m.slug} className="flex flex-col rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
                       <h4 className="h3 text-gmcc-navy leading-tight">{m.title}</h4>
 
@@ -342,12 +345,26 @@ export default function MembershipQuiz({
                           <div>
                             <span className="text-neutral-500">{m.pricing.paymentSplit.frequency}:</span>{" "}
                             <span className="font-bold">${Math.round(m.pricing.paymentSplit.cost)}</span>
+                            {pricingSavings.splitVsMonthlyPercent != null &&
+                              pricingSavings.splitVsMonthlyPercent > 0 && (
+                              <span className="ml-1.5 font-semibold text-xs text-gmcc-green">
+                                {" "}
+                                (Save {pricingSavings.splitVsMonthlyPercent}%)
+                              </span>
+                            )}
                           </div>
                         )}
                         {m.pricing.annually != null && (
                           <div>
                             <span className="text-neutral-500">Annually:</span>{" "}
                             <span className="font-bold">${Math.round(m.pricing.annually)}</span>
+                            {pricingSavings.annualVsMonthlyPercent != null &&
+                              pricingSavings.annualVsMonthlyPercent > 0 && (
+                              <span className="ml-1.5 font-semibold text-xs text-gmcc-green">
+                                {" "}
+                                (Save {pricingSavings.annualVsMonthlyPercent}%)
+                              </span>
+                            )}
                           </div>
                         )}
                         {m.pricing.joiningFee != null && (
@@ -377,7 +394,8 @@ export default function MembershipQuiz({
                         </a>
                       </div>
                     </article>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Comparison panel */}

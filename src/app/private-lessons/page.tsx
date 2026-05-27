@@ -32,6 +32,7 @@ type WPProgram = {
     programArea?: {
       nodes?: Array<{ slug?: string | null; name?: string | null } | null> | null;
     } | null;
+    offeringType?: string | null;
   } | null;
 };
 
@@ -167,6 +168,7 @@ const PRIVATE_LESSONS_PAGE_QUERY = /* GraphQL */ `
               }
             }
           }
+          offeringType
           programArea {
             nodes {
               slug
@@ -206,13 +208,36 @@ function normalizeDirectoryData(raw: any): DirectoryHeaderData {
   };
 }
 
-function isPrivateLessonsProgram(program: WPProgram): boolean {
-  const areaNodes = program.programFields?.programArea?.nodes ?? [];
-  return areaNodes.some((area) => {
-    const slug = (area?.slug ?? "").toLowerCase();
-    const name = (area?.name ?? "").toLowerCase();
-    return slug.includes("private-lessons") || name.includes("private lessons");
-  });
+function normalizeOfferingTypes(offeringType: unknown): string[] {
+  if (Array.isArray(offeringType)) {
+    return offeringType.map((value) => String(value).trim().toLowerCase());
+  }
+  if (offeringType) {
+    return [String(offeringType).trim().toLowerCase()];
+  }
+  return [];
+}
+
+function isLessonsTrainingOffering(offeringType: unknown): boolean {
+  return normalizeOfferingTypes(offeringType).some(
+    (value) => value === "lessons/training" || value === "lesson/training",
+  );
+}
+
+function hasCenter(program: WPProgram, centerSlug: string): boolean {
+  const slug = centerSlug.toLowerCase();
+  return (
+    program.programFields?.center?.nodes?.some(
+      (center) => (center?.slug ?? "").toLowerCase() === slug,
+    ) ?? false
+  );
+}
+
+function isTennisLessonProgram(program: WPProgram): boolean {
+  return (
+    isLessonsTrainingOffering(program.programFields?.offeringType) &&
+    hasCenter(program, "tennis-center")
+  );
 }
 
 export default async function PrivateLessonsPage() {
@@ -226,10 +251,9 @@ export default async function PrivateLessonsPage() {
   const rawFields = data?.page?.privateLessonsDirectoryPageFields ?? null;
   const fields = normalizeDirectoryData(rawFields);
 
-  const relatedPrograms = (data?.programs?.nodes ?? [])
+  const tennisLessonPrograms = (data?.programs?.nodes ?? [])
     .filter((program: WPProgram): program is WPProgram => !!program?.slug && !!program?.title)
-    .filter(isPrivateLessonsProgram)
-    .slice(0, 6);
+    .filter(isTennisLessonProgram);
 
   const introBody =
     fields.body?.trim() ||
@@ -261,29 +285,19 @@ export default async function PrivateLessonsPage() {
     }))
     .filter((item: { question: string; answer: string }) => item.question || item.answer);
 
-  const lessonOptionsOrder = [
-    "individual training sessions",
-    "buddy lessons",
-    "small group lessons",
-  ];
-
   const lessonOptions = (programs: WPProgram[]): WPProgram[] => {
-    return programs
-      .filter((program: WPProgram) => program.programFields?.programArea?.nodes?.some((area: { slug?: string | null; name?: string | null } | null) => area?.slug === "personal-training" || area?.name === "Personal Training"))
-      .sort((a: WPProgram, b: WPProgram) => {
-        const aIndex = lessonOptionsOrder.indexOf(String(a?.title ?? "").trim().toLowerCase());
-        const bIndex = lessonOptionsOrder.indexOf(String(b?.title ?? "").trim().toLowerCase());
-        const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
-        const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
-        return normalizedA - normalizedB;
-      });
+    return [...programs].sort((a: WPProgram, b: WPProgram) =>
+      String(a?.title ?? "").localeCompare(String(b?.title ?? ""), undefined, {
+        sensitivity: "base",
+      }),
+    );
   };
 
   return (
     <main className="overflow-x-clip">
       <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
 
-      <section className="mx-auto mt-6 max-w-6xl px-6">
+      <section className="mx-auto mt-16 max-w-6xl px-6">
         <h2 className="h2 text-gmcc-navy">
           {data?.page?.privateLessonsDirectoryPageFields?.bodyHeader ?? "Why Private Lessons at Greater Midland?"}
         </h2>
@@ -305,7 +319,7 @@ export default async function PrivateLessonsPage() {
         ) : null}
       </section>
 
-      <section className="mx-auto mt-12 max-w-6xl px-6">
+      <section className="mx-auto mt-16 max-w-6xl px-6">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
             <h2 className="h2 text-gmcc-navy">{lessonOptionsHeader}</h2>
@@ -316,7 +330,7 @@ export default async function PrivateLessonsPage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {lessonOptions(relatedPrograms).map((program: WPProgram) => {
+          {lessonOptions(tennisLessonPrograms).slice(0, 6).map((program: WPProgram) => {
             const centers =
               program.programFields?.center?.nodes
                 ?.map((center: { slug?: string | null; title?: string | null } | null) => ({
@@ -380,7 +394,7 @@ export default async function PrivateLessonsPage() {
         </div>
       </section>
 
-      <section id="trainers" className="relative mt-14 w-[100dvw] -ml-[calc(50dvw-50%)] overflow-x-clip">
+      <section id="trainers" className="relative mt-16 w-[100dvw] -ml-[calc(50dvw-50%)] overflow-x-clip">
         <div className="pointer-events-none w-full overflow-hidden leading-none">
           <svg
             viewBox="0 0 1440 120"
@@ -450,7 +464,7 @@ export default async function PrivateLessonsPage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-12 max-w-6xl px-6">
+      <section className="mx-auto mt-16 max-w-6xl px-6">
         <h2 className="h2 text-gmcc-navy">FAQs</h2>
         <div className="mt-4">
           <Accordion
@@ -463,14 +477,14 @@ export default async function PrivateLessonsPage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-12 max-w-6xl px-6">
+      <section className="mx-auto mt-16 max-w-6xl px-6">
         <h2 className="h2 text-gmcc-navy"> Testimonials</h2>
         <TestimonialSection testimonials={normalizeTestimonials(testimonials?.nodes ?? [])} />
       </section>
 
       {/* CONTACT SECTION */}
       {(contactHeader || contactSubheader) ? (
-        <section className="mx-auto mt-16 mb-18 max-w-6xl px-6 text-center">
+        <section className="mx-auto mt-16 mb-16 max-w-6xl px-6 text-center">
         {contactHeader ? <h2 className="h2 text-gmcc-navy">{contactHeader}</h2> : null}
         {contactSubheader ? (
           <p className="body mt-4 whitespace-pre-line text-neutral-700">{contactSubheader}</p>

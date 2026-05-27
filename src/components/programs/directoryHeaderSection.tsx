@@ -2,7 +2,10 @@ import React from "react";
 import { AquaticsDirectoryHeader } from "./directory-sections/aquaticsDirectoryHeader";
 import { CampsDirectoryHeader } from "./directory-sections/campsDirectoryHeader";
 import { ChildcareDirectoryHeader } from "./directory-sections/childcareDirectoryHeader";
-import { GroupFitnessDirectoryHeader } from "./directory-sections/groupFitnessDirectoryHeader";
+import {
+  GroupFitnessDirectoryHeader,
+  type GroupFitnessDirectoryHeaderData,
+} from "./directory-sections/groupFitnessDirectoryHeader";
 import { PersonalTrainingDirectoryHeader } from "./directory-sections/personalTrainingDirectoryHeader";
 import { TennisLessonsDirectoryHeader } from "./directory-sections/tennisLessonsDirectoryHeader";
 import type { DirectoryHeaderData, DirectoryTrainer } from "./directoryHeaderShared";
@@ -14,7 +17,7 @@ export type ProgramsPageACF = {
   aquaticsDirectoryPageFields?: DirectoryHeaderData | null;
   campsDirectoryPageFields?: DirectoryHeaderData | null;
   childcareDirectoryPageFields?: DirectoryHeaderData | null;
-  groupFitnessDirectoryPageFields?: DirectoryHeaderData | null;
+  groupFitnessDirectoryPageFields?: GroupFitnessDirectoryHeaderData | null;
   middleSchoolSportsDirectoryPageFields?: DirectoryHeaderData | null;
   personalTrainingDirectoryPageFields?: DirectoryHeaderData | null;
   tennisLessonsDirectoryPageFields?: DirectoryHeaderData | null;

@@ -1,25 +1,111 @@
 import Accordion from "@/components/accordion";
-import HeaderImage from "@/components/headerImage";
+import PhotoWaveHeader from "@/components/photoWaveHeader";
+import {
+  fetchPageWithHeroFields,
+  resolvePhotoWaveHeaderProps,
+} from "@/lib/pageHeroFields";
+import type { Metadata } from "next";
 
-export default function SessionCalendarPage() {
-  
-  
+export const metadata: Metadata = {
+  title: "Session Calendar",
+  description:
+    "View session calendars by center to see what programs are available and what fits your schedule.",
+};
+
+const SESSION_CALENDAR_EXTRA_FIELDS = `
+  sessionCalendarPageFields {
+    communityCenterSessionCalendar
+    tennisCenterSessionCalendar
+    colemanFamilyCenterSessionCalendar
+    northFamilyCenterSessionCalendar
+  }
+`;
+
+type SessionCalendarPageFields = {
+  communityCenterSessionCalendar?: string | null;
+  tennisCenterSessionCalendar?: string | null;
+  colemanFamilyCenterSessionCalendar?: string | null;
+  northFamilyCenterSessionCalendar?: string | null;
+};
+
+type SessionCalendarExtra = {
+  sessionCalendarPageFields?: SessionCalendarPageFields | null;
+};
+
+const CENTER_SCHEDULE_SECTIONS = [
+  {
+    id: "community",
+    title: "Community Center",
+    field: "communityCenterSessionCalendar",
+  },
+  {
+    id: "tennis",
+    title: "Tennis Center",
+    field: "tennisCenterSessionCalendar",
+  },
+  {
+    id: "coleman",
+    title: "Coleman Family Center",
+    field: "colemanFamilyCenterSessionCalendar",
+  },
+  {
+    id: "north",
+    title: "North Family Center",
+    field: "northFamilyCenterSessionCalendar",
+  },
+] as const satisfies ReadonlyArray<{
+  id: string;
+  title: string;
+  field: keyof SessionCalendarPageFields;
+}>;
+
+function renderScheduleEmbed(html: string | null | undefined) {
+  if (!html?.trim()) {
+    return (
+      <p className="text-neutral-600">
+        Schedule information is not available yet. Please check back soon.
+      </p>
+    );
+  }
+
+  return (
+    <div
+      className="gmcc-schedule-embed mt-4"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
+export default async function SessionCalendarPage() {
+  const page = await fetchPageWithHeroFields<SessionCalendarExtra>(
+    "session-calendar",
+    SESSION_CALENDAR_EXTRA_FIELDS,
+  );
+  const hero = resolvePhotoWaveHeaderProps(page, "Session Calendar");
+  const fields = page?.sessionCalendarPageFields;
+
+  const accordionItems = CENTER_SCHEDULE_SECTIONS.map(({ id, title, field }) => ({
+    id,
+    title,
+    content: renderScheduleEmbed(fields?.[field]),
+  }));
+
   return (
     <main>
-        <HeaderImage src="/images/SessionCalendarPhoto.png" alt="Session Calendar" />
-        <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
-          <h1 className="text-3xl font-bold text-gmcc-navy tracking-tight sm:text-4xl mb-4">Session Calendar</h1>
-          <h3 className="text-xl text-neutral-700 mt-0 mb-4">View the session calendar to see what programs are available and what fits your schedule.</h3>
-        
-          <div className="gmcc-schedule-embed mt-4">
-            <iframe
-            src="https://gmcc-drop-in-schedule.vercel.app/?type=dropin&sub=aquatics"
-            style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            ></iframe>
-          </div>
-        </div>
+      <PhotoWaveHeader
+        title={hero.title}
+        subheader={hero.subheader}
+        imageUrl={hero.imageUrl}
+        ctas={hero.ctas}
+      />
+
+      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+        <p className="body text-neutral-700">
+          Click on a center to view its session calendar.
+        </p>
+
+        <Accordion items={accordionItems} allowMultiple={false} defaultOpenIds={[]} />
+      </div>
     </main>
   );
 }

@@ -7,6 +7,15 @@ import {
   resolvePhotoWaveHeaderProps,
   type WpPageWithHeroFields,
 } from "@/lib/pageHeroFields";
+import { DropInCareSection } from "@/components/dropInCareSection";
+import {
+  DROP_IN_CARE_FIELDS_GRAPHQL,
+  dropInTextCardHasContent,
+  normalizeDropInCareFields,
+  normalizeDropInTextCard,
+  openLinkInNewTab,
+  type DropInTextCard,
+} from "@/lib/dropInCareFields";
 import { wpFetch } from "@/lib/wp";
 import PhotoGallery from "@/components/photoGallery";
 import EarlyChildhoodCentersClient from "./earlyChildhoodCentersClient";
@@ -19,22 +28,7 @@ const EARLY_CHILDHOOD_PAGE_QUERY = /* GraphQL */ `
       slug
       ${PAGE_HERO_FIELDS_GRAPHQL}
       earlyChildhoodPageFields {
-        dropInCareHeader
-        dropInCareDescription
-        childwatchCard {
-          header
-          body
-          ctaLabel
-          cta
-          icon { node { sourceUrl altText } }
-        }
-        theZoneCard {
-          header
-          body
-          ctaLabel
-          cta
-          icon { node { sourceUrl altText } }
-        }
+        ${DROP_IN_CARE_FIELDS_GRAPHQL}
         programsHeader
         programsDescription
         ecePrograms {
@@ -243,51 +237,11 @@ function acfCtaTarget(cta: unknown): string | null | undefined {
   return undefined;
 }
 
-function isExternalHref(href: string): boolean {
-  const t = href.trim();
-  return /^https?:\/\//i.test(t) || /^mailto:/i.test(t) || /^tel:/i.test(t);
-}
-
-export function openLinkInNewTab(url: string, linkTarget?: string | null): boolean {
-  if (linkTarget === "_blank") return true;
-  if (linkTarget === "_self") return false;
-  return isExternalHref(url);
-}
-
-export type TextCardFields = {
-  header: string;
-  body: string;
-  ctaLabel: string;
-  ctaHref: string;
-  icon: { src: string; alt: string };
-};
+export type TextCardFields = DropInTextCard;
 
 function textCardHasContent(card: TextCardFields): boolean {
-  return Boolean(card.header || card.body || card.ctaLabel || card.ctaHref);
+  return dropInTextCardHasContent(card);
 }
-
-function normalizeTextCard(raw: unknown): TextCardFields {
-  if (!raw || typeof raw !== "object") {
-    return { header: "", body: "", ctaLabel: "", ctaHref: "", icon: { src: "", alt: "" } };
-  }
-  const o = raw as Record<string, unknown> & { icon?: MediaFieldInput };
-  const cta = o.cta;
-  return {
-    header: asString(o.header),
-    body: asString(o.body),
-    ctaLabel: asString(o.ctaLabel),
-    ctaHref: acfCtaHref(cta),
-    icon: {
-      src: mediaHref(o.icon) ?? "",
-      alt: asString(
-        o.icon && typeof o.icon === "object" && "node" in o.icon
-          ? (o.icon as { node?: Record<string, unknown> }).node?.altText
-          : (o.icon as Record<string, unknown> | null | undefined)?.altText
-      ),
-    },
-  };
-}
-
 
 export type SerializedEceProgram = {
   slug: string;
@@ -436,8 +390,7 @@ export function buildEarlyChildhoodViewModel(
 ): EarlyChildhoodPageViewModel {
   const f = acf ?? {};
 
-  const childwatchCard = normalizeTextCard(f.childwatchCard);
-  const theZoneCard = normalizeTextCard(f.theZoneCard);
+  const dropIn = normalizeDropInCareFields(f);
 
   const programsHeader = asString(f.programsHeader);
   const programsDescription = asString(f.programsDescription);
@@ -472,9 +425,9 @@ export function buildEarlyChildhoodViewModel(
     programsByCenter[slug].sort((a, b) => a.title.localeCompare(b.title));
   }
 
-  const benefit1 = normalizeTextCard(f.benefit1);
-  const benefit2 = normalizeTextCard(f.benefit2);
-  const benefit3 = normalizeTextCard(f.benefit3);
+  const benefit1 = normalizeDropInTextCard(f.benefit1);
+  const benefit2 = normalizeDropInTextCard(f.benefit2);
+  const benefit3 = normalizeDropInTextCard(f.benefit3);
   const benefits = [benefit1, benefit2, benefit3].filter(textCardHasContent);
 
   const faqsRaw = f.faqs as Record<string, unknown> | undefined;
@@ -489,10 +442,7 @@ export function buildEarlyChildhoodViewModel(
   }
 
   return {
-    dropInCareHeader: asString(f.dropInCareHeader),
-    dropInCareDescription: asString(f.dropInCareDescription),
-    childwatchCard,
-    theZoneCard,
+    ...dropIn,
     programsHeader,
     programsDescription,
     importantDocumentsHeader,
@@ -527,42 +477,6 @@ export const metadata: Metadata = {
   description:
     "Drop-in childcare, preschool, and early learning programs across Greater Midland Community Centers.",
 };
-
-function DropInCard({
-  title,
-  body,
-  icon,
-  ctaLabel,
-  ctaHref,
-}: {
-  title: string;
-  body: string;
-  icon: { src: string; alt: string };
-  ctaLabel: string;
-  ctaHref: string;
-}) {
-  return (
-    <div className="relative card card-hover bg-gmcc-blue-light/30 stack-4 flex flex-col overflow-hidden p-8">
-        {/* icon */}
-        <img
-        src={icon.src}
-        alt={icon.alt}
-        aria-hidden
-        className="pointer-events-none absolute left-4 top-4 h-14 w-14"
-        />
-
-        <h3 className="h2 text-center mb-2 pt-4">{title}</h3>
-        <p className="body mt-2 leading-6 text-neutral-700 text-center">
-        {body}
-        </p>
-        <a href={ctaHref} className="btn btn-primary mx-auto" {...(openLinkInNewTab(ctaHref) ? { target: "_blank" as const, rel: "noopener noreferrer" as const } : {})}>
-        {ctaLabel}
-        </a>
-    </div>
-  );
-}
-
-
 
 function BenefitCard({ item }: { item: TextCardFields }) {
   const hasCta = Boolean(item.ctaHref && (item.ctaLabel || item.ctaHref));
@@ -640,26 +554,7 @@ export default async function EarlyChildhoodPage() {
         </section>
       ) : null}
 
-    <section className="py-4 max-w-6xl mx-auto px-6 section-y py-16">
-        {fields.dropInCareHeader ? <h2 className="h2">{fields.dropInCareHeader}</h2> : null}
-        {fields.dropInCareDescription ? <p className="body mt-2 whitespace-pre-line text-neutral-700 mb-8">{fields.dropInCareDescription}</p> : null}
-        <div className="grid gap-6 md:grid-cols-2">
-          <DropInCard
-            title={fields.childwatchCard.header || "Childwatch"}
-            body={fields.childwatchCard.body}
-            icon={fields.childwatchCard.icon}
-            ctaLabel={fields.childwatchCard.ctaLabel}
-            ctaHref={fields.childwatchCard.ctaHref}
-          />
-          <DropInCard
-            title={fields.theZoneCard.header || "The Zone"}
-            body={fields.theZoneCard.body}
-            icon={fields.theZoneCard.icon}
-            ctaLabel={fields.theZoneCard.ctaLabel}
-            ctaHref={fields.theZoneCard.ctaHref}
-          />
-        </div>
-      </section>
+      <DropInCareSection fields={fields} contain className="py-16" />
       
       {whySectionVisible ? (
         <section id="why-early-childhood" className="relative scroll-mt-24">

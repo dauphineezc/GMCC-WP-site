@@ -1,4 +1,6 @@
 // lib/nav/resolveHref.ts
+import { mapWpPathToNextPath } from "./routeMap";
+
 function normalizeWpUrlToPath(url: string) {
     try {
       const u = new URL(url);
@@ -32,10 +34,10 @@ function normalizeWpUrlToPath(url: string) {
     "Adult Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "youth,family,adult,activeOlderAdult" }),
     "Fitness": "/programs?" + buildQuery({ programArea: "Fitness" }),
     "Camps": "/camps",
-    "Full Day Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "full-day" }),
-    "Mini Day Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "mini-day" }),
-    "Specialty/Art Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "specialty-art" }),
-    "Sport/Aquatics Camps": "/programs?" + buildQuery({ offeringType: "Camp", campType: "sport-aquatics" }),
+    "Full Day Camps": "/camps?" + buildQuery({ campType: "full-day" }),
+    "Mini Day Camps": "/camps?" + buildQuery({ campType: "mini-day" }),
+    "Specialty/Art Camps": "/camps?" + buildQuery({ campType: "specialty-art" }),
+    "Sport/Aquatics Camps": "/camps?" + buildQuery({ campType: "sport-aquatics" }),
     "Childcare": "/programs?" + buildQuery({ programArea: "Childcare" }),
     "Youth Sports Leagues": "/programs?" + buildQuery({ programArea: "Middle School Sports" }),
   };
@@ -118,4 +120,91 @@ function normalizeWpUrlToPath(url: string) {
   
     // 4) Otherwise: keep path as-is (works for normal pages like /about, /events, etc.)
     return wpPath;
-  }  
+  }
+
+const ALL_LABEL_OVERRIDES: Record<string, string> = {
+  ...OUR_PURPOSE_PAGE,
+  ...MEMBERSHIP_PAGES,
+  ...PROGRAM_FILTER_BY_LABEL,
+  ...EVENT_FILTER_BY_LABEL,
+  ...UNIQUE_PROGRAM_PAGES,
+  ...SCHEDULE_PAGES,
+};
+
+function normalizeLabelKey(label: string): string {
+  return label.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+const CANONICAL_LABEL_BY_NORMALIZED_KEY = (() => {
+  const map = new Map<string, string>();
+  for (const label of Object.keys(ALL_LABEL_OVERRIDES)) {
+    map.set(normalizeLabelKey(label), label);
+  }
+  return map;
+})();
+
+/** WP page titles that differ slightly from nav menu labels */
+const SEARCH_LABEL_ALIASES: Record<string, string> = {
+  "Sports/Aquatics Camps": "Sport/Aquatics Camps",
+  "Sports Aquatics Camps": "Sport/Aquatics Camps",
+  "Our purpose": "Our Purpose",
+};
+
+function canonicalLabelFromText(text: string): string | null {
+  const alias = SEARCH_LABEL_ALIASES[text];
+  if (alias) return alias;
+  if (ALL_LABEL_OVERRIDES[text]) return text;
+  return CANONICAL_LABEL_BY_NORMALIZED_KEY.get(normalizeLabelKey(text)) ?? null;
+}
+
+function labelCandidatesFromPath(wpPath: string): string[] {
+  const segments = wpPath.split("/").filter(Boolean);
+  const candidates: string[] = [];
+
+  for (const segment of segments) {
+    const words = segment.replace(/-/g, " ");
+    const titleCase = words.replace(/\b\w/g, (char) => char.toUpperCase());
+    candidates.push(titleCase);
+
+    const canonical = canonicalLabelFromText(titleCase);
+    if (canonical) candidates.push(canonical);
+  }
+
+  return candidates;
+}
+
+/**
+ * Resolve a WordPress content node (search result, etc.) to the Next.js href
+ * used in navigation — including label-based overrides from resolveHref.
+ */
+export function resolveContentNodeHref({
+  uri,
+  title,
+  centerMap,
+}: {
+  uri: string;
+  title: string;
+  centerMap: Map<string, string>;
+}): string {
+  const wpPath = normalizeWpUrlToPath(uri);
+  const labelsToTry: string[] = [];
+
+  const trimmedTitle = title.trim();
+  if (trimmedTitle) {
+    labelsToTry.push(trimmedTitle);
+    const canonicalTitle = canonicalLabelFromText(trimmedTitle);
+    if (canonicalTitle) labelsToTry.push(canonicalTitle);
+  }
+
+  labelsToTry.push(...labelCandidatesFromPath(wpPath));
+
+  for (const label of [...new Set(labelsToTry)]) {
+    const href = resolveHref({ wpUrl: uri, label, centerMap });
+    if (href !== wpPath) return href;
+  }
+
+  const mappedPath = mapWpPathToNextPath(wpPath);
+  if (mappedPath !== wpPath) return mappedPath;
+
+  return wpPath;
+}

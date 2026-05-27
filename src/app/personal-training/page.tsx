@@ -289,10 +289,9 @@ export default async function PersonalTrainingPage() {
   const fields = normalizeDirectoryData(rawFields);
 
   const ctas = normalizedAttachmentList(fields.attachments).slice(0, 2);
-  const relatedPrograms = (data?.programs?.nodes ?? [])
+  const personalTrainingPrograms = (data?.programs?.nodes ?? [])
     .filter((program: WPProgram): program is WPProgram => !!program?.slug && !!program?.title)
-    .filter(isPersonalTrainingProgram)
-    .slice(0, 6);
+    .filter(isPersonalTrainingProgram);
 
   const introBody =
     fields.body?.trim() ||
@@ -345,7 +344,7 @@ export default async function PersonalTrainingPage() {
     <main className="overflow-x-clip">
       <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
 
-      <section className="mx-auto mt-6 max-w-6xl px-6">
+      <section className="mx-auto mt-16 max-w-6xl px-6">
         <h2 className="h2 text-gmcc-navy">
           {data?.page?.personalTrainingDirectoryPageFields?.bodyHeader ?? "Why Personal Training at Greater Midland?"}
         </h2>
@@ -367,7 +366,7 @@ export default async function PersonalTrainingPage() {
         ) : null}
       </section>
 
-      <section className="mx-auto mt-12 max-w-6xl px-6">
+      <section className="mx-auto mt-16 max-w-6xl px-6">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
             <h2 className="h2 text-gmcc-navy">{trainingOptionsHeader}</h2>
@@ -378,7 +377,7 @@ export default async function PersonalTrainingPage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {trainingOptions(relatedPrograms).map((program: WPProgram) => {
+          {trainingOptions(personalTrainingPrograms).slice(0, 6).map((program: WPProgram) => {
             const centers =
               program.programFields?.center?.nodes
                 ?.map((center: { slug?: string | null; title?: string | null } | null) => ({
@@ -442,7 +441,7 @@ export default async function PersonalTrainingPage() {
         </div>
       </section>
 
-      <section id="trainers" className="relative mt-14 w-[100dvw] -ml-[calc(50dvw-50%)] overflow-x-clip">
+      <section id="trainers" className="relative mt-16 w-[100dvw] -ml-[calc(50dvw-50%)] overflow-x-clip">
         <div className="pointer-events-none w-full overflow-hidden leading-none">
           <svg
             viewBox="0 0 1440 120"
@@ -512,7 +511,7 @@ export default async function PersonalTrainingPage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-12 max-w-6xl px-6">
+      <section className="mx-auto mt-16 max-w-6xl px-6">
         <h2 className="h2 text-gmcc-navy">FAQs</h2>
         <div className="mt-4">
           <Accordion
@@ -525,7 +524,7 @@ export default async function PersonalTrainingPage() {
         </div>
       </section>
 
-      <section className="relative mb-12 mt-12 overflow-hidden py-12">
+      <section className="relative mb-16 mt-16 overflow-hidden py-16">
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-20">
           <img
             src="/GreaterLogoBG.png"

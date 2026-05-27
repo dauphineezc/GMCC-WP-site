@@ -293,7 +293,7 @@ export default function ExploreEventsClient({
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
         <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
           {/* FILTER SIDEBAR */}
-          <aside className="card h-fit sticky top-18">
+          <aside className="card h-fit lg:sticky lg:top-18">
             {/* Mobile toggle button */}
             <button
                 onClick={() => setFiltersOpen(!filtersOpen)}

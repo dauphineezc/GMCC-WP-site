@@ -7,10 +7,17 @@ import type {
   DirectoryTrainer,
 } from "@/components/programs/directoryHeaderSection";
 import {
+  DROP_IN_CARE_FIELDS_GRAPHQL,
+  hasDropInCareContent,
+  normalizeDropInCareFields,
+  type DropInCareFields,
+} from "@/lib/dropInCareFields";
+import {
   fetchPageWithHeroFields,
   pageUriCandidatesForSlug,
   resolvePhotoWaveHeaderProps,
 } from "@/lib/pageHeroFields";
+import type { GroupFitnessDirectoryHeaderData } from "@/components/programs/directory-sections/groupFitnessDirectoryHeader";
 import { wpFetch } from "@/lib/wp";
 import {
   PROGRAMS_LIST_QUERY,
@@ -62,14 +69,28 @@ const CHILDCARE_DIRECTORY_HEADER_QUERY = `
 `;
 
 const GROUP_FITNESS_DIRECTORY_HEADER_QUERY = `
-  query GroupFitnessDirectoryHeader($uri: ID!) {
+  query GroupFitnessDirectoryHeader($uri: ID!, $dropInCareUri: ID!) {
     page(id: $uri, idType: URI) {
       groupFitnessDirectoryPageFields {
         ${DIRECTORY_HEADER_FIELDS}
       }
     }
+    dropInCarePage: page(id: $dropInCareUri, idType: URI) {
+      earlyChildhoodPageFields {
+        ${DROP_IN_CARE_FIELDS_GRAPHQL}
+      }
+    }
   }
 `;
+
+const GROUP_FITNESS_URI_CANDIDATES = [
+  "/group-fitness-classes",
+  "/group-fitness-classes/",
+  "group-fitness-classes",
+  "/group-fitness",
+  "/group-fitness/",
+  "group-fitness",
+];
 
 const MIDDLE_SCHOOL_SPORTS_DIRECTORY_HEADER_QUERY = `
   query MiddleSchoolSportsDirectoryHeader($uri: ID!) {
@@ -241,6 +262,59 @@ async function fetchFieldFromUris<TPage extends Record<string, any>>(
   return undefined;
 }
 
+type GroupFitnessDirectoryQueryPage = {
+  groupFitnessDirectoryPageFields?: DirectoryHeaderData | null;
+};
+
+type GroupFitnessDirectoryQueryData = {
+  page?: GroupFitnessDirectoryQueryPage | null;
+  dropInCarePage?: { earlyChildhoodPageFields?: Record<string, unknown> | null } | null;
+};
+
+async function fetchGroupFitnessDirectoryWithDropInCare(): Promise<
+  | {
+      directory: DirectoryHeaderData | null | undefined;
+      dropInCare: Record<string, unknown> | null | undefined;
+    }
+  | undefined
+> {
+  const dropInCareUris = pageUriCandidatesForSlug("early-childhood");
+
+  for (const uri of GROUP_FITNESS_URI_CANDIDATES) {
+    for (const dropInCareUri of dropInCareUris) {
+      try {
+        const data = await wpFetch<GroupFitnessDirectoryQueryData>(
+          GROUP_FITNESS_DIRECTORY_HEADER_QUERY,
+          { uri, dropInCareUri },
+          { suppressGraphQLErrorLogging: true }
+        );
+        const directory = data?.page?.groupFitnessDirectoryPageFields ?? null;
+        const dropInCare = data?.dropInCarePage?.earlyChildhoodPageFields ?? null;
+        if (hasDirectoryHeaderContent(directory) || hasDropInCareContent(dropInCare)) {
+          return { directory, dropInCare };
+        }
+      } catch {
+        // try next candidate
+      }
+    }
+  }
+  return undefined;
+}
+
+function normalizeGroupFitnessDirectoryData(
+  directory?: DirectoryHeaderData | null,
+  dropInCareRaw?: Record<string, unknown> | null
+): GroupFitnessDirectoryHeaderData | undefined {
+  const base = normalizeDirectoryHeaderData(directory);
+  const dropIn: DropInCareFields = normalizeDropInCareFields(dropInCareRaw ?? undefined);
+  const hasDropIn =
+    Boolean(dropIn.dropInCareHeader || dropIn.dropInCareDescription) ||
+    hasDropInCareContent(dropInCareRaw ?? undefined);
+
+  if (!base && !hasDropIn) return undefined;
+  return { ...(base ?? {}), ...dropIn };
+}
+
 
 export default async function ExploreProgramsPage() {
   const [heroPage, programsData] = await Promise.all([
@@ -282,18 +356,7 @@ export default async function ExploreProgramsPage() {
       ["/childcare", "/childcare/", "childcare"],
       "childcareDirectoryPageFields"
     ),
-    fetchFieldFromUris<{ groupFitnessDirectoryPageFields?: DirectoryHeaderData | null }>(
-      GROUP_FITNESS_DIRECTORY_HEADER_QUERY,
-      [
-        "/group-fitness-classes",
-        "/group-fitness-classes/",
-        "group-fitness-classes",
-        "/group-fitness",
-        "/group-fitness/",
-        "group-fitness",
-      ],
-      "groupFitnessDirectoryPageFields"
-    ),
+    fetchGroupFitnessDirectoryWithDropInCare(),
     fetchFieldFromUris<
       { middleSchoolSportsDirectoryPageFields?: DirectoryHeaderData | null }
     >(
@@ -329,7 +392,10 @@ export default async function ExploreProgramsPage() {
     aquaticsDirectoryPageFields: normalizeDirectoryHeaderData(aquaticsRaw),
     campsDirectoryPageFields: normalizeDirectoryHeaderData(campsRaw),
     childcareDirectoryPageFields: normalizeDirectoryHeaderData(childcareRaw),
-    groupFitnessDirectoryPageFields: normalizeDirectoryHeaderData(groupFitnessRaw),
+    groupFitnessDirectoryPageFields: normalizeGroupFitnessDirectoryData(
+      groupFitnessRaw?.directory,
+      groupFitnessRaw?.dropInCare
+    ),
     middleSchoolSportsDirectoryPageFields: normalizeDirectoryHeaderData(middleSchoolSportsRaw),
     personalTrainingDirectoryPageFields: normalizeDirectoryHeaderData(personalTrainingRaw, "trainers"),
     tennisLessonsDirectoryPageFields: normalizeDirectoryHeaderData(tennisLessonsRaw, "tennisInstructors"),

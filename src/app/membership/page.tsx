@@ -45,6 +45,8 @@ const EXPLORE_MEMBERSHIPS_QUERY = `
         membershipFields {
           summary
           benefits
+          autoDraftLink
+          manualPayLink
           pricingTable {
             tier
             monthly
@@ -235,6 +237,14 @@ function normalizeAudienceProgramAreas(raw: unknown): string[] {
   return [];
 }
 
+function mapMembershipPayUrl(
+  url: string | null | undefined,
+  defaultLabel: string
+): { url: string; label: string; target: string | null } | null {
+  const trimmed = typeof url === "string" ? url.trim() : "";
+  return trimmed ? { url: trimmed, label: defaultLabel, target: "_blank" } : null;
+}
+
 function mapMembershipNode(wp: any): Membership {
   const f = wp.membershipFields ?? {};
   const pricing = f.pricingTable ?? {};
@@ -261,6 +271,8 @@ function mapMembershipNode(wp: any): Membership {
         }
       : null,
     summary: (f.summary as string) ?? null,
+    autoDraftLink: mapMembershipPayUrl(f.autoDraftLink, "Auto Draft"),
+    manualPayLink: mapMembershipPayUrl(f.manualPayLink, "Manual Pay"),
     pricing: {
       tier: (pricing.tier as string) ?? null,
       monthly:

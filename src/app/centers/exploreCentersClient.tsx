@@ -2,8 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import ImageCarousel from "@/components/imageCarousel";
-import HeaderImage from "@/components/headerImage";
 
 type CenterNode = any;
 type ProgramNode = any;
@@ -27,16 +25,16 @@ const CENTER_MAP_IFRAME_SRC_BY_SLUG: Record<string, string> = {
 
   "coleman-family-center":
     "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2881.9681114039395!2d-84.57831382415455!3d43.75275897109748!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88218c93cb9606e9%3A0x7470a02186cb2c17!2sGreater%20Midland%20Coleman%20Family%20Center!5e0!3m2!1sen!2sus!4v1774297538605!5m2!1sen!2sus",
-  
+
   "north-family-center":
     "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2880.374964317035!2d-84.26638902415257!3d43.78583187109614!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8821780c23184edb%3A0x1ba02b20d8839295!2sNorth%20Midland%20Family%20Center!5e0!3m2!1sen!2sus!4v1774297507483!5m2!1sen!2sus",
 
   "corporate-wellness-center":
     "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2888.856505429373!2d-84.19133592416293!3d43.60952927110423!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8823d56848f2a8a3%3A0x8d994b386146db55!2sCorteva%20Fitness%20Center!5e0!3m2!1sen!2sus!4v1774297603740!5m2!1sen!2sus",
-  
+
   "corteva-fitness-center":
     "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2888.856505429373!2d-84.19133592416293!3d43.60952927110423!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8823d56848f2a8a3%3A0x8d994b386146db55!2sCorteva%20Fitness%20Center!5e0!3m2!1sen!2sus!4v1774297603740!5m2!1sen!2sus",
-  };
+};
 
 // Card media sizing (map or image fallback)
 const CARD_MEDIA_HEIGHT_CLASS = "h-[200px]";
@@ -151,19 +149,28 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
     return Array.from(set.entries()).map(([slug, name]) => ({ slug, name }));
   }, [programs]);
 
-  const programOptions = useMemo(() => {
-    return programs
-      .map(p => ({ slug: p.slug, title: p.title }))
-      .filter(p => p.slug && p.title);
-  }, [programs]);
-
   // Selected filters
   const [amenitiesSelected, setAmenitiesSelected] = useState<string[]>([]);
   const [areasSelected, setAreasSelected] = useState<string[]>([]);
   const [programsSelected, setProgramsSelected] = useState<string[]>([]);
-  
-  // Mobile filter panel state (collapsed by default)
-  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Mobile filter panel state (expanded by default)
+  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(
+    () => new Set(["amenities", "programAreas", "programs"])
+  );
+
+  const toggleDropdown = (key: string) => {
+    setOpenDropdowns((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const activeFilterCount =
+    amenitiesSelected.length + areasSelected.length + programsSelected.length;
 
   // Preferred display order for centers
   const centerOrder = [
@@ -238,26 +245,13 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
   };
 
   return (
-    <main>
-      {/* HEADER IMAGE - Full Width */}
-      <div className="w-full">
-        <HeaderImage src="/images/MembershipHeaderImage.png" alt="Greater Midland Memberships" />
-      </div>
-
-    {/* Page content - constrained width */}
-    <div className="mx-auto max-w-6xl px-4 section-y stack-8">
-      <header className="mb-8 stack-2">
-        <h1 className="h1">Explore our centers</h1>
-        <p className="body max-w-3xl">
-          Find the best location for your goals — filter by amenities, programs, or program areas.
-        </p>
-      </header>
-
-      <section className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
+    <div className="mx-auto max-w-6xl px-4 py-8 section-y stack-8">
+      <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
         {/* FILTER SIDEBAR */}
-        <aside className="card h-fit sticky top-18">
+        <aside className="card h-fit lg:sticky lg:top-18">
           {/* Mobile toggle button */}
           <button
+            type="button"
             onClick={() => setFiltersOpen(!filtersOpen)}
             className="lg:hidden w-full flex items-center justify-between p-4 body font-medium"
           >
@@ -266,14 +260,12 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
               Filters
-              {(amenitiesSelected.length + areasSelected.length + programsSelected.length) > 0 && (
-                <span className="badge badge-teal ml-1">
-                  {amenitiesSelected.length + areasSelected.length + programsSelected.length}
-                </span>
+              {activeFilterCount > 0 && (
+                <span className="badge badge-teal ml-1">{activeFilterCount}</span>
               )}
             </span>
             <svg
-              className={`w-4 h-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 transition-transform ${filtersOpen ? "rotate-180" : ""}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -283,47 +275,96 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
           </button>
 
           {/* Filter content - hidden on mobile by default, always visible on desktop */}
-          <div className={`stack-4 p-4 pt-0 lg:pt-4 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
-            {/* Amenities */}
-            <div>
-              <h3 className="text-base text-gmcc-navy">Amenities</h3>
-              <div className="mt-2 max-h-56 overflow-auto stack-2 pr-1">
-                {amenityOptions.map(a => (
-                  <label key={a.slug} className="flex items-center gap-2 small">
-                    <input
-                      type="checkbox"
-                      checked={amenitiesSelected.includes(a.slug)}
-                      onChange={() => toggle(amenitiesSelected, a.slug, setAmenitiesSelected)}
-                    />
-                    {a.name}
-                  </label>
-                ))}
-              </div>
+          <div className={`stack-4 p-4 pt-0 lg:pt-4 ${filtersOpen ? "block" : "hidden lg:block"}`}>
+            <div className="border-b border-neutral-200 pb-2">
+              <button
+                type="button"
+                onClick={() => toggleDropdown("amenities")}
+                className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
+              >
+                <span>
+                  <span className="text-base text-gmcc-navy">Amenities</span>
+                  {amenitiesSelected.length > 0 && (
+                    <span className="ml-2 text-xs text-neutral-500">({amenitiesSelected.length})</span>
+                  )}
+                </span>
+                <svg
+                  className={`w-4 h-4 transition-transform ${openDropdowns.has("amenities") ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {openDropdowns.has("amenities") && (
+                <div className="space-y-1 pt-2 pb-2 max-h-56 overflow-auto pr-1">
+                  {amenityOptions.map((a) => (
+                    <label
+                      key={a.slug}
+                      className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={amenitiesSelected.includes(a.slug)}
+                        onChange={() => toggle(amenitiesSelected, a.slug, setAmenitiesSelected)}
+                        className="cursor-pointer"
+                      />
+                      <span>{a.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Program Areas */}
-            <div>
-              <h3 className="text-base text-gmcc-navy">Program areas</h3>
-              <div className="mt-2 max-h-56 overflow-auto stack-2 pr-1">
-                {programAreaOptions.map(a => (
-                  <label key={a.slug} className="flex items-center gap-2 small">
-                    <input
-                      type="checkbox"
-                      checked={areasSelected.includes(a.slug)}
-                      onChange={() => toggle(areasSelected, a.slug, setAreasSelected)}
-                    />
-                    {a.name}
-                  </label>
-                ))}
-              </div>
+            <div className="border-b border-neutral-200 pb-2">
+              <button
+                type="button"
+                onClick={() => toggleDropdown("programAreas")}
+                className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
+              >
+                <span>
+                  <span className="text-base text-gmcc-navy">Program area</span>
+                  {areasSelected.length > 0 && (
+                    <span className="ml-2 text-xs text-neutral-500">({areasSelected.length})</span>
+                  )}
+                </span>
+                <svg
+                  className={`w-4 h-4 transition-transform ${openDropdowns.has("programAreas") ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {openDropdowns.has("programAreas") && (
+                <div className="space-y-1 pt-2 pb-2 max-h-56 overflow-auto pr-1">
+                  {programAreaOptions.map((a) => (
+                    <label
+                      key={a.slug}
+                      className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={areasSelected.includes(a.slug)}
+                        onChange={() => toggle(areasSelected, a.slug, setAreasSelected)}
+                        className="cursor-pointer"
+                      />
+                      <span>{a.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Reset */}
             <button
+              type="button"
               onClick={() => {
                 setAmenitiesSelected([]);
                 setAreasSelected([]);
                 setProgramsSelected([]);
+                setOpenDropdowns(new Set(["amenities", "programAreas", "programs"]));
               }}
               className="btn btn-secondary w-full"
             >
@@ -333,7 +374,16 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
         </aside>
 
         {/* CENTER CARDS */}
-        <div className="stack-4">
+        <section className="stack-4">
+          <div className="flex items-center justify-between">
+            <h2 className="h2">Results</h2>
+            <div className="body">
+              {filteredCenters.length === 1
+                ? `${filteredCenters.length} center`
+                : `${filteredCenters.length} centers`}
+            </div>
+          </div>
+
           {filteredCenters.length === 0 && (
             <p className="body">No centers match those filters.</p>
           )}
@@ -377,9 +427,8 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
               );
             })}
           </div>
-        </div>
+        </section>
       </section>
-      </div>
-    </main>
+    </div>
   );
 }

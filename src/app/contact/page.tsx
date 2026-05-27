@@ -52,6 +52,8 @@ const CONTACT_PAGE_QUERY = /* GraphQL */ `
         }
         contactFormHeading
         contactFormDescription
+
+        serveWithHeartStatement
       }
     }
   }
@@ -196,6 +198,12 @@ export default async function ContactPage() {
         </div>
       </div>
       {/* </section> */}
+
+      {f?.serveWithHeartStatement ? (
+        <section className="mx-auto mt-16 max-w-6xl px-6 stack-2">
+          <p className="mb-4 text-center text-lg text-neutral-700">{f?.serveWithHeartStatement}</p>
+        </section>
+      ) : null}
     </main>
   );
 }

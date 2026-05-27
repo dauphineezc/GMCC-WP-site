@@ -28,7 +28,8 @@ export type ProgramCard = {
   audience: { slug: string; name: string }[];
   centers: { slug: string; title: string }[];
   programAreas: { slug: string; name: string }[];
-  specialtyGroupFitness: string[];
+  groupFitnessClassType: string | null;
+  registrationLink: string | null;
   priceFrom: number | null;
   campTypes: { slug: string; name: string }[];
 };
@@ -78,7 +79,12 @@ export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
       name: n?.name,
     })).filter((x: any) => x?.slug && x?.name) ?? [],
 
-    specialtyGroupFitness: Array.isArray(f.specialtyGroupFitness) ? f.specialtyGroupFitness : [],
+    groupFitnessClassType: Array.isArray(f.groupFitnessClassType)
+      ? (f.groupFitnessClassType[0] ?? null)
+      : typeof f.groupFitnessClassType === "string"
+      ? f.groupFitnessClassType
+      : null,
+    registrationLink: f.registrationInformation?.registrationLink ?? null,
   };
 }
 
@@ -510,7 +516,7 @@ export default function ExploreProgramsClient({
 
       <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
         {/* FILTER SIDEBAR */}
-        <aside className="card h-fit sticky top-18">
+        <aside className="card h-fit lg:sticky lg:top-18">
           {/* Mobile toggle button */}
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
@@ -660,7 +666,7 @@ export default function ExploreProgramsClient({
               onClick={() => toggleDropdown("skillLevels")}
               className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
             >
-              <span><label className="text-base text-gmcc-navy">Skill level</label>{skillLevels.length > 0 && <span className="ml-2 text-xs text-neutral-500">({skillLevels.length})</span>}</span>
+              <span><label className="text-base text-gmcc-navy">Skill level/Intensity</label>{skillLevels.length > 0 && <span className="ml-2 text-xs text-neutral-500">({skillLevels.length})</span>}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${openDropdowns.has("skillLevels") ? "rotate-180" : ""}`}
                 fill="none"
@@ -751,10 +757,9 @@ export default function ExploreProgramsClient({
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((p) => (
 
-          <a
+          <div
             key={p.slug}
-            href={`/programs/${p.slug}`}
-            className="group card card-hover card-link overflow-hidden h-[380px] flex flex-col"
+            className="group card card-hover relative overflow-hidden flex flex-col"
           >
             {/* Full-bleed image */}
             <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
@@ -768,11 +773,11 @@ export default function ExploreProgramsClient({
                 />
               )}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
-              {p.specialtyGroupFitness.includes("SilverSneakers Exclusive") ? (
+              {p.groupFitnessClassType === "silversneakers" ? (
                 <span className="absolute top-2 right-2 rounded-full bg-[#6DB626] px-2.5 py-0.75 text-xs font-semibold text-white shadow">
-                  SilverSneakers Exclusive
+                  SilverSneakers® Exclusive
                 </span>
-              ) : p.specialtyGroupFitness.includes("Specialty Fitness Program") ? (
+              ) : p.groupFitnessClassType === "specialty fitness" ? (
                 <span className="absolute top-2 right-2 rounded-full bg-[#FF004D] px-2.5 py-0.75 text-xs font-semibold text-white shadow">
                   Specialty Program
                 </span>
@@ -792,24 +797,47 @@ export default function ExploreProgramsClient({
                 </p>
               )}
 
-              <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
-                {p.priceFrom != null ? (
-                  <div className="text-sm">
-                    <span className="text-neutral-500">From </span>
-                    <span className="font-semibold text-neutral-900">
-                      ${p.priceFrom.toFixed(2)}
-                    </span>
-                  </div>
-                ) : (
-                  <div />
-                )}
+              <div className="relative z-10 mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
+                {(() => {
+                  const isGroupFitness = p.programAreas.some(a => a.slug === "group-fitness");
+                  const isSpecialty = p.groupFitnessClassType === "specialty fitness" || p.groupFitnessClassType === "silversneakers";
+                  const showQuickRegister = isGroupFitness && !isSpecialty && p.registrationLink;
+                  return showQuickRegister ? (
+                    <a
+                      href={p.registrationLink!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-primary text-xs px-3 py-1.5"
+                    >
+                      Quick Register
+                    </a>
+                  ) : (
+                    p.priceFrom != null ? (
+                      <div className="text-sm">
+                        <span className="text-neutral-500">From </span>
+                        <span className="font-semibold text-neutral-900">
+                          ${p.priceFrom.toFixed(2)}
+                        </span>
+                      </div>
+                    ) : (
+                      <div />
+                    )
+                  );
+                })()}
 
                 <span className="text-sm font-semibold text-gmcc-navy underline-offset-4 group-hover:underline">
                   View →
                 </span>
               </div>
             </div>
-          </a>
+
+            {/* Stretched link covers the full card; action buttons above it via z-10 */}
+            <a
+              href={`/programs/${p.slug}`}
+              aria-label={p.title}
+              className="card-stretched-link"
+            />
+          </div>
             ))}
           </div>
 

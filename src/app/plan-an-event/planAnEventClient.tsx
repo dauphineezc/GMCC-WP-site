@@ -3,43 +3,9 @@
 import { useState, useMemo, useEffect } from "react";
 import Accordion from "@/components/accordion";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
-import type { RoomData, PartyPackageData } from "./page";
+import type { RoomData, PartyPackageData, PlanAnEventFields } from "./page";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
-type SectionCard = {
-  sectionHeader?: string | null;
-  sectionDescription?: string | null;
-  sectionImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
-  buttonLabel?: string | null;
-} | null;
-
-type PlanAnEventFields = {
-  section1Card?: SectionCard;
-  section2Card?: SectionCard;
-  section3Card?: SectionCard;
-  roomRentalResultsHeader?: string | null;
-  roomRentalResultsBody?: string | null;
-  birthdayPackagesBody?: string | null;
-  allPackagesInclude?: string | null;
-  sportsPackagesBody?: string | null;
-  locationOfferingsHeader?: string | null;
-  locationOfferingsBody?: string | null;
-  offeringsByCenter?: {
-    communityCenterOfferings?: string | null;
-    tennisCenterOfferings?: string | null;
-    curlingCenterOfferings?: string | null;
-    colemanFamilyCenterOfferings?: string | null;
-    northFamilyCenterOfferings?: string | null;
-  } | null;
-  faqs?: {
-    faq1?: { question?: string | null; answer?: string | null } | null;
-    faq2?: { question?: string | null; answer?: string | null } | null;
-    faq3?: { question?: string | null; answer?: string | null } | null;
-  } | null;
-  contactHeader?: string | null;
-  contactSubheader?: string | null;
-} | null;
 
 type HeroProps = {
   title: string;
@@ -52,7 +18,7 @@ type HeroProps = {
 
 type Props = {
   heroProps: HeroProps;
-  fields: PlanAnEventFields;
+  fields: PlanAnEventFields | null;
   rooms: RoomData[];
   partyPackages: PartyPackageData[];
 };
@@ -114,7 +80,9 @@ function getRoomGalleryPhotos(room: RoomData): { src: string; alt: string }[] {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function SectionCard({ card, href }: { card: SectionCard; href?: string }) {
+type SectionCardData = NonNullable<PlanAnEventFields["section1Card"]>;
+
+function SectionCard({ card, href }: { card: SectionCardData | null; href?: string }) {
   if (!card) return null;
   const imgSrc = card.sectionImage?.node?.sourceUrl;
   const imgAlt = card.sectionImage?.node?.altText ?? card.sectionHeader ?? "";
@@ -715,21 +683,35 @@ type CenterOfferingsData = {
   northFamilyCenterOfferings?: string | null;
 } | null | undefined;
 
-const CENTER_LABELS: { key: keyof NonNullable<CenterOfferingsData>; label: string }[] = [
-  { key: "communityCenterOfferings", label: "Community Center" },
-  { key: "tennisCenterOfferings", label: "Tennis Center" },
-  { key: "curlingCenterOfferings", label: "Curling Center" },
-  { key: "colemanFamilyCenterOfferings", label: "Coleman Family Center" },
-  { key: "northFamilyCenterOfferings", label: "North Family Center" },
+type CenterLogosData = PlanAnEventFields["centerLogos"];
+
+const CENTER_LABELS: {
+  key: keyof NonNullable<CenterOfferingsData>;
+  logoKey: keyof NonNullable<CenterLogosData>;
+  label: string;
+}[] = [
+  { key: "communityCenterOfferings", logoKey: "communityCenterLogo", label: "Community Center" },
+  { key: "tennisCenterOfferings", logoKey: "tennisCenterLogo", label: "Tennis Center" },
+  { key: "curlingCenterOfferings", logoKey: "curlingCenterLogo", label: "Curling Center" },
+  { key: "colemanFamilyCenterOfferings", logoKey: "colemanFamilyCenterLogo", label: "Coleman Family Center" },
+  { key: "northFamilyCenterOfferings", logoKey: "northFamilyCenterLogo", label: "North Family Center" },
 ];
 
-function CenterOfferingsSection({ data }: { data: CenterOfferingsData }) {
+function CenterOfferingsSection({
+  data,
+  centerLogos,
+}: {
+  data: CenterOfferingsData;
+  centerLogos?: CenterLogosData;
+}) {
   const centers = CENTER_LABELS.filter((c) => data?.[c.key]);
   if (centers.length === 0) return null;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {centers.map(({ key, label }) => {
+      {centers.map(({ key, logoKey, label }) => {
+        const logoSrc = centerLogos?.[logoKey]?.node?.sourceUrl;
+        const logoAlt = centerLogos?.[logoKey]?.node?.altText ?? label;
         const text = data?.[key] ?? "";
         const lines = typeof text === "string"
           ? text.split(/\n/).map((l) => l.trim()).filter(Boolean)
@@ -739,7 +721,7 @@ function CenterOfferingsSection({ data }: { data: CenterOfferingsData }) {
 
         return (
           <div key={key} className="card stack-4 flex flex-col">
-            <h3 className="h3">{label}</h3>
+            {logoSrc ? <img src={logoSrc} alt={logoAlt} className="w-fit h-16" /> : <h3 className="h3">{label}</h3>}
             {lines.length > 0 ? (
               <ul className="space-y-1 flex-grow">
                 {lines.map((line, i) => (
@@ -939,7 +921,7 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
                 <p className="body whitespace-pre-line">{fields.locationOfferingsBody}</p>
               )}
             </div>
-            <CenterOfferingsSection data={fields?.offeringsByCenter} />
+            <CenterOfferingsSection data={fields?.offeringsByCenter} centerLogos={fields?.centerLogos} />
           </div>
         </section>
       )}

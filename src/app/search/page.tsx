@@ -1,4 +1,6 @@
 // src/app/search/page.tsx
+import { getCenterWpToNextMap } from "@/lib/nav/centerMap";
+import { resolveContentNodeHref } from "@/lib/nav/resolveHref";
 import { wpFetch } from "@/lib/wp";
 import Link from "next/link";
 
@@ -41,13 +43,21 @@ export default async function SearchPage({
   const query = (params.q || "").trim();
 
   let results: SearchResultNode[] = [];
+  const centerMap = await getCenterWpToNextMap();
 
   if (query) {
     try {
       const data = await wpFetch<SearchQueryResponse>(SEARCH_QUERY, {
         search: query,
       });
-      results = data?.contentNodes?.nodes ?? [];
+      results = (data?.contentNodes?.nodes ?? []).map((item) => ({
+        ...item,
+        uri: resolveContentNodeHref({
+          uri: item.uri,
+          title: item.title ?? "",
+          centerMap,
+        }),
+      }));
     } catch (err) {
       console.error("Search query failed:", err);
     }

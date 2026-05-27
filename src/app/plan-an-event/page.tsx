@@ -61,6 +61,13 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
           colemanFamilyCenterOfferings
           northFamilyCenterOfferings
         }
+        centerLogos {
+          communityCenterLogo { node { sourceUrl altText } }
+          tennisCenterLogo { node { sourceUrl altText } }
+          curlingCenterLogo { node { sourceUrl altText } }
+          colemanFamilyCenterLogo { node { sourceUrl altText } }
+          northFamilyCenterLogo { node { sourceUrl altText } }
+        }
         faqs {
           faq1 {
             question
@@ -209,7 +216,7 @@ export type PartyPackageData = {
   } | null;
 };
 
-type PlanAnEventFields = {
+export type PlanAnEventFields = {
   section1Card?: SectionCard;
   section2Card?: SectionCard;
   section3Card?: SectionCard;
@@ -226,6 +233,13 @@ type PlanAnEventFields = {
     curlingCenterOfferings?: string | null;
     colemanFamilyCenterOfferings?: string | null;
     northFamilyCenterOfferings?: string | null;
+  } | null;
+  centerLogos?: {
+    communityCenterLogo?: MaybeImage;
+    tennisCenterLogo?: MaybeImage;
+    curlingCenterLogo?: MaybeImage;
+    colemanFamilyCenterLogo?: MaybeImage;
+    northFamilyCenterLogo?: MaybeImage;
   } | null;
   faqs?: {
     faq1?: { question?: string | null; answer?: string | null } | null;

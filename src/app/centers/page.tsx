@@ -1,4 +1,6 @@
 // src/app/centers/page.tsx
+import PhotoWaveHeader from "@/components/photoWaveHeader";
+import { fetchPageWithHeroFields, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
 import ExploreCentersClient from "./exploreCentersClient";
 
@@ -50,9 +52,18 @@ const EXPLORE_CENTERS_QUERY = `
 `;
 
 export default async function CentersPage() {
-  const data = await wpFetch<any>(EXPLORE_CENTERS_QUERY);
+  const [heroPage, data] = await Promise.all([
+    fetchPageWithHeroFields("centers"),
+    wpFetch<any>(EXPLORE_CENTERS_QUERY),
+  ]);
   const centers = data?.centers?.nodes ?? [];
   const programs = data?.programs?.nodes ?? [];
+  const hero = resolvePhotoWaveHeaderProps(heroPage, "Explore our centers");
 
-  return <ExploreCentersClient centers={centers} programs={programs} />;
+  return (
+    <main>
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} ctas={hero.ctas} />
+      <ExploreCentersClient centers={centers} programs={programs} />
+    </main>
+  );
 }

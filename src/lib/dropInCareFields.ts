@@ -1,0 +1,135 @@
+import { resolveWpMediaUrl } from "@/lib/wp";
+
+/** GraphQL selection set for drop-in care on `earlyChildhoodPageFields`. */
+export const DROP_IN_CARE_FIELDS_GRAPHQL = `
+  dropInCareHeader
+  dropInCareDescription
+  childwatchCard {
+    header
+    body
+    ctaLabel
+    cta
+    icon { node { sourceUrl altText } }
+  }
+  theZoneCard {
+    header
+    body
+    ctaLabel
+    cta
+    icon { node { sourceUrl altText } }
+  }
+`;
+
+export type DropInTextCard = {
+  header: string;
+  body: string;
+  ctaLabel: string;
+  ctaHref: string;
+  icon: { src: string; alt: string };
+};
+
+export type DropInCareFields = {
+  dropInCareHeader: string;
+  dropInCareDescription: string;
+  childwatchCard: DropInTextCard;
+  theZoneCard: DropInTextCard;
+};
+
+type MediaFieldInput = { node?: MediaRef | null } | MediaRef | undefined;
+type MediaRef = {
+  sourceUrl?: string | null;
+  mediaItemUrl?: string | null;
+  title?: string | null;
+} | null;
+
+function asString(v: unknown): string {
+  return typeof v === "string" ? v.trim() : "";
+}
+
+function mediaHref(m: MediaFieldInput): string {
+  if (m && typeof m === "object" && "node" in m && m.node) {
+    return mediaHref(m.node);
+  }
+  const flat = m as MediaRef | undefined;
+  const u = flat?.sourceUrl ?? flat?.mediaItemUrl;
+  const raw = typeof u === "string" ? u.trim() : "";
+  return resolveWpMediaUrl(raw) ?? raw;
+}
+
+function acfCtaHref(cta: unknown): string {
+  if (cta == null) return "";
+  if (typeof cta === "string") return cta.trim();
+  if (typeof cta !== "object") return "";
+  const o = cta as Record<string, unknown>;
+  const node = o.node;
+  if (node && typeof node === "object") {
+    const n = node as Record<string, unknown>;
+    const nu = n.sourceUrl ?? n.mediaItemUrl ?? n.uri ?? n.url;
+    if (typeof nu === "string" && nu.trim()) return nu.trim();
+  }
+  const flatMedia = o.sourceUrl ?? o.mediaItemUrl;
+  if (typeof flatMedia === "string" && flatMedia.trim()) return flatMedia.trim();
+  const linkUrl = o.url ?? o.href ?? o.uri;
+  if (typeof linkUrl === "string" && linkUrl.trim()) return linkUrl.trim();
+  return "";
+}
+
+export function dropInTextCardHasContent(card: DropInTextCard): boolean {
+  return Boolean(card.header || card.body || card.ctaLabel || card.ctaHref || card.icon.src);
+}
+
+export function normalizeDropInTextCard(raw: unknown): DropInTextCard {
+  if (!raw || typeof raw !== "object") {
+    return { header: "", body: "", ctaLabel: "", ctaHref: "", icon: { src: "", alt: "" } };
+  }
+  const o = raw as Record<string, unknown> & { icon?: MediaFieldInput };
+  const cta = o.cta;
+  return {
+    header: asString(o.header),
+    body: asString(o.body),
+    ctaLabel: asString(o.ctaLabel),
+    ctaHref: acfCtaHref(cta),
+    icon: {
+      src: mediaHref(o.icon) ?? "",
+      alt: asString(
+        o.icon && typeof o.icon === "object" && "node" in o.icon
+          ? (o.icon as { node?: Record<string, unknown> }).node?.altText
+          : (o.icon as Record<string, unknown> | null | undefined)?.altText
+      ),
+    },
+  };
+}
+
+export function normalizeDropInCareFields(
+  acf: Record<string, unknown> | null | undefined
+): DropInCareFields {
+  const f = acf ?? {};
+  return {
+    dropInCareHeader: asString(f.dropInCareHeader),
+    dropInCareDescription: asString(f.dropInCareDescription),
+    childwatchCard: normalizeDropInTextCard(f.childwatchCard),
+    theZoneCard: normalizeDropInTextCard(f.theZoneCard),
+  };
+}
+
+export function hasDropInCareContent(acf: Record<string, unknown> | null | undefined): boolean {
+  if (!acf) return false;
+  const normalized = normalizeDropInCareFields(acf);
+  return Boolean(
+    normalized.dropInCareHeader ||
+      normalized.dropInCareDescription ||
+      dropInTextCardHasContent(normalized.childwatchCard) ||
+      dropInTextCardHasContent(normalized.theZoneCard)
+  );
+}
+
+export function isExternalHref(href: string): boolean {
+  const t = href.trim();
+  return /^https?:\/\//i.test(t) || /^mailto:/i.test(t) || /^tel:/i.test(t);
+}
+
+export function openLinkInNewTab(url: string, linkTarget?: string | null): boolean {
+  if (linkTarget === "_blank") return true;
+  if (linkTarget === "_self") return false;
+  return isExternalHref(url);
+}

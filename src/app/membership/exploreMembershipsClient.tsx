@@ -23,6 +23,7 @@ import { getBodyParts } from "@/components/centerCampaignModule";
 import SimpleCampaign from "@/components/simpleCampaign";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import type { HeroCta } from "@/components/photoWaveHeader";
+import { computeMembershipPricingSavings } from "@/lib/membershipPricingSavings";
 
 export type Audience = {
   name: string;
@@ -35,11 +36,19 @@ export type Audience = {
 };
 export type ProgramArea = { name: string; slug: string };
 
+export type MembershipPayLink = {
+  url: string;
+  label: string;
+  target: string | null;
+};
+
 export type Membership = {
   slug: string;
   title: string;
   hero: { url: string; alt: string } | null;
   summary: string | null;
+  autoDraftLink: MembershipPayLink | null;
+  manualPayLink: MembershipPayLink | null;
   pricing: {
     tier: string | null;
     monthly: number | null;
@@ -170,6 +179,7 @@ export default function ExploreMembershipsClient({
   const [activeTab, setActiveTab] = useState<"compare" | "quiz" | "estimator">("compare");
   const [activeCenter, setActiveCenter] = useState(centerLinks[0]?.slug ?? "");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [showAllTierCards, setShowAllTierCards] = useState(false);
 
   const quizRef = useRef<HTMLDivElement>(null);
   const membershipsRef = useRef<HTMLDivElement>(null);
@@ -366,6 +376,20 @@ export default function ExploreMembershipsClient({
     isActivityPassTitle,
   ]);
 
+  const MEMBERSHIP_TIER_COLS = 3;
+  const maxVisibleTierCards = Math.max(1, MEMBERSHIP_TIER_COLS);
+  const hiddenTierCount = Math.max(0, tierGroups.length - maxVisibleTierCards);
+  const hiddenActivityPassCount = activityPassTier ? 1 : 0;
+  const hiddenMembershipCardCount = hiddenTierCount + hiddenActivityPassCount;
+  const hasHiddenMembershipCards = hiddenMembershipCardCount > 0;
+  const visibleTierGroups = showAllTierCards
+    ? tierGroups
+    : tierGroups.slice(0, maxVisibleTierCards);
+
+  useEffect(() => {
+    setShowAllTierCards(false);
+  }, [activeCenter]);
+
   const scrollToQuiz = () => {
     setActiveTab("quiz");
     setTimeout(() => {
@@ -403,7 +427,7 @@ export default function ExploreMembershipsClient({
 
       {/* COMPARE TAB CONTENT */}
       {activeTab === "compare" && (
-        <div>
+        <div className="overflow-x-clip">
           {/* CURRENT PROMOTION */}
       {fields.showCurrentPromotion && fields.currentPromotion && (
         <div className="relative mt-16 mx-auto max-w-6xl p-0 card bg-gmcc-navy text-white">
@@ -479,6 +503,13 @@ export default function ExploreMembershipsClient({
             </section>
           )}
 
+          {/* FEATURED CAMPAIGN */}
+          {fields.campaign && (
+            <div className="relative mt-16 mb-16">
+              <SimpleCampaign campaign={fields.campaign} />
+            </div>
+          )}
+
           {/* CENTER TAB NAVIGATION + MEMBERSHIP CARDS */}
           <section
             id="plans"
@@ -499,9 +530,6 @@ export default function ExploreMembershipsClient({
                     type="button"
                     onClick={() => {
                       setActiveCenter(c.slug);
-                      setTimeout(() => {
-                        membershipsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }, 50);
                     }}
                     className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
                       activeCenter === c.slug
@@ -526,30 +554,68 @@ export default function ExploreMembershipsClient({
                   </a>
                 </div>
               ) : tierGroups.length > 0 || activityPassTier ? (
-                <div className="space-y-8">
-                  {tierGroups.length > 0 ? (
-                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                      {tierGroups.map((group) => (
-                        <TierCard
-                          key={`${activeCenter}-${group.tierName}`}
-                          tierName={group.tierName}
-                          variants={group.variants}
-                          getAudienceFromTitle={getAudienceFromTitle}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                  {activityPassTier ? (
-                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                      <div className="lg:col-start-2">
-                        <TierCard
-                          key={`${activeCenter}-${activityPassTier.tierName}`}
-                          tierName={activityPassTier.tierName}
-                          variants={activityPassTier.variants}
-                          getAudienceFromTitle={getAudienceFromTitle}
-                          secondary
-                        />
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    {tierGroups.length > 0 ? (
+                      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                        {visibleTierGroups.map((group) => (
+                          <TierCard
+                            key={`${activeCenter}-${group.tierName}`}
+                            tierName={group.tierName}
+                            variants={group.variants}
+                            getAudienceFromTitle={getAudienceFromTitle}
+                            featured={isAllAccessTier(group.tierName)}
+                          />
+                        ))}
                       </div>
+                    ) : null}
+                    {hasHiddenMembershipCards && !showAllTierCards ? (
+                      <div className="pt-4 flex justify-center items-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowAllTierCards(true)}
+                          className="text-gmcc-navy hover:underline text-sm font-semibold"
+                        >
+                          {`Show more (${hiddenMembershipCardCount} more)`}
+                        </button>
+                      </div>
+                    ) : null}
+                    {hasHiddenMembershipCards && showAllTierCards && !activityPassTier ? (
+                      <div className="pt-4 flex justify-center items-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowAllTierCards(false)}
+                          className="text-gmcc-navy hover:underline text-sm font-semibold"
+                        >
+                          Show less
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                  {activityPassTier && showAllTierCards ? (
+                    <div className="space-y-3">
+                      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="lg:col-start-2">
+                          <TierCard
+                            key={`${activeCenter}-${activityPassTier.tierName}`}
+                            tierName={activityPassTier.tierName}
+                            variants={activityPassTier.variants}
+                            getAudienceFromTitle={getAudienceFromTitle}
+                            secondary
+                          />
+                        </div>
+                      </div>
+                      {hasHiddenMembershipCards ? (
+                        <div className="pt-4 flex justify-center items-center">
+                          <button
+                            type="button"
+                            onClick={() => setShowAllTierCards(false)}
+                            className="text-gmcc-navy hover:underline text-sm font-semibold"
+                          >
+                            Show less
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
@@ -569,7 +635,7 @@ export default function ExploreMembershipsClient({
 
           {/* QUIZ CTA SECTION */}
           <section>
-            <div className="mt-8 card bg-gmcc-navy text-white mx-auto max-w-6xl px-12 py-8">
+            <div className="mt-16 card bg-gmcc-navy text-white mx-auto max-w-6xl px-12 py-8">
               <div className="grid gap-4 md:grid-cols-2 items-center">
                 <div className="col-span-1 gap-4">
                   <h2 className="h2 mb-4 text-white">
@@ -607,7 +673,7 @@ export default function ExploreMembershipsClient({
 
           {/* FINANCIAL ASSISTANCE */}
           <section>
-            <div className="mt-12 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip">
+            <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mt-16 w-full overflow-x-clip">
               {/* Top wave (above navy body; not covered by background) */}
               <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
                 <svg
@@ -663,16 +729,14 @@ export default function ExploreMembershipsClient({
             </div>
           </section>
 
-          {/* FEATURED CAMPAIGN */}
-          {fields.campaign && (
-            <div className="relative mt-0">
-              <SimpleCampaign campaign={fields.campaign} />
-            </div>
-          )}
-
           {/* HEALTHY 100 CHALLENGE */}
           {fields.healthy100Challenge && (
-            <div className="relative mt-16 mx-auto max-w-6xl p-0 card bg-gmcc-navy text-white">
+            <div className="relative mb-16">
+              <SimpleCampaign campaign={fields.healthy100Challenge} />
+            </div>
+          )}
+          {/* {fields.healthy100Challenge && (
+            <div className="relative mt-20 mx-auto max-w-6xl p-0 card bg-gmcc-navy text-white">
               <div className="grid gap-y-4 md:grid-cols-5 md:items-stretch md:gap-x-0">
                 <div className="col-span-3 flex flex-col justify-center gap-4 p-8">
                   <h2 className="h2 mb-4 text-white">
@@ -709,11 +773,11 @@ export default function ExploreMembershipsClient({
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
           {/* CONTACT CTA */}
           <section>
-            <div className="mx-auto max-w-6xl px-4 mt-16 mb-8 text-center">
+            <div className="mx-auto max-w-6xl px-4 mt-18 mb-8 text-center">
               <h2 className="h2">
                 {fields.contactHeader}
               </h2>
@@ -767,6 +831,37 @@ export default function ExploreMembershipsClient({
 }
 
 const VISIBLE_BENEFITS = 5;
+const DEFAULT_JOIN_URL =
+  "https://register.greatermidland.org/webtrac/web/search.html?Action=Start";
+
+function resolveJoinAction(membership: Membership): "modal" | "direct" {
+  const hasAuto = Boolean(membership.autoDraftLink?.url);
+  const hasManual = Boolean(membership.manualPayLink?.url);
+  if (hasAuto && hasManual) return "modal";
+  return "direct";
+}
+
+function resolveDirectJoinUrl(membership: Membership): string {
+  return (
+    membership.autoDraftLink?.url ??
+    membership.manualPayLink?.url ??
+    DEFAULT_JOIN_URL
+  );
+}
+
+function isAllAccessTier(tierName: string): boolean {
+  return tierName.toLowerCase().includes("all access");
+}
+
+function PricingSavingsCallout({ percent }: { percent: number | null }) {
+  if (percent == null || percent <= 0) return null;
+  return (
+    <span className="ml-1.5 font-semibold text-xs text-gmcc-green">
+      {" "}
+      (Save {percent}%)
+    </span>
+  );
+}
 
 /** A single tier card with audience-switching pills */
 function TierCard({
@@ -774,24 +869,31 @@ function TierCard({
   variants,
   getAudienceFromTitle,
   secondary = false,
+  featured = false,
 }: {
   tierName: string;
   variants: Membership[];
   getAudienceFromTitle: (title: string) => string;
   secondary?: boolean;
+  featured?: boolean;
 }) {
-  const showAnnualSavingsCallout = variants.some(
-    (v) => v.slug.toLowerCase().includes("tennis")
-  );
-
   const defaultIdx = variants.findIndex((v) => {
     const aud = getAudienceFromTitle(v.title).toLowerCase();
     return aud.includes("adult") && !aud.includes("young");
   });
   const [selectedIdx, setSelectedIdx] = useState(defaultIdx >= 0 ? defaultIdx : 0);
   const [benefitsExpanded, setBenefitsExpanded] = useState(false);
+  const [joinChoiceOpen, setJoinChoiceOpen] = useState(false);
   const selected = variants[selectedIdx] ?? variants[0];
   if (!selected) return null;
+
+  const joinAction = resolveJoinAction(selected);
+  const directJoinUrl = resolveDirectJoinUrl(selected);
+  const joinButtonClass = secondary
+    ? "btn btn-secondary w-full"
+    : "btn btn-primary w-full";
+
+  const pricingSavings = computeMembershipPricingSavings(selected.pricing);
 
   const hiddenCount = Math.max(0, selected.benefits.length - VISIBLE_BENEFITS);
   const shownBenefits = benefitsExpanded
@@ -800,10 +902,19 @@ function TierCard({
 
   const articleClass = secondary
     ? "flex flex-col rounded-2xl border border-neutral-300 bg-neutral-50 shadow-none overflow-hidden ring-1 ring-neutral-100"
-    : "flex flex-col rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden";
+    : featured
+      ? "flex flex-col rounded-2xl border-2 border-gmcc-teal/40 bg-gmcc-blue-light/15 shadow-md overflow-hidden ring-2 ring-gmcc-teal/15"
+      : "flex flex-col rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden";
+
+  const benefitsListFadeClass =
+    !benefitsExpanded && hiddenCount > 0
+      ? "[mask-image:linear-gradient(to_bottom,black_0,black_calc(100%-3rem),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_0,black_calc(100%-3rem),transparent_100%)]"
+      : "";
 
   return (
-    <article className={articleClass}>
+    <article
+      className={`${articleClass}${joinChoiceOpen ? " z-50 overflow-visible" : ""}`}
+    >
       {selected.hero && (
         <div className={`relative bg-neutral-100 ${secondary ? "h-32 opacity-90" : "h-40"}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -838,18 +949,14 @@ function TierCard({
             <div>
               <span className="text-neutral-500">{selected.pricing.paymentSplit.frequency}:</span>{" "}
               <span className="font-bold">${Math.round(selected.pricing.paymentSplit.cost)}</span>
+              <PricingSavingsCallout percent={pricingSavings.splitVsMonthlyPercent} />
             </div>
           )}
           {selected.pricing.annually != null && (
             <div>
               <span className="text-neutral-500">Annual:</span>{" "}
               <span className="font-bold">${Math.round(selected.pricing.annually)}</span>
-              {showAnnualSavingsCallout ? (
-                <span className="ml-1.5 font-semibold text-xs text-gmcc-green">
-                  {" "}
-                  (Save 25%)
-                </span>
-              ) : null}
+              <PricingSavingsCallout percent={pricingSavings.annualVsMonthlyPercent} />
             </div>
           )}
           {selected.pricing.joiningFee != null && (
@@ -871,11 +978,13 @@ function TierCard({
                   onClick={() => {
                     setSelectedIdx(i);
                     setBenefitsExpanded(false);
+                    setJoinChoiceOpen(false);
                   }}
                   className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
-                    selectedIdx === i
-                      ? "bg-gmcc-navy text-white shadow-sm"
-                      : "bg-neutral-100 text-gmcc-navy hover:bg-neutral-200"
+                    selectedIdx === i ? "bg-gmcc-navy text-white shadow-sm"
+                      : featured
+                        ? "bg-white text-gmcc-navy hover:bg-neutral-200"
+                        : "bg-neutral-100 text-gmcc-navy hover:bg-neutral-200"
                   }`}
                 >
                   {aud}
@@ -892,7 +1001,7 @@ function TierCard({
         {/* Benefits — show first 5 then fade + "see X more" */}
         {selected.benefits.length > 0 && (
           <div className="mt-3 relative">
-            <ul className="space-y-1">
+            <ul className={`space-y-1 ${benefitsListFadeClass}`}>
               {shownBenefits.map((b, i) => (
                 <li key={i} className="flex items-start gap-1.5 text-xs text-neutral-600">
                   <svg className="mt-0.5 h-3 w-3 shrink-0 text-gmcc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -904,20 +1013,13 @@ function TierCard({
             </ul>
 
             {!benefitsExpanded && hiddenCount > 0 && (
-              <>
-                <div
-                  className={`pointer-events-none absolute bottom-6 left-0 right-0 h-8 bg-gradient-to-t to-transparent ${
-                    secondary ? "from-neutral-50" : "from-white"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setBenefitsExpanded(true)}
-                  className="mt-1 text-xs font-semibold text-gmcc-navy hover:underline"
-                >
-                  See {hiddenCount} more benefit{hiddenCount !== 1 && "s"}
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => setBenefitsExpanded(true)}
+                className="mt-1 text-xs font-semibold text-gmcc-navy hover:underline"
+              >
+                See {hiddenCount} more benefit{hiddenCount !== 1 && "s"}
+              </button>
             )}
 
             {benefitsExpanded && hiddenCount > 0 && (
@@ -932,13 +1034,92 @@ function TierCard({
           </div>
         )}
 
-        <div className="mt-auto pt-4">
-          <a
-            href="https://register.greatermidland.org/webtrac/web/search.html?Action=Start"
-            className={secondary ? "btn btn-secondary w-full" : "btn btn-primary w-full"}
-          >
-            Join Now
-          </a>
+        <div className="relative mt-auto pt-4">
+          {joinChoiceOpen && joinAction === "modal" && (
+            <>
+              <div
+                className="fixed inset-0 z-40 bg-black/15"
+                onClick={() => setJoinChoiceOpen(false)}
+                aria-hidden
+              />
+              <div
+                className="absolute bottom-full left-0 right-0 z-50 mb-2 rounded-xl border border-neutral-200 bg-white p-4 shadow-lg"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={`join-choice-title-${selected.slug}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <h3
+                    id={`join-choice-title-${selected.slug}`}
+                    className="text-base font-semibold text-gmcc-navy"
+                  >
+                    Choose how to pay
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setJoinChoiceOpen(false)}
+                    className="shrink-0 rounded-full bg-neutral-100 p-1 text-neutral-600 transition hover:bg-neutral-200"
+                    aria-label="Close"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="h-4 w-4"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-neutral-600">
+                  Continue registration for{" "}
+                  <span className="font-semibold text-gmcc-navy">{tierName}</span>
+                </p>
+                <div className="mt-3 flex flex-col gap-2">
+                  {selected.autoDraftLink ? (
+                    <a
+                      href={selected.autoDraftLink.url}
+                      target={selected.autoDraftLink.target ?? "_blank"}
+                      rel="noopener noreferrer"
+                      className="btn btn-primary w-full text-sm"
+                    >
+                      {selected.autoDraftLink.label}
+                    </a>
+                  ) : null}
+                  {selected.manualPayLink ? (
+                    <a
+                      href={selected.manualPayLink.url}
+                      target={selected.manualPayLink.target ?? "_blank"}
+                      rel="noopener noreferrer"
+                      className="btn btn-secondary w-full text-sm"
+                    >
+                      {selected.manualPayLink.label}
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            </>
+          )}
+          {joinAction === "modal" ? (
+            <button
+              type="button"
+              onClick={() => setJoinChoiceOpen(true)}
+              className={joinButtonClass}
+            >
+              Join Now
+            </button>
+          ) : (
+            <a
+              href={directJoinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={joinButtonClass}
+            >
+              Join Now
+            </a>
+          )}
         </div>
       </div>
     </article>
