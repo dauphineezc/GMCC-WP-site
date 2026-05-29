@@ -1,5 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import Navbar from "@/components/nav/navbar";
 import Footer from "@/components/footer/footer";
@@ -35,7 +36,11 @@ export default async function RootLayout({
       className={`${headingFont.variable} ${secondaryFont.variable} ${bodyFont.variable} ${scriptFont.variable}`}
     >
       <body className="min-h-screen bg-white text-neutral-900 flex flex-col">
-        <GoogleTranslateInit />
+        {/* Suspense is required because GoogleTranslateInit uses usePathname,
+            which opts the component into dynamic rendering context */}
+        <Suspense fallback={null}>
+          <GoogleTranslateInit />
+        </Suspense>
         {/* Do not set overflow-x here: paired with default overflow-y it becomes a scrollport and breaks position:sticky in <main>. */}
         <div className="flex flex-col flex-1">
           <Navbar items={nav} utilityItems={utilityItems} />
