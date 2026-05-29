@@ -514,7 +514,7 @@ export default function ExploreMembershipsClient({
           <section
             id="plans"
             ref={plansSectionRef}
-            className="scroll-mt-28 md:scroll-mt-32"
+            className="scroll-mt-6 md:scroll-mt-12"
           >
             <div className="mx-auto max-w-6xl px-4 py-8">
               <h2 className="h2 mb-2">{fields.membershipsHeader}</h2>

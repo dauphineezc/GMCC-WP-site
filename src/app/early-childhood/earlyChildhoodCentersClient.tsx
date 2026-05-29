@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { EceCenterSlug, SerializedEceProgram } from "./page";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 
@@ -37,7 +38,47 @@ export default function EarlyChildhoodCentersClient({
   documentsByCenter,
   programsByCenter,
 }: EarlyChildhoodCentersClientProps) {
+  const searchParams = useSearchParams();
+  const sectionRef = useRef<HTMLElement>(null);
   const [activeSlug, setActiveSlug] = useState<EceCenterSlug>(centers[0]?.slug ?? "community-center");
+
+  /** Deep link: /early-childhood?center=coleman-family-center#programs-by-center */
+  useLayoutEffect(() => {
+    const raw = searchParams.get("center");
+    if (!raw) return;
+    const normalized = raw.trim().toLowerCase();
+    const match = centers.find(
+      (c) => c.slug === raw || c.slug.toLowerCase() === normalized
+    );
+    if (match) setActiveSlug(match.slug);
+  }, [searchParams, centers]);
+
+  /**
+   * App Router often does not scroll to hash targets on client navigations.
+   * Scroll after paint when we have a deep link (?center=… and/or #programs-by-center).
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const hash = window.location.hash.replace(/^#/, "").toLowerCase();
+    const hasCenterParam = Boolean(searchParams.get("center")?.trim());
+    if (hash !== "programs-by-center" && !hasCenterParam) return;
+
+    const scrollSection = () => {
+      const el = sectionRef.current ?? document.getElementById("programs-by-center");
+      el?.scrollIntoView({ behavior: "smooth", block: "start"  });
+    };
+
+    scrollSection();
+    const t0 = window.setTimeout(scrollSection, 0);
+    const t1 = window.setTimeout(scrollSection, 120);
+    const t2 = window.setTimeout(scrollSection, 350);
+    return () => {
+      window.clearTimeout(t0);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [searchParams]);
 
   const activeDocs = useMemo(() => documentsByCenter[activeSlug] ?? [], [documentsByCenter, activeSlug]);
   const activePrograms = useMemo(() => programsByCenter[activeSlug] ?? [], [programsByCenter, activeSlug]);
@@ -45,7 +86,11 @@ export default function EarlyChildhoodCentersClient({
   const activeLabel = centers.find((c) => c.slug === activeSlug)?.label ?? "";
 
   return (
-    <section id="programs-by-center" className="mx-auto max-w-6xl px-6 pt-16 pb-16">
+    <section
+      id="programs-by-center"
+      ref={sectionRef}
+      className="mx-auto max-w-6xl px-6 pt-16 pb-16"
+    >
       {programsHeader ? <h2 className="h2 text-gmcc-navy">{programsHeader}</h2> : null}
       {programsDescription ? (
         <div className="body mt-3 text-neutral-700 whitespace-pre-line">{programsDescription}</div>

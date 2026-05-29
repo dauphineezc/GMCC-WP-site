@@ -5,6 +5,13 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { NavItem } from "@/lib/nav/tree";
+import {
+  applyGoogleTranslate,
+  getGoogleTranslateLang,
+  LANG_COOKIE,
+  setPreferredLangCookie,
+  type TranslateLang,
+} from "@/lib/googleTranslate";
 
 // Accessibility types and helpers
 type TextSize = "normal" | "large" | "xlarge";
@@ -15,8 +22,6 @@ type A11yState = {
 };
 
 const A11Y_STORAGE_KEY = "gmcc_a11y";
-const LANG_COOKIE = "gmcc_preferred_lang";
-
 const DEFAULT_A11Y_STATE: A11yState = {
   textSize: "normal",
   highContrast: false,
@@ -38,49 +43,6 @@ function getLangCookie(): string {
     if (name === LANG_COOKIE && value === "es") return "es";
   }
   return "en";
-}
-
-function getCurrentPageLang(): "en" | "es" {
-  if (typeof window === "undefined") return "en";
-  const url = new URL(window.location.href);
-  if (url.searchParams.get("_x_tr_tl") === "es") return "es";
-  if (window.location.hostname.includes("translate.goog")) return "es";
-  return "en";
-}
-
-function setLangCookie(lang: string) {
-  const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
-  document.cookie = `${LANG_COOKIE}=${lang}; expires=${expires}; path=/; SameSite=Lax`;
-}
-
-function isLocalhost(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1" ||
-      window.location.hostname.startsWith("192.168."))
-  );
-}
-
-function resolveTranslatedHref(href: string): string {
-  if (typeof window === "undefined") return href;
-  if (!window.location.hostname.includes("translate.goog")) return href;
-  if (!href || href.startsWith("#")) return href;
-
-  const currentUrl = new URL(window.location.href);
-  const targetLang = currentUrl.searchParams.get("_x_tr_tl") || "es";
-
-  let absoluteTarget = href;
-  if (!/^https?:\/\//i.test(href)) {
-    const originalHost = window.location.hostname
-      .replace(".translate.goog", "")
-      .replace(/-/g, ".");
-    absoluteTarget = `https://${originalHost}${href.startsWith("/") ? href : `/${href}`}`;
-  }
-
-  return `https://translate.google.com/translate?sl=en&tl=${targetLang}&u=${encodeURIComponent(
-    absoluteTarget
-  )}`;
 }
 
 type MobileMenuProps = {
@@ -106,7 +68,7 @@ export default function MobileMenu({
   const [a11yExpanded, setA11yExpanded] = useState(false);
 
   // Language state
-  const [lang, setLang] = useState<string>("en");
+  const [lang, setLang] = useState<TranslateLang>("en");
   const [langExpanded, setLangExpanded] = useState(false);
 
   // Load accessibility settings
@@ -136,30 +98,14 @@ export default function MobileMenu({
   // Load language preference
   useEffect(() => {
     // Reflect actual page language first; fallback to cookie.
-    setLang(getCurrentPageLang() || getLangCookie());
+    setLang(getGoogleTranslateLang() || (getLangCookie() as TranslateLang));
   }, []);
 
-  // Handle language change
-  const handleLanguageChange = (newLang: string) => {
-    setLangCookie(newLang);
+  const handleLanguageChange = (newLang: TranslateLang) => {
+    if (newLang === lang) return;
+    setPreferredLangCookie(newLang);
     setLang(newLang);
-    
-    if (isLocalhost()) {
-      // Just update state on localhost
-      return;
-    }
-
-    if (newLang === "es") {
-      const currentUrl = window.location.href;
-      const translateUrl = `https://translate.google.com/translate?sl=en&tl=es&u=${encodeURIComponent(currentUrl)}`;
-      window.location.href = translateUrl;
-    } else if (window.location.hostname.includes("translate.goog")) {
-      // Go back to original site
-      const originalHost = window.location.hostname
-        .replace(".translate.goog", "")
-        .replace(/-/g, ".");
-      window.location.href = `https://${originalHost}${window.location.pathname}`;
-    }
+    applyGoogleTranslate(newLang);
   };
 
   // Clear search when menu closes
@@ -200,12 +146,7 @@ export default function MobileMenu({
     e.preventDefault();
     if (searchQuery.trim()) {
       const searchHref = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
-      const resolvedSearchHref = resolveTranslatedHref(searchHref);
-      if (resolvedSearchHref === searchHref) {
-        router.push(searchHref);
-      } else {
-        window.location.href = resolvedSearchHref;
-      }
+      router.push(searchHref);
       setSearchQuery("");
       onClose();
     }
@@ -439,7 +380,7 @@ export default function MobileMenu({
                     .map((u) => (
                       <li key={u.id}>
                         <Link
-                          href={resolveTranslatedHref(u.href)}
+                          href={u.href}
                           onClick={onClose}
                           className="block py-2 text-sm font-medium text-neutral-700 hover:text-gmcc-navy transition-colors"
                         >
@@ -466,7 +407,7 @@ export default function MobileMenu({
                       <div className="flex items-center">
                         {/* Clickable label - navigates to page */}
                         <Link
-                          href={resolveTranslatedHref(item.href)}
+                          href={item.href}
                           onClick={onClose}
                           className="flex-1 px-6 py-4 text-gmcc-navy font-medium hover:bg-gmcc-blue-light/30 transition-colors"
                         >
@@ -515,7 +456,7 @@ export default function MobileMenu({
                                   <NestedSubmenu item={child} onClose={onClose} />
                                 ) : (
                                   <Link
-                                    href={resolveTranslatedHref(child.href)}
+                                    href={child.href}
                                     onClick={onClose}
                                     className="block px-10 py-3 text-gray-700 hover:text-gmcc-navy hover:bg-gmcc-blue-light/20 transition-colors"
                                   >
@@ -530,7 +471,7 @@ export default function MobileMenu({
                     </>
                   ) : (
                     <Link
-                      href={resolveTranslatedHref(item.href)}
+                      href={item.href}
                       onClick={onClose}
                       className="block px-6 py-4 text-gmcc-navy font-medium hover:bg-gmcc-blue-light/30 transition-colors"
                     >
@@ -711,7 +652,7 @@ function NestedSubmenu({
       <div className="flex items-center">
         {/* Clickable label - navigates to category page */}
         <Link
-          href={resolveTranslatedHref(item.href)}
+          href={item.href}
           onClick={onClose}
           className="flex-1 px-10 py-3 text-gray-700 font-medium hover:text-gmcc-navy hover:bg-gmcc-blue-light/20 transition-colors"
         >
@@ -757,7 +698,7 @@ function NestedSubmenu({
             {item.children.map((leaf) => (
               <li key={leaf.id}>
                 <Link
-                  href={resolveTranslatedHref(leaf.href)}
+                  href={leaf.href}
                   onClick={onClose}
                   className="block px-14 py-2 text-sm text-gray-600 hover:text-gmcc-navy transition-colors"
                 >

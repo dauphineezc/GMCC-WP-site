@@ -516,7 +516,7 @@ export default function ExploreProgramsClient({
 
       <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
         {/* FILTER SIDEBAR */}
-        <aside className="card h-fit lg:sticky lg:top-18">
+        <aside className="card h-fit lg:top-18">
           {/* Mobile toggle button */}
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}

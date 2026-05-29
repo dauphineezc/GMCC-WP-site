@@ -33,7 +33,8 @@ export default function PhoneLink({
   if (!digits) return null;
 
   return (
-    <a href={`tel:${digits}`} className={className}>
+    // translate="no" prevents GT from garbling formatted phone numbers
+    <a href={`tel:${digits}`} className={className} translate="no">
       {children ?? formatDisplay(phone)}
     </a>
   );

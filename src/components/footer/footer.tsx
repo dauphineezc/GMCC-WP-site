@@ -66,8 +66,8 @@ export default function Footer({ items }: FooterProps) {
         {/* Divider - visible on mobile */}
         <div className="md:hidden border-t border-white/20 my-6" />
 
-        {/* Contact Info */}
-        <div className="flex flex-col md:flex-row flex-wrap justify-center items-center gap-y-3 md:gap-x-6 md:gap-y-2 small tracking-wide text-white/80">
+        {/* Contact Info — translate="no" protects address, phone, and email */}
+        <div className="flex flex-col md:flex-row flex-wrap justify-center items-center gap-y-3 md:gap-x-6 md:gap-y-2 small tracking-wide text-white/80" translate="no">
           <span className="font-medium">GREATER MIDLAND</span>
           <span className="text-center">2205 S Jefferson Ave, Midland MI, 48640</span>
           <div className="flex gap-4 md:gap-6">

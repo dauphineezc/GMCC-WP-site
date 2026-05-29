@@ -2,98 +2,24 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useOutsideClick } from "./useOutsideClick";
+import {
+  applyGoogleTranslate,
+  getGoogleTranslateLang,
+  isLocalhost,
+  setPreferredLangCookie,
+  type TranslateLang,
+} from "@/lib/googleTranslate";
 
-type Lang = "en" | "es";
-
-const LANG_COOKIE = "gmcc_preferred_lang";
-
-function getCurrentLang(): Lang {
-  if (typeof window === "undefined") return "en";
-  const url = new URL(window.location.href);
-
-  // Most reliable: explicit Google Translate target-language query param.
-  const translatedTo = url.searchParams.get("_x_tr_tl");
-  if (translatedTo === "es") return "es";
-
-  // Fallback for translated hostnames.
-  if (window.location.hostname.includes("translate.goog")) return "es";
-
-  // If we're on the original site, reflect original language (English).
-  // This avoids stale cookie mismatches where UI says ES on an EN page.
-  return "en";
-}
-
-function setLangCookie(lang: Lang) {
-  const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
-  document.cookie = `${LANG_COOKIE}=${lang}; expires=${expires}; path=/; SameSite=Lax`;
-}
-
-function isLocalhost() {
-  return (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname.startsWith("192.168.")
-  );
-}
-
-function isOnGoogleTranslate(): boolean {
-  return window.location.hostname.includes("translate.goog");
-}
-
-function getOriginalUrl(): string {
-  // Google Translate proxy URLs look like:
-  // https://example-com.translate.goog/path?_x_tr_sl=en&_x_tr_tl=es...
-  // We need to convert back to https://example.com/path
-  const url = new URL(window.location.href);
-  
-  // Extract original hostname (convert hyphens back to dots, remove .translate.goog)
-  const originalHost = url.hostname
-    .replace(".translate.goog", "")
-    .replace(/-/g, ".");
-  
-  // Remove Google Translate query params
-  const cleanParams = new URLSearchParams();
-  url.searchParams.forEach((value, key) => {
-    if (!key.startsWith("_x_tr_")) {
-      cleanParams.set(key, value);
-    }
-  });
-  
-  const queryString = cleanParams.toString();
-  return `https://${originalHost}${url.pathname}${queryString ? `?${queryString}` : ""}`;
-}
-
-function translateWithGoogle(targetLang: Lang): boolean {
-  if (isLocalhost()) {
-    // Can't use Google Translate on localhost
-    return false;
-  }
-
-  if (targetLang === "en") {
-    // If on translated page, go back to original
-    if (isOnGoogleTranslate()) {
-      window.location.href = getOriginalUrl();
-      return true;
-    }
-    // Already on English, no action needed
-    return true;
-  } else {
-    // Get the URL to translate (original if on Google Translate, current otherwise)
-    const urlToTranslate = isOnGoogleTranslate() ? getOriginalUrl() : window.location.href;
-    const translateUrl = `https://translate.google.com/translate?sl=en&tl=${targetLang}&u=${encodeURIComponent(urlToTranslate)}`;
-    window.location.href = translateUrl;
-    return true;
-  }
+function getCurrentLang(): TranslateLang {
+  return getGoogleTranslateLang();
 }
 
 export default function LanguagePopover({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
-  const [lang, setLang] = useState<Lang>("en");
+  const [lang, setLang] = useState<TranslateLang>("en");
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({});
-  const [showLocalWarning, setShowLocalWarning] = useState(false);
   const [onLocalhost, setOnLocalhost] = useState(false);
 
-  // Check if on localhost on mount
   useEffect(() => {
     setOnLocalhost(isLocalhost());
   }, []);
@@ -101,7 +27,6 @@ export default function LanguagePopover({ className = "" }: { className?: string
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Calculate fixed position when opening
   const updatePanelPosition = useCallback(() => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
@@ -125,26 +50,26 @@ export default function LanguagePopover({ className = "" }: { className?: string
     }
   }, [open, updatePanelPosition]);
 
-  useOutsideClick([buttonRef as React.RefObject<HTMLElement>, panelRef as React.RefObject<HTMLElement>], () => setOpen(false), open);
+  useOutsideClick(
+    [buttonRef as React.RefObject<HTMLElement>, panelRef as React.RefObject<HTMLElement>],
+    () => setOpen(false),
+    open
+  );
 
-  // Read current language on mount
   useEffect(() => {
     setLang(getCurrentLang());
   }, []);
 
-  // Handle language change
-  const handleLanguageChange = (newLang: Lang) => {
-    setLangCookie(newLang);
-    setLang(newLang);
-    
-    const success = translateWithGoogle(newLang);
-    if (!success && newLang !== "en") {
-      // On localhost, show warning but keep popover open
-      setShowLocalWarning(true);
-    } else {
+  const handleLanguageChange = (newLang: TranslateLang) => {
+    if (newLang === lang) {
       setOpen(false);
-      setShowLocalWarning(false);
+      return;
     }
+
+    setPreferredLangCookie(newLang);
+    setLang(newLang);
+    applyGoogleTranslate(newLang);
+    setOpen(false);
   };
 
   useEffect(() => {
@@ -165,7 +90,7 @@ export default function LanguagePopover({ className = "" }: { className?: string
   );
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative notranslate ${className}`}>
       <button
         ref={buttonRef}
         type="button"
@@ -174,7 +99,6 @@ export default function LanguagePopover({ className = "" }: { className?: string
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        {/* <IconGlobe className="w-3.5 h-3.5 flex-shrink-0" /> */}
         <span>Language</span>
       </button>
 
@@ -224,34 +148,14 @@ export default function LanguagePopover({ className = "" }: { className?: string
             })}
           </div>
 
-          {showLocalWarning ? (
-            <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-xs text-amber-800">
-                Translation is not available on localhost. It will work when deployed to production.
-              </p>
-            </div>
-          ) : (
-            <div className="mt-3 text-xs text-neutral-500">
-              {onLocalhost 
-                ? "Translation available in production only."
-                : "You will be redirected to view translated content."
-              }
-            </div>
-          )}
+          <div className="mt-3 text-xs text-neutral-500">
+            {onLocalhost
+              ? "Translation reloads this page in your browser."
+              : "Page content is translated in place; you stay on this site."}
+          </div>
         </div>
       )}
     </div>
-  );
-}
-
-function IconGlobe({ className = "" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 2a10 10 0 100 20 10 10 0 000-20z" />
-      <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M2 12h20" />
-      <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 2c3 3 3 17 0 20" />
-      <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 2c-3 3-3 17 0 20" />
-    </svg>
   );
 }
 

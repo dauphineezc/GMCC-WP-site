@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Accordion from "@/components/accordion";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import {
@@ -467,6 +468,12 @@ export function centerTabsForEce(): { slug: EceCenterSlug; label: string }[] {
   return ECE_CENTER_ORDER.map((slug) => ({ slug, label: CENTER_TAB_LABEL[slug] }));
 }
 
+/** Deep link to a center tab on /early-childhood (e.g. from /centers/coleman-family-center). */
+export function earlyChildhoodCenterHref(slug: string): string | null {
+  if (!ECE_CENTER_ORDER.includes(slug as EceCenterSlug)) return null;
+  return `/early-childhood?center=${encodeURIComponent(slug)}#programs-by-center`;
+}
+
 
 type EarlyChildhoodQueryData = {
   page?: (WpPageWithHeroFields & { earlyChildhoodPageFields?: Record<string, unknown> | null }) | null;
@@ -531,14 +538,16 @@ export default async function EarlyChildhoodPage() {
         ctas={hero.ctas}
       />
 
-      <EarlyChildhoodCentersClient
-        programsHeader={fields.programsHeader}
-        programsDescription={fields.programsDescription}
-        importantDocumentsHeader={fields.importantDocumentsHeader}
-        centers={centerTabsForEce()}
-        documentsByCenter={fields.documentsByCenter}
-        programsByCenter={fields.programsByCenter}
-      />
+      <Suspense fallback={null}>
+        <EarlyChildhoodCentersClient
+          programsHeader={fields.programsHeader}
+          programsDescription={fields.programsDescription}
+          importantDocumentsHeader={fields.importantDocumentsHeader}
+          centers={centerTabsForEce()}
+          documentsByCenter={fields.documentsByCenter}
+          programsByCenter={fields.programsByCenter}
+        />
+      </Suspense>
 
       {financialVisible ? (
         <section className="mx-auto max-w-4xl px-6 text-center pt-8 pb-8">

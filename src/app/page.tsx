@@ -133,6 +133,8 @@ type HomeData = {
           item4?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
           item5?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
           item6?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
+          item7?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
+          item8?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
         } | null;
       } | null;
 
@@ -438,6 +440,8 @@ query HomePage($uri: ID!) {
           item4 { date title body image { node { sourceUrl altText } } }
           item5 { date title body image { node { sourceUrl altText } } }
           item6 { date title body image { node { sourceUrl altText } } }
+          item7 { date title body image { node { sourceUrl altText } } }
+          item8 { date title body image { node { sourceUrl altText } } }
         }
       }
 

@@ -8,6 +8,7 @@ import { getFooterNav } from "@/lib/nav/getFooterNav";
 import { getUtilityNav } from "@/lib/nav/getUtilityMenu";
 import { NavItem } from "@/lib/nav/tree";
 import { bodyFont, headingFont, scriptFont, secondaryFont } from "./fonts";
+import GoogleTranslateInit from "@/components/GoogleTranslateInit";
 
 export const metadata: Metadata = {
   title: "Greater Midland",
@@ -34,6 +35,7 @@ export default async function RootLayout({
       className={`${headingFont.variable} ${secondaryFont.variable} ${bodyFont.variable} ${scriptFont.variable}`}
     >
       <body className="min-h-screen bg-white text-neutral-900 flex flex-col">
+        <GoogleTranslateInit />
         {/* Do not set overflow-x here: paired with default overflow-y it becomes a scrollport and breaks position:sticky in <main>. */}
         <div className="flex flex-col flex-1">
           <Navbar items={nav} utilityItems={utilityItems} />

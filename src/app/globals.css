@@ -105,3 +105,50 @@ html.reduce-motion * {
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
 }
+
+/* ─── Google Translate widget suppression ─────────────────────────────────── *
+ * GT injects a toolbar iframe that pushes body down by ~40px and adds its own *
+ * tooltip / balloon overlays. We hide all of it and pin body.top back to 0.   *
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/* Toolbar iframe and all GT overlays */
+.goog-te-banner-frame,
+.goog-te-gadget,
+.goog-te-gadget-icon,
+.goog-te-gadget-simple,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.goog-tooltip,
+.goog-tooltip:hover,
+.goog-text-highlight {
+  display: none !important;
+}
+
+/* GT wraps translated text in <font> — remove the yellow highlight it adds */
+font[style*="background-color: rgb(255, 255, 102)"],
+font[style*="background-color:#ffff66"],
+.goog-te-highlight {
+  background-color: transparent !important;
+}
+
+/* GT sets body { top: <toolbar-height>px } when the toolbar is visible.
+   Since we hide the toolbar, lock it back to 0 on all breakpoints. */
+body {
+  top: 0 !important;
+  position: static !important; /* GT sometimes sets position:relative */
+}
+
+/* Skip-translate wrapper injected into <body> */
+.skiptranslate,
+iframe.skiptranslate {
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  visibility: hidden !important;
+  border: none !important;
+}
+
+/* The hidden GT element container we mount */
+#google_translate_element {
+  display: none !important;
+}

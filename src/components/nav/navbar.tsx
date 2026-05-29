@@ -12,27 +12,6 @@ import MobileMenu from "@/components/nav/mobileMenu";
 import AccessibilityPopover from "@/components/nav/accessibilityPopover";
 import LanguagePopover from "@/components/nav/languagePopover";
 
-function resolveTranslatedHref(href: string): string {
-  if (typeof window === "undefined") return href;
-  if (!window.location.hostname.includes("translate.goog")) return href;
-  if (!href || href.startsWith("#")) return href;
-
-  const currentUrl = new URL(window.location.href);
-  const targetLang = currentUrl.searchParams.get("_x_tr_tl") || "es";
-
-  let absoluteTarget = href;
-  if (!/^https?:\/\//i.test(href)) {
-    const originalHost = window.location.hostname
-      .replace(".translate.goog", "")
-      .replace(/-/g, ".");
-    absoluteTarget = `https://${originalHost}${href.startsWith("/") ? href : `/${href}`}`;
-  }
-
-  return `https://translate.google.com/translate?sl=en&tl=${targetLang}&u=${encodeURIComponent(
-    absoluteTarget
-  )}`;
-}
-
 export default function Navbar({
   items,
   utilityItems = [],
@@ -85,13 +64,7 @@ export default function Navbar({
     e.preventDefault();
     const q = searchQuery.trim();
     if (q) {
-      const searchHref = `/search?q=${encodeURIComponent(q)}`;
-      const resolvedSearchHref = resolveTranslatedHref(searchHref);
-      if (resolvedSearchHref === searchHref) {
-        router.push(searchHref);
-      } else {
-        window.location.href = resolvedSearchHref;
-      }
+      router.push(`/search?q=${encodeURIComponent(q)}`);
       setSearchOpen(false);
       setSearchQuery("");
     }
@@ -227,7 +200,7 @@ export default function Navbar({
                       return (
                         <li key={u.id}>
                           <Link
-                            href={resolveTranslatedHref(u.href)}
+                            href={u.href}
                             className={[
                               "px-3 py-1 text-xs font-medium rounded transition-colors font-secondary",
                               isDonate
@@ -255,7 +228,7 @@ export default function Navbar({
         >
           {/* Logo - left aligned */}
           <Link
-            href={resolveTranslatedHref(homeItem?.href ?? "/")}
+            href={homeItem?.href ?? "/"}
             className="shrink-0 mr-auto"
             title="Home Page"
             aria-label="Home Page"
@@ -280,7 +253,7 @@ export default function Navbar({
                 return (
                   <li key={top.id} onMouseEnter={() => (hasDropdown ? setOpenId(top.id) : setOpenId(null))}>
                     <Link
-                      href={resolveTranslatedHref(top.href)}
+                      href={top.href}
                       onClick={() => setOpenId(null)}
                       className={`rounded px-5 py-2 font-medium transition-all duration-300 inline-block ${
                         isScrolled ? "text-base" : "text-[22px]"
