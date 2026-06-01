@@ -76,13 +76,27 @@ export function escapeLegacyTranslateProxy(): void {
   window.location.replace(target);
 }
 
+/**
+ * Returns the active language based on our own preference cookie.
+ *
+ * We intentionally read `gmcc_preferred_lang` (which we write) rather than
+ * the `googtrans` cookie (which Google Translate also writes). GT's widget
+ * sets `googtrans` with domain attributes we can't fully control, so clearing
+ * it is unreliable. By owning the source of truth ourselves, switching back to
+ * English is guaranteed: we just set our cookie to "en" and never initialize
+ * the GT script, which means GT never runs and the page stays in English —
+ * regardless of what `googtrans` says.
+ */
 export function getGoogleTranslateLang(): TranslateLang {
   if (typeof document === "undefined") return "en";
 
   const cookies = document.cookie.split(";");
   for (const entry of cookies) {
     const [name, value] = entry.trim().split("=");
-    if (name === "googtrans" && value?.includes("/es")) return "es";
+    if (name === LANG_COOKIE) {
+      if (value === "es") return "es";
+      if (value === "en") return "en";
+    }
   }
   return "en";
 }
