@@ -9,7 +9,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "wpe-build": "node -v && npm -v && echo WPE_BUILD_STARTED && next build",
-    "start": "next start",
+    "start": "next start -p 8080",
     "lint": "eslint",
 
     "preinstall": "node -e \"console.log('=== PREINSTALL ===', process.cwd())\"",
