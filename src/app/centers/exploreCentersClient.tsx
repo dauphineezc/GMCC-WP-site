@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import PhoneLink from "@/components/phoneLink";
 
 type CenterNode = any;
 type ProgramNode = any;
@@ -92,6 +93,41 @@ function CenterCardMedia({
     </div>
   );
 }
+
+
+function LocationIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-gmcc-teal" aria-hidden="true">
+      <path
+        d="M12 22c-4.2-4.9-7-8.3-7-12a7 7 0 1 1 14 0c0 3.7-2.8 7.1-7 12Zm0-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-gmcc-teal" aria-hidden="true">
+      <path
+        d="M7.6 2h3.1c.6 0 1.1.4 1.2 1l.7 3.2c.1.5-.1 1-.5 1.3L10 9.5a14.4 14.4 0 0 0 4.5 4.5l2-2.1c.3-.4.8-.6 1.3-.5l3.2.7c.6.1 1 .6 1 1.2v3.1c0 .7-.6 1.3-1.3 1.3C11.6 18 6 12.4 6.3 3.3 6.3 2.6 6.9 2 7.6 2Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function EmailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-gmcc-teal" aria-hidden="true">
+      <path
+        d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 
 export default function ExploreCentersClient({ centers, programs }: Props) {
   // Build a lookup: centerSlug -> { programs[], programAreas[] }
@@ -393,10 +429,9 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
               const cf = c.centersFields ?? {};
 
               return (
-                <a
+                <div
                   key={c.slug}
-                  href={`/centers/${c.slug}`}
-                  className="group card card-hover overflow-hidden"
+                  className="group card card-hover relative overflow-hidden"
                 >
                   <CenterCardMedia
                     slug={c.slug}
@@ -409,21 +444,44 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
                     <h3 className="font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-1">{c.title}</h3>
 
                     {cf.address && (
-                      <p className="small whitespace-pre-line">{cf.address}</p>
+                      <p className="flex items-start gap-2 small">
+                        <LocationIcon />
+                        <span className="whitespace-pre-line">{cf.address}</span>
+                      </p>
                     )}
 
                     {(cf.contactInfo?.contactPhone || cf.contactInfo?.contactEmail) && (
                       <div className="small stack-2">
                         {cf.contactInfo?.contactPhone && (
-                          <div>📞 {cf.contactInfo.contactPhone}</div>
+                          <p className="flex items-center gap-2">
+                            <PhoneIcon />
+                            <PhoneLink
+                              phone={cf.contactInfo.contactPhone}
+                              className="relative z-10 hover:text-gmcc-teal hover:underline"
+                            />
+                          </p>
                         )}
                         {cf.contactInfo?.contactEmail && (
-                          <div>✉️ {cf.contactInfo.contactEmail}</div>
+                          <p className="flex items-center gap-2">
+                            <EmailIcon />
+                            <a
+                              href={`mailto:${cf.contactInfo.contactEmail}`}
+                              className="relative z-10 hover:text-gmcc-teal hover:underline"
+                            >
+                              {cf.contactInfo.contactEmail}
+                            </a>
+                          </p>
                         )}
                       </div>
                     )}
                   </div>
-                </a>
+
+                  <a
+                    href={`/centers/${c.slug}`}
+                    aria-label={c.title ? `View ${c.title}` : "View center"}
+                    className="card-stretched-link"
+                  />
+                </div>
               );
             })}
           </div>

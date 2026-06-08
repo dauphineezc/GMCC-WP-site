@@ -32,6 +32,12 @@ const CENTER_DETAIL_PAGE_FIELDS_CORE = `
           cardText
           ctaLabel
         }
+        socialIcons {
+          instagram { node { sourceUrl altText }}
+          facebook { node { sourceUrl altText }}
+          youtube { node { sourceUrl altText }}
+          tiktok { node { sourceUrl altText }}
+        }
         curlingCenterPageFields {
           hoursReplacementStatement
         }
@@ -99,9 +105,64 @@ export type CenterPageCurlingFields = {
   membershipReplacementCta?: CenterPageMembershipReplacementCta | null;
 };
 
+export type CenterSocialIconNode = {
+  node?: { sourceUrl?: string | null; altText?: string | null } | null;
+};
+
+export type CenterPageSocialIcons = {
+  instagram?: CenterSocialIconNode | null;
+  facebook?: CenterSocialIconNode | null;
+  youtube?: CenterSocialIconNode | null;
+  tiktok?: CenterSocialIconNode | null;
+};
+
+export const CENTER_SOCIAL_PLATFORMS = ["instagram", "facebook", "youtube", "tiktok"] as const;
+export type CenterSocialPlatform = (typeof CENTER_SOCIAL_PLATFORMS)[number];
+
+export type ResolvedCenterSocialLink = {
+  platform: CenterSocialPlatform;
+  href: string;
+  iconUrl: string;
+  iconAlt: string;
+};
+
+const SOCIAL_PLATFORM_LABELS: Record<CenterSocialPlatform, string> = {
+  instagram: "Instagram",
+  facebook: "Facebook",
+  youtube: "YouTube",
+  tiktok: "TikTok",
+};
+
+/** Pair shared icon assets with per-center URLs; skips platforms missing either. */
+export function resolveCenterSocialLinks(
+  icons: CenterPageSocialIcons | null | undefined,
+  links: Partial<Record<CenterSocialPlatform, string | null | undefined>> | null | undefined,
+): ResolvedCenterSocialLink[] {
+  if (!icons || !links) return [];
+
+  const resolved: ResolvedCenterSocialLink[] = [];
+
+  for (const platform of CENTER_SOCIAL_PLATFORMS) {
+    const href = links[platform]?.trim();
+    const iconUrl = icons[platform]?.node?.sourceUrl?.trim();
+    if (!href || !iconUrl) continue;
+
+    const iconAlt = icons[platform]?.node?.altText?.trim();
+    resolved.push({
+      platform,
+      href,
+      iconUrl,
+      iconAlt: iconAlt || SOCIAL_PLATFORM_LABELS[platform],
+    });
+  }
+
+  return resolved;
+}
+
 export type CenterDetailPageFields = {
   testimonialHeader?: string | null;
   readyToJoinSection?: CenterPageReadyToJoinSection | null;
+  socialIcons?: CenterPageSocialIcons | null;
   curlingCenterPageFields?: CenterPageCurlingFields | null;
 };
 
@@ -146,6 +207,7 @@ function mergeCenterDetailParts(
       core?.testimonialHeader ?? curlingCtaCopy?.testimonialHeader ?? curlingCtaLink?.testimonialHeader,
     readyToJoinSection:
       core?.readyToJoinSection ?? curlingCtaCopy?.readyToJoinSection ?? curlingCtaLink?.readyToJoinSection,
+    socialIcons: core?.socialIcons ?? curlingCtaCopy?.socialIcons ?? curlingCtaLink?.socialIcons,
     curlingCenterPageFields: hasCurlingBlock
       ? {
           hoursReplacementStatement:

@@ -797,7 +797,7 @@ export default function ExploreProgramsClient({
                 </p>
               )}
 
-              <div className="relative z-10 mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
+              <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
                 {(() => {
                   const isGroupFitness = p.programAreas.some(a => a.slug === "group-fitness");
                   const isSpecialty = p.groupFitnessClassType === "specialty fitness" || p.groupFitnessClassType === "silversneakers";
@@ -807,7 +807,7 @@ export default function ExploreProgramsClient({
                       href={p.registrationLink!}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn btn-primary text-xs px-3 py-1.5"
+                      className="relative z-10 btn btn-primary text-xs px-3 py-1.5"
                     >
                       Quick Register
                     </a>
@@ -831,7 +831,7 @@ export default function ExploreProgramsClient({
               </div>
             </div>
 
-            {/* Stretched link covers the full card; action buttons above it via z-10 */}
+            {/* Stretched link covers the full card; Quick Register sits above it via z-10 */}
             <a
               href={`/programs/${p.slug}`}
               aria-label={p.title}

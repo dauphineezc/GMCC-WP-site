@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { getScrollerContentWidth } from "@/lib/scrollerContentWidth";
 
 export type ProgramCard = {
   href: string;
@@ -20,7 +21,7 @@ type ProgramsSectionProps = {
 // Layout constants
 const DESKTOP_COLS = 4;
 const COL_GAP_PX = 24; // gap-6
-const MOBILE_CARD_MAX_PX = 420;
+const EDGE_PAD_PX = 6; // scroller px-[6px]; scroll-padding only
 /** Subpixel / gap / floor(column width) can make the last snap a few px past maxScrollLeft; too small breaks the final desktop "page". */
 const SNAP_EPSILON_PX = { md: 32, sm: 12 } as const;
 
@@ -46,6 +47,7 @@ export default function ProgramsSection({
 
   const [isMd, setIsMd] = useState(false);
   const [desktopColW, setDesktopColW] = useState<number>(260);
+  const [mobileColW, setMobileColW] = useState<number>(0);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [atStart, setAtStart] = useState(true);
@@ -66,20 +68,24 @@ export default function ProgramsSection({
     return () => mq.removeEventListener?.("change", update);
   }, []);
 
-  // Compute desktop column width so 4 cards fit exactly (no peeking)
+  // Column widths from scroller viewport (avoids 100% + max-content circular sizing on mobile)
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
     const calc = () => {
       const md = window.matchMedia("(min-width: 768px)").matches;
-      if (!md) return;
+      const viewport = getScrollerContentWidth(scroller);
 
-      const viewport = scroller.clientWidth - EDGE_PAD_PX * 2;
-      const w = Math.floor(
-        (viewport - COL_GAP_PX * (DESKTOP_COLS - 1)) / DESKTOP_COLS
-      );
-      setDesktopColW(Math.max(220, w));
+      if (md) {
+        const w = Math.floor(
+          (viewport - COL_GAP_PX * (DESKTOP_COLS - 1)) / DESKTOP_COLS
+        );
+        setDesktopColW(Math.max(220, w));
+        return;
+      }
+
+      setMobileColW(Math.max(260, viewport));
     };
 
     calc();
@@ -201,7 +207,6 @@ export default function ProgramsSection({
 
   const goPrev = () => scrollToIndex(activeIndex - 1);
   const goNext = () => scrollToIndex(activeIndex + 1);
-  const EDGE_PAD_PX = 6; // prevents left/right edge clipping (shadow/border)
 
   // Keep active + edges in sync on scroll
   useEffect(() => {
@@ -215,9 +220,16 @@ export default function ProgramsSection({
     scroller.addEventListener("scroll", onScroll, { passive: true });
     syncEdgeAndActive();
 
-    return () => scroller.removeEventListener("scroll", onScroll);
+    const raf = requestAnimationFrame(() => syncEdgeAndActive());
+    const timeout = window.setTimeout(() => syncEdgeAndActive(), 60);
+
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+      window.clearTimeout(timeout);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length, isMd, desktopColW]);
+  }, [items.length, isMd, desktopColW, mobileColW]);
 
   // Mouse drag-to-scroll (history-style). We disable snap while dragging and
   // suppress click-through when the gesture was actually a drag.
@@ -293,7 +305,7 @@ export default function ProgramsSection({
     "inline-flex h-10 w-10 items-center justify-center rounded-full bg-gmcc-navy text-white border border-gmcc-navy body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gmcc-navy/80";
 
   return (
-    <section className="relative overflow-hidden pt-8 pb-8">
+    <section className="relative overflow-x-clip pt-8 pb-8">
       {/* Background logo pieces, clipped to section bounds
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <img
@@ -318,7 +330,7 @@ export default function ProgramsSection({
 
         <a
           href={'/programs'}
-          className="block text-right text-sm text-gmcc-navy font-semibold underline hover:translate-y-[-2px] hover:text-gmcc-teal"
+          className="block text-center mt-2 md:text-right md:mt-0 text-sm text-gmcc-navy font-semibold underline hover:translate-y-[-2px] hover:text-gmcc-teal"
         >
           {"View all programs"}
         </a>
@@ -370,7 +382,11 @@ export default function ProgramsSection({
                 className="grid gap-6"
                 style={{
                   gridAutoFlow: "column",
-                  gridAutoColumns: isMd ? `${desktopColW}px` : "100%",
+                  gridAutoColumns: isMd
+                    ? `${desktopColW}px`
+                    : mobileColW > 0
+                      ? `${mobileColW}px`
+                      : "min(100%, 420px)",
                   width: "max-content",
                   minWidth: "100%",
                 }}
@@ -381,16 +397,13 @@ export default function ProgramsSection({
                     ref={(el) => {
                       cellRefs.current[idx] = el;
                     }}
+                    className="min-w-0"
                     style={{
                       scrollSnapAlign: "start",
                       scrollSnapStop: "always",
                     }}
                   >
-                    {/* Mobile: center card within the 100% slide */}
-                    <div
-                      className="mx-auto w-full md:mx-0"
-                      style={{ maxWidth: isMd ? undefined : MOBILE_CARD_MAX_PX }}
-                    >
+                    <div className="min-w-0 w-full max-w-full">
                       <ProgramCardView program={p} />
                     </div>
                   </div>
@@ -428,7 +441,7 @@ export default function ProgramsSection({
 
 function ProgramCardView({ program }: { program: ProgramCard }) {
   return (
-    <div className="group card card-hover card-link overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+    <div className="group card card-hover card-link min-w-0 max-w-full overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
         {program.imageUrl ? (
           <img

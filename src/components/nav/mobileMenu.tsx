@@ -375,7 +375,7 @@ export default function MobileMenu({
                   {utilityItems
                     .filter((u) => {
                       const label = u.label.toLowerCase();
-                      return label !== "search" && label !== "accessibility" && label !== "language";
+                      return label !== "search" && label !== "accessibility options" && label !== "language";
                     })
                     .map((u) => (
                       <li key={u.id}>

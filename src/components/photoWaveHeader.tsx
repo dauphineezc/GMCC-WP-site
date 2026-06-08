@@ -43,12 +43,16 @@ type PhotoWaveHeaderProps = {
   ctas?: HeroCta[];
   /** Extra content below subheader, inside the hero (rare) */
   children?: ReactNode;
+  /** When set with both `ctas` and `children`, render `children` before the `ctas` links. */
+  childrenBeforeCtas?: boolean;
   /** Wave SVG fill (Tailwind `text-*` → currentColor). Default white for pages whose content sits on white. */
   waveFillClassName?: string;
   /** 2px bar under the wave to hide subpixel seams; match `waveFillClassName` when docking to same-colored block. */
   waveEdgeClassName?: string;
   /** Whether to flush the bottom of the header with the content below it */
   flushBottom?: boolean;
+  /** Whether to enforce a minimum height for the header */
+  minHeight?: boolean;
 };
 
 /**
@@ -61,13 +65,15 @@ export default function PhotoWaveHeader({
   imageUrl,
   ctas,
   children,
+  childrenBeforeCtas = false,
   flushBottom = false,
+  minHeight = false,
   waveFillClassName = "text-white",
   waveEdgeClassName = "bg-white",
 }: PhotoWaveHeaderProps) {
   return (
     <section
-      className={`relative overflow-hidden lg:mt-28 z-10 py-6 ${flushBottom ? "mb-0" : "mb-8"}`}
+      className={`relative overflow-hidden lg:mt-28 z-10 py-6 ${flushBottom ? "mb-0" : "mb-8"} ${minHeight ? "min-h-[70dvh]" : ""}`}
     >
       <div
         className="absolute inset-0"
@@ -109,11 +115,16 @@ export default function PhotoWaveHeader({
         </h1>
 
         {subheader ? (
-          <p className={`mt-6 ${ctas && ctas.length > 0 ? "mb-4" : "mb-8"} max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg`}>{subheader}</p>
+          <p
+            className={`mt-6 ${(ctas && ctas.length > 0) || children ? "mb-8" : "mb-12"} max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg`}
+          >
+            {subheader}
+          </p>
         ) : null}
 
         {(ctas && ctas.length > 0) || children ? (
-          <div className="mt-6 mb-6 flex flex-wrap items-center gap-3">
+          <div className="mt-6 mb-12 flex flex-wrap items-center gap-3">
+            {childrenBeforeCtas ? children : null}
             {ctas?.map((cta) => (
               <Link
                 key={cta.url}
@@ -123,7 +134,7 @@ export default function PhotoWaveHeader({
                 {cta.label}
               </Link>
             ))}
-            {children}
+            {!childrenBeforeCtas ? children : null}
           </div>
         ) : null}
       </div>

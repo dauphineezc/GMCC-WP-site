@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useOutsideClick } from "./useOutsideClick";
 
 type TextSize = "normal" | "large" | "xlarge";
@@ -42,28 +43,19 @@ export default function AccessibilityPopover({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Calculate fixed position when opening
   const updatePanelPosition = useCallback(() => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setPanelStyle({
-        position: "fixed",
-        top: rect.bottom + 8,
-        right: window.innerWidth - rect.right,
-      });
-    }
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const panelWidth = 320; // w-80
+    const centeredLeft = rect.left + rect.width / 2 - panelWidth / 2;
+    const left = Math.max(8, Math.min(centeredLeft, window.innerWidth - panelWidth - 8));
+    setPanelStyle({ position: "fixed", top: rect.bottom + 8, left });
   }, []);
 
   useEffect(() => {
-    if (open) {
-      updatePanelPosition();
-      window.addEventListener("scroll", updatePanelPosition, { passive: true });
-      window.addEventListener("resize", updatePanelPosition);
-      return () => {
-        window.removeEventListener("scroll", updatePanelPosition);
-        window.removeEventListener("resize", updatePanelPosition);
-      };
-    }
+    if (!open) return;
+    window.addEventListener("resize", updatePanelPosition);
+    return () => window.removeEventListener("resize", updatePanelPosition);
   }, [open, updatePanelPosition]);
 
   useOutsideClick([buttonRef as React.RefObject<HTMLElement>, panelRef as React.RefObject<HTMLElement>], () => setOpen(false), open);
@@ -122,13 +114,16 @@ export default function AccessibilityPopover({
       <button
         ref={buttonRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-colors font-secondary text-neutral-700 hover:text-gmcc-navy hover:bg-neutral-200/60 leading-none"
+        onClick={() => {
+          if (!open) updatePanelPosition();
+          setOpen((v) => !v);
+        }}
+        className="flex items-center justify-center p-1.5 rounded transition-colors hover:bg-neutral-200/60"
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-label="Accessibility Options"
       >
-        {/* <IconA11y className="w-3.5 h-3.5 flex-shrink-0" /> */}
-        <span className="hidden xl:inline">Accessibility</span>
+        <Image src="/accessibilityOptionsIcon.png" alt="" width={22} height={22} className="w-5 h-5 object-contain" />
       </button>
 
       {open && (

@@ -4,7 +4,7 @@ import {
     resolvePhotoWaveHeaderProps,
     type WpPageWithHeroFields,
   } from "@/lib/pageHeroFields";
-import { resolveWpMediaUrl, wpFetch } from "@/lib/wp";
+import { acfFileHref, resolveWpMediaUrl, wpFetch } from "@/lib/wp";
 import PhoneLink from "@/components/phoneLink";
 import CorporateAmenityTiles from "@/components/corporateAmenityTiles";
 import CorporateMembershipBenefits from "@/components/corporateMembershipBenefits";
@@ -66,15 +66,6 @@ const HOURS_BY_DAY: Array<{ key: keyof CenterHours; label: string }> = [
   { key: "saturdayHours", label: "Saturday" },
   { key: "sundayHours", label: "Sunday" },
 ];
-
-function mediaHref(m: MediaFieldInput): string {
-  if (m && typeof m === "object" && "node" in m && m.node) {
-    return mediaHref(m.node);
-  }
-  const flat = m as MediaRef | undefined;
-  const u = flat?.sourceUrl ?? flat?.mediaItemUrl;
-  return typeof u === "string" ? u.trim() : "";
-}
 
 const renderScheduleFile = (url?: string, label?: string) => {
     if (!url) {
@@ -337,9 +328,9 @@ export default async function CortevaFitnessCenterPage() {
     const address = cortevaCenterFields?.address?.trim() || null;
     const phone = cortevaCenterFields?.phoneNumber?.trim() || null;
     const email = cortevaCenterFields?.emailAddress?.trim() || null;
-    const membershipTiersPdfHref = mediaHref(membershipTiersPdf);
-    const cortevaApplicationHref = mediaHref(cortevaMembershipApplication);
-    const threeRiversApplicationHref = mediaHref(threeRiversMembershipApplication);
+    const membershipTiersPdfHref = acfFileHref(membershipTiersPdf);
+    const cortevaApplicationHref = acfFileHref(cortevaMembershipApplication);
+    const threeRiversApplicationHref = acfFileHref(threeRiversMembershipApplication);
     const membershipSteps =
       membershipProcess == null
         ? []

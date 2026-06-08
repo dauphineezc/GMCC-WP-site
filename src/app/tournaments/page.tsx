@@ -528,13 +528,13 @@ export default async function TournamentsPage() {
                         )}
 
                         {/* Footer actions */}
-                        <div className="relative z-10 mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
+                        <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
                         {!tournament.isPast && tournament.registrationLink ? (
                             <a
                             href={tournament.registrationLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn btn-primary text-xs px-3 py-1.5"
+                            className="relative z-10 btn btn-primary text-xs px-3 py-1.5"
                             >
                             Register
                             </a>
@@ -548,7 +548,7 @@ export default async function TournamentsPage() {
                         </div>
                     </div>
 
-                    {/* Stretched link covers the full card; action buttons above it via z-10 */}
+                    {/* Stretched link covers the full card; Register sits above it via z-10 */}
                     <a
                         href={eventHref}
                         aria-label={tournament.title}

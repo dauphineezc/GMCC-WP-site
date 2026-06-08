@@ -1,5 +1,5 @@
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps, WpPageWithHeroFields } from "@/lib/pageHeroFields";
-import { wpFetch } from "@/lib/wp";
+import { acfFileHref, wpFetch } from "@/lib/wp";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
@@ -295,15 +295,6 @@ type MediaRef = {
 type MediaFieldInput = { node?: MediaRef } | MediaRef | undefined;
 
 /** ACF file fields often return `{ node: MediaItem }` from WPGraphQL; unwrap when present. */
-function mediaHref(m: MediaFieldInput): string {
-  if (m && typeof m === "object" && "node" in m && m.node) {
-    return mediaHref(m.node);
-  }
-  const flat = m as MediaRef | undefined;
-  const u = flat?.sourceUrl ?? flat?.mediaItemUrl;
-  return typeof u === "string" ? u.trim() : "";
-}
-
 function openInNewTab(url: string): boolean {
   return /^https?:\/\//i.test(url) || /^mailto:/i.test(url) || /^tel:/i.test(url);
 }
@@ -548,15 +539,15 @@ export default async function RacesPage() {
   const fields = initializeRacesPageFields(data?.page?.racesPageFields);
 
   // Build the pdf registration form as a secondary hero CTA if available
-  const pdfHeroSecondary = mediaHref(fields.pdfRegistrationForm)
-    ? { label: "Download Registration Form", url: mediaHref(fields.pdfRegistrationForm), variant: "secondary" as const }
+  const pdfHeroSecondary = acfFileHref(fields.pdfRegistrationForm)
+    ? { label: "Download Registration Form", url: acfFileHref(fields.pdfRegistrationForm), variant: "secondary" as const }
     : null;
   const heroCtas = [
     ...(hero.ctas ?? []),
     // Only add the pdf if no secondary CTA already came from the hero fields
     ...(!hero.secondaryCta && pdfHeroSecondary ? [pdfHeroSecondary] : []),
   ];
-  const schedulePdfHref = mediaHref(fields.scheduleCard.schedulePdf) || mediaHref(fields.pdfRegistrationForm);
+  const schedulePdfHref = acfFileHref(fields.scheduleCard.schedulePdf) || acfFileHref(fields.pdfRegistrationForm);
   const connectHref = fields.connectCard.link;
   const tripleChallengeHref = fields.tripleChallenge.cta;
   const tripleChallengeCtaLabel = fields.tripleChallenge.ctaLabel || "Take the Triple Challenge";
@@ -819,14 +810,14 @@ export default async function RacesPage() {
                     )}
 
                     {/* Footer actions */}
-                    <div className="relative z-10 mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
+                    <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
                       {race.isPast ? (
                         resultsUrl ? (
                           <a
                             href={resultsUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn btn-secondary text-xs px-3 py-1.5"
+                            className="relative z-10 btn btn-secondary text-xs px-3 py-1.5"
                           >
                             View results
                           </a>
@@ -839,7 +830,7 @@ export default async function RacesPage() {
                             href={race.registrationLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn btn-primary text-xs px-3 py-1.5"
+                            className="relative z-10 btn btn-primary text-xs px-3 py-1.5"
                           >
                             Register
                           </a>
@@ -854,7 +845,7 @@ export default async function RacesPage() {
                     </div>
                   </div>
 
-                  {/* Stretched link covers the full card; action buttons above it via z-10 */}
+                  {/* Stretched link covers the full card; footer action buttons sit above it via z-10 */}
                   <a
                     href={eventHref}
                     aria-label={race.title}
@@ -932,7 +923,7 @@ export default async function RacesPage() {
                         <a href={fields?.sponsorCard?.cta} target="_blank" rel="noopener noreferrer" className="btn btn-tertiary">
                           {fields?.sponsorCard?.ctaLabel}
                         </a>
-                        {fields.sponsorCard.sponsorshipPdf ? <a href={mediaHref(fields.sponsorCard.sponsorshipPdf)} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">{fields.sponsorCard.sponsorshipPdfLabel}</a> : null}
+                        {fields.sponsorCard.sponsorshipPdf ? <a href={acfFileHref(fields.sponsorCard.sponsorshipPdf)} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">{fields.sponsorCard.sponsorshipPdfLabel}</a> : null}
                         </div>
                       </div>
                   </div>

@@ -168,7 +168,7 @@ const EARLY_CHILDHOOD_PAGE_QUERY = /* GraphQL */ `
   }
 `;
 
-import { resolveWpMediaUrl } from "@/lib/wp";
+import { acfCtaHref, acfFileHref, resolveWpMediaUrl } from "@/lib/wp";
 import type { GalleryPhoto } from "@/components/photoGallery";
 
 export type EceCenterSlug = "community-center" | "coleman-family-center" | "north-family-center";
@@ -198,36 +198,8 @@ type MediaRef = {
   title?: string | null;
 } | null;
 
-function mediaHref(m: MediaFieldInput): string {
-  if (m && typeof m === "object" && "node" in m && m.node) {
-    return mediaHref(m.node);
-  }
-  const flat = m as MediaRef | undefined;
-  const u = flat?.sourceUrl ?? flat?.mediaItemUrl;
-  const raw = typeof u === "string" ? u.trim() : "";
-  return resolveWpMediaUrl(raw) ?? raw;
-}
-
 function asString(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
-}
-
-function acfCtaHref(cta: unknown): string {
-  if (cta == null) return "";
-  if (typeof cta === "string") return cta.trim();
-  if (typeof cta !== "object") return "";
-  const o = cta as Record<string, unknown>;
-  const node = o.node;
-  if (node && typeof node === "object") {
-    const n = node as Record<string, unknown>;
-    const nu = n.sourceUrl ?? n.mediaItemUrl ?? n.uri ?? n.url;
-    if (typeof nu === "string" && nu.trim()) return nu.trim();
-  }
-  const flatMedia = o.sourceUrl ?? o.mediaItemUrl;
-  if (typeof flatMedia === "string" && flatMedia.trim()) return flatMedia.trim();
-  const linkUrl = o.url ?? o.href ?? o.uri;
-  if (typeof linkUrl === "string" && linkUrl.trim()) return linkUrl.trim();
-  return "";
 }
 
 function acfCtaTarget(cta: unknown): string | null | undefined {
@@ -293,7 +265,7 @@ function collectDocumentsFromCenterBlock(block: unknown): { label: string; href:
   const out: { label: string; href: string }[] = [];
   for (let i = 1; i <= 6; i++) {
     const field = o[`file${i}`] as MediaFieldInput;
-    const href = mediaHref(field);
+    const href = acfFileHref(field);
     if (!href) continue;
     const node =
       field && typeof field === "object" && "node" in field

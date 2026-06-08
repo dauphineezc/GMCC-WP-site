@@ -12,7 +12,8 @@ import { wpFetch } from "@/lib/wp";
 import { PAGE_HERO_FIELDS_GRAPHQL } from "@/lib/pageHeroFields";
 import { resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
-import { normalizeTestimonials, TestimonialSection } from "@/components/testimonials";
+import { normalizeTestimonials } from "@/components/testimonials";
+import FeaturedTestimonialsCarousel from "@/components/featuredTestimonialsCarousel";
 
 type WPProgram = {
   slug?: string | null;
@@ -132,6 +133,7 @@ const PRIVATE_LESSONS_PAGE_QUERY = /* GraphQL */ `
         contactSubheader
         contactEmail
 
+        testimonialsHeader
         testimonials {
           nodes {
             ... on Testimonial {
@@ -273,7 +275,10 @@ export default async function PrivateLessonsPage() {
     const trainersHeader = data?.page?.privateLessonsDirectoryPageFields?.trainersHeader ?? "Meet our Trainers!";
     const trainersSubheader = data?.page?.privateLessonsDirectoryPageFields?.trainersSubheader ?? "Learn from experienced coaches who personalize each session to your goals.";
 
-    const testimonials = data?.page?.privateLessonsDirectoryPageFields?.testimonials;
+    const testimonialsHeader = data?.page?.privateLessonsDirectoryPageFields?.testimonialsHeader ?? "Testimonials";
+    const featuredTestimonials = normalizeTestimonials(
+      data?.page?.privateLessonsDirectoryPageFields?.testimonials?.nodes ?? [],
+    );
     const contactHeader = data?.page?.privateLessonsDirectoryPageFields?.contactHeader ?? "Ready to Get Started?";
     const contactSubheader = data?.page?.privateLessonsDirectoryPageFields?.contactSubheader ?? "Fill out the contact form below.";
     const contactEmail = data?.page?.privateLessonsDirectoryPageFields?.contactEmail ?? "info@greatermidland.com";
@@ -427,6 +432,19 @@ export default async function PrivateLessonsPage() {
               />
             </div>
           </div>
+
+        <div className="mx-auto mt-16 max-w-3xl px-0">
+            <h2 className="h2 mb-8 text-center text-white">FAQs</h2>
+            <Accordion
+              variant="onDark"
+              items={faqsList.map((item: { question: string; answer: string }) => ({
+                id: item.question,
+                title: item.question,
+                content: <p className="body text-white/80">{item.answer}</p>,
+              }))}
+              allowMultiple
+            />
+          </div>
         </div>
 
         <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
@@ -464,27 +482,24 @@ export default async function PrivateLessonsPage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-16 max-w-6xl px-6">
-        <h2 className="h2 text-gmcc-navy">FAQs</h2>
-        <div className="mt-4">
-          <Accordion
-            items={ faqsList.map((item: { question: string; answer: string }) => ({
-              id: item.question,
-              title: item.question,
-              content: <p>{item.answer}</p>,
-            })) }
-          />
-        </div>
-      </section>
+      {featuredTestimonials.length > 0 ? (
+        <section className="px-4 pt-16">
+          <div className="mx-auto max-w-6xl">
+            <div className="relative text-center">
+              <h2 className="h2 text-gmcc-navy">{testimonialsHeader}</h2>
+            </div>
 
-      <section className="mx-auto mt-16 max-w-6xl px-6">
-        <h2 className="h2 text-gmcc-navy"> Testimonials</h2>
-        <TestimonialSection testimonials={normalizeTestimonials(testimonials?.nodes ?? [])} />
-      </section>
+            <figure className="mx-auto max-w-3xl">
+              <div className="text-5xl mb-0 leading-none text-gmcc-teal/50">“</div>
+              <FeaturedTestimonialsCarousel testimonials={featuredTestimonials} />
+            </figure>
+          </div>
+        </section>
+      ) : null}
 
       {/* CONTACT SECTION */}
       {(contactHeader || contactSubheader) ? (
-        <section className="mx-auto mt-16 mb-16 max-w-6xl px-6 text-center">
+        <section className="mx-auto pt-12 mt-16 mb-16 max-w-6xl px-6 text-center">
         {contactHeader ? <h2 className="h2 text-gmcc-navy">{contactHeader}</h2> : null}
         {contactSubheader ? (
           <p className="body mt-4 whitespace-pre-line text-neutral-700">{contactSubheader}</p>

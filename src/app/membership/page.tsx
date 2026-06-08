@@ -1,6 +1,6 @@
 // app/membership/page.tsx
 import { Suspense } from "react";
-import { wpFetch } from "@/lib/wp";
+import { acfFileHref, wpFetch } from "@/lib/wp";
 import ExploreMembershipsClient, {
   Membership,
   Audience,
@@ -305,16 +305,6 @@ type MediaRef = {
 /** Shape returned by WPGraphQL for ACF file fields (nested `node`) or a flat media object. */
 type MediaFieldInput = { node?: MediaRef } | MediaRef | undefined;
 
-/** ACF file fields often return `{ node: MediaItem }` from WPGraphQL; unwrap when present. */
-function mediaHref(m: MediaFieldInput): string {
-  if (m && typeof m === "object" && "node" in m && m.node) {
-    return mediaHref(m.node);
-  }
-  const flat = m as MediaRef | undefined;
-  const u = flat?.sourceUrl ?? flat?.mediaItemUrl;
-  return typeof u === "string" ? u.trim() : "";
-}
-
 function mapPageFields(wp: any): MembershipPageFields {
   const f = wp?.membershipPageFields ?? {};
 
@@ -350,7 +340,7 @@ function mapPageFields(wp: any): MembershipPageFields {
       ? {
           estimatorLabel: (f.financialAssistanceCtas.estimatorLabel as string) ?? "",
           applicationCtaLabel: (f.financialAssistanceCtas.applicationCtaLabel as string) ?? "",
-          applicationPdf: mediaHref((f.financialAssistanceCtas.applicationPdf as MediaRef)) ?? null,
+          applicationPdf: acfFileHref(f.financialAssistanceCtas.applicationPdf as MediaFieldInput),
         }
       : null,
     contactHeader: (f.contactHeader as string) ?? null,

@@ -1,7 +1,7 @@
 import Accordion from "@/components/accordion";
 import Link from "next/link";
 import { Suspense } from "react";
-import { wpFetch } from "@/lib/wp";
+import { acfCtaHref, acfFileHref, wpFetch } from "@/lib/wp";
 import { CAMPS_PROGRAMS_FIRST, PROGRAMS_LIST_QUERY, PROGRAMS_PAGE_SIZE } from "@/lib/programsListQuery";
 import CampsProgramsExplorerClient from "./campsProgramsExplorerClient";
 import { PAGE_HERO_FIELDS_GRAPHQL, type WpPageWithHeroFields } from "@/lib/pageHeroFields";
@@ -216,38 +216,6 @@ type MediaRef = {
 /** Shape returned by WPGraphQL for ACF file fields (nested `node`) or a flat media object. */
 type MediaFieldInput = { node?: MediaRef } | MediaRef | undefined;
 
-/** ACF file fields often return `{ node: MediaItem }` from WPGraphQL; unwrap when present. */
-function mediaHref(m: MediaFieldInput): string {
-  if (m && typeof m === "object" && "node" in m && m.node) {
-    return mediaHref(m.node);
-  }
-  const flat = m as MediaRef | undefined;
-  const u = flat?.sourceUrl ?? flat?.mediaItemUrl;
-  return typeof u === "string" ? u.trim() : "";
-}
-
-/**
- * URL from ACF fields that may be a file (MediaItem), link object, or raw string
- * (matches hero CTA handling in `pageHeroFields` plus nested `node` media).
- */
-function acfCtaHref(cta: unknown): string {
-  if (cta == null) return "";
-  if (typeof cta === "string") return cta.trim();
-  if (typeof cta !== "object") return "";
-  const o = cta as Record<string, unknown>;
-  const node = o.node;
-  if (node && typeof node === "object") {
-    const n = node as Record<string, unknown>;
-    const nu = n.sourceUrl ?? n.mediaItemUrl ?? n.uri ?? n.url;
-    if (typeof nu === "string" && nu.trim()) return nu.trim();
-  }
-  const flatMedia = o.sourceUrl ?? o.mediaItemUrl;
-  if (typeof flatMedia === "string" && flatMedia.trim()) return flatMedia.trim();
-  const linkUrl = o.url ?? o.href ?? o.uri;
-  if (typeof linkUrl === "string" && linkUrl.trim()) return linkUrl.trim();
-  return "";
-}
-
 function acfCtaTitle(cta: unknown): string {
   if (cta && typeof cta === "object") {
     const o = cta as Record<string, unknown>;
@@ -306,7 +274,7 @@ function collectFormsAndLinks(formsAndLinks: Record<string, unknown> | null | un
   for (let i = 1; i <= 6; i++) {
     const form = formsAndLinks[`form${i}`] as { node?: MediaRef } | undefined;
     const node = form?.node;
-    const url = mediaHref(node);
+    const url = acfFileHref(node);
     const label = (node?.title ?? `Form ${i}`).trim();
     if (url) out.push({ label, url, kind: "file" });
   }
@@ -572,17 +540,26 @@ function CampsResultsSkeleton() {
   );
 }
 
+function isFinancialAssistanceBenefit(item: TextCard): boolean {
+  return /financial\s*assistance/i.test(item.header ?? "");
+}
+
 function TextCardBlock({
   item,
   className = "",
   variant = "default",
+  ctaHrefOverride,
 }: {
   item: TextCard;
   className?: string;
   variant?: "default" | "navy";
+  /** When set, used instead of resolving `item.cta` (e.g. ACF file field for a benefit PDF). */
+  ctaHrefOverride?: string;
 }) {
-  const href = acfCtaHref(item.cta);
-  const openNewTab = openLinkInNewTab(href, acfCtaTarget(item.cta));
+  const href = (ctaHrefOverride?.trim() || acfCtaHref(item.cta)).trim();
+  const openNewTab = ctaHrefOverride
+    ? true
+    : openLinkInNewTab(href, acfCtaTarget(item.cta));
   const ctaLinkText =
     item.ctaLabel?.trim() || acfCtaTitle(item.cta) || (href ? "Open link" : "");
 
@@ -702,10 +679,15 @@ export default async function CampsPage() {
 
   return (
     <main className="overflow-x-clip">
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} children={<div className="mt-6 mb-6 flex flex-wrap items-center gap-3">
-        <a href={mediaHref(f?.campsBrochure as MediaFieldInput)} target="_blank" rel="noopener noreferrer" className="btn btn-tertiary">{hero.primaryCta?.label ?? "Camps brochure"}</a>
-        <a href={mediaHref(f?.financialAssistanceApplication as MediaFieldInput)} className="btn btn-secondary">{hero.secondaryCta?.label ?? "Financial assistance application"}</a>
-      </div>} />
+      <PhotoWaveHeader
+        title={hero.title}
+        subheader={hero.subheader}
+        imageUrl={hero.imageUrl}
+        ctas={hero.ctas}
+        childrenBeforeCtas
+      >
+        <a href={acfFileHref(f?.campsBrochure as MediaFieldInput)} target="_blank" rel="noopener noreferrer" className="btn btn-tertiary">{hero.primaryCta?.label ?? "Camps brochure"}</a>
+      </PhotoWaveHeader>
 
       {hasBrowseByCenterSection ? (
         <section className="mx-auto max-w-6xl px-6 pt-16">
@@ -904,7 +886,15 @@ export default async function CampsPage() {
                     className={`grid min-w-0 gap-6 md:grid-cols-3 ${whyHeader || whyBody ? "mt-10" : ""}`}
                   >
                     {benefits.map((item, index) => (
-                      <TextCardBlock key={`benefit-${index}`} item={item} />
+                      <TextCardBlock
+                        key={`benefit-${index}`}
+                        item={item}
+                        ctaHrefOverride={
+                          isFinancialAssistanceBenefit(item)
+                            ? acfFileHref(f.financialAssistanceApplication)
+                            : undefined
+                        }
+                      />
                     ))}
                   </div>
                 ) : null}

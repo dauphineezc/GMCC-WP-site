@@ -22,6 +22,54 @@ export function resolveWpMediaUrl(url: string | null | undefined): string | unde
   return trimmed;
 }
 
+export type WpMediaRef = {
+  sourceUrl?: string | null;
+  mediaItemUrl?: string | null;
+  title?: string | null;
+} | null;
+
+/** ACF file fields from WPGraphQL: nested `node` or a flat media object. */
+export type WpMediaFieldInput = { node?: WpMediaRef } | WpMediaRef | undefined;
+
+/**
+ * URL for ACF File fields. WPGraphQL `sourceUrl` on PDFs is often a single-page
+ * preview image; `mediaItemUrl` is the actual uploaded file.
+ */
+export function acfFileHref(m: WpMediaFieldInput): string {
+  if (m && typeof m === "object" && "node" in m && m.node) {
+    return acfFileHref(m.node);
+  }
+  const flat = m as WpMediaRef | undefined;
+  const u = flat?.mediaItemUrl ?? flat?.sourceUrl;
+  const raw = typeof u === "string" ? u.trim() : "";
+  return resolveWpMediaUrl(raw) ?? raw;
+}
+
+/** Resolve href from an ACF CTA field (link URL, file media, or raw string). */
+export function acfCtaHref(cta: unknown): string {
+  if (cta == null) return "";
+  if (typeof cta === "string") return cta.trim();
+  if (typeof cta !== "object") return "";
+  const o = cta as Record<string, unknown>;
+  const node = o.node;
+  if (node && typeof node === "object") {
+    const n = node as Record<string, unknown>;
+    const nu = n.mediaItemUrl ?? n.sourceUrl ?? n.uri ?? n.url;
+    if (typeof nu === "string" && nu.trim()) {
+      const raw = nu.trim();
+      return resolveWpMediaUrl(raw) ?? raw;
+    }
+  }
+  const flatMedia = o.mediaItemUrl ?? o.sourceUrl;
+  if (typeof flatMedia === "string" && flatMedia.trim()) {
+    const raw = flatMedia.trim();
+    return resolveWpMediaUrl(raw) ?? raw;
+  }
+  const linkUrl = o.url ?? o.href ?? o.uri;
+  if (typeof linkUrl === "string" && linkUrl.trim()) return linkUrl.trim();
+  return "";
+}
+
 const MAX_CONCURRENT_REQUESTS = Number(process.env.WP_GRAPHQL_MAX_CONCURRENCY ?? 4);
 const MAX_ATTEMPTS = Number(process.env.WP_GRAPHQL_MAX_ATTEMPTS ?? 5);
 const inFlightRequests = new Map<string, Promise<unknown>>();

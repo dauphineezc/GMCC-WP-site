@@ -108,7 +108,7 @@ export default function Navbar({
                       const isSearch = label === "search";
                       const isDonate = label === "donate";
 
-                      if (label === "accessibility") {
+                      if (label === "accessibility options") {
                         return (
                           <li key={u.id} className="relative">
                             <AccessibilityPopover />

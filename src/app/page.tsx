@@ -177,16 +177,6 @@ type HomeData = {
         }> | null;
       } | null;
 
-      newsHighlights?: {
-        nodes?: Array<{
-          id: string;
-          title?: string | null;
-          uri?: string | null;
-          date?: string | null;
-          newsFields?: { body?: string | null } | null;
-          featuredImage?: GqlImage | null;
-        }> | null;
-      } | null;
       newsletterSubscriptionHeader?: string | null;
       newsletterSubscriptionSubtext?: string | null;
     } | null;
@@ -273,6 +263,64 @@ function normalizeTimelineItems(timelineItems: any) {
 function safeFirst<T>(arr: T[] | null | undefined) {
   return Array.isArray(arr) && arr.length ? arr[0] : null;
 }
+
+type RecentNewsData = {
+  allNews?: {
+    nodes?: Array<{
+      id: string;
+      title?: string | null;
+      uri?: string | null;
+      slug?: string | null;
+      featuredImage?: GqlImage | null;
+      newsFields?: { body?: string | null; publishDate?: string | null } | null;
+    }> | null;
+  } | null;
+};
+
+function toNewsDateValue(d?: string | null) {
+  if (!d) return 0;
+  if (/^\d{8}$/.test(d)) {
+    const yyyy = Number(d.slice(0, 4));
+    const mm = Number(d.slice(4, 6));
+    const dd = Number(d.slice(6, 8));
+    return new Date(yyyy, mm - 1, dd).valueOf();
+  }
+  const t = Date.parse(d);
+  return Number.isFinite(t) ? t : 0;
+}
+
+function getRecentNewsItems(data: RecentNewsData | null | undefined) {
+  const raw = data?.allNews?.nodes ?? [];
+  return [...raw]
+    .sort(
+      (a, b) =>
+        toNewsDateValue(b.newsFields?.publishDate) - toNewsDateValue(a.newsFields?.publishDate)
+    )
+    .slice(0, 3)
+    .map((n) => ({
+      id: n.id,
+      title: n.title ?? "",
+      uri: n.uri ?? (n.slug ? `/news/${n.slug}` : ""),
+      date: n.newsFields?.publishDate ?? "",
+      newsFields: n.newsFields ?? {},
+      featuredImage: n.featuredImage ?? null,
+    }));
+}
+
+const RECENT_NEWS_QUERY = /* GraphQL */ `
+  query RecentNews($first: Int!) {
+    allNews(first: $first) {
+      nodes {
+        id
+        title
+        uri
+        slug
+        featuredImage { node { sourceUrl altText } }
+        newsFields { body publishDate }
+      }
+    }
+  }
+`;
 
 // ---- Query (your exact query text) ----
 const HOME_QUERY = /* GraphQL */ `
@@ -493,19 +541,6 @@ query HomePage($uri: ID!) {
         }
       }
 
-      newsHighlights {
-        nodes {
-          ... on News {
-            id
-            title
-            uri
-            date
-            featuredImage { node { sourceUrl altText } }
-            newsFields { body }
-          }
-        }
-      }
-
       newsletterSubscriptionHeader
       newsletterSubscriptionSubtext
     }
@@ -514,7 +549,10 @@ query HomePage($uri: ID!) {
 `;
 
 export default async function HomePage() {
-  const data = await wpFetch<HomeData>(HOME_QUERY, { uri: "/" });
+  const [data, recentNewsData] = await Promise.all([
+    wpFetch<HomeData>(HOME_QUERY, { uri: "/" }),
+    wpFetch<RecentNewsData>(RECENT_NEWS_QUERY, { first: 50 }),
+  ]);
   const f = data?.page?.homepageFields;
 
   const hero = f?.hero;
@@ -524,7 +562,7 @@ export default async function HomePage() {
   const centers = f?.centers?.nodes ?? [];
   const corporateWellnessCentersCaption = f?.corporateWellnessCentersCaption;
   const corporateWellnessCentersImage = f?.corporateWellnessCentersImage;
-  const news = f?.newsHighlights?.nodes ?? [];
+  const news = getRecentNewsItems(recentNewsData);
 
   const impactStats = normalizeImpactStats(f?.impact?.impactStats);
   const timeline = normalizeTimelineItems(f?.historyTimeline?.timelineItems);
@@ -599,14 +637,7 @@ export default async function HomePage() {
         corporateWellnessCentersImage={corporateWellnessCentersImage}
       />
 
-      <NewsSection heading="Latest News" items={news.map((n) => ({
-        id: n.id,
-        title: n.title ?? "",
-        uri: n.uri ?? "",
-        date: n.date ?? "",
-        newsFields: n.newsFields ?? {},
-        featuredImage: n.featuredImage ?? null,
-      }))} cta={{ title: "View all news", url: "/news" }}
+      <NewsSection heading="Latest News" items={news} cta={{ title: "View all news", url: "/news" }}
        newsletterSubscriptionHeader={f?.newsletterSubscriptionHeader ?? null}
        newsletterSubscriptionSubtext={f?.newsletterSubscriptionSubtext ?? null}
        />

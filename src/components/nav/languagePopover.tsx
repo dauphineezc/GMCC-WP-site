@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useOutsideClick } from "./useOutsideClick";
 import {
   applyGoogleTranslate,
@@ -28,26 +29,21 @@ export default function LanguagePopover({ className = "" }: { className?: string
   const panelRef = useRef<HTMLDivElement>(null);
 
   const updatePanelPosition = useCallback(() => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setPanelStyle({
-        position: "fixed",
-        top: rect.bottom + 8,
-        right: window.innerWidth - rect.right,
-      });
-    }
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const panelWidth = 256; // w-64
+    const centeredLeft = rect.left + rect.width / 2 - panelWidth / 2;
+    const left = Math.max(8, Math.min(centeredLeft, window.innerWidth - panelWidth - 8));
+    setPanelStyle({ position: "fixed", top: rect.bottom + 8, left });
   }, []);
 
   useEffect(() => {
-    if (open) {
-      updatePanelPosition();
-      window.addEventListener("scroll", updatePanelPosition, { passive: true });
-      window.addEventListener("resize", updatePanelPosition);
-      return () => {
-        window.removeEventListener("scroll", updatePanelPosition);
-        window.removeEventListener("resize", updatePanelPosition);
-      };
-    }
+    if (!open) return;
+    // Resize-only: initial position is calculated in the click handler so the
+    // panel's very first render already has position:fixed applied (React 18
+    // batches the setPanelStyle + setOpen calls into one render).
+    window.addEventListener("resize", updatePanelPosition);
+    return () => window.removeEventListener("resize", updatePanelPosition);
   }, [open, updatePanelPosition]);
 
   useOutsideClick(
@@ -94,12 +90,16 @@ export default function LanguagePopover({ className = "" }: { className?: string
       <button
         ref={buttonRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-colors font-secondary text-neutral-700 hover:text-gmcc-navy hover:bg-neutral-200/60 leading-none"
+        onClick={() => {
+          if (!open) updatePanelPosition();
+          setOpen((v) => !v);
+        }}
+        className="flex items-center justify-center p-1.5 rounded transition-colors hover:bg-neutral-200/60"
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-label="Language"
       >
-        <span>Language</span>
+        <Image src="/languageIcon.png" alt="" width={22} height={22} className="w-5 h-5 object-contain" />
       </button>
 
       {open && (

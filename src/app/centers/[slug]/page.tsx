@@ -1,7 +1,9 @@
 // src/app/centers/[slug]/page.tsx
 import AmenitiesGrid from "@/components/amenitiesGrid";
 import CenterCampaignModule from "@/components/centerCampaignModule";
+import FeaturedTestimonialsCarousel from "@/components/featuredTestimonialsCarousel";
 import PhoneLink from "@/components/phoneLink";
+import { normalizeTestimonials } from "@/components/testimonials";
 import { extractAmenitySlugs, toAmenityDisplayForCenter } from "@/lib/amenities";
 import { fetchAmenitiesWithImages } from "@/lib/amenities";
 import { wpFetch } from "@/lib/wp";
@@ -12,6 +14,7 @@ import {
   coerceWpRichText,
   fetchCenterDetailPageFields,
   isCurlingCenterSlug,
+  resolveCenterSocialLinks,
   resolveFeaturedProgramEventHref,
 } from "@/lib/centerDetailPageFields";
 
@@ -53,7 +56,19 @@ const CENTER_BY_SLUG_QUERY = `
         longDescription
         centerType
         address
-        socialLinks
+        socialLinks {
+          instagram
+          facebook
+          youtube
+          tiktok
+        }
+        brochureFields {
+          brochureHeader
+          programBrochure { node { mediaItemUrl } }
+          programBrochureLabel
+          campBrochure { node { mediaItemUrl } }
+          campBrochureLabel
+        }
         amenities {
           nodes {
             name
@@ -202,7 +217,12 @@ const CENTER_BY_SLUG_QUERY = `
           contactEmail
         }
 
-        featuredTestimonial {
+        newsletterSignUp {
+          header
+          subheader
+        }
+
+        featuredTestimonials {
           nodes {
             ... on Testimonial {
               id
@@ -301,6 +321,41 @@ function renderHoursReplacementContent(htmlOrText: string) {
   return <p className="body text-neutral-200 whitespace-pre-line">{c}</p>;
 }
 
+
+function LocationIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0 text-gmcc-teal" aria-hidden="true">
+      <path
+        d="M12 22c-4.2-4.9-7-8.3-7-12a7 7 0 1 1 14 0c0 3.7-2.8 7.1-7 12Zm0-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0 text-gmcc-teal" aria-hidden="true">
+      <path
+        d="M7.6 2h3.1c.6 0 1.1.4 1.2 1l.7 3.2c.1.5-.1 1-.5 1.3L10 9.5a14.4 14.4 0 0 0 4.5 4.5l2-2.1c.3-.4.8-.6 1.3-.5l3.2.7c.6.1 1 .6 1 1.2v3.1c0 .7-.6 1.3-1.3 1.3C11.6 18 6 12.4 6.3 3.3 6.3 2.6 6.9 2 7.6 2Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function EmailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-gmcc-teal" aria-hidden="true">
+      <path
+        d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+
 type CenterPageProps = {
   params: Promise<{ slug: string }>;
 };
@@ -344,7 +399,26 @@ export default async function CenterPage(props: CenterPageProps) {
   ].filter((c): c is HeroCta => c != null);
 
   const centerFields = center.centersFields ?? {};
-  const featuredTestimonial = centerFields.featuredTestimonial?.nodes?.[0] ?? null;
+  const brochureFields = centerFields.brochureFields ?? {};
+  const programBrochureUrl =
+    brochureFields.programBrochure?.node?.mediaItemUrl?.trim() || null;
+  const programBrochureLabel =
+    brochureFields.programBrochureLabel?.trim() || "Program brochure";
+  const campBrochureUrl =
+    brochureFields.campBrochure?.node?.mediaItemUrl?.trim() || null;
+  const campBrochureLabel =
+    brochureFields.campBrochureLabel?.trim() || "Camp brochure";
+  const hasBrochures = Boolean(programBrochureUrl || campBrochureUrl);
+  const brochureHeader = brochureFields.brochureHeader?.trim() || null;
+  const centerSocialLinks = resolveCenterSocialLinks(
+    centerDetailFields?.socialIcons,
+    centerFields.socialLinks,
+  );
+  const featuredTestimonials = normalizeTestimonials(centerFields.featuredTestimonials?.nodes ?? []);
+  const newsletterSignUp = centerFields.newsletterSignUp ?? {};
+  const newsletterHeader = (newsletterSignUp.header ?? "").trim() || null;
+  const newsletterSubheader = (newsletterSignUp.subheader ?? "").trim() || null;
+  const showNewsletterSignUp = Boolean(newsletterHeader || newsletterSubheader);
   const campaign = center.centerCampaignModuleFields ?? {};
 
   const firstNonEmptyString = (...values: unknown[]) => {
@@ -463,7 +537,7 @@ export default async function CenterPage(props: CenterPageProps) {
   }
 
   return (
-    <main>
+    <main className="overflow-x-clip">
       <PhotoWaveHeader
         title={heroHeader}
         subheader={heroSubheader}
@@ -472,25 +546,61 @@ export default async function CenterPage(props: CenterPageProps) {
         flushBottom={true}
         waveFillClassName="text-gmcc-navy"
         waveEdgeClassName="bg-gmcc-navy"
+        minHeight={true}
       />
 
-      <section
-        className="relative w-screen -ml-[calc(50vw-50%)] overflow-x-clip scroll-mt-24"
-      >
-        <div className="bg-gmcc-navy py-10">
+      <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip scroll-mt-24">
+        <section className="bg-gmcc-navy py-10">
           <div className="mx-auto max-w-6xl px-6">
-            <div className="grid gap-16 md:grid-cols-3 items-start">
-                <div className="stack-3 col-span-1 mb-8">
+            <div className="grid gap-8 md:grid-cols-3 md:gap-16 items-start">
+                <div className="stack-3">
                     <h2 className="h2 mb-4 text-white">Location</h2>
-                    <p className="body text-neutral-200">{centerFields.address}</p>
-                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(centerFields.address)}`} target="_blank" rel="noopener noreferrer" className="mt-2 btn btn-tertiary">View on Google Maps</a>
+                    <p className="flex items-start gap-2 mt-2 body text-neutral-200 hover:text-white hover:underline">
+                      <LocationIcon />
+                      <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(centerFields.address)}`} target="_blank" rel="noopener noreferrer">{centerFields.address}</a>
+                    </p>
                 </div>
-                <div className="stack-3 col-span-1 mb-8">
+                <div className="stack-3">
                     <h2 className="h2 mb-4 text-white">Contact</h2>
-                    <PhoneLink className="body text-neutral-200 hover:text-white hover:underline" phone={centerFields.contactInfo.contactPhone} /> <br />
-                    <a href={`mailto:${centerFields.contactInfo.contactEmail}`} className="body text-neutral-200 hover:text-white hover:underline mb-8">{centerFields.contactInfo.contactEmail}</a>
+                    <p className="flex items-center gap-2 body text-neutral-200 hover:text-white hover:underline">
+                      <PhoneIcon />
+                      <PhoneLink phone={centerFields.contactInfo.contactPhone} />
+                    </p>
+                    <p className="flex items-center gap-2 body text-neutral-200 hover:text-white hover:underline">
+                      {centerFields.contactInfo.contactEmail ? (
+                        <>
+                          <EmailIcon />
+                          <a href={`mailto:${centerFields.contactInfo.contactEmail}`}>{centerFields.contactInfo.contactEmail}</a>
+                        </>
+                      ) : null}
+                    </p>
+                    {centerSocialLinks.length > 0 ? (
+                      <div className="flex flex-wrap items-center gap-3 pt-2">
+                        {centerSocialLinks.map((social) => (
+                          <a
+                            key={social.platform}
+                            href={social.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={social.iconAlt}
+                            className="inline-flex rounded-md opacity-90 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gmcc-teal focus-visible:ring-offset-2 focus-visible:ring-offset-gmcc-navy"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={social.iconUrl}
+                              alt=""
+                              width={32}
+                              height={32}
+                              className="h-6 w-6 object-contain"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    ) : null}
                 </div>
-                <div className="stack-3 col-span-1 mb-14 md:mb-0">
+                <div className={`stack-3 md:mb-0${hasBrochures ? " md:row-span-2" : ""}`}>
                     <h2 className="h2 mb-4 text-white">Hours</h2>
                     {showCurlingHoursReplacement ? (
                       renderHoursReplacementContent(hoursReplacement)
@@ -545,47 +655,75 @@ export default async function CenterPage(props: CenterPageProps) {
                     </div>
                     )}
                 </div>
+                {hasBrochures ? (
+                  <div className="stack-3 md:col-span-2">
+                    {brochureHeader ? (
+                      <h2 className="h2 mb-4 text-white">{brochureHeader}</h2>
+                    ) : null}
+                    <div className="flex flex-wrap gap-3">
+                      {programBrochureUrl ? (
+                        <a
+                          href={programBrochureUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn text-neutral-200 border border-neutral-200 hover:text-gmcc-teal hover:border-gmcc-teal w-fit"
+                        >
+                          {programBrochureLabel}
+                        </a>
+                      ) : null}
+                      {campBrochureUrl ? (
+                        <a
+                          href={campBrochureUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn text-neutral-200 border border-neutral-200 hover:text-gmcc-teal hover:border-gmcc-teal w-fit"
+                        >
+                          {campBrochureLabel}
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Outside overflow-x-clip so width isn't clipped (same pattern as site footer: w-full under full-width main) */}
-      <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
-        <svg
-          viewBox="0 0 390 120"
-          className="-ml-px block h-14 w-[calc(100%+2px)] text-gmcc-navy md:hidden"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="
+        <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
+          <svg
+            viewBox="0 0 390 120"
+            className="-ml-px block h-14 w-[calc(100%+2px)] text-gmcc-navy md:hidden"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="
                 M0,98
                 C78,62 135,54 195,74
                 C255,96 322,88 390,60
                 L390,0 L0,0 Z
               "
-            fill="currentColor"
-          />
-        </svg>
+              fill="currentColor"
+            />
+          </svg>
 
-        <svg
-          viewBox="0 0 1440 120"
-          className="-ml-px hidden h-16 w-[calc(100%+2px)] text-gmcc-navy md:block"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="
+          <svg
+            viewBox="0 0 1440 120"
+            className="-ml-px hidden h-16 w-[calc(100%+2px)] text-gmcc-navy md:block"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="
                 M0,110
                 C300,-50  500,120  800,100
                 S1000,0 1440,0
                 L1440,0 L0,0 Z
               "
-            fill="currentColor"
-          />
-        </svg>
+              fill="currentColor"
+            />
+          </svg>
+        </div>
       </div>
 
-      <section className="mx-auto max-w-6xl px-4 py-8 section-y stack-4">
+      <section className="mx-auto max-w-6xl px-4 pt-16 stack-4">
         <h2 className="h2 mb-4">What you'll find here</h2>
         <p className="body mb-8">{centerFields.longDescription}</p>
         {/* Amenities Grid */}
@@ -596,47 +734,22 @@ export default async function CenterPage(props: CenterPageProps) {
         <CenterCampaignModule module={campaignModule} />
       </section>
 
-      <section className="px-4 pt-4 pb-12">
-      <div className="mx-auto max-w-6xl">
-        <div className="relative text-center">
-          <h2 className="h2 text-gmcc-navy">{testimonialHeader}</h2>
-        </div>
+      {featuredTestimonials.length > 0 ? (
+        <section className="px-4 pt-12">
+          <div className="mx-auto max-w-6xl">
+            <div className="relative text-center">
+              <h2 className="h2 text-gmcc-navy">{testimonialHeader}</h2>
+            </div>
 
-        <div>
-          <figure className="mx-auto max-w-3xl">
-            <div className="text-5xl mb-0 leading-none text-gmcc-teal/50">“</div>
+            <figure className="mx-auto max-w-3xl">
+              <div className="text-5xl mb-0 leading-none text-gmcc-teal/50">“</div>
+              <FeaturedTestimonialsCarousel testimonials={featuredTestimonials} />
+            </figure>
+          </div>
+        </section>
+      ) : null}
 
-            <blockquote className="mt-0 text-lg leading-relaxed text-neutral-700 text-center">
-              {featuredTestimonial?.testimonialFields?.quote ?? ""}
-            </blockquote>
-
-            {(featuredTestimonial?.testimonialFields?.personName || featuredTestimonial?.testimonialFields?.personContext || featuredTestimonial?.testimonialFields?.photo?.node?.sourceUrl) ? (
-              <figcaption className="mt-6 flex items-center justify-center gap-3 text-left">
-                {featuredTestimonial?.testimonialFields?.photo?.node?.sourceUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={featuredTestimonial.testimonialFields.photo.node.sourceUrl}
-                    alt={featuredTestimonial?.testimonialFields?.photo?.node?.altText ?? ""}
-                    className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : null}
-
-                <div className="small text-center">
-                  {featuredTestimonial?.testimonialFields?.personName ? (
-                    <div className="font-semibold text-neutral-900">{featuredTestimonial.testimonialFields.personName}</div>
-                  ) : null}
-                  {featuredTestimonial?.testimonialFields?.personContext ? <div>{featuredTestimonial.testimonialFields.personContext}</div> : null}
-                </div>
-              </figcaption>
-            ) : null}
-          </figure>
-        </div>
-      </div>
-    </section>
-
-      <section className="mx-auto max-w-6xl px-4 pt-4 pb-12 section-y stack-4">
+      <section className="mx-auto max-w-6xl px-4 pt-16 stack-4">
         <h2 className="h2 mb-2">{joinSectionHeader}</h2>
         {joinSectionSubheader ? (
           <p className="body mb-4">{joinSectionSubheader}</p>
@@ -656,6 +769,36 @@ export default async function CenterPage(props: CenterPageProps) {
           </p>
         </div>
       </section>
+
+      {showNewsletterSignUp ? (
+        <section className="mx-auto max-w-2xl mt-16 mb-8 py-8 px-4 text-center card bg-gmcc-navy">
+            <div className="col-span-1">
+              {newsletterHeader ? <h3 className="h3 mb-2 text-white">{newsletterHeader}</h3> : null}
+              {newsletterSubheader ? <p className="text-sm mb-4 mx-8 text-neutral-200">{newsletterSubheader}</p> : null}
+            </div>
+            <div className="col-span-1 flex justify-center">
+              <form
+                aria-label="Newsletter signup (placeholder)"
+              >
+                <div className="flex-1 sm:max-w-md min-w-sm">
+                  <input
+                    id={`center-newsletter-email-${slug}`}
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="Enter your email address"
+                    className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
+                  />
+                </div>
+                <div className="mt-4 flex justify-center">
+                  <button type="button" className="btn btn-secondary shrink-0">
+                    Subscribe
+                  </button>
+                </div>
+              </form>
+            </div>
+        </section>
+      ) : null}
     </main>
   );
 }

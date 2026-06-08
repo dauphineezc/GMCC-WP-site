@@ -47,7 +47,7 @@ export type DirectoryHeaderData = {
 };
 
 function fileUrl(file: Maybe<ACFFile>) {
-  return file?.sourceUrl ?? file?.mediaItemUrl ?? undefined;
+  return file?.mediaItemUrl ?? file?.sourceUrl ?? undefined;
 }
 
 function normalizeAttachments(

@@ -39,7 +39,8 @@ function normalizeWpUrlToPath(url: string) {
     "Specialty/Art Camps": "/camps?" + buildQuery({ campType: "specialty-art" }),
     "Sport/Aquatics Camps": "/camps?" + buildQuery({ campType: "sport-aquatics" }),
     "Childcare": "/programs?" + buildQuery({ programArea: "Childcare" }),
-    "Youth Sports Leagues": "/programs?" + buildQuery({ programArea: "Middle School Sports" }),
+    "Youth Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Middle School Sports" }),
+    "Dolphins Swim Team": "/programs/dolphins-swim-team",
   };
 
   // Event filter rules (label-based for navbar items)

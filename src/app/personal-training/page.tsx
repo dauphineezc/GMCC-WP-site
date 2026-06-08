@@ -6,10 +6,13 @@ import type {
   DirectoryHeaderData,
   DirectoryTrainer,
 } from "@/components/programs/directoryHeaderShared";
+import { PROGRAMS_ALL_AT_ONCE } from "@/lib/programsListQuery";
 import { wpFetch } from "@/lib/wp";
 import { PAGE_HERO_FIELDS_GRAPHQL } from "@/lib/pageHeroFields";
 import { resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
+import FeaturedTestimonialsCarousel from "@/components/featuredTestimonialsCarousel";
+import { normalizeTestimonials } from "@/components/testimonials";
 
 type WPProgram = {
   slug?: string | null;
@@ -26,6 +29,7 @@ type WPProgram = {
     center?: {
       nodes?: Array<{ slug?: string | null; title?: string | null } | null> | null;
     } | null;
+    offeringType?: string | string[] | null;
     programArea?: {
       nodes?: Array<{ slug?: string | null; name?: string | null } | null> | null;
     } | null;
@@ -167,6 +171,20 @@ const PERSONAL_TRAINING_PAGE_QUERY = /* GraphQL */ `
           }
         }
 
+        testimonialsHeader
+        testimonials {
+          nodes {
+            ... on Testimonial {
+              id
+              testimonialFields {
+                quote
+                personName
+                personContext
+              }
+            }
+          }
+        }
+
         inquiryFormHeader
         inquiryFormSubheader
       }
@@ -193,6 +211,7 @@ const PERSONAL_TRAINING_PAGE_QUERY = /* GraphQL */ `
               }
             }
           }
+          offeringType
           programArea {
             nodes {
               slug
@@ -260,7 +279,7 @@ function normalizedAttachmentList(
   ];
   return items
     .map((item) => {
-      const url = item?.file?.sourceUrl ?? item?.file?.mediaItemUrl ?? "";
+      const url = item?.file?.mediaItemUrl ?? item?.file?.sourceUrl ?? "";
       const label = (item?.label ?? item?.file?.title ?? "").trim();
       if (!url || !label) return null;
       return { label, url };
@@ -268,19 +287,39 @@ function normalizedAttachmentList(
     .filter((item): item is { label: string; url: string } => !!item);
 }
 
+function normalizeOfferingTypes(offeringType: unknown): string[] {
+  if (Array.isArray(offeringType)) {
+    return offeringType.map((value) => String(value).trim().toLowerCase());
+  }
+  if (offeringType) {
+    return [String(offeringType).trim().toLowerCase()];
+  }
+  return [];
+}
+
+function isLessonsTrainingOffering(offeringType: unknown): boolean {
+  return normalizeOfferingTypes(offeringType).some(
+    (value) => value === "lessons/training" || value === "lesson/training",
+  );
+}
+
 function isPersonalTrainingProgram(program: WPProgram): boolean {
+  if (!isLessonsTrainingOffering(program.programFields?.offeringType)) {
+    return false;
+  }
+
   const areaNodes = program.programFields?.programArea?.nodes ?? [];
   return areaNodes.some((area) => {
     const slug = (area?.slug ?? "").toLowerCase();
     const name = (area?.name ?? "").toLowerCase();
-    return slug.includes("personal-training") || name.includes("personal training");
+    return slug === "personal-training" || name === "personal training";
   });
 }
 
 export default async function PersonalTrainingPage() {
   const data = await wpFetch<any>(PERSONAL_TRAINING_PAGE_QUERY, {
     uri: "/personal-training",
-    first: 60,
+    first: PROGRAMS_ALL_AT_ONCE,
   });
 
   const hero = resolvePhotoWaveHeaderProps(data?.page, "Personal Training");
@@ -322,6 +361,11 @@ export default async function PersonalTrainingPage() {
     }))
     .filter((item: { question: string; answer: string }) => item.question || item.answer);
 
+    const testimonialsHeader = data?.page?.personalTrainingDirectoryPageFields?.testimonialsHeader ?? "Testimonials";
+    const featuredTestimonials = normalizeTestimonials(
+      data?.page?.personalTrainingDirectoryPageFields?.testimonials?.nodes ?? [],
+    );
+
   const trainingOptionsOrder = [
     "individual training sessions",
     "buddy training sessions",
@@ -329,9 +373,7 @@ export default async function PersonalTrainingPage() {
   ];
 
   const trainingOptions = (programs: WPProgram[]): WPProgram[] => {
-    return programs
-      .filter((program: WPProgram) => program.programFields?.programArea?.nodes?.some((area: { slug?: string | null; name?: string | null } | null) => area?.slug === "personal-training" || area?.name === "Personal Training"))
-      .sort((a: WPProgram, b: WPProgram) => {
+    return programs.sort((a: WPProgram, b: WPProgram) => {
         const aIndex = trainingOptionsOrder.indexOf(String(a?.title ?? "").trim().toLowerCase());
         const bIndex = trainingOptionsOrder.indexOf(String(b?.title ?? "").trim().toLowerCase());
         const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
@@ -377,7 +419,7 @@ export default async function PersonalTrainingPage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {trainingOptions(personalTrainingPrograms).slice(0, 6).map((program: WPProgram) => {
+          {trainingOptions(personalTrainingPrograms).map((program: WPProgram) => {
             const centers =
               program.programFields?.center?.nodes
                 ?.map((center: { slug?: string | null; title?: string | null } | null) => ({
@@ -474,6 +516,19 @@ export default async function PersonalTrainingPage() {
               />
             </div>
           </div>
+
+          <div className="mx-auto mt-16 max-w-3xl px-0">
+            <h2 className="h2 mb-8 text-center text-white">FAQs</h2>
+            <Accordion
+              variant="onDark"
+              items={faqsList.map((item: { question: string; answer: string }) => ({
+                id: item.question,
+                title: item.question,
+                content: <p className="body text-white/80">{item.answer}</p>,
+              }))}
+              allowMultiple
+            />
+          </div>
         </div>
 
         <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
@@ -511,20 +566,22 @@ export default async function PersonalTrainingPage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-16 max-w-6xl px-6">
-        <h2 className="h2 text-gmcc-navy">FAQs</h2>
-        <div className="mt-4">
-          <Accordion
-            items={ faqsList.map((item: { question: string; answer: string }) => ({
-              id: item.question,
-              title: item.question,
-              content: <p>{item.answer}</p>,
-            })) }
-          />
-        </div>
-      </section>
+      {featuredTestimonials.length > 0 ? (
+        <section className="px-4 pt-16">
+          <div className="mx-auto max-w-6xl">
+            <div className="relative text-center">
+              <h2 className="h2 text-gmcc-navy">{testimonialsHeader}</h2>
+            </div>
 
-      <section className="relative mb-16 mt-16 overflow-hidden py-16">
+            <figure className="mx-auto max-w-3xl">
+              <div className="text-5xl mb-0 leading-none text-gmcc-teal/50">“</div>
+              <FeaturedTestimonialsCarousel testimonials={featuredTestimonials} />
+            </figure>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="relative mb-16 mt-16 overflow-hidden py-12">
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-20">
           <img
             src="/GreaterLogoBG.png"

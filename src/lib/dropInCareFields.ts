@@ -1,4 +1,4 @@
-import { resolveWpMediaUrl } from "@/lib/wp";
+import { acfCtaHref, resolveWpMediaUrl } from "@/lib/wp";
 
 /** GraphQL selection set for drop-in care on `earlyChildhoodPageFields`. */
 export const DROP_IN_CARE_FIELDS_GRAPHQL = `
@@ -54,24 +54,6 @@ function mediaHref(m: MediaFieldInput): string {
   const u = flat?.sourceUrl ?? flat?.mediaItemUrl;
   const raw = typeof u === "string" ? u.trim() : "";
   return resolveWpMediaUrl(raw) ?? raw;
-}
-
-function acfCtaHref(cta: unknown): string {
-  if (cta == null) return "";
-  if (typeof cta === "string") return cta.trim();
-  if (typeof cta !== "object") return "";
-  const o = cta as Record<string, unknown>;
-  const node = o.node;
-  if (node && typeof node === "object") {
-    const n = node as Record<string, unknown>;
-    const nu = n.sourceUrl ?? n.mediaItemUrl ?? n.uri ?? n.url;
-    if (typeof nu === "string" && nu.trim()) return nu.trim();
-  }
-  const flatMedia = o.sourceUrl ?? o.mediaItemUrl;
-  if (typeof flatMedia === "string" && flatMedia.trim()) return flatMedia.trim();
-  const linkUrl = o.url ?? o.href ?? o.uri;
-  if (typeof linkUrl === "string" && linkUrl.trim()) return linkUrl.trim();
-  return "";
 }
 
 export function dropInTextCardHasContent(card: DropInTextCard): boolean {

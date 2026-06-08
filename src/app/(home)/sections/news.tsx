@@ -25,7 +25,13 @@ function stripHtml(html?: string | null) {
 
 function safeDateValue(date?: string | null) {
   if (!date) return 0;
-  const t = new Date(date).getTime();
+  if (/^\d{8}$/.test(date)) {
+    const yyyy = Number(date.slice(0, 4));
+    const mm = Number(date.slice(4, 6));
+    const dd = Number(date.slice(6, 8));
+    return new Date(yyyy, mm - 1, dd).valueOf();
+  }
+  const t = Date.parse(date);
   return Number.isFinite(t) ? t : 0;
 }
 
@@ -37,7 +43,7 @@ export default function NewsSection({
   newsletterSubscriptionSubtext,
 }: {
   heading: string;
-  items: NewsItem[];
+  items?: NewsItem[];
   cta?: Linkish | null;
   newsletterSubscriptionHeader?: string | null;
   newsletterSubscriptionSubtext?: string | null;
@@ -69,7 +75,7 @@ export default function NewsSection({
         {cta?.url ? (
           <a
             href={cta.url}
-            className="block text-right text-sm text-gmcc-navy font-semibold underline hover:translate-y-[-2px] hover:text-gmcc-teal"
+            className="block text-center mt-2 md:text-right md:mt-0 text-sm text-gmcc-navy font-semibold underline hover:translate-y-[-2px] hover:text-gmcc-teal"
           >
             {cta.title || "View all"}
           </a>

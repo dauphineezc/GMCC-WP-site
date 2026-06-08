@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getScrollerContentWidth } from "@/lib/scrollerContentWidth";
 
 type HistoryItem = {
   date: string;
@@ -19,7 +20,7 @@ type HistorySectionProps = {
 const SIDE_PADDING_PX = 0; // extra left/right padding applied inside the grid (we use gutter on the scroller instead)
 const MOBILE_CARD_MIN_PX = 320;
 const MOBILE_CARD_MAX_PX = 420;
-const MOBILE_CARD_VW = 0.82; // matches [grid-auto-columns:minmax(320px,82vw)]
+const MOBILE_CARD_VW = 0.82;
 
 export default function HistorySection({ heading, items }: HistorySectionProps) {
   /**
@@ -55,6 +56,7 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
    */
   const [isMd, setIsMd] = useState(false);
   const [mobileGutter, setMobileGutter] = useState(0);
+  const [mobileColW, setMobileColW] = useState(0);
 
   /**
    * Timeline line width (must match the scrollable grid width)
@@ -98,14 +100,20 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
       const md = window.matchMedia("(min-width: 768px)").matches;
       if (md) {
         setMobileGutter(0);
+        setMobileColW(0);
         return;
       }
 
-      const w = scroller.clientWidth;
+      const w = getScrollerContentWidth(scroller);
       const cardW = Math.min(
-        Math.max(MOBILE_CARD_MIN_PX, Math.floor(w * MOBILE_CARD_VW)),
-        MOBILE_CARD_MAX_PX
+        MOBILE_CARD_MAX_PX,
+        w,
+        Math.max(
+          Math.min(MOBILE_CARD_MIN_PX, w),
+          Math.floor(w * MOBILE_CARD_VW)
+        )
       );
+      setMobileColW(cardW);
       setMobileGutter(Math.max(0, Math.floor((w - cardW) / 2)));
     };
 
@@ -244,7 +252,7 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
     onScroll(); // initialize
     return () => scroller.removeEventListener("scroll", onScroll);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cleanItems.length, isMd, mobileGutter]);
+  }, [cleanItems.length, isMd, mobileGutter, mobileColW]);
 
   /**
    * Mouse drag-to-scroll (desktop only behavior; safe on mobile).
@@ -294,12 +302,12 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
       scroller.removeEventListener("mouseleave", endDrag);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMd, mobileGutter]);
+  }, [isMd, mobileGutter, mobileColW]);
 
   if (!cleanItems.length) return null;
 
   return (
-    <section className="relative overflow-hidden bg-gmcc-navy px-4 py-14 scroll-mt-24">
+    <section className="relative overflow-x-clip bg-gmcc-navy px-4 py-14 scroll-mt-24">
       <div className="relative z-10 mx-auto max-w-6xl">
         {/* Header */}
         <div className="text-center">
@@ -344,13 +352,15 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
         >
           <div
             ref={gridRef}
-            className="
-              relative inline-grid gap-8
-              [grid-auto-flow:column]
-              [grid-auto-columns:minmax(320px,82vw)]
-              md:[grid-auto-columns:calc((100%-64px)/3)]
-            "
-            style={{ minWidth: "100%" }}
+            className="relative inline-grid gap-8 [grid-auto-flow:column] md:[grid-auto-columns:calc((100%-64px)/3)]"
+            style={{
+              minWidth: "100%",
+              gridAutoColumns: isMd
+                ? undefined
+                : mobileColW > 0
+                  ? `${mobileColW}px`
+                  : "100%",
+            }}
           >
             {/* Timeline track line spanning full scroll width */}
             <div
@@ -368,7 +378,7 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
                 ref={(el) => {
                   cellRefs.current[idx] = el;
                 }}
-                className="relative"
+                className="relative min-w-0"
                 style={{
                   scrollSnapAlign: isMd ? "start" : "center",
                   scrollSnapStop: "always",
@@ -388,7 +398,7 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
 
                 {/* Card */}
                 <div className="mt-10 mb-2 flex justify-center">
-                  <div className="w-full max-w-none select-none">
+                  <div className="min-w-0 w-full max-w-full select-none">
                     <PolaroidCard item={it} />
                   </div>
                 </div>
@@ -462,12 +472,12 @@ function PolaroidCard({ item }: { item: HistoryItem }) {
   return (
     <div
       className={[
-        "relative w-full rounded-2xl border border-neutral-200 bg-white",
+        "relative min-w-0 max-w-full w-full rounded-2xl border border-neutral-200 bg-white",
         "transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-xl",
       ].join(" ")}
     >
       {/* Top pin */}
-      <div className="absolute -top-11 left-1/12">
+      <div className="absolute -top-11 left-4 md:left-1/12">
         <div className="grid h-12 w-12 place-items-center">
           <BrandPin className="h-14 w-14 scale-x-[-1] rotate-[20deg]" />
         </div>
