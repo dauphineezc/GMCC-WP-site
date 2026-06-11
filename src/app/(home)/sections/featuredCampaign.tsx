@@ -6,5 +6,5 @@ export default function FeaturedCampaignSection({
 }: {
   campaign: SimpleCampaignData | null;
 }) {
-  return <section className="relative mt-12 mb-12"><SimpleCampaign campaign={campaign} /></section>;
+  return <section className="section-y relative"><SimpleCampaign campaign={campaign} /></section>;
 }

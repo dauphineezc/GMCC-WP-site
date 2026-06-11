@@ -1,4 +1,5 @@
 import ImageCarousel from "@/components/imageCarousel";
+import { acfGalleryCarouselImages } from "@/lib/wp";
 
 type AdvantageProShopSectionProps = {
   advantageProShopFields?: {
@@ -16,13 +17,7 @@ type AdvantageProShopSectionProps = {
       saturdayHours?: string | null;
       sundayHours?: string | null;
     } | null;
-    gallery?: {
-      photo1?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
-      photo2?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
-      photo3?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
-      photo4?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
-      photo5?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
-    } | null;
+    gallery?: unknown;
   } | null;
 };
 
@@ -51,23 +46,7 @@ export default function AdvantageProShopSection({
     })
     .filter((row) => Boolean(row.value));
 
-  const gallery = advantageProShopFields?.gallery ?? null;
-  const galleryImages = [gallery?.photo1, gallery?.photo2, gallery?.photo3, gallery?.photo4, gallery?.photo5]
-    .map((photo) => {
-      const sourceUrl = photo?.node?.sourceUrl ?? null;
-      if (!sourceUrl) return null;
-      return {
-        image: {
-          sourceUrl,
-          altText: photo?.node?.altText ?? null,
-        },
-        cta: null,
-        url: null,
-      };
-    })
-    .filter((item): item is { image: { sourceUrl: string; altText: string | null }; cta: null; url: null } =>
-      Boolean(item)
-    );
+  const galleryImages = acfGalleryCarouselImages(advantageProShopFields?.gallery);
 
   const hasHours = weeklyHours.length > 0;
   const hasGallery = galleryImages.length > 0;

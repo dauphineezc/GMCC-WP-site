@@ -7,7 +7,7 @@ export default function PoolAvailabilityPage() {
   return (
     <main>
         <HeaderImage src="/images/PoolPhoto.png" alt="Pool Availability" />
-        <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+        <div className="page-section stack-8">
           <h1 className="text-3xl font-bold text-gmcc-navy tracking-tight sm:text-4xl mb-4">Pool Availability</h1>
           <h3 className="text-xl text-neutral-700 mt-0 mb-4">Interested in swimming laps, enjoying a fun swim night with your family, or just 
             relaxing by the pool? View the drop-in swim schedule at the Community Center below.</h3>

@@ -18,8 +18,8 @@ const QUERY = `
         }
         programFields {
           summary
-          mediaGallery {
-            image1 {
+          gallery {
+            photos {
               node {
                 sourceUrl
                 altText

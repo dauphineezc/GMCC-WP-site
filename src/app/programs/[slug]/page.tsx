@@ -81,36 +81,21 @@ const PROGRAM_BY_SLUG_QUERY = `
           nodes { name slug }
         }
 
-        # Media gallery (ACF group of images)
-        mediaGallery {
-          image1 { node { sourceUrl altText mediaDetails { width height } } }
-          image2 { node { sourceUrl altText mediaDetails { width height } } }
-          image3 { node { sourceUrl altText mediaDetails { width height } } }
-          image4 { node { sourceUrl altText mediaDetails { width height } } }
+        gallery {
+          photos {
+            node { sourceUrl altText mediaDetails { width height } }
+          }
         }
 
         attachments {
-          attachment1 {
-            attachment1Label
-            attachment1File { node { mediaItemUrl } }
+          file {
+            node {
+              sourceUrl
+              mediaItemUrl
+              title
+            }
           }
-          attachment2 {
-            attachment2Label
-            attachment2File { node { mediaItemUrl } }
-          }
-          attachment3 {
-            attachment3Label
-            attachment3File { node { mediaItemUrl } }
-          }
-          attachment4 {
-            attachment4Label
-            attachment4File { node { mediaItemUrl } }
-          }
-          attachment5 {
-            attachment5Label
-            attachment5File { node { mediaItemUrl } }
-          }
-          }
+        }
 
           testimonials {
             nodes {
@@ -473,23 +458,21 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
         {/* RIGHT: stretch to row height like /programs filters (default grid align) so sticky has a tall scroll span */}
         <div className="flex min-h-0 min-w-0 flex-col gap-6">
 
-          {/* Media Gallery Carousel */}
+          {/* Gallery Carousel */}
           {(() => {
-            const gallery = wp.programFields?.mediaGallery;
-            if (!gallery) return null;
-            
-            // Transform media gallery images into carousel format
-            const carouselImages = [
-              gallery.image1,
-              gallery.image2,
-              gallery.image3,
-              gallery.image4,
-            ]
-              .filter((img) => img?.node?.sourceUrl)
-              .map((img) => ({
+            // gallery is the repeater: [{ photos: { node } }, ...]
+            const galleryRows = Array.isArray(wp.programFields?.gallery)
+              ? wp.programFields.gallery
+              : wp.programFields?.gallery
+                ? [wp.programFields.gallery]
+                : [];
+
+            const carouselImages = galleryRows
+              .filter((row: { photos?: { node?: { sourceUrl?: string } } }) => row?.photos?.node?.sourceUrl)
+              .map((row: { photos: { node: { sourceUrl: string; altText?: string | null } } }) => ({
                 image: {
-                  sourceUrl: img.node.sourceUrl,
-                  altText: img.node.altText ?? null,
+                  sourceUrl: row.photos.node.sourceUrl,
+                  altText: row.photos.node.altText ?? null,
                 },
                 cta: null,
                 url: null,

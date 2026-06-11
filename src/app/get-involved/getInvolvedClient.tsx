@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import Accordion from "@/components/accordion";
 import Tabs from "@/components/tabs";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
+import NavyWaveSection from "@/components/navyWaveSection";
 
 type WPImageNode = {
   sourceUrl?: string | null;
@@ -77,7 +78,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
   return (
     <div className="overflow-x-clip">
 
-    <section className="mx-auto max-w-6xl px-6 mt-6">
+    <section className="page-section">
       {/* TOP 3 CARDS */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 items-start">
         {/* Volunteer */}
@@ -139,7 +140,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
       </div>
 
       {/* IMPACT BLURB */}
-      <div className="stack-4 mt-12">
+      <div className="stack-4 section-gap">
         <p className="body text-center whitespace-pre-line">{fields?.impactBlurb ?? ""}</p>
         <div className="flex justify-center">
           <a href="/our-purpose" className="btn btn-secondary">
@@ -149,7 +150,9 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
       </div>
 
       {/* DONATE */}
-      <section id="donate" className="stack-6 scroll-mt-24 mt-12">
+      </section>
+
+      <section id="donate" className="page-section stack-6 scroll-mt-24">
         <div className="grid gap-16 md:grid-cols-2 items-start">
           {/* LEFT COLUMN */}
           <div className="stack-6">
@@ -196,105 +199,47 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
       </section>
 
       {/* VOLUNTEER */}
-      <section
+      <NavyWaveSection
         id="volunteer"
-        className="relative mt-12 w-screen -ml-[calc(50vw-50%)] overflow-x-clip scroll-mt-24"
+        className="w-screen -ml-[calc(50vw-50%)] overflow-x-clip"
+        fullBleed={false}
+        bandClassName="py-12"
       >
-        {/* Top wave */}
-        <div className="pointer-events-none w-full overflow-hidden leading-none">
-          <svg
-              viewBox="0 0 1440 120"
-              className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="
-                  M-20,110
-                  C750,-90  800,120  1200,80
-                  S1420,0 1460,0
-                  L1460,0 L-20,0 Z
-                "
-                transform="translate(0 120) scale(1 -1)"
-                fill="var(--gmcc-navy)"
-              />
-            </svg>
-        </div>
+        <div className="grid gap-16 md:grid-cols-2 items-start">
+          <div className="stack-3 [&_p]:text-white">
+            <h2 className="h2 mb-2 text-white">Volunteer</h2>
+            <TextBlock text={volunteer?.volunteerLongDescription} />
 
-        <div className="-mt-px py-12 bg-gmcc-navy text-white">
-          <div className="mx-auto max-w-6xl px-6">
-
-            <div className="grid gap-16 md:grid-cols-2 items-start">
-              <div className="stack-3 [&_p]:text-white">
-                <h2 className="h2 mb-2 text-white">Volunteer</h2>
-                <TextBlock text={volunteer?.volunteerLongDescription} />
-
-                {volunteer?.volunteerApplication ? (
-                  <div className="pt-4 text-center mx-auto">
-                    <a
-                      href={volunteer.volunteerApplication}
-                      className="btn btn-secondary"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Sign up as a volunteer
-                    </a>
-                  </div>
-                ) : null}
+            {volunteer?.volunteerApplication ? (
+              <div className="pt-4 text-center mx-auto">
+                <a
+                  href={volunteer.volunteerApplication}
+                  className="btn btn-secondary"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Sign up as a volunteer
+                </a>
               </div>
-
-              {volunteer?.volunteerImage?.node?.sourceUrl ? (
-                <img
-                  src={volunteer?.volunteerImage?.node?.sourceUrl}
-                  alt={volunteer?.volunteerImage?.node?.altText || ""}
-                  className="block h-full w-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : (
-                <div className="aspect-square bg-neutral-200" />
-              )}
-            </div>
+            ) : null}
           </div>
-        </div>
 
-        {/* Bottom wave */}
-        <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
-          <svg
-            viewBox="0 0 390 120"
-            className="block h-14 w-full text-gmcc-navy md:hidden"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M0,98
-                C78,62 135,54 195,74
-                C255,96 322,88 390,60
-                L390,0 L0,0 Z
-              "
-              fill="currentColor"
+          {volunteer?.volunteerImage?.node?.sourceUrl ? (
+            <img
+              src={volunteer?.volunteerImage?.node?.sourceUrl}
+              alt={volunteer?.volunteerImage?.node?.altText || ""}
+              className="block h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
-          </svg>
-
-          <svg
-            viewBox="0 0 1440 120"
-            className="hidden h-16 w-full text-gmcc-navy md:block"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M0,110
-                C300,-50  500,120  800,100
-                S1000,0 1440,0
-                L1440,0 L0,0 Z
-              "
-              fill="currentColor"
-            />
-          </svg>
+          ) : (
+            <div className="aspect-square bg-neutral-200" />
+          )}
         </div>
-      </section>
+      </NavyWaveSection>
 
       {/* SPONSOR */}
-      <section id="sponsor" className="stack-6 scroll-mt-24 mt-12 pb-12">
+      <section id="sponsor" className="page-section stack-6 scroll-mt-24">
         <h2 className="h2 mb-2">Sponsor</h2>
 
         <TextBlock text={sponsor?.sponsorLongDescription} />
@@ -345,7 +290,6 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
             </div>
       </section>
 
-    </section>
     </div>
   );
 }

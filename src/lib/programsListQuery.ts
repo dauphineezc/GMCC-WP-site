@@ -35,8 +35,8 @@ export const PROGRAMS_LIST_QUERY = /* GraphQL */ `
         }
         programFields {
           summary
-          mediaGallery {
-            image1 {
+          gallery {
+            photos {
               node {
                 sourceUrl
                 altText

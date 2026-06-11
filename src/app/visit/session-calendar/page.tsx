@@ -99,7 +99,7 @@ export default async function SessionCalendarPage() {
         ctas={hero.ctas}
       />
 
-      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+      <div className="page-section stack-8">
         <p className="body text-neutral-700">
           Click on a center to view its session calendar.
         </p>

@@ -6,10 +6,11 @@ import PhoneLink from "@/components/phoneLink";
 import { normalizeTestimonials } from "@/components/testimonials";
 import { extractAmenitySlugs, toAmenityDisplayForCenter } from "@/lib/amenities";
 import { fetchAmenitiesWithImages } from "@/lib/amenities";
-import { wpFetch } from "@/lib/wp";
+import { acfGalleryPhotoNodes, wpFetch } from "@/lib/wp";
 import { resolveHeroCta } from "@/lib/pageHeroFields";
 import type { HeroCta } from "@/components/photoWaveHeader";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
+import NavyWaveSection from "@/components/navyWaveSection";
 import {
   coerceWpRichText,
   fetchCenterDetailPageFields,
@@ -251,37 +252,7 @@ const CENTER_BY_SLUG_QUERY = `
           cta
         }
         gallery {
-          photo1 {
-            node {
-              sourceUrl
-              altText
-            }
-          }
-          photo2 {
-            node {
-              sourceUrl
-              altText
-            }
-          }
-          photo3 {
-            node {
-              sourceUrl
-              altText
-            }
-          }
-          photo4 {
-            node {
-              sourceUrl
-              altText
-            }
-          }
-          photo5 {
-            node {
-              sourceUrl
-              altText
-            }
-          }
-          photo6 {
+          photos {
             node {
               sourceUrl
               altText
@@ -492,12 +463,10 @@ export default async function CenterPage(props: CenterPageProps) {
     body: campaign.body ?? null,
     primaryCta: campaignPrimaryCta,
     secondaryCta: campaignSecondaryCta,
-    gallery: {
-      photo1: campaign.gallery?.photo1?.node ?? null,
-      photo2: campaign.gallery?.photo2?.node ?? null,
-      photo3: campaign.gallery?.photo3?.node ?? null,
-      photo4: campaign.gallery?.photo4?.node ?? null,
-    },
+    gallery: acfGalleryPhotoNodes(campaign.gallery).map((node) => ({
+      sourceUrl: node.sourceUrl ?? null,
+      altText: node.altText ?? null,
+    })),
   };
 
   const isCurlingCenter = isCurlingCenterSlug(slug, center.slug ?? null);
@@ -549,181 +518,176 @@ export default async function CenterPage(props: CenterPageProps) {
         minHeight={true}
       />
 
-      <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip scroll-mt-24">
-        <section className="bg-gmcc-navy py-10">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="grid gap-8 md:grid-cols-3 md:gap-16 items-start">
-                <div className="stack-3">
-                    <h2 className="h2 mb-4 text-white">Location</h2>
-                    <p className="flex items-start gap-2 mt-2 body text-neutral-200 hover:text-white hover:underline">
-                      <LocationIcon />
-                      <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(centerFields.address)}`} target="_blank" rel="noopener noreferrer">{centerFields.address}</a>
-                    </p>
-                </div>
-                <div className="stack-3">
-                    <h2 className="h2 mb-4 text-white">Contact</h2>
-                    <p className="flex items-center gap-2 body text-neutral-200 hover:text-white hover:underline">
-                      <PhoneIcon />
-                      <PhoneLink phone={centerFields.contactInfo.contactPhone} />
-                    </p>
-                    <p className="flex items-center gap-2 body text-neutral-200 hover:text-white hover:underline">
-                      {centerFields.contactInfo.contactEmail ? (
-                        <>
-                          <EmailIcon />
-                          <a href={`mailto:${centerFields.contactInfo.contactEmail}`}>{centerFields.contactInfo.contactEmail}</a>
-                        </>
-                      ) : null}
-                    </p>
-                    {centerSocialLinks.length > 0 ? (
-                      <div className="flex flex-wrap items-center gap-3 pt-2">
-                        {centerSocialLinks.map((social) => (
-                          <a
-                            key={social.platform}
-                            href={social.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={social.iconAlt}
-                            className="inline-flex rounded-md opacity-90 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gmcc-teal focus-visible:ring-offset-2 focus-visible:ring-offset-gmcc-navy"
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={social.iconUrl}
-                              alt=""
-                              width={32}
-                              height={32}
-                              className="h-6 w-6 object-contain"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          </a>
-                        ))}
-                      </div>
-                    ) : null}
-                </div>
-                <div className={`stack-3 md:mb-0${hasBrochures ? " md:row-span-2" : ""}`}>
-                    <h2 className="h2 mb-4 text-white">Hours</h2>
-                    {showCurlingHoursReplacement ? (
-                      renderHoursReplacementContent(hoursReplacement)
-                    ) : (
-                    <div className="grid grid-cols-2 items-center">
-                        <div className="flex flex-col text-left">
-                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Monday</p>
-                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Tuesday</p>
-                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Wednesday</p>
-                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Thursday</p>
-                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Friday</p>
-                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Saturday</p>
-                            <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Sunday</p>
-                        </div>
-                        <div className="flex flex-col text-right">
-                            {centerFields.hours.mondayHours.closedMonday ? (
-                              <p className="body text-neutral-200">Closed</p>
-                            ) : (
-                              <p className="body text-neutral-200">{centerFields.hours.mondayHours.mondayOpenTime} - {centerFields.hours.mondayHours.mondayCloseTime}</p>
-                            )}
-                            {centerFields.hours.tuesdayHours.closedTuesday ? (
-                              <p className="body text-neutral-200">Closed</p>
-                            ) : (
-                              <p className="body text-neutral-200">{centerFields.hours.tuesdayHours.tuesdayOpenTime} - {centerFields.hours.tuesdayHours.tuesdayCloseTime}</p>
-                            )}
-                            {centerFields.hours.wednesdayHours.closedWednesday ? (
-                              <p className="body text-neutral-200">Closed</p>
-                            ) : (
-                              <p className="body text-neutral-200">{centerFields.hours.wednesdayHours.wednesdayOpenTime} - {centerFields.hours.wednesdayHours.wednesdayCloseTime}</p>
-                            )}
-                            {centerFields.hours.thursdayHours.closedThursday ? (
-                              <p className="body text-neutral-200">Closed</p>
-                            ) : (
-                              <p className="body text-neutral-200">{centerFields.hours.thursdayHours.thursdayOpenTime} - {centerFields.hours.thursdayHours.thursdayCloseTime}</p>
-                            )}
-                            {centerFields.hours.fridayHours.closedFriday ? (
-                              <p className="body text-neutral-200">Closed</p>
-                            ) : (
-                              <p className="body text-neutral-200">{centerFields.hours.fridayHours.fridayOpenTime} - {centerFields.hours.fridayHours.fridayCloseTime}</p>
-                            )}
-                            {centerFields.hours.saturdayHours.closedSaturday ? (
-                              <p className="body text-neutral-200">Closed</p>
-                            ) : (
-                              <p className="body text-neutral-200">{centerFields.hours.saturdayHours.saturdayOpenTime} - {centerFields.hours.saturdayHours.saturdayCloseTime}</p>
-                            )}
-                            {centerFields.hours.sundayHours.closedSunday ? (
-                              <p className="body text-neutral-200">Closed</p>
-                            ) : (
-                              <p className="body text-neutral-200">{centerFields.hours.sundayHours.sundayOpenTime} - {centerFields.hours.sundayHours.sundayCloseTime}</p>
-                            )}
-                        </div>
-                    </div>
-                    )}
-                </div>
-                {hasBrochures ? (
-                  <div className="stack-3 md:col-span-2">
-                    {brochureHeader ? (
-                      <h2 className="h2 mb-4 text-white">{brochureHeader}</h2>
-                    ) : null}
-                    <div className="flex flex-wrap gap-3">
-                      {programBrochureUrl ? (
-                        <a
-                          href={programBrochureUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn text-neutral-200 border border-neutral-200 hover:text-gmcc-teal hover:border-gmcc-teal w-fit"
-                        >
-                          {programBrochureLabel}
-                        </a>
-                      ) : null}
-                      {campBrochureUrl ? (
-                        <a
-                          href={campBrochureUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn text-neutral-200 border border-neutral-200 hover:text-gmcc-teal hover:border-gmcc-teal w-fit"
-                        >
-                          {campBrochureLabel}
-                        </a>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-            </div>
+      <NavyWaveSection
+        className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip scroll-mt-24"
+        fullBleed={false}
+        topWave={false}
+        bandClassName="py-10"
+        contentClassName="mx-auto max-w-6xl px-6"
+      >
+        <div className="grid gap-8 md:grid-cols-3 md:gap-16 items-start">
+          <div className="stack-3">
+            <h2 className="h2 mb-4 text-white">Location</h2>
+            <p className="flex items-start gap-2 mt-2 body text-neutral-200 hover:text-white hover:underline">
+              <LocationIcon />
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(centerFields.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {centerFields.address}
+              </a>
+            </p>
           </div>
-        </section>
-
-        <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
-          <svg
-            viewBox="0 0 390 120"
-            className="-ml-px block h-14 w-[calc(100%+2px)] text-gmcc-navy md:hidden"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M0,98
-                C78,62 135,54 195,74
-                C255,96 322,88 390,60
-                L390,0 L0,0 Z
-              "
-              fill="currentColor"
-            />
-          </svg>
-
-          <svg
-            viewBox="0 0 1440 120"
-            className="-ml-px hidden h-16 w-[calc(100%+2px)] text-gmcc-navy md:block"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M0,110
-                C300,-50  500,120  800,100
-                S1000,0 1440,0
-                L1440,0 L0,0 Z
-              "
-              fill="currentColor"
-            />
-          </svg>
+          <div className="stack-3">
+            <h2 className="h2 mb-4 text-white">Contact</h2>
+            <p className="flex items-center gap-2 body text-neutral-200 hover:text-white hover:underline">
+              <PhoneIcon />
+              <PhoneLink phone={centerFields.contactInfo.contactPhone} />
+            </p>
+            <p className="flex items-center gap-2 body text-neutral-200 hover:text-white hover:underline">
+              {centerFields.contactInfo.contactEmail ? (
+                <>
+                  <EmailIcon />
+                  <a href={`mailto:${centerFields.contactInfo.contactEmail}`}>
+                    {centerFields.contactInfo.contactEmail}
+                  </a>
+                </>
+              ) : null}
+            </p>
+            {centerSocialLinks.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                {centerSocialLinks.map((social) => (
+                  <a
+                    key={social.platform}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.iconAlt}
+                    className="inline-flex rounded-md opacity-90 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gmcc-teal focus-visible:ring-offset-2 focus-visible:ring-offset-gmcc-navy"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={social.iconUrl}
+                      alt=""
+                      width={32}
+                      height={32}
+                      className="h-6 w-6 object-contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <div className={`stack-3 md:mb-0${hasBrochures ? " md:row-span-2" : ""}`}>
+            <h2 className="h2 mb-4 text-white">Hours</h2>
+            {showCurlingHoursReplacement ? (
+              renderHoursReplacementContent(hoursReplacement)
+            ) : (
+              <div className="grid grid-cols-2 items-center">
+                <div className="flex flex-col text-left">
+                  <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Monday</p>
+                  <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Tuesday</p>
+                  <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Wednesday</p>
+                  <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Thursday</p>
+                  <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Friday</p>
+                  <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Saturday</p>
+                  <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Sunday</p>
+                </div>
+                <div className="flex flex-col text-right">
+                  {centerFields.hours.mondayHours.closedMonday ? (
+                    <p className="body text-neutral-200">Closed</p>
+                  ) : (
+                    <p className="body text-neutral-200">
+                      {centerFields.hours.mondayHours.mondayOpenTime} -{" "}
+                      {centerFields.hours.mondayHours.mondayCloseTime}
+                    </p>
+                  )}
+                  {centerFields.hours.tuesdayHours.closedTuesday ? (
+                    <p className="body text-neutral-200">Closed</p>
+                  ) : (
+                    <p className="body text-neutral-200">
+                      {centerFields.hours.tuesdayHours.tuesdayOpenTime} -{" "}
+                      {centerFields.hours.tuesdayHours.tuesdayCloseTime}
+                    </p>
+                  )}
+                  {centerFields.hours.wednesdayHours.closedWednesday ? (
+                    <p className="body text-neutral-200">Closed</p>
+                  ) : (
+                    <p className="body text-neutral-200">
+                      {centerFields.hours.wednesdayHours.wednesdayOpenTime} -{" "}
+                      {centerFields.hours.wednesdayHours.wednesdayCloseTime}
+                    </p>
+                  )}
+                  {centerFields.hours.thursdayHours.closedThursday ? (
+                    <p className="body text-neutral-200">Closed</p>
+                  ) : (
+                    <p className="body text-neutral-200">
+                      {centerFields.hours.thursdayHours.thursdayOpenTime} -{" "}
+                      {centerFields.hours.thursdayHours.thursdayCloseTime}
+                    </p>
+                  )}
+                  {centerFields.hours.fridayHours.closedFriday ? (
+                    <p className="body text-neutral-200">Closed</p>
+                  ) : (
+                    <p className="body text-neutral-200">
+                      {centerFields.hours.fridayHours.fridayOpenTime} -{" "}
+                      {centerFields.hours.fridayHours.fridayCloseTime}
+                    </p>
+                  )}
+                  {centerFields.hours.saturdayHours.closedSaturday ? (
+                    <p className="body text-neutral-200">Closed</p>
+                  ) : (
+                    <p className="body text-neutral-200">
+                      {centerFields.hours.saturdayHours.saturdayOpenTime} -{" "}
+                      {centerFields.hours.saturdayHours.saturdayCloseTime}
+                    </p>
+                  )}
+                  {centerFields.hours.sundayHours.closedSunday ? (
+                    <p className="body text-neutral-200">Closed</p>
+                  ) : (
+                    <p className="body text-neutral-200">
+                      {centerFields.hours.sundayHours.sundayOpenTime} -{" "}
+                      {centerFields.hours.sundayHours.sundayCloseTime}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          {hasBrochures ? (
+            <div className="stack-3 md:col-span-2">
+              {brochureHeader ? <h2 className="h2 mb-4 text-white">{brochureHeader}</h2> : null}
+              <div className="flex flex-wrap gap-3">
+                {programBrochureUrl ? (
+                  <a
+                    href={programBrochureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn text-neutral-200 border border-neutral-200 hover:text-gmcc-teal hover:border-gmcc-teal w-fit"
+                  >
+                    {programBrochureLabel}
+                  </a>
+                ) : null}
+                {campBrochureUrl ? (
+                  <a
+                    href={campBrochureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn text-neutral-200 border border-neutral-200 hover:text-gmcc-teal hover:border-gmcc-teal w-fit"
+                  >
+                    {campBrochureLabel}
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
-      </div>
+      </NavyWaveSection>
 
-      <section className="mx-auto max-w-6xl px-4 pt-16 stack-4">
+      <section className="page-section stack-4">
         <h2 className="h2 mb-4">What you'll find here</h2>
         <p className="body mb-8">{centerFields.longDescription}</p>
         {/* Amenities Grid */}
@@ -735,8 +699,8 @@ export default async function CenterPage(props: CenterPageProps) {
       </section>
 
       {featuredTestimonials.length > 0 ? (
-        <section className="px-4 pt-12">
-          <div className="mx-auto max-w-6xl">
+        <section className="">
+          <div>
             <div className="relative text-center">
               <h2 className="h2 text-gmcc-navy">{testimonialHeader}</h2>
             </div>
@@ -749,7 +713,7 @@ export default async function CenterPage(props: CenterPageProps) {
         </section>
       ) : null}
 
-      <section className="mx-auto max-w-6xl px-4 pt-16 stack-4">
+      <section className="page-section stack-4">
         <h2 className="h2 mb-2">{joinSectionHeader}</h2>
         {joinSectionSubheader ? (
           <p className="body mb-4">{joinSectionSubheader}</p>
@@ -771,7 +735,8 @@ export default async function CenterPage(props: CenterPageProps) {
       </section>
 
       {showNewsletterSignUp ? (
-        <section className="mx-auto max-w-2xl mt-16 mb-8 py-8 px-4 text-center card bg-gmcc-navy">
+        <section className="page-section-wide text-center mt-[-4rem]">
+          <div className="card bg-gmcc-navy">
             <div className="col-span-1">
               {newsletterHeader ? <h3 className="h3 mb-2 text-white">{newsletterHeader}</h3> : null}
               {newsletterSubheader ? <p className="text-sm mb-4 mx-8 text-neutral-200">{newsletterSubheader}</p> : null}
@@ -797,6 +762,7 @@ export default async function CenterPage(props: CenterPageProps) {
                 </div>
               </form>
             </div>
+          </div>
         </section>
       ) : null}
     </main>

@@ -291,7 +291,7 @@ export default async function AboutPage() {
       </section>
 
       {/* BODY SECTION 1 (image left, text right) */}
-      <section className="mx-auto max-w-6xl px-6 py-8 md:py-16 mt-4 mb-4">
+      <section className="page-section">
         <h2 className="h2 text-center mb-8">{mainContentHeader}</h2>
         <div className="grid items-center gap-10 md:grid-cols-2">
           <div className="order-2 overflow-hidden bg-neutral-100 md:order-1">
@@ -400,7 +400,7 @@ export default async function AboutPage() {
       </section>
 
       {/* GET INVOLVED */}
-      <section className="mx-auto max-w-6xl px-6 pt-12">
+      <section className="page-section">
         <h2 className="h2 text-center">{getInvolvedHeader}</h2>
         {getInvolvedBody ? (
           <p className="mx-auto mt-4 max-w-4xl text-center text-neutral-700">{getInvolvedBody}</p>
@@ -447,7 +447,7 @@ export default async function AboutPage() {
 
       {/* TESTIMONIALS */}
       {testimonialsHeader || testimonials?.length ? (
-        <section className="mx-auto max-w-6xl px-6 pb-12 pt-16 mt-4">
+        <section className="page-section">
           {testimonialsHeader ? (
             <h2 className="h2 text-center">{testimonialsHeader}</h2>
           ) : null}

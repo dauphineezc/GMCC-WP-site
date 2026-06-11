@@ -45,6 +45,84 @@ export function acfFileHref(m: WpMediaFieldInput): string {
   return resolveWpMediaUrl(raw) ?? raw;
 }
 
+export type AcfGalleryPhotoNode = {
+  sourceUrl?: string | null;
+  altText?: string | null;
+  mediaItemUrl?: string | null;
+};
+
+type AcfGalleryRepeaterRow = {
+  photos?: { node?: AcfGalleryPhotoNode | null } | null;
+};
+
+/** ACF gallery repeater from WPGraphQL: `gallery` → `[{ photos: { node } }, ...]`. */
+export function acfGalleryRepeaterRows(gallery: unknown): AcfGalleryRepeaterRow[] {
+  if (!gallery) return [];
+  return Array.isArray(gallery) ? (gallery as AcfGalleryRepeaterRow[]) : [gallery as AcfGalleryRepeaterRow];
+}
+
+export function acfGalleryPhotoNodes(gallery: unknown): AcfGalleryPhotoNode[] {
+  return acfGalleryRepeaterRows(gallery)
+    .map((row) => row?.photos?.node)
+    .filter((node): node is AcfGalleryPhotoNode => Boolean(node?.sourceUrl || node?.mediaItemUrl));
+}
+
+export function acfGalleryCarouselImages(gallery: unknown) {
+  return acfGalleryPhotoNodes(gallery)
+    .map((node) => {
+      const sourceUrl = resolveWpMediaUrl(node.sourceUrl ?? node.mediaItemUrl);
+      if (!sourceUrl) return null;
+      return {
+        image: { sourceUrl, altText: node.altText ?? null },
+        cta: null,
+        url: null,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item != null);
+}
+
+export type CorporatePartnerItem = {
+  resolvedUrl: string;
+  altText?: string | null;
+  pageLink: string | null;
+};
+
+export type AttachmentItem = { label: string; url: string };
+
+/** ACF attachments repeater: `[{ file: { node } }, ...]`. Label from media title. */
+export function acfAttachmentItems(attachments: unknown): AttachmentItem[] {
+  const rows = Array.isArray(attachments) ? attachments : attachments ? [attachments] : [];
+  return rows.flatMap((row, index) => {
+    if (!row || typeof row !== "object") return [];
+    const file = (row as { file?: WpMediaFieldInput }).file;
+    const url = acfFileHref(file);
+    if (!url) return [];
+    const node =
+      file && typeof file === "object" && "node" in file
+        ? file.node
+        : (file as WpMediaRef | undefined);
+    const label = (node?.title ?? `Document ${index + 1}`).trim();
+    return [{ label, url }];
+  });
+}
+
+/** ACF corporatePartners repeater: `[{ logo: { node }, pageLink }, ...]`. */
+export function acfCorporatePartnerItems(partners: unknown): CorporatePartnerItem[] {
+  const rows = Array.isArray(partners) ? partners : partners ? [partners] : [];
+  return rows.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const r = row as {
+      logo?: { node?: AcfGalleryPhotoNode | null } | null;
+      pageLink?: string | null;
+    };
+    const logoNode = r.logo?.node;
+    const resolvedUrl = resolveWpMediaUrl(logoNode?.sourceUrl ?? logoNode?.mediaItemUrl);
+    if (!resolvedUrl || !logoNode) return [];
+    const pageLink = (r.pageLink ?? "").trim() || null;
+    return [{ resolvedUrl, altText: logoNode.altText, pageLink }];
+  });
+}
+
 /** Resolve href from an ACF CTA field (link URL, file media, or raw string). */
 export function acfCtaHref(cta: unknown): string {
   if (cta == null) return "";

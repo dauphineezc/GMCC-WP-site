@@ -1,6 +1,7 @@
 // app/membership/page.tsx
 import { Suspense } from "react";
 import { acfFileHref, wpFetch } from "@/lib/wp";
+import { splitLines, type MediaFieldInput } from "@/lib/acf";
 import ExploreMembershipsClient, {
   Membership,
   Audience,
@@ -191,12 +192,6 @@ const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
   }
 `;
 
-function splitLines(val: unknown): string[] {
-  return typeof val === "string"
-    ? val.split("\n").map((s) => s.trim()).filter(Boolean)
-    : [];
-}
-
 /**
  * ACF checkbox on audience taxonomy — WPGraphQL may return string[], a single string, or related objects.
  */
@@ -295,15 +290,6 @@ function mapMembershipNode(wp: any): Membership {
     benefits: splitLines(f.benefits),
   };
 }
-
-type MediaRef = {
-  sourceUrl?: string | null;
-  mediaItemUrl?: string | null;
-  title?: string | null;
-} | null;
-
-/** Shape returned by WPGraphQL for ACF file fields (nested `node`) or a flat media object. */
-type MediaFieldInput = { node?: MediaRef } | MediaRef | undefined;
 
 function mapPageFields(wp: any): MembershipPageFields {
   const f = wp?.membershipPageFields ?? {};

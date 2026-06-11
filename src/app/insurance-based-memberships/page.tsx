@@ -230,7 +230,7 @@ export default async function InsuranceBasedMembershipsPage() {
         ctas={heroProps.ctas}
       />
 
-      <div className="mx-auto max-w-6xl px-4 py-10 space-y-10">
+      <div className="page-section stack-8">
 
         {/* Programs */}
         <section className="space-y-4">
@@ -264,7 +264,7 @@ export default async function InsuranceBasedMembershipsPage() {
         {/* Insurance benefits */}
         {insurance ? (
           <>
-            <h2 className="h2 mb-2 mt-16">Insurance-based membership benefits</h2>
+            <h2 className="h2 mb-2">Insurance-based membership benefits</h2>
             {insuranceIntro ? <p className="mt-3 text-base text-neutral-700">{insuranceIntro}</p> : null}
             {insuranceItems.length > 0 ? (
               <ul className="space-y-2 pl-6 mt-4">
@@ -303,7 +303,7 @@ export default async function InsuranceBasedMembershipsPage() {
         {/* Contact */}
         {(contact?.contactName || contact?.personContext || contactPhone) ? (
           <>
-            <h2 className="h2 mt-16 mb-4 text-center">Have Questions?</h2>
+            <h2 className="h2 mb-4 text-center">Have Questions?</h2>
             <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-start text-center">
               <div>
                 {contact?.contactName ? (

@@ -1,9 +1,18 @@
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps, WpPageWithHeroFields } from "@/lib/pageHeroFields";
 import { acfFileHref, wpFetch } from "@/lib/wp";
+import {
+  asImageField,
+  asString,
+  collectGalleryPhotos,
+  isExternalHref,
+  type ImageField,
+  type MediaFieldInput,
+} from "@/lib/acf";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import PhotoGallery from "@/components/photoGallery";
+import NavyWaveSection from "@/components/navyWaveSection";
 
 const RACES_PAGE_QUERY = /* GraphQL */ `
   query RacesPage($uri: ID!) {
@@ -285,27 +294,6 @@ function formatRaceDate(start?: string | null, end?: string | null): string | nu
   return `${date} • ${time}–${endTime}`;
 }
 
-type MediaRef = {
-  sourceUrl?: string | null;
-  mediaItemUrl?: string | null;
-  title?: string | null;
-} | null;
-
-/** Shape returned by WPGraphQL for ACF file fields (nested `node`) or a flat media object. */
-type MediaFieldInput = { node?: MediaRef } | MediaRef | undefined;
-
-/** ACF file fields often return `{ node: MediaItem }` from WPGraphQL; unwrap when present. */
-function openInNewTab(url: string): boolean {
-  return /^https?:\/\//i.test(url) || /^mailto:/i.test(url) || /^tel:/i.test(url);
-}
-
-type ImageField = {
-  node?: {
-    sourceUrl?: string | null;
-    altText?: string | null;
-  } | null;
-} | null;
-
 type StaffNode = {
   title?: string | null;
   staffProfilesFields?: {
@@ -393,23 +381,6 @@ type RacesPageFields = {
   contactSubheader: string;
   raceDirectorContact: ContactField;
 };
-
-function asString(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function asImageField(value: unknown): ImageField {
-  if (!value || typeof value !== "object") return null;
-  const node = (value as { node?: unknown }).node;
-  if (!node || typeof node !== "object") return null;
-  const record = node as Record<string, unknown>;
-  return {
-    node: {
-      sourceUrl: asString(record.sourceUrl),
-      altText: asString(record.altText),
-    },
-  };
-}
 
 function asContactField(value: unknown): ContactField {
   if (!value || typeof value !== "object") return { nodes: [] };
@@ -632,7 +603,7 @@ export default async function RacesPage() {
                 <a
                   href={schedulePdfHref}
                   className="btn btn-primary"
-                  {...(openInNewTab(schedulePdfHref)
+                  {...(isExternalHref(schedulePdfHref)
                     ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
                     : {})}
                 >
@@ -661,7 +632,7 @@ export default async function RacesPage() {
                 <a
                   href={connectHref}
                   className="btn btn-primary"
-                  {...(openInNewTab(connectHref)
+                  {...(isExternalHref(connectHref)
                     ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
                     : {})}
                 >
@@ -701,7 +672,7 @@ export default async function RacesPage() {
                       <a
                         href={tripleChallengeHref}
                         className="btn btn-tertiary"
-                        {...(openInNewTab(tripleChallengeHref)
+                        {...(isExternalHref(tripleChallengeHref)
                           ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
                           : {})}
                       >
@@ -751,7 +722,7 @@ export default async function RacesPage() {
 
       </section>
       {sortedRaces.length > 0 && (
-        <section id="browse-races" className="mx-auto max-w-6xl px-6 pb-8 section-y">
+        <section id="browse-races" className="page-section">
           {fields.racesHeader ? <h2 className="h2">{fields.racesHeader}</h2> : null}
           {fields.racesSubheader ? (
             <p className="body mt-2 text-neutral-700">{fields.racesSubheader}</p>
@@ -860,181 +831,160 @@ export default async function RacesPage() {
 
 
       {(fields.volunteerCard || fields.sponsorCard) ? (
-        <section id="get-involved" className="relative mt-12 scroll-mt-24">
-          <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip">
-            {/* Top wave (above navy body; not covered by background) */}
-            <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
-              <svg
-                viewBox="0 0 1440 120"
-                className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-                preserveAspectRatio="none"
-                aria-hidden
+        <NavyWaveSection id="get-involved" contentClassName="mx-auto grid max-w-6xl gap-6 px-6 py-12 md:grid-cols-2">
+          {fields.sponsorCard ? (
+            <div className="card card-hover p-8">
+              {fields.sponsorCard.header || fields.sponsorCard.body ? (
+                <div>
+                  {fields.sponsorCard.header ? (
+                    <h2 className="h2 text-gmcc-navy">{fields.sponsorCard.header}</h2>
+                  ) : null}
+                  {fields.sponsorCard.body ? (
+                    <p className="body mt-4 mb-2 whitespace-pre-line text-neutral-700">
+                      {fields.sponsorCard.body}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <div
+                className={`${fields.sponsorCard.contactPrompt || fields.sponsorCard.personOfContact || fields.sponsorCard.ctaLabel || fields.sponsorCard.cta ? "mt-4" : ""}`}
               >
-                <path
-                  d="
-                    M-20,110
-                    C750,-90  800,120  1200,80
-                    S1420,0 1460,0
-                    L1460,0 L-20,0 Z
-                  "
-                  transform="translate(0 120) scale(1 -1)"
-                  fill="var(--gmcc-navy)"
-                />
-              </svg>
-            </div>
-
-            {/* Full-bleed navy band; content aligned to max-w-6xl + horizontal padding */}
-            <div className="relative z-0 -mt-px bg-gmcc-navy text-white">
-              <div className="mx-auto grid max-w-6xl gap-6 px-6 py-12 md:grid-cols-2">
-              
-                {fields.sponsorCard ? (
-                  <div className="card card-hover p-8">
-                    {fields.sponsorCard.header || fields.sponsorCard.body ? (
-                    <div>
-                      {fields.sponsorCard.header ? <h2 className="h2 text-gmcc-navy">{fields.sponsorCard.header}</h2> : null}
-                      {fields.sponsorCard.body ? <p className="body mt-4 mb-2 whitespace-pre-line text-neutral-700">{fields.sponsorCard.body}</p> : null}
-                    </div>
-                  ) : null}
-
-                    <div
-                      className={`${fields.sponsorCard.contactPrompt || fields.sponsorCard.personOfContact || fields.sponsorCard.ctaLabel || fields.sponsorCard.cta ? "mt-4" : ""}`}
-                    >
-                      {fields.sponsorCard.contactPrompt || fields.sponsorCard.personOfContact?.nodes?.length ? (
-                        <div className="body mt-4 text-neutral-700">
-                          {fields.sponsorCard.contactPrompt ? <span>{fields.sponsorCard.contactPrompt} </span> : null}
-                          {fields.sponsorCard.personOfContact?.nodes?.map((node, i) => {
-                            const sf = node.staffProfilesFields;
-                            return (
-                              <span key={i}>
-                                <span className="font-medium">{node.title}</span>
-                                {sf?.email || sf?.phone ? (
-                                  <span> at{" "}
-                                    {sf.email ? <a href={`mailto:${sf.email}`} className="link">{sf.email}</a> : null}
-                                    {sf.email && sf.phone ? <span> or </span> : null}
-                                    {sf.phone ? <a href={`tel:${sf.phone}`} className="link">{sf.phone}</a> : null}
-                                  </span>
-                                ) : null}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      ) : null}
-                      <div className="mt-6 flex items-center justify-center gap-4 text-center">
-                        <a href={fields?.sponsorCard?.cta} target="_blank" rel="noopener noreferrer" className="btn btn-tertiary">
-                          {fields?.sponsorCard?.ctaLabel}
-                        </a>
-                        {fields.sponsorCard.sponsorshipPdf ? <a href={acfFileHref(fields.sponsorCard.sponsorshipPdf)} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">{fields.sponsorCard.sponsorshipPdfLabel}</a> : null}
-                        </div>
-                      </div>
+                {fields.sponsorCard.contactPrompt || fields.sponsorCard.personOfContact?.nodes?.length ? (
+                  <div className="body mt-4 text-neutral-700">
+                    {fields.sponsorCard.contactPrompt ? (
+                      <span>{fields.sponsorCard.contactPrompt} </span>
+                    ) : null}
+                    {fields.sponsorCard.personOfContact?.nodes?.map((node, i) => {
+                      const sf = node.staffProfilesFields;
+                      return (
+                        <span key={i}>
+                          <span className="font-medium">{node.title}</span>
+                          {sf?.email || sf?.phone ? (
+                            <span>
+                              {" "}
+                              at{" "}
+                              {sf.email ? (
+                                <a href={`mailto:${sf.email}`} className="link">
+                                  {sf.email}
+                                </a>
+                              ) : null}
+                              {sf.email && sf.phone ? <span> or </span> : null}
+                              {sf.phone ? (
+                                <a href={`tel:${sf.phone}`} className="link">
+                                  {sf.phone}
+                                </a>
+                              ) : null}
+                            </span>
+                          ) : null}
+                        </span>
+                      );
+                    })}
                   </div>
                 ) : null}
-
-                {fields.volunteerCard ? (
-                  <div className="card card-hover p-8">
-                    {fields.volunteerCard.header || fields.volunteerCard.body ? (
-                    <div>
-                      {fields.volunteerCard.header ? <h2 className="h2 text-gmcc-navy">{fields.volunteerCard.header}</h2> : null}
-                      {fields.volunteerCard.body ? <p className="body mt-4 mb-2 whitespace-pre-line text-neutral-700">{fields.volunteerCard.body}</p> : null}
-                    </div>
-                  ) : null}
-
-                    <div
-                      className={`${fields.volunteerCard.contactPrompt || fields.volunteerCard.personOfContact || fields.volunteerCard.ctaLabel || fields.volunteerCard.cta ? "mt-4" : ""}`}
+                <div className="mt-6 flex items-center justify-center gap-4 text-center">
+                  <a
+                    href={fields?.sponsorCard?.cta}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-tertiary"
+                  >
+                    {fields?.sponsorCard?.ctaLabel}
+                  </a>
+                  {fields.sponsorCard.sponsorshipPdf ? (
+                    <a
+                      href={acfFileHref(fields.sponsorCard.sponsorshipPdf)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-secondary"
                     >
-                      {fields.volunteerCard.contactPrompt || fields.volunteerCard.personOfContact?.nodes?.length ? (
-                        <div className="body mt-4 text-neutral-700">
-                          {fields.volunteerCard.contactPrompt ? <span>{fields.volunteerCard.contactPrompt} </span> : null}
-                          {fields.volunteerCard.personOfContact?.nodes?.map((node, i) => {
-                            const sf = node.staffProfilesFields;
-                            return (
-                              <span key={i}>
-                                <span className="font-medium">{node.title}</span>
-                                {sf?.email || sf?.phone ? (
-                                  <span> at{" "}
-                                    {sf.email ? <a href={`mailto:${sf.email}`} className="link">{sf.email}</a> : null}
-                                    {sf.email && sf.phone ? <span> or </span> : null}
-                                    {sf.phone ? <a href={`tel:${sf.phone}`} className="link">{sf.phone}</a> : null}
-                                  </span>
-                                ) : null}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      ) : null}
-                      <div className="mt-6 flex justify-center">
-                        {fields.volunteerCard.cta ? <a href={fields?.volunteerCard?.cta} target="_blank" rel="noopener noreferrer" className="btn btn-tertiary text-center justify-self-start">
-                          {fields?.volunteerCard?.ctaLabel}
-                        </a> : null}
-                        </div>
-                      </div>
-                  </div>
-                ) : null}
+                      {fields.sponsorCard.sponsorshipPdfLabel}
+                    </a>
+                  ) : null}
+                </div>
               </div>
             </div>
+          ) : null}
 
-            {/* Bottom wave (below navy body) */}
-            <div className="relative z-[1] pointer-events-none -mt-px w-full overflow-hidden leading-none">
-              <svg
-                viewBox="0 0 390 120"
-                className="block h-14 w-full text-gmcc-navy md:hidden"
-                preserveAspectRatio="none"
-                aria-hidden
-              >
-                <path
-                  d="
-                M0,98
-                C78,62 135,54 195,74
-                C255,96 322,88 390,60
-                L390,0 L0,0 Z
-              "
-                  fill="currentColor"
-                />
-              </svg>
+          {fields.volunteerCard ? (
+            <div className="card card-hover p-8">
+              {fields.volunteerCard.header || fields.volunteerCard.body ? (
+                <div>
+                  {fields.volunteerCard.header ? (
+                    <h2 className="h2 text-gmcc-navy">{fields.volunteerCard.header}</h2>
+                  ) : null}
+                  {fields.volunteerCard.body ? (
+                    <p className="body mt-4 mb-2 whitespace-pre-line text-neutral-700">
+                      {fields.volunteerCard.body}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
 
-              <svg
-                viewBox="0 0 1440 120"
-                className="hidden h-16 w-full text-gmcc-navy md:block"
-                preserveAspectRatio="none"
-                aria-hidden
+              <div
+                className={`${fields.volunteerCard.contactPrompt || fields.volunteerCard.personOfContact || fields.volunteerCard.ctaLabel || fields.volunteerCard.cta ? "mt-4" : ""}`}
               >
-                <path
-                  d="
-                M0,110
-                C300,-50  500,120  800,100
-                S1000,0 1440,0
-                L1440,0 L0,0 Z
-              "
-                  fill="currentColor"
-                />
-              </svg>
+                {fields.volunteerCard.contactPrompt || fields.volunteerCard.personOfContact?.nodes?.length ? (
+                  <div className="body mt-4 text-neutral-700">
+                    {fields.volunteerCard.contactPrompt ? (
+                      <span>{fields.volunteerCard.contactPrompt} </span>
+                    ) : null}
+                    {fields.volunteerCard.personOfContact?.nodes?.map((node, i) => {
+                      const sf = node.staffProfilesFields;
+                      return (
+                        <span key={i}>
+                          <span className="font-medium">{node.title}</span>
+                          {sf?.email || sf?.phone ? (
+                            <span>
+                              {" "}
+                              at{" "}
+                              {sf.email ? (
+                                <a href={`mailto:${sf.email}`} className="link">
+                                  {sf.email}
+                                </a>
+                              ) : null}
+                              {sf.email && sf.phone ? <span> or </span> : null}
+                              {sf.phone ? (
+                                <a href={`tel:${sf.phone}`} className="link">
+                                  {sf.phone}
+                                </a>
+                              ) : null}
+                            </span>
+                          ) : null}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : null}
+                <div className="mt-6 flex justify-center">
+                  {fields.volunteerCard.cta ? (
+                    <a
+                      href={fields?.volunteerCard?.cta}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-tertiary text-center justify-self-start"
+                    >
+                      {fields?.volunteerCard?.ctaLabel}
+                    </a>
+                  ) : null}
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
+          ) : null}
+        </NavyWaveSection>
       ) : null}
 
 
       {/* PREVIOUS RACES */}
       {(() => {
-        const galleryPhotos = [
-          fields.gallery.photo1,
-          fields.gallery.photo2,
-          fields.gallery.photo3,
-          fields.gallery.photo4,
-          fields.gallery.photo5,
-          fields.gallery.photo6,
-          fields.gallery.photo7,
-          fields.gallery.photo8,
-          fields.gallery.photo9,
-        ]
-          .filter((p) => !!p?.node?.sourceUrl)
-          .map((p) => ({ url: p!.node!.sourceUrl!, alt: p!.node!.altText ?? "" }));
+        const galleryPhotos = collectGalleryPhotos(fields.gallery);
 
         if (!fields.previousRacesHeader && !fields.previousRacesBody && !galleryPhotos.length) {
           return null;
         }
 
         return (
-          <section className="mx-auto max-w-6xl px-6 section-y pb-8">
+          <section className="page-section">
             {fields.previousRacesHeader ? (
               <h2 className="h2">{fields.previousRacesHeader}</h2>
             ) : null}
@@ -1051,82 +1001,58 @@ export default async function RacesPage() {
 
       {/* RUNNERS PROMO */}
       {(fields.runnersPromo.header || fields.runnersPromo.body || fields.runnersPromo.logo?.node?.sourceUrl) ? (
-        <section id="get-involved" className="relative mt-12 scroll-mt-24">
-        <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip">
-          {/* Top wave (above navy body; not covered by background) */}
-          <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
-            <svg
-              viewBox="0 0 1440 120"
-              className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-              preserveAspectRatio="none"
-              aria-hidden
-            >
-              <path
-                d="
-                  M-20,110
-                  C750,-90  800,120  1200,80
-                  S1420,0 1460,0
-                  L1460,0 L-20,0 Z
-                "
-                transform="translate(0 120) scale(1 -1)"
-                fill="var(--gmcc-navy)"
-              />
-            </svg>
-          </div>
+        <NavyWaveSection
+          id="runners-promo"
+          splitTopWave
+          bottomWave={false}
+          bandClassName="pt-12 pb-14"
+          contentClassName="mx-auto flex max-w-6xl flex-col items-center gap-12 px-6 md:flex-row md:gap-16"
+        >
+          {fields.runnersPromo.logo?.node?.sourceUrl ? (
+            <div className="w-full shrink-0 md:w-110">
+              <div className="flex items-center justify-center rounded-2xl bg-white p-8 shadow-lg">
+                <img
+                  src={fields.runnersPromo.logo.node.sourceUrl}
+                  alt={fields.runnersPromo.logo.node.altText || "Partner logo"}
+                  className="max-h-56 w-full object-contain"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            </div>
+          ) : null}
 
-          {/* Full-bleed navy band; content aligned to max-w-6xl + horizontal padding */}
-          <div className="relative z-0 -mt-px bg-gmcc-navy text-white pt-12 pb-14">
-          <div className="mx-auto flex max-w-6xl flex-col items-center gap-12 px-6 md:flex-row md:gap-16">
-            {/* Logo card */}
-            {fields.runnersPromo.logo?.node?.sourceUrl ? (
-              <div className="w-full shrink-0 md:w-110">
-                <div className="flex items-center justify-center rounded-2xl bg-white p-8 shadow-lg">
-                  <img
-                    src={fields.runnersPromo.logo.node.sourceUrl}
-                    alt={fields.runnersPromo.logo.node.altText || "Partner logo"}
-                    className="max-h-56 w-full object-contain"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
+          <div className="flex-1">
+            {fields.runnersPromo.header ? (
+              <h2 className="font-heading text-2xl font-bold leading-tight text-white sm:text-3xl">
+                {fields.runnersPromo.header}
+              </h2>
+            ) : null}
+            {fields.runnersPromo.body ? (
+              <p className="mt-4 text-base leading-7 text-white/85 whitespace-pre-line">
+                {fields.runnersPromo.body}
+              </p>
+            ) : null}
+            {fields.runnersPromo.cta ? (
+              <div className="mt-6">
+                <a
+                  href={fields.runnersPromo.cta}
+                  className="btn btn-secondary"
+                  {...(isExternalHref(fields.runnersPromo.cta)
+                    ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
+                    : {})}
+                >
+                  {fields.runnersPromo.ctaLabel || "Learn more"}
+                </a>
               </div>
             ) : null}
-
-            {/* Text + CTA */}
-            <div className="flex-1">
-              {fields.runnersPromo.header ? (
-                <h2 className="font-heading text-2xl font-bold leading-tight text-white sm:text-3xl">
-                  {fields.runnersPromo.header}
-                </h2>
-              ) : null}
-              {fields.runnersPromo.body ? (
-                <p className="mt-4 text-base leading-7 text-white/85 whitespace-pre-line">
-                  {fields.runnersPromo.body}
-                </p>
-              ) : null}
-              {fields.runnersPromo.cta ? (
-                <div className="mt-6">
-                  <a
-                    href={fields.runnersPromo.cta}
-                    className="btn btn-secondary"
-                    {...(openInNewTab(fields.runnersPromo.cta)
-                      ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
-                      : {})}
-                  >
-                    {fields.runnersPromo.ctaLabel || "Learn more"}
-                  </a>
-                </div>
-              ) : null}
-            </div>
           </div>
-        </div>
-        </div>
-        </section>
+        </NavyWaveSection>
       ) : null}
 
       {/* CONTACT SECTION */}
       {(fields.contactHeader || fields.contactSubheader || fields.raceDirectorContact?.nodes?.length || fields.volunteerCard.personOfContact?.nodes?.length) ? (
-        <section className="mx-auto max-w-6xl px-6 section-y mt-6">
+        <section className="page-section">
           {fields.contactHeader ? (
             <h2 className="h2">{fields.contactHeader}</h2>
           ) : null}

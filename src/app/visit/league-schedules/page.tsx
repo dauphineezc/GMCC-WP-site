@@ -7,7 +7,7 @@ export default function LeagueSchedulesPage() {
   return (
     <main>
         <HeaderImage src="/images/LeaguePhoto.png" alt="League Schedules" />
-        <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+        <div className="page-section stack-8">
           <h1 className="text-3xl font-bold text-gmcc-navy tracking-tight sm:text-4xl mb-4">League Schedules</h1>
           <h3 className="text-xl text-neutral-700 mt-0 mb-4">Need to check the schedule for a league you're playing in, or want to watch a thrilling 
             game? View the schedules for all in-house leagues (including basketball, volleyball, and more) below.</h3>

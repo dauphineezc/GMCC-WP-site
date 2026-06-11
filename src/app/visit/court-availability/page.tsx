@@ -64,7 +64,7 @@ export default function CourtAvailabilityPage() {
   return (
     <main>
         <HeaderImage src="/images/CourtsPhoto.png" alt="Court Availability" />
-        <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+        <div className="page-section stack-8">
           <h1 className="text-3xl font-bold text-gmcc-navy tracking-tight sm:text-4xl mb-4">Court Availability</h1>
           <h3 className="text-xl text-neutral-700 mt-0 mb-4">Interested in playing a game of tennis, pickleball, basketball, or volleyball? 
             View the availability of all courts at your preferred center below.</h3>

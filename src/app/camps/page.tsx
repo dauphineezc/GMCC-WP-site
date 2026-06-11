@@ -2,12 +2,26 @@ import Accordion from "@/components/accordion";
 import Link from "next/link";
 import { Suspense } from "react";
 import { acfCtaHref, acfFileHref, wpFetch } from "@/lib/wp";
+import {
+  acfCtaTarget,
+  acfCtaTitle,
+  asImageField,
+  asString,
+  collectNumberedFaqs,
+  openLinkInNewTab,
+  resolveAcfLink,
+  type FaqItem,
+  type ImageField,
+  type MediaFieldInput,
+  type MediaRef,
+} from "@/lib/acf";
 import { CAMPS_PROGRAMS_FIRST, PROGRAMS_LIST_QUERY, PROGRAMS_PAGE_SIZE } from "@/lib/programsListQuery";
 import CampsProgramsExplorerClient from "./campsProgramsExplorerClient";
 import { PAGE_HERO_FIELDS_GRAPHQL, type WpPageWithHeroFields } from "@/lib/pageHeroFields";
 import { resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import SponsorsGrid, { normalizeSponsorsByType } from "@/components/sponsorsGrid";
+import NavyWaveSection from "@/components/navyWaveSection";
 
 const CAMPS_PAGE_QUERY = /* GraphQL */ `
   query CampsPage($uri: ID!) {
@@ -66,74 +80,20 @@ const CAMPS_PAGE_QUERY = /* GraphQL */ `
           }
         }
 
-        formsAndLinks {
-          header
-          form1 {
+        formsAndLinksHeader
+
+        forms {
+          file {
             node {
               sourceUrl
               mediaItemUrl
               title
             }
           }
-          form2 {
-            node {
-              sourceUrl
-              mediaItemUrl
-              title
-            }
-          }
-          form3 {
-            node {
-              sourceUrl
-              mediaItemUrl
-              title
-            }
-          }
-          form4 {
-            node {
-              sourceUrl
-              mediaItemUrl
-              title
-            }
-          }
-          form5 {
-            node {
-              sourceUrl
-              mediaItemUrl
-              title
-            }
-          }
-          form6 {
-            node {
-              sourceUrl
-              mediaItemUrl
-              title
-            }
-          }
-          link1 {
-            linkLabel
-            link
-          }
-          link2 {
-            linkLabel
-            link
-          }
-          link3 {
-            linkLabel
-            link
-          }
-          link4 {
-            linkLabel
-            link
-          }
-          link5 {
-            linkLabel
-            link
-          }
-          link6 {
-            linkLabel
-            link
-          }
+        }
+        links {
+          linkLabel
+          link
         }
 
         workAtCampHeader
@@ -207,83 +167,31 @@ const CAMP_SPONSORS_QUERY = /* GraphQL */ `
   }
 `;
 
-type MediaRef = {
-  sourceUrl?: string | null;
-  mediaItemUrl?: string | null;
-  title?: string | null;
-} | null;
-
-/** Shape returned by WPGraphQL for ACF file fields (nested `node`) or a flat media object. */
-type MediaFieldInput = { node?: MediaRef } | MediaRef | undefined;
-
-function acfCtaTitle(cta: unknown): string {
-  if (cta && typeof cta === "object") {
-    const o = cta as Record<string, unknown>;
-    if (typeof o.title === "string" && o.title.trim()) return o.title.trim();
-    const node = o.node;
-    if (node && typeof node === "object") {
-      const t = (node as Record<string, unknown>).title;
-      if (typeof t === "string" && t.trim()) return t.trim();
-    }
-  }
-  return "";
-}
-
-function acfCtaTarget(cta: unknown): string | null | undefined {
-  if (cta && typeof cta === "object") {
-    const t = (cta as Record<string, unknown>).target;
-    if (typeof t === "string") return t;
-  }
-  return undefined;
-}
-
-/** ACF / WPGraphQL link field: string URL or object with `url` / optional `target`. */
-function resolveAcfLink(raw: unknown): { url: string; target?: string | null } {
-  if (raw == null) return { url: "" };
-  if (typeof raw === "string") return { url: raw.trim() };
-  if (typeof raw === "object") {
-    const o = raw as Record<string, unknown>;
-    const u = o.url ?? o.href;
-    const t = o.target;
-    return {
-      url: typeof u === "string" ? u.trim() : "",
-      target: typeof t === "string" ? t : null,
-    };
-  }
-  return { url: "" };
-}
-
-function openLinkInNewTab(url: string, linkTarget?: string | null): boolean {
-  if (linkTarget === "_blank") return true;
-  if (linkTarget === "_self") return false;
-  return isExternalHref(url);
-}
-
-function isExternalHref(href: string): boolean {
-  const t = href.trim();
-  return /^https?:\/\//i.test(t) || /^mailto:/i.test(t) || /^tel:/i.test(t);
-}
-
 type FormsAttachmentItem =
   | { kind: "file"; label: string; url: string }
   | { kind: "link"; label: string; url: string; linkTarget?: string | null };
 
-function collectFormsAndLinks(formsAndLinks: Record<string, unknown> | null | undefined): FormsAttachmentItem[] {
-  if (!formsAndLinks || typeof formsAndLinks !== "object") return [];
+function collectFormsAndLinksItems(forms: unknown, links: unknown): FormsAttachmentItem[] {
   const out: FormsAttachmentItem[] = [];
-  for (let i = 1; i <= 6; i++) {
-    const form = formsAndLinks[`form${i}`] as { node?: MediaRef } | undefined;
-    const node = form?.node;
+  const formRows = Array.isArray(forms) ? forms : forms ? [forms] : [];
+
+  formRows.forEach((row, index) => {
+    if (!row || typeof row !== "object") return;
+    const node = (row as { file?: { node?: MediaRef } }).file?.node;
     const url = acfFileHref(node);
-    const label = (node?.title ?? `Form ${i}`).trim();
+    const label = (node?.title ?? `Form ${index + 1}`).trim();
     if (url) out.push({ label, url, kind: "file" });
-  }
-  for (let i = 1; i <= 6; i++) {
-    const row = formsAndLinks[`link${i}`] as { linkLabel?: string | null; link?: unknown } | undefined;
-    const { url, target } = resolveAcfLink(row?.link);
-    const label = (row?.linkLabel ?? "").trim();
+  });
+
+  const linkRows = Array.isArray(links) ? links : links ? [links] : [];
+  linkRows.forEach((row) => {
+    if (!row || typeof row !== "object") return;
+    const r = row as { linkLabel?: string | null; link?: unknown };
+    const { url, target } = resolveAcfLink(r.link);
+    const label = (r.linkLabel ?? "").trim();
     if (url && label) out.push({ label, url, kind: "link", linkTarget: target });
-  }
+  });
+
   return out;
 }
 
@@ -309,55 +217,22 @@ type TextCard = {
   cta?: unknown;
 };
 
-type CampsImageField = {
-  node?: {
-    sourceUrl?: string | null;
-    altText?: string | null;
-  } | null;
-} | null;
-
-type CampsFaqItem = {
-  question: string;
-  answer: string;
-};
-
-type CampsFaqs = {
-  faq1: CampsFaqItem;
-  faq2: CampsFaqItem;
-  faq3: CampsFaqItem;
-  faq4: CampsFaqItem;
-};
-
-type CampsFormsAndLinks = {
-  header: string;
-  form1: MediaFieldInput;
-  form2: MediaFieldInput;
-  form3: MediaFieldInput;
-  form4: MediaFieldInput;
-  form5: MediaFieldInput;
-  form6: MediaFieldInput;
-  link1: { linkLabel: string; link: unknown };
-  link2: { linkLabel: string; link: unknown };
-  link3: { linkLabel: string; link: unknown };
-  link4: { linkLabel: string; link: unknown };
-  link5: { linkLabel: string; link: unknown };
-  link6: { linkLabel: string; link: unknown };
-};
-
 type CampsDirectoryPageFields = {
   campsBrochure: MediaFieldInput;
   financialAssistanceApplication: MediaFieldInput;
   browseByCenterHeader: string;
   browseByCenterSubheader: string;
   ccCampsDescription: string;
-  ccCampsImage: CampsImageField;
+  ccCampsImage: ImageField;
   tcCampsDescription: string;
-  tcCampsImage: CampsImageField;
+  tcCampsImage: ImageField;
   cfcCampsDescription: string;
-  cfcCampsImage: CampsImageField;
+  cfcCampsImage: ImageField;
   nfcCampsDescription: string;
-  nfcCampsImage: CampsImageField;
-  formsAndLinks: CampsFormsAndLinks;
+  nfcCampsImage: ImageField;
+  formsAndLinksHeader: string;
+  forms: unknown;
+  links: unknown;
   workAtCampHeader: string;
   workAtCampSubheader: string;
   counselorLink: { linkLabel: string; link: unknown };
@@ -369,14 +244,10 @@ type CampsDirectoryPageFields = {
   benefit1: TextCard;
   benefit2: TextCard;
   benefit3: TextCard;
-  faqs: CampsFaqs;
+  faqs: FaqItem[];
   contactHeader: string;
   contactSubheader: string;
 };
-
-function stringOrEmpty(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
 
 function normalizeTextCard(value: unknown): TextCard {
   if (!value || typeof value !== "object") {
@@ -384,23 +255,10 @@ function normalizeTextCard(value: unknown): TextCard {
   }
   const v = value as Record<string, unknown>;
   return {
-    header: stringOrEmpty(v.header),
-    body: stringOrEmpty(v.body),
-    ctaLabel: stringOrEmpty(v.ctaLabel),
+    header: asString(v.header),
+    body: asString(v.body),
+    ctaLabel: asString(v.ctaLabel),
     cta: v.cta ?? null,
-  };
-}
-
-function normalizeImageField(value: unknown): CampsImageField {
-  if (!value || typeof value !== "object") return null;
-  const node = (value as { node?: unknown }).node;
-  if (!node || typeof node !== "object") return null;
-  const n = node as Record<string, unknown>;
-  return {
-    node: {
-      sourceUrl: stringOrEmpty(n.sourceUrl),
-      altText: stringOrEmpty(n.altText),
-    },
   };
 }
 
@@ -408,71 +266,43 @@ function normalizeFormLink(value: unknown): { linkLabel: string; link: unknown }
   if (!value || typeof value !== "object") return { linkLabel: "", link: null };
   const v = value as Record<string, unknown>;
   return {
-    linkLabel: stringOrEmpty(v.linkLabel),
+    linkLabel: asString(v.linkLabel),
     link: v.link ?? null,
-  };
-}
-
-function normalizeFaqItem(value: unknown): CampsFaqItem {
-  if (!value || typeof value !== "object") return { question: "", answer: "" };
-  const v = value as Record<string, unknown>;
-  return {
-    question: stringOrEmpty(v.question),
-    answer: stringOrEmpty(v.answer),
   };
 }
 
 function initializeCampsDirectoryPageFields(raw: Record<string, unknown> | null | undefined): CampsDirectoryPageFields {
   const f = raw ?? {};
-  const formsAndLinks = (f.formsAndLinks as Record<string, unknown> | undefined) ?? {};
-  const faqs = (f.faqs as Record<string, unknown> | undefined) ?? {};
   return {
     campsBrochure: (f.campsBrochure as MediaFieldInput) ?? null,
     financialAssistanceApplication: (f.financialAssistanceApplication as MediaFieldInput) ?? null,
-    browseByCenterHeader: stringOrEmpty(f.browseByCenterHeader),
-    browseByCenterSubheader: stringOrEmpty(f.browseByCenterSubheader),
-    ccCampsDescription: stringOrEmpty(f.ccCampsDescription),
-    ccCampsImage: normalizeImageField(f.ccCampsImage),
-    tcCampsDescription: stringOrEmpty(f.tcCampsDescription),
-    tcCampsImage: normalizeImageField(f.tcCampsImage),
-    cfcCampsDescription: stringOrEmpty(f.cfcCampsDescription),
-    cfcCampsImage: normalizeImageField(f.cfcCampsImage),
-    nfcCampsDescription: stringOrEmpty(f.nfcCampsDescription),
-    nfcCampsImage: normalizeImageField(f.nfcCampsImage),
-    formsAndLinks: {
-      header: stringOrEmpty(formsAndLinks.header),
-      form1: (formsAndLinks.form1 as MediaFieldInput) ?? null,
-      form2: (formsAndLinks.form2 as MediaFieldInput) ?? null,
-      form3: (formsAndLinks.form3 as MediaFieldInput) ?? null,
-      form4: (formsAndLinks.form4 as MediaFieldInput) ?? null,
-      form5: (formsAndLinks.form5 as MediaFieldInput) ?? null,
-      form6: (formsAndLinks.form6 as MediaFieldInput) ?? null,
-      link1: normalizeFormLink(formsAndLinks.link1),
-      link2: normalizeFormLink(formsAndLinks.link2),
-      link3: normalizeFormLink(formsAndLinks.link3),
-      link4: normalizeFormLink(formsAndLinks.link4),
-      link5: normalizeFormLink(formsAndLinks.link5),
-      link6: normalizeFormLink(formsAndLinks.link6),
-    },
-    workAtCampHeader: stringOrEmpty(f.workAtCampHeader),
-    workAtCampSubheader: stringOrEmpty(f.workAtCampSubheader),
+    browseByCenterHeader: asString(f.browseByCenterHeader),
+    browseByCenterSubheader: asString(f.browseByCenterSubheader),
+    ccCampsDescription: asString(f.ccCampsDescription),
+    ccCampsImage: asImageField(f.ccCampsImage),
+    tcCampsDescription: asString(f.tcCampsDescription),
+    tcCampsImage: asImageField(f.tcCampsImage),
+    cfcCampsDescription: asString(f.cfcCampsDescription),
+    cfcCampsImage: asImageField(f.cfcCampsImage),
+    nfcCampsDescription: asString(f.nfcCampsDescription),
+    nfcCampsImage: asImageField(f.nfcCampsImage),
+    formsAndLinksHeader: asString(f.formsAndLinksHeader),
+    forms: f.forms ?? [],
+    links: f.links ?? [],
+    workAtCampHeader: asString(f.workAtCampHeader),
+    workAtCampSubheader: asString(f.workAtCampSubheader),
     counselorLink: normalizeFormLink(f.counselorLink),
     volunteerLink: normalizeFormLink(f.volunteerLink),
-    resultsHeader: stringOrEmpty(f.resultsHeader),
-    resultsBody: stringOrEmpty(f.resultsBody),
-    whyGmCampsHeader: stringOrEmpty(f.whyGmCampsHeader),
-    whyGmCampsBody: stringOrEmpty(f.whyGmCampsBody),
+    resultsHeader: asString(f.resultsHeader),
+    resultsBody: asString(f.resultsBody),
+    whyGmCampsHeader: asString(f.whyGmCampsHeader),
+    whyGmCampsBody: asString(f.whyGmCampsBody),
     benefit1: normalizeTextCard(f.benefit1),
     benefit2: normalizeTextCard(f.benefit2),
     benefit3: normalizeTextCard(f.benefit3),
-    faqs: {
-      faq1: normalizeFaqItem(faqs.faq1),
-      faq2: normalizeFaqItem(faqs.faq2),
-      faq3: normalizeFaqItem(faqs.faq3),
-      faq4: normalizeFaqItem(faqs.faq4),
-    },
-    contactHeader: stringOrEmpty(f.contactHeader),
-    contactSubheader: stringOrEmpty(f.contactSubheader),
+    faqs: collectNumberedFaqs(f.faqs, 4),
+    contactHeader: asString(f.contactHeader),
+    contactSubheader: asString(f.contactSubheader),
   };
 }
 
@@ -623,10 +453,8 @@ export default async function CampsPage() {
 
   const hero = resolvePhotoWaveHeaderProps(data?.page, "Camps");
   const f = initializeCampsDirectoryPageFields(data?.page?.campsDirectoryPageFields);
-  const formsAndLinks = f.formsAndLinks as unknown as Record<string, unknown>;
-  const formsAndLinksHeader = f.formsAndLinks.header;
-  const formsAndLinksSectionTitle = formsAndLinksHeader || "Forms and links";
-  const attachmentItems = collectFormsAndLinks(formsAndLinks);
+  const formsAndLinksSectionTitle = f.formsAndLinksHeader || "Forms and links";
+  const attachmentItems = collectFormsAndLinksItems(f.forms, f.links);
 
   const programsNodes = programsData?.programs?.nodes ?? [];
   const programsPageInfo = programsData?.programs?.pageInfo ?? {
@@ -638,7 +466,7 @@ export default async function CampsPage() {
   const browseSubheader = f.browseByCenterSubheader;
 
   const browseCenterCards = CENTER_CAMPS_CONFIG.map((cfg) => {
-    const text = stringOrEmpty((f as unknown as Record<string, unknown>)[cfg.descField]);
+    const text = asString((f as unknown as Record<string, unknown>)[cfg.descField]);
     const image = centerHeroImage(f, cfg.imageField);
     const href = `/camps?center=${encodeURIComponent(cfg.programsCenterSlug)}#camps-results`;
     return {
@@ -663,12 +491,7 @@ export default async function CampsPage() {
 
   const benefits = [f.benefit1, f.benefit2, f.benefit3].filter((b) => blockHasContent(b as TextCard)) as TextCard[];
 
-  const faqsList = [f.faqs.faq1, f.faqs.faq2, f.faqs.faq3, f.faqs.faq4]
-    .map((item) => ({
-      question: item?.question ?? "",
-      answer: item?.answer ?? "",
-    }))
-    .filter((item) => item.question.trim() || item.answer.trim());
+  const faqsList = f.faqs;
 
   const contactHeader = f.contactHeader;
   const contactSubheader = f.contactSubheader;
@@ -690,7 +513,7 @@ export default async function CampsPage() {
       </PhotoWaveHeader>
 
       {hasBrowseByCenterSection ? (
-        <section className="mx-auto max-w-6xl px-6 pt-16">
+        <section className="page-section">
           {browseHeader ? <h2 className="h2">{browseHeader}</h2> : null}
           {browseSubheader ? (
             <div className="body mt-4 text-neutral-700">
@@ -740,7 +563,7 @@ export default async function CampsPage() {
       ) : null}
 
       {attachmentItems.length ? (
-        <section className="mx-auto mt-16 max-w-5xl pt-16 px-6">
+        <section className="page-section-narrow">
           <div className="justify-center items-center">
           <h2 className="h2 mb-2 text-gmcc-navy text-center">{formsAndLinksSectionTitle}</h2>
           <div className="mt-4 flex flex-wrap gap-3 justify-center items-center">
@@ -796,7 +619,7 @@ export default async function CampsPage() {
       ) : null}
 
 
-      <section className="mx-auto max-w-6xl px-6 mt-16">
+      <section className="page-section">
       {resultsHeader ? <h2 className="h2 text-gmcc-navy">{resultsHeader}</h2> : null}
       {resultsBody ? <p className="body mt-4 text-neutral-700">{resultsBody}</p> : null}
 
@@ -812,7 +635,7 @@ export default async function CampsPage() {
       </section>
 
       {showWorkAtCampSection ? (
-        <section className="mx-auto mt-16 max-w-5xl px-6">
+        <section className="page-section-narrow">
           <div className="justify-center items-center">
             <h2 className="h2 mb-2 text-gmcc-navy text-center">{workAtCampSectionTitle}</h2>
             {f.workAtCampSubheader ? (
@@ -848,121 +671,55 @@ export default async function CampsPage() {
 
 
       {(whyHeader || whyBody || benefits.length || faqsList.length) ? (
-        <section id="resources" className="relative mt-12 scroll-mt-24">
-          <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip">
-            {/* Top wave (above navy body; not covered by background) */}
-            <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
-              <svg
-                viewBox="0 0 1440 120"
-                className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-                preserveAspectRatio="none"
-                aria-hidden
-              >
-                <path
-                  d="
-                    M-20,110
-                    C750,-90  800,120  1200,80
-                    S1420,0 1460,0
-                    L1460,0 L-20,0 Z
-                  "
-                  transform="translate(0 120) scale(1 -1)"
-                  fill="var(--gmcc-navy)"
-                />
-              </svg>
+        <NavyWaveSection id="resources" bottomWave={false} contentClassName="mx-auto w-full max-w-6xl px-6 pb-12 pt-8 md:pt-16 justify-center">
+          {(whyHeader || whyBody) ? (
+            <div>
+              {whyHeader ? <h2 className="h2 text-white">{whyHeader}</h2> : null}
+              {whyBody ? <p className="body mt-4 whitespace-pre-line text-white/95">{whyBody}</p> : null}
             </div>
+          ) : null}
 
-            {/* Full-bleed navy band; content aligned to max-w-6xl + horizontal padding */}
-            <div className="relative z-0 -mt-px bg-gmcc-navy text-white">
-              <div className="mx-auto w-full max-w-6xl px-6 pb-12 pt-8 md:pt-16 justify-center">
-                {(whyHeader || whyBody) ? (
-                  <div>
-                    {whyHeader ? <h2 className="h2 text-white">{whyHeader}</h2> : null}
-                    {whyBody ? <p className="body mt-4 whitespace-pre-line text-white/95">{whyBody}</p> : null}
-                  </div>
-                ) : null}
-
-                {benefits.length ? (
-                  <div
-                    className={`grid min-w-0 gap-6 md:grid-cols-3 ${whyHeader || whyBody ? "mt-10" : ""}`}
-                  >
-                    {benefits.map((item, index) => (
-                      <TextCardBlock
-                        key={`benefit-${index}`}
-                        item={item}
-                        ctaHrefOverride={
-                          isFinancialAssistanceBenefit(item)
-                            ? acfFileHref(f.financialAssistanceApplication)
-                            : undefined
-                        }
-                      />
-                    ))}
-                  </div>
-                ) : null}
-
-                {/* ── FAQs ── */}
-                {faqsList.length > 0 && (
-                    <div className="mx-auto max-w-3xl px-6 mt-16">
-                        <h2 className="h1 mb-8 text-center text-white">FAQs</h2>
-                        <Accordion variant="onDark" items={faqsList.map((item) => ({
-                        id: item.question,
-                        title: item.question,
-                        content: <p className="body text-white/80">{item.answer}</p>,
-                        }))} allowMultiple />
-                    </div>
-                )}
-              </div>
+          {benefits.length ? (
+            <div
+              className={`grid min-w-0 gap-6 md:grid-cols-3 ${whyHeader || whyBody ? "mt-10" : ""}`}
+            >
+              {benefits.map((item, index) => (
+                <TextCardBlock
+                  key={`benefit-${index}`}
+                  item={item}
+                  ctaHrefOverride={
+                    isFinancialAssistanceBenefit(item)
+                      ? acfFileHref(f.financialAssistanceApplication)
+                      : undefined
+                  }
+                />
+              ))}
             </div>
+          ) : null}
 
-            {/* Bottom wave (below navy body)
-            <div className="relative z-[1] pointer-events-none -mt-px w-full overflow-hidden leading-none">
-              <svg
-                viewBox="0 0 390 120"
-                className="block h-14 w-full text-gmcc-navy md:hidden"
-                preserveAspectRatio="none"
-                aria-hidden
-              >
-                <path
-                  d="
-                M0,98
-                C78,62 135,54 195,74
-                C255,96 322,88 390,60
-                L390,0 L0,0 Z
-              "
-                  fill="currentColor"
-                />
-              </svg>
-
-              <svg
-                viewBox="0 0 1440 120"
-                className="hidden h-16 w-full text-gmcc-navy md:block"
-                preserveAspectRatio="none"
-                aria-hidden
-              >
-                <path
-                  d="
-                M0,110
-                C300,-50  500,120  800,100
-                S1000,0 1440,0
-                L1440,0 L0,0 Z
-              "
-                  fill="currentColor"
-                />
-              </svg>
-            </div> */}
-          </div>
-        </section>
+          {faqsList.length > 0 && (
+            <div className="mx-auto max-w-3xl px-6 mt-16">
+              <h2 className="h1 mb-8 text-center text-white">FAQs</h2>
+              <Accordion variant="onDark" items={faqsList.map((item) => ({
+                id: item.question,
+                title: item.question,
+                content: <p className="body text-white/80">{item.answer}</p>,
+              }))} allowMultiple />
+            </div>
+          )}
+        </NavyWaveSection>
       ) : null}
 
       {/* CAMP SPONSORS */}
       {campSponsors.length > 0 && (
-        <section className="mx-auto mt-20 max-w-6xl px-6">
+        <section className="page-section">
           <SponsorsGrid sponsors={campSponsors} title="Thank You to Our Camp Sponsors" />
         </section>
       )}
 
       {/* CONTACT CTA */}
       {(contactHeader || contactSubheader) && (
-        <section className="mx-auto mt-24 mb-18 max-w-6xl px-6 text-center justify-center">
+        <section className="page-section text-center">
           {contactHeader ? <h2 className="h2 text-gmcc-navy">{contactHeader}</h2> : null}
           {contactSubheader ? (
             <p className="body mt-4 whitespace-pre-line text-neutral-700">{contactSubheader}</p>

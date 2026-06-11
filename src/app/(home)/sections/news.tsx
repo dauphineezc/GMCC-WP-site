@@ -62,11 +62,12 @@ export default function NewsSection({
     _excerpt: stripHtml(p.newsFields?.body ?? ""),
   }));
 
-  // tweak to match your design
-  const CARD_HEIGHT = "h-[220px] sm:h-[240px]"; // fixed card height
+  // Fixed height tall enough for the subscribe card (title + subtext + input + button + padding)
+  // All 4 cards share the same value so every card in the 2-col grid looks identical.
+  const CARD_H = "h-[250px]";
 
   return (
-    <section className="relative overflow-hidden pb-0 pt-16 pb-10">
+    <section className="page-section relative overflow-hidden">
       <div className="mx-auto max-w-6xl px-4">
         <h2 className="h2 text-center">
           {heading}
@@ -88,10 +89,10 @@ export default function NewsSection({
               key={p.id}
               href={p.uri ?? "#"}
               aria-label={p.title ?? "Read news item"}
-              className={`group card card-hover card-link overflow-hidden p-0 ${CARD_HEIGHT}`}
+              className={`group card card-hover card-link overflow-hidden p-0 ${CARD_H}`}
             >
               <div className="grid h-full grid-cols-5">
-                <div className="col-span-2 bg-neutral-100">
+                <div className="col-span-2 h-full overflow-hidden bg-neutral-100">
                   {p.featuredImage?.node?.sourceUrl ? (
                     <img
                       src={p.featuredImage.node.sourceUrl}
@@ -104,22 +105,15 @@ export default function NewsSection({
                 </div>
 
                 <div className="col-span-3 flex h-full flex-col p-5">
-                  <div className="text-sm font-semibold leading-snug text-gmcc-navy group-hover:text-gmcc-teal line-clamp-3">
+                  <div className="text-base font-semibold leading-snug text-gmcc-navy group-hover:text-gmcc-teal line-clamp-2">
                     {p.title}
                   </div>
 
-                  {p._excerpt ? (
-                    <p className="mt-3 text-sm leading-relaxed text-neutral-700 line-clamp-4">
-                      {p._excerpt}
-                    </p>
-                  ) : (
-                    <p className="mt-3 text-sm leading-relaxed text-neutral-500 line-clamp-4">
-                      {/* keeps heights consistent even if excerpt is missing */}
-                      &nbsp;
-                    </p>
-                  )}
+                  <p className="mt-2 text-sm leading-relaxed text-neutral-700 line-clamp-4">
+                    {p._excerpt || "\u00a0"}
+                  </p>
 
-                  <div className="mt-auto pt-3 text-sm font-semibold text-gmcc-teal underline underline-offset-2 group-hover:text-gmcc-teal">
+                  <div className="mt-auto pt-2 text-sm font-semibold text-gmcc-teal group-hover:underline underline-offset-2 group-hover:translate-y-[-2px]">
                     Keep reading →
                   </div>
                 </div>
@@ -127,37 +121,34 @@ export default function NewsSection({
             </a>
           ))}
 
-          {/* Subscribe card (same fixed height + layout) */}
-          <div className={`card overflow-hidden p-0 ${CARD_HEIGHT}`}>
-            <div className="grid h-full grid-cols-1 bg-gmcc-navy">
+          {/* Subscribe card */}
+          <div className={`card overflow-hidden p-0 ${CARD_H}`}>
+            <div className="flex h-full flex-col bg-gmcc-navy p-6">
+              <div className="text-xl font-semibold leading-snug text-white">
+                Subscribe to <span className="italic">Greater Life</span>
+              </div>
 
-              <div className="col-span-1 flex h-full flex-col p-6">
-                <div className="text-2xl font-semibold leading-snug text-white line-clamp-2">
-                  Subscribe to <span className='text-italic'>Greater Life</span>
-                </div>
+              <p className="mt-2 text-sm leading-relaxed text-neutral-200 line-clamp-3">
+                {newsletterSubscriptionSubtext ||
+                  "Get updates about programs, events, and community news."}
+              </p>
 
-                <p className="mt-1 text-base leading-relaxed text-neutral-200 line-clamp-4">
-                  {newsletterSubscriptionSubtext ||
-                    "Get updates about programs, events, and community news."}
-                </p>
-
-                <div className="mt-4 pt-2">
-                  <div className="w-full px-10">
-                    <span className="sr-only pl-4">Enter your email address</span>
-                    <input type="email" placeholder="Enter your email address" className="w-full p-1 rounded-md border border-white bg-white text-neutral-700" />
-                  </div>
-                  <div className="flex justify-center mt-3">
-                    <a href={cta?.url ?? "#"} className="btn btn-secondary">
-                      Subscribe
-                    </a>
-                  </div>
+              <div className="mt-auto space-y-3">
+                <span className="sr-only">Enter your email address</span>
+                <input
+                  type="email"
+                  placeholder="Enter your email address"
+                  className="w-full rounded-md border border-white bg-white px-3 py-2 text-sm text-neutral-700"
+                />
+                <div className="flex justify-center">
+                  <a href={cta?.url ?? "#"} className="btn btn-secondary">
+                    Subscribe
+                  </a>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Optional: if you want to ensure line-clamp works everywhere, keep Tailwind's line-clamp plugin enabled */}
       </div>
     </section>
   );

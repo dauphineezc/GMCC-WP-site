@@ -1,3 +1,6 @@
+import { acfAttachmentItems } from "@/lib/wp";
+import { splitLines } from "@/lib/acf";
+
 // adjust typing however you want; keeping it loose for now
 export function mapProgram(wp: any) {
 
@@ -56,33 +59,7 @@ export function mapProgram(wp: any) {
       f.session?.nodes?.map((n: any) => n?.name).filter(Boolean) ?? [],
   };
 
-  const splitLines = (v: unknown): string[] =>
-    typeof v === "string"
-      ? v.split("\n").map(s => s.trim()).filter(Boolean)
-      : [];
-
-  const connectionToNames = (conn: any): string[] =>
-    conn?.nodes?.map((n: any) => n?.name).filter(Boolean) ?? [];
-
-  const hero = wp.featuredImage?.node;
-
-  // Build attachments array
-  const attachments: { label: string; url: string }[] = [];
-  const att = f.attachments ?? {};
-
-  const maybePushAttachment = (groupKey: string, labelKey: string, fileKey: string) => {
-    const g = att[groupKey];
-    const fileNode = g?.[fileKey]?.node;
-    const label = g?.[labelKey];
-    if (fileNode?.mediaItemUrl && label) {
-      attachments.push({ label, url: fileNode.mediaItemUrl });
-    }
-  };
-
-  maybePushAttachment("attachment1", "attachment1Label", "attachment1File");
-  maybePushAttachment("attachment2", "attachment2Label", "attachment2File");
-  maybePushAttachment("attachment3", "attachment3Label", "attachment3File");
-  maybePushAttachment("attachment4", "attachment4Label", "attachment4File");
+  const attachments = acfAttachmentItems(f.attachments);
 
   return {
 

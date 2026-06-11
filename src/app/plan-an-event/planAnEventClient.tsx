@@ -3,7 +3,9 @@
 import { useState, useMemo, useEffect } from "react";
 import Accordion from "@/components/accordion";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
-import type { RoomData, PartyPackageData, PlanAnEventFields } from "./page";
+import NavyWaveSection from "@/components/navyWaveSection";
+import type { RoomData, PartyPackageData, PlanAnEventFields } from "./planAnEventFields";
+import { acfGalleryPhotoNodes } from "@/lib/wp";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -46,36 +48,21 @@ function getCenterNames(nodes?: { title?: string | null; slug?: string | null }[
 }
 
 function getFirstPhoto(room: RoomData): string | null {
-  const g = room.rentableRoomFields?.gallery;
-  return (
-    g?.photo1?.node?.sourceUrl ??
-    g?.photo2?.node?.sourceUrl ??
-    g?.photo3?.node?.sourceUrl ??
-    g?.photo4?.node?.sourceUrl ??
-    null
-  );
+  return acfGalleryPhotoNodes(room.rentableRoomFields?.gallery)[0]?.sourceUrl ?? null;
 }
 
 function getRoomGalleryPhotos(room: RoomData): { src: string; alt: string }[] {
-  const gallery = room.rentableRoomFields?.gallery;
   const fallbackName = room.rentableRoomFields?.name ?? room.title ?? "Room";
-  const rawPhotos = [
-    gallery?.photo1,
-    gallery?.photo2,
-    gallery?.photo3,
-    gallery?.photo4,
-  ];
-
-  return rawPhotos
-    .map((photo, index) => {
-      const src = photo?.node?.sourceUrl;
+  return acfGalleryPhotoNodes(room.rentableRoomFields?.gallery)
+    .map((node: { sourceUrl?: string | null; altText?: string | null }, index: number) => {
+      const src = node.sourceUrl;
       if (!src) return null;
       return {
         src,
-        alt: photo?.node?.altText ?? `${fallbackName} photo ${index + 1}`,
+        alt: node.altText ?? `${fallbackName} photo ${index + 1}`,
       };
     })
-    .filter((photo): photo is { src: string; alt: string } => Boolean(photo));
+    .filter((photo: { src: string; alt: string } | null): photo is { src: string; alt: string } => Boolean(photo));
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -775,7 +762,7 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
       />
 
       {/* ── 3-CARD OVERVIEW ── */}
-      <section className="mx-auto max-w-6xl px-6 py-12">
+      <section className="page-section">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <SectionCard card={fields?.section1Card ?? null} href="#rent-a-space" />
           <SectionCard card={fields?.section2Card ?? null} href="#birthday-packages" />
@@ -784,8 +771,8 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
       </section>
 
       {/* ── FIND YOUR PERFECT RENTAL SPACE ── */}
-      <section id="rent-a-space" className="py-10">
-        <div className="mx-auto max-w-6xl px-6">
+      <section id="rent-a-space" className="page-section">
+        <div>
           <div className="mb-8 max-w-6xl">
             <h2 className="h2 mb-3">
               {fields?.roomRentalResultsHeader ?? "Find Your Perfect Rental Space"}
@@ -803,93 +790,30 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
       </section>
 
       {/* ── BIRTHDAY PARTY PACKAGES ── */}
-      <section id="birthday-packages" className="py-12 sm:py-16">
-        <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip">
-          {/* Top wave (above navy body; not covered by background) */}
-          <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
-            <svg
-              viewBox="0 0 1440 120"
-              className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-              preserveAspectRatio="none"
-              aria-hidden
-            >
-              <path
-                d="
-                  M-20,110
-                  C750,-90  800,120  1200,80
-                  S1420,0 1460,0
-                  L1460,0 L-20,0 Z
-                "
-                transform="translate(0 120) scale(1 -1)"
-                fill="var(--gmcc-navy)"
-              />
-            </svg>
-          </div>
-        </div>
-        <div className="relative z-0 -mt-px bg-gmcc-navy text-white">
-        <div className="mx-auto max-w-6xl px-6 py-12">
-          <div className="mb-4 max-w-6xl">
-            <h2 className="h2 text-white">Birthday Party Packages</h2>
-            {fields?.birthdayPackagesBody && (
-              <p className="body whitespace-pre-line text-neutral-200 mt-4">{fields.birthdayPackagesBody}</p>
-            )}
-          </div>
-          {fields?.allPackagesInclude && (
-            <div className="mb-8 rounded-xl bg-white px-6 py-4">
-              <p className="body">
-                <span className="font-semibold text-gmcc-navy">All packages include: </span>
-                {fields.allPackagesInclude}
-              </p>
-            </div>
-          )}
-          {birthdayPackages.length > 0 ? (
-            <PartyPackagesByCenterGrid packages={birthdayPackages} />
-          ) : (
-            <p className="body text-gmcc-grey">Birthday packages coming soon.</p>
+      <NavyWaveSection id="birthday-packages" splitTopWave bandClassName="" contentClassName="mx-auto max-w-6xl px-6 py-12">
+        <div className="mb-4 max-w-6xl">
+          <h2 className="h2 text-white">Birthday Party Packages</h2>
+          {fields?.birthdayPackagesBody && (
+            <p className="body whitespace-pre-line text-neutral-200 mt-4">{fields.birthdayPackagesBody}</p>
           )}
         </div>
-        </div>
-
-        {/* Bottom wave (below navy body) */}
-        <div className="relative z-[1] pointer-events-none -mt-px w-full overflow-hidden leading-none">
-          <svg
-            viewBox="0 0 390 120"
-            className="block h-14 w-full text-gmcc-navy md:hidden"
-            preserveAspectRatio="none"
-            aria-hidden
-          >
-            <path
-              d="
-            M0,98
-            C78,62 135,54 195,74
-            C255,96 322,88 390,60
-            L390,0 L0,0 Z
-          "
-              fill="currentColor"
-            />
-          </svg>
-
-          <svg
-            viewBox="0 0 1440 120"
-            className="hidden h-16 w-full text-gmcc-navy md:block"
-            preserveAspectRatio="none"
-            aria-hidden
-          >
-            <path
-              d="
-            M0,110
-            C300,-50  500,120  800,100
-            S1000,0 1440,0
-            L1440,0 L0,0 Z
-          "
-              fill="currentColor"
-            />
-          </svg>
-        </div>
-      </section>
+        {fields?.allPackagesInclude && (
+          <div className="mb-8 rounded-xl bg-white px-6 py-4">
+            <p className="body">
+              <span className="font-semibold text-gmcc-navy">All packages include: </span>
+              {fields.allPackagesInclude}
+            </p>
+          </div>
+        )}
+        {birthdayPackages.length > 0 ? (
+          <PartyPackagesByCenterGrid packages={birthdayPackages} />
+        ) : (
+          <p className="body text-gmcc-grey">Birthday packages coming soon.</p>
+        )}
+      </NavyWaveSection>
 
       {/* ── SPORTS EVENTS ── */}
-      <section id="sports-events" className="pb-10">
+      <section id="sports-events" className="page-section">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-8 max-w-6xl">
             <h2 className="h2 mb-3 text-gmcc-navy">Sports Events</h2>
@@ -911,7 +835,7 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
 
       {/* ── LOCATION OFFERINGS ── */}
       {(fields?.locationOfferingsHeader || fields?.offeringsByCenter) && (
-        <section className="pb-10 pt-10 sm:pb-16">
+        <section className="page-section">
           <div className="mx-auto max-w-6xl px-6">
             <div className="mb-8 max-w-6xl">
               <h2 className="h2 mb-3">
@@ -927,48 +851,31 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
       )}
 
       {/* ── START PLANNING / CONTACT ── */}
-      <section id="contact" className="">
-      <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip">
-          {/* Top wave (above navy body; not covered by background) */}
-          <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
-            <svg
-              viewBox="0 0 1440 120"
-              className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-              preserveAspectRatio="none"
-              aria-hidden
-            >
-              <path
-                d="
-                  M-20,110
-                  C750,-90  800,120  1200,80
-                  S1420,0 1460,0
-                  L1460,0 L-20,0 Z
-                "
-                transform="translate(0 120) scale(1 -1)"
-                fill="var(--gmcc-navy)"
-              />
-            </svg>
-          </div>
-        </div>
-        <div className="relative z-0 -mt-px bg-gmcc-navy text-white ">
-        <div className="mx-auto max-w-6xl px-6 py-12">
-        {/* ── FAQs ── */}
-      {faqItems.length > 0 && (
+      <NavyWaveSection
+        id="contact"
+        splitTopWave
+        bottomWave={false}
+        bandClassName=""
+        contentClassName="mx-auto max-w-6xl px-6 py-12"
+      >
+        {faqItems.length > 0 && (
           <div className="mx-auto max-w-3xl px-6">
             <h2 className="h2 mb-8 text-center text-white">FAQs</h2>
-            <Accordion variant="onDark" items={faqItems.map((item) => ({
-              id: item.id,
-              title: item.title,
-              content: <p className="body text-white/80">{item.content}</p>,
-            }))} allowMultiple />
+            <Accordion
+              variant="onDark"
+              items={faqItems.map((item) => ({
+                id: item.id,
+                title: item.title,
+                content: <p className="body text-white/80">{item.content}</p>,
+              }))}
+              allowMultiple
+            />
           </div>
-      )}
-      </div>
-      </div>
-      </section>
+        )}
+      </NavyWaveSection>
 
-      <section className="pt-16 pb-10 sm:pt-16">
-      <div className="mx-auto max-w-3xl px-6 text-center">
+      <section className="mx-auto max-w-3xl px-6 section-y text-center">
+      <div>
           <h2 className="h2 mb-4 text-gmcc-navy">
             {fields?.contactHeader ?? "Start Planning Your Event"}
           </h2>

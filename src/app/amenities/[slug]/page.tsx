@@ -62,31 +62,7 @@ const AMENITIES_PAGE_SPECIAL_FIELDS_QUERY = `
             sundayHours
           }
           gallery {
-            photo1 {
-              node {
-                sourceUrl
-                altText
-              }
-            }
-            photo2 {
-              node {
-                sourceUrl
-                altText
-              }
-            }
-            photo3 {
-              node {
-                sourceUrl
-                altText
-              }
-            }
-            photo4 {
-              node {
-                sourceUrl
-                altText
-              }
-            }
-            photo5 {
+            photos {
               node {
                 sourceUrl
                 altText

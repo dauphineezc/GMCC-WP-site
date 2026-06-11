@@ -55,7 +55,7 @@ export default async function TakeATourPage() {
     <main className="pb-16">
       <SolidNavyWaveHeader title={f?.header} description={f?.subheader} />
 
-      <section className="mx-auto mt-8 max-w-6xl px-6 stack-2">
+      <section className="page-section stack-2">
         <h2 className="mt-8 text-center text-xl font-extrabold text-gmcc-navy md:text-left md:text-2xl">
           Schedule a tour using the form below
         </h2>

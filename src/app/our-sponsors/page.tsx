@@ -61,7 +61,7 @@ export default async function OurSponsorsPage() {
 
       {/* Header + body intro */}
       {(pageFields?.header || pageFields?.body) && (
-        <section className="mx-auto mt-16 max-w-6xl px-6">
+        <section className="page-section">
           {pageFields?.header && (
             <h2 className="h2 text-gmcc-navy">{pageFields.header}</h2>
           )}
@@ -73,14 +73,14 @@ export default async function OurSponsorsPage() {
 
       {/* Sponsors grid */}
       {sponsors.length > 0 && (
-        <section className="mx-auto mt-16 max-w-6xl px-6">
+        <section className="page-section">
           <SponsorsGrid sponsors={sponsors} />
         </section>
       )}
 
       {/* Become a Sponsor */}
       {becomeASponsor && (
-        <section className="mx-auto py-24 max-w-6xl px-6">
+        <section className="page-section">
           <div className="relative card bg-gmcc-navy text-white p-0">
             <div className="grid gap-y-4 md:grid-cols-5 md:items-stretch md:gap-x-0">
               <div className="col-span-3 flex flex-col justify-center gap-4 p-8">

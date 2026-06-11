@@ -22,7 +22,7 @@ export default function CommunityActivitySchedulesPage() {
   return (
     <main>
         <HeaderImage src="/images/CommunityActivityPhoto.png" alt="Community Activity Schedules" />
-        <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+        <div className="page-section stack-8">
           <h1 className="text-3xl font-bold text-gmcc-navy tracking-tight sm:text-4xl mb-4">Community Activity Schedules</h1>
           <h3 className="text-xl text-neutral-700 mt-0 mb-4">Make new friends and learn new skills by participating in a community activity.
              Free for members; $7 per non-member participant. View the schedules for all community activities at the Community Center below.</h3>

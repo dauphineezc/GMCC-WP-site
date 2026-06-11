@@ -35,30 +35,9 @@ query ProgramBySlug($slug: ID!) {
       audience    { nodes { name slug } }
       session     { nodes { name slug } }
 
-      # Media Gallery (each image is AcfMediaItemConnectionEdge)
-      mediaGallery {
-        image1 {
-          node {
-            sourceUrl
-            altText
-            mediaDetails { width height }
-          }
-        }
-        image2 {
-          node {
-            sourceUrl
-            altText
-            mediaDetails { width height }
-          }
-        }
-        image3 {
-          node {
-            sourceUrl
-            altText
-            mediaDetails { width height }
-          }
-        }
-        image4 {
+      # Media gallery (ACF repeater; each row is AcfMediaItemConnectionEdge)
+      gallery {
+        photos {
           node {
             sourceUrl
             altText
@@ -67,46 +46,13 @@ query ProgramBySlug($slug: ID!) {
         }
       }
 
-      # Attachments (each file field is AcfMediaItemConnectionEdge)
+      # Attachments (ACF repeater; each row has file subfield)
       attachments {
-        attachment1 {
-          attachment1Label
-          attachment1File {
-            node {
-              mediaItemUrl
-            }
-          }
-        }
-        attachment2 {
-          attachment2Label
-          attachment2File {
-            node {
-              mediaItemUrl
-            }
-          }
-        }
-        attachment3 {
-          attachment3Label
-          attachment3File {
-            node {
-              mediaItemUrl
-            }
-          }
-        }
-        attachment4 {
-          attachment4Label
-          attachment4File {
-            node {
-              mediaItemUrl
-            }
-          }
-        }
-        attachment5 {
-          attachment5Label
-          attachment5File {
-            node {
-              mediaItemUrl
-            }
+        file {
+          node {
+            sourceUrl
+            mediaItemUrl
+            title
           }
         }
       }

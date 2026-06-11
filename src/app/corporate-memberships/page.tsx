@@ -3,7 +3,8 @@ import {
   resolvePhotoWaveHeaderProps,
   type WpPageWithHeroFields,
 } from "@/lib/pageHeroFields";
-import { resolveWpMediaUrl, wpFetch } from "@/lib/wp";
+import { acfCorporatePartnerItems, wpFetch } from "@/lib/wp";
+import { isExternalHref } from "@/lib/acf";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import CorporateAmenityTiles from "@/components/corporateAmenityTiles";
 import CorporateMembershipBenefits from "@/components/corporateMembershipBenefits";
@@ -66,11 +67,8 @@ query CorporateMembershipsPage($uri: ID!) {
       becomeAPartnerSubheader
 
       corporatePartners {
-        partner1 { pageLink logo { node { sourceUrl altText } } }
-        partner2 { pageLink logo { node { sourceUrl altText } } }
-        partner3 { pageLink logo { node { sourceUrl altText } } }
-        partner4 { pageLink logo { node { sourceUrl altText } } }
-        partner5 { pageLink logo { node { sourceUrl altText } } }
+        logo { node { sourceUrl mediaItemUrl altText } }
+        pageLink
       }
     }   
   }
@@ -116,57 +114,15 @@ type CorporateMembershipsPageData = {
                     } | null;
                 } | null> | null;
             } | null;
-            corporatePartners?: {
-                partner1?: { pageLink?: string | null; logo?: { node?: WpImageNode | null } | null } | null;
-                partner2?: { pageLink?: string | null; logo?: { node?: WpImageNode | null } | null } | null;
-                partner3?: { pageLink?: string | null; logo?: { node?: WpImageNode | null } | null } | null;
-                partner4?: { pageLink?: string | null; logo?: { node?: WpImageNode | null } | null } | null;
-                partner5?: { pageLink?: string | null; logo?: { node?: WpImageNode | null } | null } | null;
-            } | null;
+            corporatePartners?: unknown;
             becomeAPartnerHeader?: string | null;
             becomeAPartnerSubheader?: string | null;
         } | null;
     };
 };
 
-type WpImageNode = {
-    sourceUrl?: string | null;
-    mediaItemUrl?: string | null;
-    altText?: string | null;
-};
-
 const AMENITY_KEYS = ["amenity1", "amenity2", "amenity3", "amenity4", "amenity5"] as const;
 const BENEFIT_KEYS = ["benefit1", "benefit2", "benefit3", "benefit4", "benefit5"] as const;
-const PARTNER_KEYS = ["partner1", "partner2", "partner3", "partner4", "partner5"] as const;
-
-type PartnerLogoItem = {
-    resolvedUrl: string;
-    altText?: string | null;
-    pageLink: string | null;
-};
-
-function corporatePartnerLogoItems(
-    corporatePartners:
-        | NonNullable<
-              NonNullable<CorporateMembershipsPageData["page"]>["corporateMembershipPageFields"]
-          >["corporatePartners"]
-        | null
-        | undefined,
-): PartnerLogoItem[] {
-    if (!corporatePartners) return [];
-    return PARTNER_KEYS.flatMap((key) => {
-        const p = corporatePartners[key];
-        const logoNode = p?.logo?.node;
-        const url = resolveWpMediaUrl(logoNode?.sourceUrl ?? logoNode?.mediaItemUrl);
-        if (!url || !logoNode) return [];
-        const pageLink = (p?.pageLink ?? "").trim() || null;
-        return [{ resolvedUrl: url, altText: logoNode.altText, pageLink }];
-    });
-}
-
-function isExternalHref(href: string): boolean {
-    return /^https?:\/\//i.test(href);
-}
 
 function corporateAmenityStrings(
     amenities: NonNullable<
@@ -214,8 +170,9 @@ export default async function CorporateMembershipsPage() {
     const testimonialsHeader = page?.corporateMembershipPageFields?.testimonialsHeader;
     const testimonials = page?.corporateMembershipPageFields?.testimonials;
     const normalizedTestimonials = normalizeTestimonials(testimonials?.nodes ?? []);
-    const corporatePartners = page?.corporateMembershipPageFields?.corporatePartners;
-    const partnerLogoNodes = corporatePartnerLogoItems(corporatePartners);
+    const partnerLogoNodes = acfCorporatePartnerItems(
+        page?.corporateMembershipPageFields?.corporatePartners,
+    );
 
     return (
 
@@ -227,7 +184,7 @@ export default async function CorporateMembershipsPage() {
           ctas={heroProps.ctas}
         />
         
-        <section className="mx-auto max-w-6xl px-4 pt-16 section-y stack-6">
+        <section className="page-section stack-6">
           {redirectForIndividualEmployees ? <p className="body mx-auto max-w-6xl text-center text-sm italic mb-8"> {redirectForIndividualEmployees}</p> : null}
           {whyCorporateWellnessHeader ? <h2 className="h2 text-center">{whyCorporateWellnessHeader}</h2> : null}
           {whyCorporateWellnessBody ? <p className="body mx-auto max-w-6xl text-center text-base mt-4">{whyCorporateWellnessBody}</p> : null}
@@ -240,7 +197,7 @@ export default async function CorporateMembershipsPage() {
 
         {/* TESTIMONIALS */}
         {testimonialsHeader || normalizedTestimonials.length || partnerLogoNodes.length > 0 ? (
-            <section className="mx-auto max-w-6xl px-6 pt-16 mt-4">
+            <section className="page-section">
             {testimonialsHeader ? (
                 <h2 className="h2 text-center">{testimonialsHeader}</h2>
             ) : null}
@@ -287,7 +244,7 @@ export default async function CorporateMembershipsPage() {
             </section>
         ) : null}
 
-        <section className="mx-auto max-w-6xl px-4 mt-4 pt-16 section-y stack-6">
+        <section className="page-section stack-6">
             {becomeAPartnerHeader ? <h2 className="h2 text-center">{becomeAPartnerHeader}</h2> : null}
             {becomeAPartnerSubheader ? <p className="body mx-auto max-w-6xl text-center text-base mt-4">{becomeAPartnerSubheader}</p> : null}
 

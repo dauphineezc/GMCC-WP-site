@@ -37,7 +37,7 @@ export default function EventsSection({ events }: { events?: EventItem[] | null 
   if (!top4.length) return null;
 
   return (
-    <section className="relative overflow-x-clip pt-8 pb-8">
+    <section className="page-section relative overflow-x-clip">
       <div className="mx-auto min-w-0 max-w-6xl px-4">
         <h2 className="h2 text-center">Upcoming Events</h2>
 

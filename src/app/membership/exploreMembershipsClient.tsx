@@ -23,6 +23,7 @@ import { getBodyParts } from "@/components/centerCampaignModule";
 import SimpleCampaign from "@/components/simpleCampaign";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import type { HeroCta } from "@/components/photoWaveHeader";
+import NavyWaveSection from "@/components/navyWaveSection";
 import { computeMembershipPricingSavings } from "@/lib/membershipPricingSavings";
 
 export type Audience = {
@@ -343,16 +344,10 @@ export default function ExploreMembershipsClient({
       groupMap.set(tier, existing);
     }
 
-    const TIER_ORDER: Record<string, number> = {
-      center: 0,
-      "center plus": 1,
-      "all access": 2,
-    };
-
     return Array.from(groupMap.entries())
       .sort(([a], [b]) => {
-        const aOrder = TIER_ORDER[a.toLowerCase()] ?? 99;
-        const bOrder = TIER_ORDER[b.toLowerCase()] ?? 99;
+        const aOrder = getMembershipTierSortOrder(a);
+        const bOrder = getMembershipTierSortOrder(b);
         if (aOrder !== bOrder) return aOrder - bOrder;
         return a.localeCompare(b);
       })
@@ -430,7 +425,8 @@ export default function ExploreMembershipsClient({
         <div className="overflow-x-clip">
           {/* CURRENT PROMOTION */}
       {fields.showCurrentPromotion && fields.currentPromotion && (
-        <div className="relative mt-16 mx-auto max-w-6xl p-0 card bg-gmcc-navy text-white">
+        <div className="page-section">
+          <div className="relative card bg-gmcc-navy p-0 text-white">
           <div className="grid gap-y-4 md:grid-cols-5 md:items-stretch md:gap-x-0">
             <div className="col-span-3 flex flex-col justify-center gap-4 p-8">
               <h2 className="h2 mb-4 text-white">
@@ -466,12 +462,13 @@ export default function ExploreMembershipsClient({
               />
             </div>
           </div>
+          </div>
         </div>
       )}
 
           {/* SEE WHAT YOU CAN GET — Amenities */}
           {amenityDisplayItems.length > 0 && (
-            <section className="mx-auto max-w-6xl px-4 py-12 pt-16">
+            <section className="page-section">
               <h2 className="h2 mb-2">
                 {fields.benefitsHeader || "See What You Can Get with Your Membership"}
               </h2>
@@ -505,7 +502,7 @@ export default function ExploreMembershipsClient({
 
           {/* FEATURED CAMPAIGN */}
           {fields.campaign && (
-            <div className="relative mt-16 mb-16">
+            <div className="section-y">
               <SimpleCampaign campaign={fields.campaign} />
             </div>
           )}
@@ -635,7 +632,8 @@ export default function ExploreMembershipsClient({
 
           {/* QUIZ CTA SECTION */}
           <section>
-            <div className="mt-16 card bg-gmcc-navy text-white mx-auto max-w-6xl px-12 py-8">
+            <div className="page-section">
+              <div className="card bg-gmcc-navy px-12 py-8 text-white">
               <div className="grid gap-4 md:grid-cols-2 items-center">
                 <div className="col-span-1 gap-4">
                   <h2 className="h2 mb-4 text-white">
@@ -668,66 +666,46 @@ export default function ExploreMembershipsClient({
                     </button>
                 </div>
               </div>
+              </div>
             </div>
           </section>
 
           {/* FINANCIAL ASSISTANCE */}
-          <section>
-            <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mt-16 w-full overflow-x-clip">
-              {/* Top wave (above navy body; not covered by background) */}
-              <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
-                <svg
-                  viewBox="0 0 1440 120"
-                  className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-                  preserveAspectRatio="none"
-                  aria-hidden
-                >
-                  <path
-                    d="
-                      M-20,110
-                      C750,-90  800,120  1200,80
-                      S1420,0 1460,0
-                      L1460,0 L-20,0 Z
-                    "
-                    transform="translate(0 120) scale(1 -1)"
-                    fill="var(--gmcc-navy)"
-                  />
-                </svg>
-              </div>
-            </div>
-            <div className="relative z-0 -mt-px pb-4 mb-0 bg-gmcc-navy text-white">
-            <div className="mx-auto max-w-6xl px-4 pt-16 sm:py-16 text-center justify-center items-center">
-                <h2 className="h2 text-white">
-                  {fields.financialAssistanceHeader || "Financial Assistance"}
-                </h2>
-                <p className="eyebrow mt-6 text-gmcc-green-light">
-                  {fields.financialAssistanceSubheader || "Need help covering membership costs?"}
-                </p>
-                {fields.financialAssistanceDescription && (
-                  <p className="body mt-6 max-w-4xl text-neutral-200 mx-auto">
-                    {fields.financialAssistanceDescription}
-                  </p>
-                )}
+          <NavyWaveSection
+            splitTopWave
+            bottomWave={false}
+            bandClassName="pb-4 mb-0"
+            contentClassName="mx-auto max-w-6xl px-4 pt-16 sm:py-16 text-center justify-center items-center"
+          >
+            <h2 className="h2 text-white">
+              {fields.financialAssistanceHeader || "Financial Assistance"}
+            </h2>
+            <p className="eyebrow mt-6 text-gmcc-green-light">
+              {fields.financialAssistanceSubheader || "Need help covering membership costs?"}
+            </p>
+            {fields.financialAssistanceDescription && (
+              <p className="body mt-6 max-w-4xl text-neutral-200 mx-auto">
+                {fields.financialAssistanceDescription}
+              </p>
+            )}
 
-                <button
-                  type="button"
-                  onClick={scrollToEstimator}
-                  className="btn btn-tertiary mt-8 mx-auto mr-1"
-                >
-                  {fields.financialAssistanceCtas?.estimatorLabel || "Apply / Get Started"}
-                </button>
+            <button
+              type="button"
+              onClick={scrollToEstimator}
+              className="btn btn-tertiary mt-8 mx-auto mr-1"
+            >
+              {fields.financialAssistanceCtas?.estimatorLabel || "Apply / Get Started"}
+            </button>
 
-                {fields.financialAssistanceCtas?.applicationPdf ? (
-                  <a
-                    href={fields.financialAssistanceCtas.applicationPdf}
-                    className="btn btn-secondary mt-8 mx-auto ml-1"
-                  >
-                    {fields.financialAssistanceCtas.applicationCtaLabel || "Apply / Get Started"}
-                  </a>
-                ) : null}
-              </div>
-            </div>
-          </section>
+            {fields.financialAssistanceCtas?.applicationPdf ? (
+              <a
+                href={fields.financialAssistanceCtas.applicationPdf}
+                className="btn btn-secondary mt-8 mx-auto ml-1"
+              >
+                {fields.financialAssistanceCtas.applicationCtaLabel || "Apply / Get Started"}
+              </a>
+            ) : null}
+          </NavyWaveSection>
 
           {/* HEALTHY 100 CHALLENGE */}
           {fields.healthy100Challenge && (
@@ -853,6 +831,32 @@ function isAllAccessTier(tierName: string): boolean {
   return tierName.toLowerCase().includes("all access");
 }
 
+function getMembershipTierSortOrder(tierName: string): number {
+  const lower = tierName.toLowerCase();
+  if (lower.includes("all access")) return 2;
+  if (lower.includes("center plus")) return 1;
+  if (lower.includes("center")) return 0;
+  return 99;
+}
+
+function isDefaultAdultAudience(audienceLabel: string): boolean {
+  const aud = audienceLabel.toLowerCase();
+  if (
+    aud.includes("youth") ||
+    aud.includes("junior") ||
+    aud.includes("young") ||
+    aud.includes("family") ||
+    aud.includes("senior")
+  ) {
+    return false;
+  }
+  return (
+    (aud.includes("adult") && !aud.includes("young")) ||
+    aud.includes("individual") ||
+    (aud.includes("25") && aud.includes("over"))
+  );
+}
+
 function PricingSavingsCallout({ percent }: { percent: number | null }) {
   if (percent == null || percent <= 0) return null;
   return (
@@ -877,10 +881,9 @@ function TierCard({
   secondary?: boolean;
   featured?: boolean;
 }) {
-  const defaultIdx = variants.findIndex((v) => {
-    const aud = getAudienceFromTitle(v.title).toLowerCase();
-    return aud.includes("adult") && !aud.includes("young");
-  });
+  const defaultIdx = variants.findIndex((v) =>
+    isDefaultAdultAudience(getAudienceFromTitle(v.title))
+  );
   const [selectedIdx, setSelectedIdx] = useState(defaultIdx >= 0 ? defaultIdx : 0);
   const [benefitsExpanded, setBenefitsExpanded] = useState(false);
   const [joinChoiceOpen, setJoinChoiceOpen] = useState(false);

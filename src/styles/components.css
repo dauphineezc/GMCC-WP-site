@@ -1,9 +1,53 @@
 @layer components {
-    /* Layout rhythm */
-    .section-y { @apply py-12 sm:py-16; }
+    /* Layout rhythm — plain CSS (Tailwind v4 cannot @apply custom component classes) */
+    .section-y {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    .section-gap {
+        margin-top: 2rem;
+    }
+    .page-section {
+        margin-inline: auto;
+        max-width: 72rem;
+        padding-inline: 1.5rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    .page-section-narrow {
+        margin-inline: auto;
+        max-width: 64rem;
+        padding-inline: 1.5rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    .page-section-wide {
+        margin-inline: auto;
+        max-width: 56rem;
+        padding-inline: 1.5rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
     .stack-8 { @apply space-y-8; }
+    .stack-6 { @apply space-y-6; }
     .stack-4 { @apply space-y-4; }
+    .stack-3 { @apply space-y-3; }
     .stack-2 { @apply space-y-2; }
+    @media (width >= 40rem) {
+        .section-y {
+            padding-top: 3rem;
+            padding-bottom: 3rem;
+        }
+        .section-gap {
+            margin-top: 2rem;
+        }
+        .page-section,
+        .page-section-narrow,
+        .page-section-wide {
+            padding-top: 3rem;
+            padding-bottom: 3rem;
+        }
+    }
 
       
     /* Type scale */

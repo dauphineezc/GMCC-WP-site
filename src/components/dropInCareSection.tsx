@@ -2,8 +2,8 @@ import {
   type DropInCareFields,
   type DropInTextCard,
   dropInTextCardHasContent,
-  openLinkInNewTab,
 } from "@/lib/dropInCareFields";
+import { openLinkInNewTab } from "@/lib/acf";
 
 function DropInCard({
   title,
@@ -68,7 +68,7 @@ export function DropInCareSection({
   const layoutClass = contain ? "mx-auto max-w-6xl px-6" : "w-full";
 
   return (
-    <section className={`${layoutClass} section-y py-8 ${className}`.trim()}>
+    <section className={`${layoutClass} section-y ${className}`.trim()}>
       {fields.dropInCareHeader ? <h2 className="h2">{fields.dropInCareHeader}</h2> : null}
       {fields.dropInCareDescription ? (
         <p className="body mt-2 whitespace-pre-line text-neutral-700 mb-8">

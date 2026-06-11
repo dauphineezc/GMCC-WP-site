@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import Accordion from "@/components/accordion";
+import NavyWaveSection from "@/components/navyWaveSection";
 
 // ─── Section 1 data ──────────────────────────────────────────────────────────
 
@@ -314,9 +315,13 @@ export default function VisitPage() {
       />
 
       {/* ── Section 1: What Are You Looking For? ─────────────────────────── */}
-      <section className="mt-0 pt-0" id="categories">
-        <div className="bg-gmcc-navy">
-        <div className="mx-auto max-w-6xl px-4 py-12">
+      <NavyWaveSection
+        id="categories"
+        topWave={false}
+        fullBleed={false}
+        bandClassName=""
+        contentClassName="mx-auto max-w-6xl px-4 py-12"
+      >
         <div className="mb-10 text-center">
           <h2 className="h2 text-white">What Are You Looking For?</h2>
         </div>
@@ -350,45 +355,10 @@ export default function VisitPage() {
             </div>
           ))}
         </div>
-        </div>
-        </div>
-        <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
-          <svg
-            viewBox="0 0 390 120"
-            className="block h-14 w-full text-gmcc-navy md:hidden"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M0,98
-                C78,62 135,54 195,74
-                C255,96 322,88 390,60
-                L390,0 L0,0 Z
-              "
-              fill="currentColor"
-            />
-          </svg>
-
-          <svg
-            viewBox="0 0 1440 120"
-            className="hidden h-16 w-full text-gmcc-navy md:block"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M0,110
-                C300,-50  500,120  800,100
-                S1000,0 1440,0
-                L1440,0 L0,0 Z
-              "
-              fill="currentColor"
-            />
-          </svg>
-        </div>
-      </section>
+      </NavyWaveSection>
 
       {/* ── Section 2: What's Happening Today? ───────────────────────────── */}
-      <section className="pt-16" id="today">
+      <section className="page-section" id="today">
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-10">
             <h2 className="h2 text-center">What&rsquo;s Happening Today?</h2>
@@ -476,32 +446,17 @@ export default function VisitPage() {
       </section>
 
       {/* ── Section 3: Visiting For the Day? ─────────────────────────────── */}
-      <section className="pt-16" id="access">
-        <div className="pointer-events-none w-full overflow-hidden leading-none">
-            <svg
-              viewBox="0 0 1440 120"
-              className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="
-                  M-20,110
-                  C750,-90  800,120  1200,80
-                  S1420,0 1460,0
-                  L1460,0 L-20,0 Z
-                "
-                transform="translate(0 120) scale(1 -1)"
-                fill="var(--gmcc-navy)"
-              />
-            </svg>
-          </div>
-
-          <div className="bg-gmcc-navy mt-[-2px] pt-0">
-          <div className="mx-auto max-w-6xl px-4 pt-12 pb-4">
-            <h2 className="h2 text-white">Visiting For the Day?</h2>
-            <p className="body mt-2 max-w-2xl text-neutral-200 mb-8">
-              Choose the access option that best fits your visit.
-            </p>
+      <NavyWaveSection
+        id="access"
+        fullBleed={false}
+        className="section-gap"
+        bandClassName="mt-[-2px] pt-0"
+        contentClassName="mx-auto max-w-6xl px-4 pt-12 pb-4"
+      >
+        <h2 className="h2 text-white">Visiting For the Day?</h2>
+        <p className="body mt-2 max-w-2xl text-neutral-200 mb-8">
+          Choose the access option that best fits your visit.
+        </p>
 
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {ACCESS_OPTIONS.map((opt) => (
@@ -546,46 +501,10 @@ export default function VisitPage() {
           </Link>{" "}
           or ask at the Welcome Desk at any center.
         </p>
-        </div>
-        </div>
-        
-        <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
-          <svg
-            viewBox="0 0 390 120"
-            className="block h-14 w-full text-gmcc-navy md:hidden"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M0,98
-                C78,62 135,54 195,74
-                C255,96 322,88 390,60
-                L390,0 L0,0 Z
-              "
-              fill="currentColor"
-            />
-          </svg>
-
-          <svg
-            viewBox="0 0 1440 120"
-            className="hidden h-16 w-full text-gmcc-navy md:block"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M0,110
-                C300,-50  500,120  800,100
-                S1000,0 1440,0
-                L1440,0 L0,0 Z
-              "
-              fill="currentColor"
-            />
-          </svg>
-        </div>
-      </section>
+      </NavyWaveSection>
 
       {/* ── Section 4: Build Your Perfect Day ────────────────────────────── */}
-      <section className="pt-16" id="perfect-day">
+      <section className="page-section" id="perfect-day">
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-10">
             <h2 className="h2">Build Your Perfect Day</h2>
@@ -639,7 +558,7 @@ export default function VisitPage() {
       </section>
 
       {/* ── Section 5: FAQs ───────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-3xl px-4 pt-16 mt-12" id="faqs">
+      <section className="mx-auto max-w-3xl px-6 section-y" id="faqs">
         <div className="mb-8">
           <h2 className="h2 text-center">FAQs for First-Time Visitors</h2>
         </div>
@@ -647,7 +566,7 @@ export default function VisitPage() {
       </section>
 
       {/* CONTACT SECTION */}
-        <section className="mx-auto pt-16 mt-12 mb-16 max-w-6xl px-6 text-center">
+        <section className="page-section text-center">
         <h2 className="h2 text-gmcc-navy">Have Questions?</h2>
         <Link href="/contact" className="btn bg-gmcc-navy text-white hover:bg-neutral-100 mt-6 text-base px-8 py-3">
           Contact Us

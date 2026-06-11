@@ -201,11 +201,9 @@ export default async function LeadershipPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 mt-6">
-
         {/* Organization Section */}
         {fields?.organizationHeader && (
-          <section className="stack-6">
+          <section className="page-section stack-6">
             <h2 className="h2 text-gmcc-navy text-center mb-4">
               {fields.organizationHeader}
             </h2>
@@ -220,7 +218,7 @@ export default async function LeadershipPage() {
 
         {/* Executive Leaders Section */}
         {elts.length > 0 && (
-          <section className="stack-6">
+          <section className="page-section stack-6">
             <h2 className="h2 text-gmcc-navy text-center mb-6">
               Executive Leaders
             </h2>
@@ -271,7 +269,7 @@ export default async function LeadershipPage() {
 
         {/* Board of Trustees Section */}
         {fields?.boardOfTrusteesHeader && (
-          <section className="stack-6">
+          <section className="page-section stack-6">
             <h2 className="h2 text-gmcc-navy text-center mb-4">
               {fields.boardOfTrusteesHeader}
             </h2>
@@ -318,8 +316,8 @@ export default async function LeadershipPage() {
         )}
 
         {/* Operating Unit Boards Accordion */}
-        <section className="stack-6">
-        <h2 className="eyebrow pl-28 mb-4">
+        <section className="page-section stack-6">
+        <h2 className="eyebrow pl-28 mb-8">
             Operating Unit Boards
           </h2>
           <div className="max-w-4xl mx-auto">
@@ -331,7 +329,6 @@ export default async function LeadershipPage() {
               curlcBoardMembers={fields?.curlcBoardMembers}
             />
           </div>
-        </section>
         </section>
     </main>
   );

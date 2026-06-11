@@ -37,7 +37,14 @@ export type ProgramCard = {
 export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
   const f = wp.programFields ?? {};
   const hero = wp.featuredImage?.node;
-  const galleryHero = f?.mediaGallery?.image1?.node;
+  const galleryRows = Array.isArray(f?.gallery)
+    ? f.gallery
+    : f?.gallery
+      ? [f.gallery]
+      : [];
+  const galleryHero =
+    galleryRows.find((row: { photos?: { node?: { sourceUrl?: string } } }) => row?.photos?.node?.sourceUrl)
+      ?.photos?.node ?? null;
 
   const centers =
     f.center?.nodes?.map((c: any) => ({

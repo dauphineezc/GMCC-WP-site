@@ -1,4 +1,5 @@
 import { acfCtaHref, resolveWpMediaUrl } from "@/lib/wp";
+import { asString, type MediaFieldInput, type MediaRef } from "@/lib/acf";
 
 /** GraphQL selection set for drop-in care on `earlyChildhoodPageFields`. */
 export const DROP_IN_CARE_FIELDS_GRAPHQL = `
@@ -34,17 +35,6 @@ export type DropInCareFields = {
   childwatchCard: DropInTextCard;
   theZoneCard: DropInTextCard;
 };
-
-type MediaFieldInput = { node?: MediaRef | null } | MediaRef | undefined;
-type MediaRef = {
-  sourceUrl?: string | null;
-  mediaItemUrl?: string | null;
-  title?: string | null;
-} | null;
-
-function asString(v: unknown): string {
-  return typeof v === "string" ? v.trim() : "";
-}
 
 function mediaHref(m: MediaFieldInput): string {
   if (m && typeof m === "object" && "node" in m && m.node) {
@@ -105,13 +95,6 @@ export function hasDropInCareContent(acf: Record<string, unknown> | null | undef
   );
 }
 
-export function isExternalHref(href: string): boolean {
-  const t = href.trim();
-  return /^https?:\/\//i.test(t) || /^mailto:/i.test(t) || /^tel:/i.test(t);
-}
+/** @deprecated Import from `@/lib/acf` instead. Re-exported for backward compatibility. */
+export { isExternalHref, openLinkInNewTab } from "@/lib/acf";
 
-export function openLinkInNewTab(url: string, linkTarget?: string | null): boolean {
-  if (linkTarget === "_blank") return true;
-  if (linkTarget === "_self") return false;
-  return isExternalHref(url);
-}

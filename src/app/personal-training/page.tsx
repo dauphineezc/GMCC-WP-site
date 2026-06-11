@@ -8,10 +8,12 @@ import type {
 } from "@/components/programs/directoryHeaderShared";
 import { PROGRAMS_ALL_AT_ONCE } from "@/lib/programsListQuery";
 import { wpFetch } from "@/lib/wp";
+import { collectNumberedFaqs } from "@/lib/acf";
 import { PAGE_HERO_FIELDS_GRAPHQL } from "@/lib/pageHeroFields";
 import { resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import FeaturedTestimonialsCarousel from "@/components/featuredTestimonialsCarousel";
+import NavyWaveSection from "@/components/navyWaveSection";
 import { normalizeTestimonials } from "@/components/testimonials";
 
 type WPProgram = {
@@ -353,13 +355,7 @@ export default async function PersonalTrainingPage() {
     const inquiryFormHeader = data?.page?.personalTrainingDirectoryPageFields?.inquiryFormHeader ?? "Ready to Get Started?";
     const inquiryFormSubheader = data?.page?.personalTrainingDirectoryPageFields?.inquiryFormSubheader ?? "Fill out the inquiry form below.";
 
-    const faqs = data?.page?.personalTrainingDirectoryPageFields?.faqs;
-    const faqsList = [faqs?.faq1, faqs?.faq2, faqs?.faq3]
-    .map((item: any) => ({
-      question: item?.question ?? "",
-      answer: item?.answer ?? "",
-    }))
-    .filter((item: { question: string; answer: string }) => item.question || item.answer);
+    const faqsList = collectNumberedFaqs(data?.page?.personalTrainingDirectoryPageFields?.faqs, 3);
 
     const testimonialsHeader = data?.page?.personalTrainingDirectoryPageFields?.testimonialsHeader ?? "Testimonials";
     const featuredTestimonials = normalizeTestimonials(
@@ -386,7 +382,7 @@ export default async function PersonalTrainingPage() {
     <main className="overflow-x-clip">
       <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
 
-      <section className="mx-auto mt-16 max-w-6xl px-6">
+      <section className="page-section">
         <h2 className="h2 text-gmcc-navy">
           {data?.page?.personalTrainingDirectoryPageFields?.bodyHeader ?? "Why Personal Training at Greater Midland?"}
         </h2>
@@ -408,7 +404,7 @@ export default async function PersonalTrainingPage() {
         ) : null}
       </section>
 
-      <section className="mx-auto mt-16 max-w-6xl px-6">
+      <section className="page-section">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
             <h2 className="h2 text-gmcc-navy">{trainingOptionsHeader}</h2>
@@ -483,92 +479,41 @@ export default async function PersonalTrainingPage() {
         </div>
       </section>
 
-      <section id="trainers" className="relative mt-16 w-[100dvw] -ml-[calc(50dvw-50%)] overflow-x-clip">
-        <div className="pointer-events-none w-full overflow-hidden leading-none">
-          <svg
-            viewBox="0 0 1440 120"
-            className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M-20,110
-                C750,-90  800,120  1200,80
-                S1420,0 1460,0
-                L1460,0 L-20,0 Z
-              "
-              transform="translate(0 120) scale(1 -1)"
-              fill="var(--gmcc-navy)"
-            />
-          </svg>
-        </div>
-
-        <div className="-mt-px bg-gmcc-navy py-12 text-white">
-          <div className="mx-auto max-w-6xl px-6">
-            <h2 className="h2 text-white">{trainersHeader}</h2>
-            <p className="mt-2 text-white/90">
-              {trainersSubheader}
-            </p>
-            <div className="mt-6 rounded-2xl bg-gmcc-navy p-4 text-neutral-900 md:p-6">
-              <PersonalTrainingDirectoryHeader
-                data={{ trainers: fields.trainers ?? [] }}
-                className="w-full"
-              />
-            </div>
-          </div>
-
-          <div className="mx-auto mt-16 max-w-3xl px-0">
-            <h2 className="h2 mb-8 text-center text-white">FAQs</h2>
-            <Accordion
-              variant="onDark"
-              items={faqsList.map((item: { question: string; answer: string }) => ({
-                id: item.question,
-                title: item.question,
-                content: <p className="body text-white/80">{item.answer}</p>,
-              }))}
-              allowMultiple
+      <NavyWaveSection
+        id="trainers"
+        className="w-[100dvw] -ml-[calc(50dvw-50%)] overflow-x-clip"
+        fullBleed={false}
+        bandClassName="py-12"
+        contentClassName={false}
+      >
+        <div className="mx-auto max-w-6xl px-6">
+          <h2 className="h2 text-white">{trainersHeader}</h2>
+          <p className="mt-2 text-white/90">{trainersSubheader}</p>
+          <div className="mt-6 rounded-2xl bg-gmcc-navy p-4 text-neutral-900 md:p-6">
+            <PersonalTrainingDirectoryHeader
+              data={{ trainers: fields.trainers ?? [] }}
+              className="w-full"
             />
           </div>
         </div>
 
-        <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
-          <svg
-            viewBox="0 0 390 120"
-            className="block h-14 w-full text-gmcc-navy md:hidden"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M0,98
-                C78,62 135,54 195,74
-                C255,96 322,88 390,60
-                L390,0 L0,0 Z
-              "
-              fill="currentColor"
-            />
-          </svg>
-
-          <svg
-            viewBox="0 0 1440 120"
-            className="hidden h-16 w-full text-gmcc-navy md:block"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="
-                M0,110
-                C300,-50  500,120  800,100
-                S1000,0 1440,0
-                L1440,0 L0,0 Z
-              "
-              fill="currentColor"
-            />
-          </svg>
+        <div className="mx-auto mt-16 max-w-3xl px-0">
+          <h2 className="h2 mb-8 text-center text-white">FAQs</h2>
+          <Accordion
+            variant="onDark"
+            items={faqsList.map((item: { question: string; answer: string }) => ({
+              id: item.question,
+              title: item.question,
+              content: <p className="body text-white/80">{item.answer}</p>,
+            }))}
+            allowMultiple
+          />
         </div>
-      </section>
+      </NavyWaveSection>
 
       {featuredTestimonials.length > 0 ? (
-        <section className="px-4 pt-16">
-          <div className="mx-auto max-w-6xl">
+        <section className="page-section">
+          <div>
             <div className="relative text-center">
               <h2 className="h2 text-gmcc-navy">{testimonialsHeader}</h2>
             </div>
@@ -581,7 +526,7 @@ export default async function PersonalTrainingPage() {
         </section>
       ) : null}
 
-      <section className="relative mb-16 mt-16 overflow-hidden py-12">
+      <section className="page-section relative overflow-hidden mb-12">
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-20">
           <img
             src="/GreaterLogoBG.png"

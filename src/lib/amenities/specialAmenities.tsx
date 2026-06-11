@@ -18,13 +18,7 @@ type SpecialAmenityRenderArgs = {
         saturdayHours?: string | null;  
         sundayHours?: string | null;
       } | null;
-      gallery?: {
-        photo1?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
-        photo2?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
-        photo3?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
-        photo4?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
-        photo5?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
-      } | null;
+      gallery?: unknown;
     } | null;
     [key: string]: unknown;
   } | null;

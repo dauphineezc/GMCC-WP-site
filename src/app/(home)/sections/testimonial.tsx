@@ -22,7 +22,7 @@ export default function TestimonialSection({
   const f = testimonial.testimonialFields;
 
   return (
-    <section className="px-4 py-10">
+    <section className="page-section">
       <div className="mx-auto max-w-6xl">
         <div className="relative text-center">
           <h2 className="h2 text-gmcc-navy">{heading}</h2>

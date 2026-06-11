@@ -110,12 +110,12 @@ export default async function AccessibilityPage() {
     <main>
       <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
 
-      <section className="mx-auto max-w-6xl px-4 py-6 section-y stack-4 text-center">
+      <section className="page-section stack-4 text-center">
         <h2 className="h2">{accessibilityStatementHeader}</h2>
         <p className="body">{accessibilityStatement}</p>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-6 section-y stack-4">
+      <section className="page-section stack-4">
         <h2 className="h2 text-center mb-8">{accessibleFeaturesHeader}</h2>
         {amenities.length > 0 ? (
           <AmenitiesGrid amenities={amenities} title="Accessibility amenities" numCols={3} />
@@ -127,7 +127,7 @@ export default async function AccessibilityPage() {
       </section>
 
 
-      <section className="mx-auto max-w-6xl px-4 py-12 section-y stack-4">
+      <section className="page-section stack-4">
         <h2 className="h2 text-center mb-8">{accessibleProgramsHeader}</h2>
         <div className="grid gap-8 md:grid-cols-2 md:gap-10 md:items-stretch">
           {campaignNodes.map((campaign, index) => (
@@ -141,7 +141,7 @@ export default async function AccessibilityPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-6 section-y stack-4">
+      <section className="page-section stack-4">
         <p className="body text-center">{conclusionContent}</p>
       </section>
 

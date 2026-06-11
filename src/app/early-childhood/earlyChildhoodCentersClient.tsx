@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import type { EceCenterSlug, SerializedEceProgram } from "./page";
+import type { EceCenterSlug, SerializedEceProgram } from "./earlyChildhoodPageFields";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 
 type DocLink = { label: string; href: string };
@@ -89,7 +89,7 @@ export default function EarlyChildhoodCentersClient({
     <section
       id="programs-by-center"
       ref={sectionRef}
-      className="mx-auto max-w-6xl px-6 pt-16 pb-16"
+      className="page-section"
     >
       {programsHeader ? <h2 className="h2 text-gmcc-navy">{programsHeader}</h2> : null}
       {programsDescription ? (

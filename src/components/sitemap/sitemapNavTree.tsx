@@ -1,14 +1,6 @@
 import Link from "next/link";
 import type { NavItem } from "@/lib/nav/tree";
-
-function isExternalHref(href: string): boolean {
-  return (
-    href.startsWith("http://") ||
-    href.startsWith("https://") ||
-    href.startsWith("mailto:") ||
-    href.startsWith("tel:")
-  );
-}
+import { isExternalHref } from "@/lib/acf";
 
 export function SitemapLink({ href, label }: { href: string; label: string }) {
   const className =

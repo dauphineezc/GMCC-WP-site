@@ -4,24 +4,19 @@ import {
     resolvePhotoWaveHeaderProps,
     type WpPageWithHeroFields,
   } from "@/lib/pageHeroFields";
-import { acfFileHref, resolveWpMediaUrl, wpFetch } from "@/lib/wp";
+import { acfFileHref, acfGalleryCarouselImages, resolveWpMediaUrl, wpFetch } from "@/lib/wp";
+import type { MediaRef } from "@/lib/acf";
+import ImageCarousel from "@/components/imageCarousel";
 import PhoneLink from "@/components/phoneLink";
 import CorporateAmenityTiles from "@/components/corporateAmenityTiles";
 import CorporateMembershipBenefits from "@/components/corporateMembershipBenefits";
+import NavyWaveSection from "@/components/navyWaveSection";
 
 type WpImageNode = {
   sourceUrl?: string | null;
   mediaItemUrl?: string | null;
   altText?: string | null;
 };
-
-type MediaRef = {
-    sourceUrl?: string | null;
-    mediaItemUrl?: string | null;
-    title?: string | null;
-  } | null;
-
-type MediaFieldInput = { node?: MediaRef | null } | MediaRef | undefined;
 
 type CenterHours = {
   mondayHours?: string | null;
@@ -44,14 +39,7 @@ type CorporateCenterNode = {
     emailAddress?: string | null;
     hours?: CenterHours | null;
     logo?: { node?: WpImageNode | null } | null;
-    gallery?: {
-      photo1?: { node?: WpImageNode | null } | null;
-      photo2?: { node?: WpImageNode | null } | null;
-      photo3?: { node?: WpImageNode | null } | null;
-      photo4?: { node?: WpImageNode | null } | null;
-      photo5?: { node?: WpImageNode | null } | null;
-      photo6?: { node?: WpImageNode | null } | null;
-    } | null;
+    gallery?: unknown;
   } | null;
 };
 
@@ -205,12 +193,9 @@ query CortevaFitnessCenterPage($uri: ID!) {
           }
           logo { node { sourceUrl mediaItemUrl altText } }
           gallery {
-            photo1 { node { sourceUrl mediaItemUrl altText } }
-            photo2 { node { sourceUrl mediaItemUrl altText } }
-            photo3 { node { sourceUrl mediaItemUrl altText } }
-            photo4 { node { sourceUrl mediaItemUrl altText } }
-            photo5 { node { sourceUrl mediaItemUrl altText } }
-            photo6 { node { sourceUrl mediaItemUrl altText } }
+            photos {
+              node { sourceUrl mediaItemUrl altText }
+            }
           }
         }
       }
@@ -317,6 +302,7 @@ export default async function CortevaFitnessCenterPage() {
         return slug.includes("corteva") || name.includes("corteva");
       }) ?? null;
     const cortevaCenterFields = cortevaCenter?.corporateWellnessCenterFields ?? null;
+    const cortevaGalleryImages = acfGalleryCarouselImages(cortevaCenterFields?.gallery);
     const serviceItems =
       services == null
         ? []
@@ -370,155 +356,125 @@ export default async function CortevaFitnessCenterPage() {
                 waveEdgeClassName="bg-gmcc-navy"
             />
 
-            <section className="relative w-screen -ml-[calc(50vw-50%)] overflow-x-clip scroll-mt-24">
-                <div className="bg-gmcc-navy py-10">
-                    <div className="mx-auto max-w-6xl px-6">
-                        <div className="grid gap-16 items-start md:grid-cols-3">
-                            <div className="stack-3 col-span-1 mb-8">
-                                <h2 className="h2 mb-4 text-white">Location</h2>
-                                {address ? <p className="body text-neutral-200">{address}</p> : <p className="body text-neutral-200">Location coming soon.</p>}
-                                {address ? (
-                                  <a
-                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="mt-2 btn btn-tertiary"
-                                  >
-                                    View on Google Maps
-                                  </a>
-                                ) : null}
-                            </div>
-                            <div className="stack-3 col-span-1 mb-8">
-                                <h2 className="h2 mb-4 text-white">Contact</h2>
-                                {phone ? <PhoneLink className="body text-neutral-200 hover:text-white hover:underline" phone={phone} /> : <p className="body text-neutral-200">Phone coming soon.</p>}
-                                {email ? (
-                                  <a href={`mailto:${email}`} className="body text-neutral-200 hover:text-white hover:underline">
-                                    {email}
-                                  </a>
-                                ) : (
-                                  <p className="body text-neutral-200">Email coming soon.</p>
-                                )}
-                            </div>
-                            <div className="stack-3 col-span-1 mb-14 md:mb-0">
-                                <h2 className="h2 mb-4 text-white">Hours</h2>
-                                <div className="grid grid-cols-2 items-center gap-y-1">
-                                    <div className="flex flex-col text-left">
-                                        {hourRows.map((row) => (
-                                          <p key={`day-${row.day}`} className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">{row.day}</p>
-                                        ))}
-                                    </div>
-                                    <div className="flex flex-col text-right">
-                                        {hourRows.map((row) => (
-                                          <p key={`hours-${row.day}`} className="body text-neutral-200">{row.hours}</p>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <NavyWaveSection
+              className="relative w-screen -ml-[calc(50vw-50%)] overflow-x-clip scroll-mt-24"
+              fullBleed={false}
+              topWave={false}
+              bandClassName="py-10"
+            >
+              <div className="grid gap-16 items-start md:grid-cols-3">
+                <div className="stack-3 col-span-1 mb-8">
+                  <h2 className="h2 mb-4 text-white">Location</h2>
+                  {address ? (
+                    <p className="body text-neutral-200">{address}</p>
+                  ) : (
+                    <p className="body text-neutral-200">Location coming soon.</p>
+                  )}
+                  {address ? (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 btn btn-tertiary"
+                    >
+                      View on Google Maps
+                    </a>
+                  ) : null}
+                </div>
+                <div className="stack-3 col-span-1 mb-8">
+                  <h2 className="h2 mb-4 text-white">Contact</h2>
+                  {phone ? (
+                    <PhoneLink className="body text-neutral-200 hover:text-white hover:underline" phone={phone} />
+                  ) : (
+                    <p className="body text-neutral-200">Phone coming soon.</p>
+                  )}
+                  {email ? (
+                    <a href={`mailto:${email}`} className="body text-neutral-200 hover:text-white hover:underline">
+                      {email}
+                    </a>
+                  ) : (
+                    <p className="body text-neutral-200">Email coming soon.</p>
+                  )}
+                </div>
+                <div className="stack-3 col-span-1 mb-14 md:mb-0">
+                  <h2 className="h2 mb-4 text-white">Hours</h2>
+                  <div className="grid grid-cols-2 items-center gap-y-1">
+                    <div className="flex flex-col text-left">
+                      {hourRows.map((row) => (
+                        <p
+                          key={`day-${row.day}`}
+                          className="body text-sm text-neutral-200 font-bold uppercase tracking-wide"
+                        >
+                          {row.day}
+                        </p>
+                      ))}
                     </div>
-                </div>
-            </section>
-
-            <div className="pointer-events-none -mt-px w-full overflow-hidden leading-none">
-                <svg
-                    viewBox="0 0 390 120"
-                    className="-ml-px block h-14 w-[calc(100%+2px)] text-gmcc-navy md:hidden"
-                    preserveAspectRatio="none"
-                >
-                    <path
-                        d="
-                            M0,98
-                            C78,62 135,54 195,74
-                            C255,96 322,88 390,60
-                            L390,0 L0,0 Z
-                          "
-                        fill="currentColor"
-                    />
-                </svg>
-
-                <svg
-                    viewBox="0 0 1440 120"
-                    className="-ml-px hidden h-16 w-[calc(100%+2px)] text-gmcc-navy md:block"
-                    preserveAspectRatio="none"
-                >
-                    <path
-                        d="
-                            M0,110
-                            C300,-50  500,120  800,100
-                            S1000,0 1440,0
-                            L1440,0 L0,0 Z
-                          "
-                        fill="currentColor"
-                    />
-                </svg>
-            </div>
-
-            <section className="mx-auto max-w-6xl px-4 pt-16 pb-2 section-y stack-4">
-                {cortevaHeader ? <h2 className="h2 mb-4 text-center">{cortevaHeader}</h2> : null}
-                {cortevaDescription ? <p className="body mb-8 text-center">{cortevaDescription}</p> : null}
-                {serviceItems.length > 0 ? <CorporateAmenityTiles items={serviceItems} /> : null}
-            </section>
-
-            <section>
-              <div className="mt-12 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip">
-                <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
-                  <svg
-                    viewBox="0 0 1440 120"
-                    className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-                    preserveAspectRatio="none"
-                    aria-hidden
-                  >
-                    <path
-                      d="
-                        M-20,110
-                        C750,-90  800,120  1200,80
-                        S1420,0 1460,0
-                        L1460,0 L-20,0 Z
-                      "
-                      transform="translate(0 120) scale(1 -1)"
-                      fill="var(--gmcc-navy)"
-                    />
-                  </svg>
-                </div>
-              </div>
-
-              <div className="relative z-0 -mt-px bg-gmcc-navy text-white">
-                <div className="mx-auto max-w-6xl px-4 pt-16 pb-16">
-                <h2 className="h2 text-center text-white mb-8">Guided Workouts With Our Experts</h2>
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <article className="card card-hover bg-white p-8 text-center">
-                      {groupFitnessHeader ? <h3 className="h3 text-gmcc-navy">{groupFitnessHeader}</h3> : null}
-                      {groupFitnessBody ? <p className="body mt-4 text-neutral-700">{groupFitnessBody}</p> : null}
-                      {onlineGroupFitnessLink ? (
-                        <a
-                          href={onlineGroupFitnessLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-tertiary mt-6"
-                        >
-                          View Group Fitness
-                        </a>
-                      ) : null}
-                    </article>
-
-                    <article className="card card-hover bg-white p-8 text-center">
-                      {personalTrainingHeader ? <h3 className="h3 text-gmcc-navy">{personalTrainingHeader}</h3> : null}
-                      {personalTrainingBody ? <p className="body mt-4 text-neutral-700">{personalTrainingBody}</p> : null}
-                      {personalTrainingContactLink ? (
-                        <a
-                          href={personalTrainingContactLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-tertiary mt-6"
-                        >
-                          Contact us to get started
-                        </a>
-                      ) : null}
-                    </article>
+                    <div className="flex flex-col text-right">
+                      {hourRows.map((row) => (
+                        <p key={`hours-${row.day}`} className="body text-neutral-200">
+                          {row.hours}
+                        </p>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
+            </NavyWaveSection>
+
+            <section className="page-section stack-4">
+                {cortevaHeader ? <h2 className="h2 mb-4 text-center">{cortevaHeader}</h2> : null}
+                {cortevaDescription ? <p className="body mb-8 text-center">{cortevaDescription}</p> : null}
+                {cortevaGalleryImages.length > 0 ? (
+                  <div className="mb-8">
+                    <ImageCarousel images={cortevaGalleryImages} />
+                  </div>
+                ) : null}
+                {serviceItems.length > 0 ? <CorporateAmenityTiles items={serviceItems} /> : null}
             </section>
+
+            <NavyWaveSection
+              splitTopWave
+              bottomWave={false}
+              bandClassName=""
+              contentClassName="mx-auto max-w-6xl px-4 pt-16 pb-16"
+            >
+              <h2 className="h2 text-center text-white mb-8">Guided Workouts With Our Experts</h2>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <article className="card card-hover bg-white p-8 text-center">
+                  {groupFitnessHeader ? <h3 className="h3 text-gmcc-navy">{groupFitnessHeader}</h3> : null}
+                  {groupFitnessBody ? <p className="body mt-4 text-neutral-700">{groupFitnessBody}</p> : null}
+                  {onlineGroupFitnessLink ? (
+                    <a
+                      href={onlineGroupFitnessLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-tertiary mt-6"
+                    >
+                      View Group Fitness
+                    </a>
+                  ) : null}
+                </article>
+
+                <article className="card card-hover bg-white p-8 text-center">
+                  {personalTrainingHeader ? (
+                    <h3 className="h3 text-gmcc-navy">{personalTrainingHeader}</h3>
+                  ) : null}
+                  {personalTrainingBody ? (
+                    <p className="body mt-4 text-neutral-700">{personalTrainingBody}</p>
+                  ) : null}
+                  {personalTrainingContactLink ? (
+                    <a
+                      href={personalTrainingContactLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-tertiary mt-6"
+                    >
+                      Contact us to get started
+                    </a>
+                  ) : null}
+                </article>
+              </div>
+            </NavyWaveSection>
 
             {memberStoryTestimonial ? (
               <section className="relative mt-0">
@@ -556,7 +512,7 @@ export default async function CortevaFitnessCenterPage() {
               </section>
             ) : null}
 
-            <section className="mx-auto max-w-6xl px-4 pt-16 section-y stack-6">
+            <section className="page-section stack-6">
                 {membershipHeader ? <h2 className="h2 text-center mt-8">{membershipHeader}</h2> : null}
                 <div className="stack-3">
                     {renderScheduleFile(

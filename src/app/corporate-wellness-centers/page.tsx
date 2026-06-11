@@ -1,5 +1,5 @@
 import { fetchPageWithHeroFields, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
-import { resolveWpMediaUrl } from "@/lib/wp";
+import { acfCorporatePartnerItems, acfGalleryCarouselImages } from "@/lib/wp";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import ImageCarousel from "@/components/imageCarousel";
 import type { Metadata } from "next";
@@ -38,33 +38,21 @@ const CORPORATE_WELLNESS_PAGE_EXTRA_FIELDS = /* GraphQL */ `
             }
             logo { node { sourceUrl mediaItemUrl altText } }
             gallery {
-              photo1 { node { sourceUrl mediaItemUrl altText } }
-              photo2 { node { sourceUrl mediaItemUrl altText } }
-              photo3 { node { sourceUrl mediaItemUrl altText } }
-              photo4 { node { sourceUrl mediaItemUrl altText } }
-              photo5 { node { sourceUrl mediaItemUrl altText } }
-              photo6 { node { sourceUrl mediaItemUrl altText } }
+              photos {
+                node { sourceUrl mediaItemUrl altText }
+              }
             }
           }
         }
       }
     }
 
-    partnerLogos {
-      logo1 { node { sourceUrl mediaItemUrl altText } }
-      logo2 { node { sourceUrl mediaItemUrl altText } }
-      logo3 { node { sourceUrl mediaItemUrl altText } }
-      logo4 { node { sourceUrl mediaItemUrl altText } }
-      logo5 { node { sourceUrl mediaItemUrl altText } }
+    corporatePartners {
+      logo { node { sourceUrl mediaItemUrl altText } }
+      pageLink
     }
   }
 `;
-
-type WpImageNode = {
-  sourceUrl?: string | null;
-  mediaItemUrl?: string | null;
-  altText?: string | null;
-};
 
 type CenterHours = {
   mondayHours?: string | null;
@@ -85,14 +73,7 @@ type CorporateCenterNode = {
     phoneNumber?: string | null;
     emailAddress?: string | null;
     hours?: CenterHours | null;
-    gallery?: {
-      photo1?: { node?: WpImageNode | null } | null;
-      photo2?: { node?: WpImageNode | null } | null;
-      photo3?: { node?: WpImageNode | null } | null;
-      photo4?: { node?: WpImageNode | null } | null;
-      photo5?: { node?: WpImageNode | null } | null;
-      photo6?: { node?: WpImageNode | null } | null;
-    } | null;
+    gallery?: unknown;
   } | null;
 };
 
@@ -101,13 +82,7 @@ type CorporateWellnessPageExtra = {
     corporateCentersHeader?: string | null;
     corporateCentersBody?: string | null;
     employeeRequirementDisclaimer?: string | null;
-    partnerLogos?: {
-      logo1?: { node?: WpImageNode | null } | null;
-      logo2?: { node?: WpImageNode | null } | null;
-      logo3?: { node?: WpImageNode | null } | null;
-      logo4?: { node?: WpImageNode | null } | null;
-      logo5?: { node?: WpImageNode | null } | null;
-    } | null;
+    corporatePartners?: unknown;
     corporateWellnessCenters?: {
       nodes?: (CorporateCenterNode | null)[] | null;
     } | null;
@@ -115,31 +90,7 @@ type CorporateWellnessPageExtra = {
 };
 
 function centerGalleryImages(center: CorporateCenterNode) {
-  const gallery = center.corporateWellnessCenterFields?.gallery;
-  const photos = [
-    gallery?.photo1?.node,
-    gallery?.photo2?.node,
-    gallery?.photo3?.node,
-    gallery?.photo4?.node,
-    gallery?.photo5?.node,
-    gallery?.photo6?.node,
-  ];
-
-  return photos
-    .filter((photo): photo is WpImageNode => Boolean(photo?.sourceUrl || photo?.mediaItemUrl))
-    .map((photo) => {
-      const url = resolveWpMediaUrl(photo.sourceUrl ?? photo.mediaItemUrl);
-      if (!url) return null;
-      return {
-        image: {
-          sourceUrl: url,
-          altText: photo.altText ?? null,
-        },
-        cta: null,
-        url: null,
-      };
-    })
-    .filter((item): item is NonNullable<typeof item> => item != null);
+  return acfGalleryCarouselImages(center.corporateWellnessCenterFields?.gallery);
 }
 
 const HOURS_BY_DAY: Array<{ key: keyof CenterHours; label: string }> = [
@@ -190,26 +141,15 @@ export default async function CorporateWellnessCentersPage() {
       (center): center is CorporateCenterNode => center != null,
     ) ?? [];
   const employeeRequirementDisclaimer = page?.corporateWellnessPageFields?.employeeRequirementDisclaimer;
-  const partnerLogos = page?.corporateWellnessPageFields?.partnerLogos;
-  const partnerLogoNodes = [
-    partnerLogos?.logo1?.node,
-    partnerLogos?.logo2?.node,
-    partnerLogos?.logo3?.node,
-    partnerLogos?.logo4?.node,
-    partnerLogos?.logo5?.node,
-  ]
-    .map((logo) => {
-      const url = resolveWpMediaUrl(logo?.sourceUrl ?? logo?.mediaItemUrl);
-      if (!url || !logo) return null;
-      return { ...logo, resolvedUrl: url } as WpImageNode & { resolvedUrl: string };
-    })
-    .filter((logo): logo is WpImageNode & { resolvedUrl: string } => logo != null);
+  const partnerLogoNodes = acfCorporatePartnerItems(
+    page?.corporateWellnessPageFields?.corporatePartners,
+  );
 
   return (
     <main>
       <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
 
-      <section className="mx-auto max-w-6xl px-4 py-10 section-y stack-6">
+      <section className="page-section stack-6">
         {centersHeader ? <h2 className="h2 text-center">{centersHeader}</h2> : null}
         {centersBody ? (
           <div
@@ -226,20 +166,39 @@ export default async function CorporateWellnessCentersPage() {
         ) : null}
         {partnerLogoNodes.length > 0 ? (
           <div className="mx-auto mt-2 mb-8 grid w-full max-w-6xl grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-            {partnerLogoNodes.map((logo, index) => (
-              <div
-                key={`${logo.resolvedUrl}-${index}`}
-                className="flex h-20 items-center justify-center rounded-lg border border-neutral-200 bg-white p-0"
-              >
+            {partnerLogoNodes.map((logo, index) => {
+              const alt = logo.altText?.trim() || `Corporate partner logo ${index + 1}`;
+              const key = `${logo.resolvedUrl}-${index}`;
+              const cellClass =
+                "flex h-20 items-center justify-center rounded-lg border border-neutral-200 bg-white p-0";
+              const image = (
                 <Image
                   src={logo.resolvedUrl}
-                  alt={logo.altText?.trim() || `Corporate partner logo ${index + 1}`}
+                  alt={alt}
                   width={180}
                   height={72}
                   className="h-full w-full object-contain"
                 />
-              </div>
-            ))}
+              );
+              if (logo.pageLink) {
+                const external = /^https?:\/\//i.test(logo.pageLink);
+                return (
+                  <a
+                    key={key}
+                    href={logo.pageLink}
+                    className={`${cellClass} text-inherit no-underline transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gmcc-teal`}
+                    {...(external ? { target: "_blank" as const, rel: "noopener noreferrer" } : {})}
+                  >
+                    {image}
+                  </a>
+                );
+              }
+              return (
+                <div key={key} className={cellClass}>
+                  {image}
+                </div>
+              );
+            })}
           </div>
         ) : null}
 
@@ -256,10 +215,10 @@ export default async function CorporateWellnessCentersPage() {
               >
                 <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
                   <div className="stack-2">
-                    <h3 className="h3">{center.name ?? "Corporate Wellness Center"}</h3>
+                    <h3 className="h3 mb-6">{center.name ?? "Corporate Wellness Center"}</h3>
                     {center.description ? (
                       <div
-                        className="body text-neutral-700 mt-6 mb-6"
+                        className="body text-neutral-700 mb-6"
                         dangerouslySetInnerHTML={{ __html: center.description }}
                       />
                     ) : null}

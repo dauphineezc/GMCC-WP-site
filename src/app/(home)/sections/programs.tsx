@@ -305,7 +305,7 @@ export default function ProgramsSection({
     "inline-flex h-10 w-10 items-center justify-center rounded-full bg-gmcc-navy text-white border border-gmcc-navy body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gmcc-navy/80";
 
   return (
-    <section className="relative overflow-x-clip pt-8 pb-8">
+    <section className="page-section relative overflow-x-clip">
       {/* Background logo pieces, clipped to section bounds
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <img
@@ -335,36 +335,22 @@ export default function ProgramsSection({
           {"View all programs"}
         </a>
 
-        <div className="mt-4 relative w-full min-w-0 max-w-full">
-          {/* Desktop arrows (in outer margins) */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 right-0 hidden md:block">
+        <div className="mt-4 w-full min-w-0 max-w-full">
+          <div className="mx-auto flex w-full min-w-0 max-w-6xl items-center gap-3">
             <button
               type="button"
               onClick={goPrev}
               disabled={atStart}
               aria-label="Previous programs"
-              className={`${arrowBtn} pointer-events-auto absolute left-[-6px] top-1/2 -translate-y-1/2`}
+              className={`${arrowBtn} hidden shrink-0 md:inline-flex`}
             >
               ←
             </button>
 
-            <button
-              type="button"
-              onClick={goNext}
-              disabled={atEnd}
-              aria-label="Next programs"
-              className={`${arrowBtn} pointer-events-auto absolute right-[-6px] top-1/2 -translate-y-1/2`}
-            >
-              →
-            </button>
-          </div>
-
-          {/* Cards rail uses full content width; arrows live outside this width */}
-          <div className="mx-auto w-full min-w-0 max-w-6xl overflow-visible">
             {/* Scroller: must be width-constrained so its overflow stays internal */}
             <div
               ref={scrollerRef}
-              className="w-full min-w-0 max-w-full overflow-x-auto pb-4 pt-1 px-[6px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              className="min-w-0 flex-1 overflow-x-auto pb-4 pt-1 px-[6px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               style={{
                 scrollSnapType: "x mandatory",
                 WebkitOverflowScrolling: "touch",
@@ -410,6 +396,16 @@ export default function ProgramsSection({
                 ))}
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={atEnd}
+              aria-label="Next programs"
+              className={`${arrowBtn} hidden shrink-0 md:inline-flex`}
+            >
+              →
+            </button>
           </div>
 
           {/* Mobile controls */}

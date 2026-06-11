@@ -1,5 +1,5 @@
 // src/app/events/[yyyy]/[mm]/[slug]/page.tsx
-import { wpFetch } from "@/lib/wp";
+import { acfAttachmentItems, wpFetch } from "@/lib/wp";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { formatEventDate } from "@/lib/events/formatEventDate";
@@ -30,32 +30,21 @@ const EVENT_BY_SLUG_QUERY = `
         locationOverride
         whatToBring
 
-        mediaGallery {
-          photo1 { node { sourceUrl altText } }
-          photo2 { node { sourceUrl altText } }
-          photo3 { node { sourceUrl altText } }
-          photo4 { node { sourceUrl altText } }
-          photo5 { node { sourceUrl altText } }
+        gallery {
+          photos {
+            node { sourceUrl altText mediaDetails { width height } }
+          }
         }
 
         attachments {
-          attachment1 {
-            attachment1Label
-            attachment1File { node { mediaItemUrl } }
+          file {
+            node {
+              sourceUrl
+              mediaItemUrl
+              title
+            }
           }
-          attachment2 {
-            attachment2Label
-            attachment2File { node { mediaItemUrl } }
-          }
-          attachment3 {
-            attachment3Label
-            attachment3File { node { mediaItemUrl } }
-          }
-          attachment4 {
-            attachment4Label
-            attachment4File { node { mediaItemUrl } }
-          }
-          }
+        }
 
         center {
           nodes {
@@ -180,6 +169,7 @@ export default async function EventPage(props: EventPageProps) {
   }
 
   const f = event.eventFields ?? {};
+  const attachments = acfAttachmentItems(f.attachments);
   const whatToBringItems = Array.isArray(f.whatToBring)
     ? f.whatToBring.filter((item: unknown): item is string => typeof item === "string" && item.trim().length > 0)
     : typeof f.whatToBring === "string"
@@ -260,11 +250,11 @@ export default async function EventPage(props: EventPageProps) {
           )}
 
           {/* Attachments card */}
-          {f.attachments?.length > 0 && (
+          {attachments.length > 0 && (
             <div>
               <h3 className="eyebrow mb-3">Relevant documents</h3>
               <div className="flex flex-wrap gap-3">
-                {f.attachments.map((att: any, i: number) => (
+                {attachments.map((att, i: number) => (
                   <a 
                     key={i}
                     href={att.url} 
@@ -402,24 +392,21 @@ export default async function EventPage(props: EventPageProps) {
 
         {/* RIGHT: stretch to row height like /events filters so sticky has a tall scroll span */}
         <div className="flex min-h-0 min-w-0 flex-col gap-6">
-          {/* Media Gallery Carousel */}
+          {/* Gallery Carousel */}
           {(() => {
-            const gallery = f.mediaGallery;
-            if (!gallery) return null;
-            
-            // Transform media gallery images into carousel format
-            const carouselImages = [
-              gallery.photo1,
-              gallery.photo2,
-              gallery.photo3,
-              gallery.photo4,
-              gallery.photo5,
-            ]
-              .filter((img) => img?.node?.sourceUrl)
-              .map((img) => ({
+            // gallery is the repeater: [{ photos: { node } }, ...]
+            const galleryRows = Array.isArray(f.gallery)
+              ? f.gallery
+              : f.gallery
+                ? [f.gallery]
+                : [];
+
+            const carouselImages = galleryRows
+              .filter((row: { photos?: { node?: { sourceUrl?: string } } }) => row?.photos?.node?.sourceUrl)
+              .map((row: { photos: { node: { sourceUrl: string; altText?: string | null } } }) => ({
                 image: {
-                  sourceUrl: img.node.sourceUrl,
-                  altText: img.node.altText ?? null,
+                  sourceUrl: row.photos.node.sourceUrl,
+                  altText: row.photos.node.altText ?? null,
                 },
                 cta: null,
                 url: null,

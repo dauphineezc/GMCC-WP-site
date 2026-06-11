@@ -1,6 +1,12 @@
 import { wpFetch } from "@/lib/wp";
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import PlanAnEventClient from "./planAnEventClient";
+import type {
+  MaybeImage,
+  PartyPackageData,
+  PlanAnEventFields,
+  RoomData,
+} from "./planAnEventFields";
 
 const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
   query PlanAnEventPage($uri: ID!) {
@@ -106,25 +112,7 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
             price
             roomAmenities
             gallery {
-              photo1 {
-                node {
-                  sourceUrl
-                  altText
-                }
-              }
-              photo2 {
-                node {
-                  sourceUrl
-                  altText
-                }
-              }
-              photo3 {
-                node {
-                  sourceUrl
-                  altText
-                }
-              }
-              photo4 {
+              photos {
                 node {
                   sourceUrl
                   altText
@@ -166,89 +154,6 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
     }
   }
 `;
-
-type WPImageNode = {
-  sourceUrl?: string | null;
-  altText?: string | null;
-};
-
-type MaybeImage = { node?: WPImageNode | null } | null;
-
-type SectionCard = {
-  sectionHeader?: string | null;
-  sectionDescription?: string | null;
-  sectionImage?: MaybeImage;
-  buttonLabel?: string | null;
-} | null;
-
-type CenterRef = { title?: string | null; slug?: string | null };
-
-export type RoomData = {
-  title?: string | null;
-  slug?: string | null;
-  rentableRoomFields?: {
-    name?: string | null;
-    description?: string | null;
-    center?: { nodes?: CenterRef[] | null } | null;
-    capacity?: string | null;
-    price?: string | null;
-    roomAmenities?: string[] | string | null;
-    gallery?: {
-      photo1?: MaybeImage;
-      photo2?: MaybeImage;
-      photo3?: MaybeImage;
-      photo4?: MaybeImage;
-    } | null;
-  } | null;
-};
-
-export type PartyPackageData = {
-  title?: string | null;
-  slug?: string | null;
-  featuredImage?: MaybeImage;
-  partyPackageFields?: {
-    name?: string | null;
-    photo?: MaybeImage;
-    description?: string | null;
-    price?: string | null;
-    center?: { nodes?: CenterRef[] | null } | null;
-    partyType?: string | string[] | null;
-  } | null;
-};
-
-export type PlanAnEventFields = {
-  section1Card?: SectionCard;
-  section2Card?: SectionCard;
-  section3Card?: SectionCard;
-  roomRentalResultsHeader?: string | null;
-  roomRentalResultsBody?: string | null;
-  birthdayPackagesBody?: string | null;
-  allPackagesInclude?: string | null;
-  sportsPackagesBody?: string | null;
-  locationOfferingsHeader?: string | null;
-  locationOfferingsBody?: string | null;
-  offeringsByCenter?: {
-    communityCenterOfferings?: string | null;
-    tennisCenterOfferings?: string | null;
-    curlingCenterOfferings?: string | null;
-    colemanFamilyCenterOfferings?: string | null;
-    northFamilyCenterOfferings?: string | null;
-  } | null;
-  centerLogos?: {
-    communityCenterLogo?: MaybeImage;
-    tennisCenterLogo?: MaybeImage;
-    curlingCenterLogo?: MaybeImage;
-    colemanFamilyCenterLogo?: MaybeImage;
-    northFamilyCenterLogo?: MaybeImage;
-  } | null;
-  faqs?: {
-    faq1?: { question?: string | null; answer?: string | null } | null;
-    faq2?: { question?: string | null; answer?: string | null } | null;
-    faq3?: { question?: string | null; answer?: string | null } | null;
-  } | null;
-  contactHeader?: string | null;
-  contactSubheader?: string | null;
-};
 
 export default async function PlanAnEventPage() {
   const data = await wpFetch<{

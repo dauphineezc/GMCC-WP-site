@@ -121,7 +121,7 @@ export default async function ContactPage() {
         </section>
       ) : null}
 
-      <section className="mx-auto mt-8 max-w-6xl px-6 stack-2">
+      <section className="page-section stack-2">
         <h2 className="mt-8 text-center text-xl font-extrabold text-gmcc-navy md:text-left md:text-2xl">
           {f?.contactFormHeading}
         </h2>
@@ -200,7 +200,7 @@ export default async function ContactPage() {
       {/* </section> */}
 
       {f?.serveWithHeartStatement ? (
-        <section className="mx-auto mt-16 max-w-6xl px-6 stack-2">
+        <section className="page-section stack-2">
           <p className="mb-4 text-center text-lg text-neutral-700">{f?.serveWithHeartStatement}</p>
         </section>
       ) : null}

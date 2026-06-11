@@ -116,7 +116,7 @@ export default async function GroupFitnessSchedulesPage() {
         ctas={hero.ctas}
       />
 
-      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+      <div className="page-section stack-8">
         <h1 className="h1">{header}</h1>
         <h3 className="text-xl text-neutral-700 mt-0 mb-4 whitespace-pre-line">{description}</h3>
         <p className="body">{calendarInstructions}</p>

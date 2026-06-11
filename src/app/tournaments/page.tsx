@@ -1,9 +1,11 @@
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps, WpPageWithHeroFields } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
+import { asImageField, asString, collectGalleryPhotos, type ImageField } from "@/lib/acf";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import PhotoGallery from "@/components/photoGallery";
 import SimpleCampaign, { SimpleCampaignData } from "@/components/simpleCampaign";
+import NavyWaveSection from "@/components/navyWaveSection";
 
 const TOURNAMENTS_PAGE_QUERY = /* GraphQL */ `
   query TournamentsPage($uri: ID!) {
@@ -194,13 +196,6 @@ function formatTournamentDate(start?: string | null, end?: string | null): strin
   return `${date} • ${time}–${endTime}`;
 }
 
-type ImageField = {
-  node?: {
-    sourceUrl?: string | null;
-    altText?: string | null;
-  } | null;
-} | null;
-
 type PartnerField = {
   logo: ImageField;
   link: string;
@@ -234,23 +229,6 @@ type TournamentsPageFields = {
   contactHeader: string;
   contactSubheader: string;
 };
-
-function asString(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function asImageField(value: unknown): ImageField {
-  if (!value || typeof value !== "object") return null;
-  const node = (value as { node?: unknown }).node;
-  if (!node || typeof node !== "object") return null;
-  const record = node as Record<string, unknown>;
-  return {
-    node: {
-      sourceUrl: asString(record.sourceUrl),
-      altText: asString(record.altText),
-    },
-  };
-}
 
 function asPartnerField(value: unknown): PartnerField {
   const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
@@ -363,19 +341,7 @@ export default async function TournamentsPage() {
     fields.tournamentPartners.tournamentPartner4,
   ].filter((p) => !!p.logo?.node?.sourceUrl);
 
-  const galleryPhotos = [
-    fields.gallery.photo1,
-    fields.gallery.photo2,
-    fields.gallery.photo3,
-    fields.gallery.photo4,
-    fields.gallery.photo5,
-    fields.gallery.photo6,
-    fields.gallery.photo7,
-    fields.gallery.photo8,
-    fields.gallery.photo9,
-  ]
-    .filter((p) => !!p?.node?.sourceUrl)
-    .map((p) => ({ url: p!.node!.sourceUrl!, alt: p!.node!.altText ?? "" }));
+  const galleryPhotos = collectGalleryPhotos(fields.gallery);
 
   return (
     <main className="overflow-x-clip">
@@ -388,7 +354,7 @@ export default async function TournamentsPage() {
 
       {/* TOURNAMENT PARTNERS */}
       {(fields.tournamentPartnersHeader || fields.tournamentPartnersBody || tournamentPartners.length > 0) ? (
-        <section className="mx-auto max-w-6xl px-6 section-y pb-8">
+        <section className="page-section">
           {fields.tournamentPartnersHeader ? (
             <h2 className="h2">{fields.tournamentPartnersHeader}</h2>
           ) : null}
@@ -431,178 +397,108 @@ export default async function TournamentsPage() {
 
       {/* FEATURED TOURNAMENT CAMPAIGN */}
       {fields.featuredTournament ? (
-        <section className="py-4 max-w-6xl mx-auto px-6 section-y pt-16 pb-16">
+        <section className="page-section">
           <SimpleCampaign campaign={fields.featuredTournament} />
         </section>
       ) : null}
 
       {/* TOURNAMENT CARDS */}
       {sortedTournaments.length > 0 && (
-        <section id="browse-tournaments" className="relative scroll-mt-24">
-          <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip">
-            <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
-                <svg
-                viewBox="0 0 1440 120"
-                
-                className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
-                preserveAspectRatio="none"
-                aria-hidden
+        <NavyWaveSection id="browse-tournaments" splitTopWave>
+          {fields.inHouseTournamentsHeader ? (
+            <h2 className="h2 text-white">{fields.inHouseTournamentsHeader}</h2>
+          ) : null}
+          {fields.inHouseTournamentsBody ? (
+            <p className="body mt-2 text-neutral-200">{fields.inHouseTournamentsBody}</p>
+          ) : null}
+
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {sortedTournaments.map((tournament) => {
+              const eventHref = buildEventHref(tournament.slug, tournament.startDateTime ?? "");
+              const dateLabel = formatTournamentDate(tournament.startDateTime, tournament.endDateTime);
+
+              return (
+                <div
+                  key={tournament.id}
+                  className="group card card-hover relative flex flex-col overflow-hidden"
                 >
-                <path
-                    d="
-                    M-20,110
-                    C750,-90  800,120  1200,80
-                    S1420,0 1460,0
-                    L1460,0 L-20,0 Z
-                    "
-                    transform="translate(0 120) scale(1 -1)"
-                    fill="var(--gmcc-navy)"
-                />
-                </svg>
-            </div>
+                  {/* Hero image */}
+                  <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
+                    {tournament.heroUrl && (
+                      <img
+                        src={tournament.heroUrl}
+                        alt={tournament.heroAlt}
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    )}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
+
+                    {tournament.isPast && (
+                      <div className="absolute inset-x-0 top-0 flex items-center justify-center bg-gmcc-teal/85 py-2">
+                        <span className="text-sm font-semibold uppercase tracking-wide text-white">
+                          Tournament Completed
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card body */}
+                  <div className="flex flex-1 flex-col min-h-0 mt-4">
+                    <h3 className="font-heading text-lg font-medium leading-snug text-neutral-900 line-clamp-2 group-hover:text-gmcc-teal">
+                      {tournament.title}
+                    </h3>
+
+                    {dateLabel && (
+                      <span className="mt-2 badge badge-green w-fit">{dateLabel}</span>
+                    )}
+
+                    {tournament.centers.length > 0 && (
+                      <p className="mt-2 badge badge-teal w-fit">
+                        {tournament.centers.map((c) => c.title).join(" · ")}
+                      </p>
+                    )}
+
+                    {tournament.summary && (
+                      <p className="mt-3 mb-3 text-xs leading-6 text-neutral-600 line-clamp-3">
+                        {tournament.summary}
+                      </p>
+                    )}
+
+                    {/* Footer actions */}
+                    <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
+                      {!tournament.isPast && tournament.registrationLink ? (
+                        <a
+                          href={tournament.registrationLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative z-10 btn btn-primary text-xs px-3 py-1.5"
+                        >
+                          Register
+                        </a>
+                      ) : (
+                        <span />
+                      )}
+
+                      <span className="text-sm font-semibold text-gmcc-navy underline-offset-4 group-hover:underline">
+                        View →
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Stretched link covers the full card; Register sits above it via z-10 */}
+                  <a href={eventHref} aria-label={tournament.title} className="card-stretched-link" />
+                </div>
+              );
+            })}
           </div>
-        
-          <div className="relative z-0 -mt-px bg-gmcc-navy text-white">
-            <div className="mx-auto w-full max-w-6xl px-6 pb-12 pt-8 md:pt-10">
-            {fields.inHouseTournamentsHeader ? (
-                <h2 className="h2 text-white">{fields.inHouseTournamentsHeader}</h2>
-            ) : null}
-            {fields.inHouseTournamentsBody ? (
-                <p className="body mt-2 text-neutral-200">{fields.inHouseTournamentsBody}</p>
-            ) : null}
-
-            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {sortedTournaments.map((tournament) => {
-                const eventHref = buildEventHref(tournament.slug, tournament.startDateTime ?? "");
-                const dateLabel = formatTournamentDate(tournament.startDateTime, tournament.endDateTime);
-
-                return (
-                    <div
-                    key={tournament.id}
-                    className="group card card-hover relative flex flex-col overflow-hidden"
-                    >
-                    {/* Hero image */}
-                    <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
-                        {tournament.heroUrl && (
-                        <img
-                            src={tournament.heroUrl}
-                            alt={tournament.heroAlt}
-                            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                            loading="lazy"
-                            decoding="async"
-                        />
-                        )}
-                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
-
-                        {tournament.isPast && (
-                        <div className="absolute inset-x-0 top-0 flex items-center justify-center bg-gmcc-teal/85 py-2">
-                            <span className="text-sm font-semibold uppercase tracking-wide text-white">
-                            Tournament Completed
-                            </span>
-                        </div>
-                        )}
-                    </div>
-
-                    {/* Card body */}
-                    <div className="flex flex-1 flex-col min-h-0 mt-4">
-                        <h3 className="font-heading text-lg font-medium leading-snug text-neutral-900 line-clamp-2 group-hover:text-gmcc-teal">
-                        {tournament.title}
-                        </h3>
-
-                        {dateLabel && (
-                        <span className="mt-2 badge badge-green w-fit">
-                            {dateLabel}
-                        </span>
-                        )}
-
-                        {tournament.centers.length > 0 && (
-                        <p className="mt-2 badge badge-teal w-fit">
-                            {tournament.centers.map((c) => c.title).join(" · ")}
-                        </p>
-                        )}
-
-                        {tournament.summary && (
-                        <p className="mt-3 mb-3 text-xs leading-6 text-neutral-600 line-clamp-3">
-                            {tournament.summary}
-                        </p>
-                        )}
-
-                        {/* Footer actions */}
-                        <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
-                        {!tournament.isPast && tournament.registrationLink ? (
-                            <a
-                            href={tournament.registrationLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="relative z-10 btn btn-primary text-xs px-3 py-1.5"
-                            >
-                            Register
-                            </a>
-                        ) : (
-                            <span />
-                        )}
-
-                        <span className="text-sm font-semibold text-gmcc-navy underline-offset-4 group-hover:underline">
-                            View →
-                        </span>
-                        </div>
-                    </div>
-
-                    {/* Stretched link covers the full card; Register sits above it via z-10 */}
-                    <a
-                        href={eventHref}
-                        aria-label={tournament.title}
-                        className="card-stretched-link"
-                    />
-                    </div>
-                );
-                })}
-            </div>
-            </div>
-            </div>
-
-            {/* Bottom wave (below navy body) */}
-            <div className="relative z-[1] pointer-events-none -mt-px w-full overflow-hidden leading-none">
-              <svg
-                viewBox="0 0 390 120"
-                className="block h-14 w-full text-gmcc-navy md:hidden"
-                preserveAspectRatio="none"
-                aria-hidden
-              >
-                <path
-                  d="
-                M0,98
-                C78,62 135,54 195,74
-                C255,96 322,88 390,60
-                L390,0 L0,0 Z
-              "
-                  fill="currentColor"
-                />
-              </svg>
-
-              <svg
-                viewBox="0 0 1440 120"
-                className="hidden h-16 w-full text-gmcc-navy md:block"
-                preserveAspectRatio="none"
-                aria-hidden
-              >
-                <path
-                  d="
-                M0,110
-                C300,-50  500,120  800,100
-                S1000,0 1440,0
-                L1440,0 L0,0 Z
-              "
-                  fill="currentColor"
-                />
-              </svg>
-            </div>
-        </section>
+        </NavyWaveSection>
       )}
 
       {/* PHOTO GALLERY */}
       {galleryPhotos.length > 0 ? (
-        <section className="mx-auto max-w-6xl px-6 section-y pb-8">
+        <section className="page-section">
           {fields.galleryHeader ? <h2 className="h2">{fields.galleryHeader}</h2> : null}
           {fields.gallerySubheader ? <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.gallerySubheader}</p> : null}
           <PhotoGallery photos={galleryPhotos} />
@@ -611,7 +507,7 @@ export default async function TournamentsPage() {
 
       {/* CONTACT SECTION */}
       {(fields.contactHeader || fields.contactSubheader) ? (
-        <section className="mx-auto mt-16 mb-18 max-w-6xl px-6 text-center">
+        <section className="page-section text-center">
         {fields.contactHeader ? <h2 className="h2 text-gmcc-navy">{fields.contactHeader}</h2> : null}
         {fields.contactSubheader ? (
           <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.contactSubheader}</p>

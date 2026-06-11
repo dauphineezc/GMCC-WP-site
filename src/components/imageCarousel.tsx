@@ -35,7 +35,7 @@ export default function ImageCarousel({ images }: ImageCarouselProps) {
   const currentImage = images[currentIndex];
 
   return (
-    <div className="relative w-full overflow-hidden bg-neutral-100 mb-8">
+    <div className="relative w-full overflow-hidden bg-neutral-100">
       {/* Image */}
       {currentImage?.image?.sourceUrl && (
         // eslint-disable-next-line @next/next/no-img-element

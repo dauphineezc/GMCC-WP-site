@@ -23,12 +23,7 @@ type CenterCampaignModuleData = {
   body?: Maybe<string>;
   primaryCta?: Maybe<ModuleCta>;
   secondaryCta?: Maybe<ModuleCta>;
-  gallery?: Maybe<{
-    photo1?: Maybe<ModuleImage>;
-    photo2?: Maybe<ModuleImage>;
-    photo3?: Maybe<ModuleImage>;
-    photo4?: Maybe<ModuleImage>;
-  }>;
+  gallery?: Maybe<ModuleImage[]>;
 };
 
 type CenterCampaignModuleProps = {
@@ -55,9 +50,7 @@ export function getBodyParts(body?: Maybe<string>) {
 }
 
 function getImages(gallery?: CenterCampaignModuleData["gallery"]) {
-  return [gallery?.photo1, gallery?.photo2, gallery?.photo3, gallery?.photo4].filter(
-    (img): img is ModuleImage => !!img?.sourceUrl
-  );
+  return (gallery ?? []).filter((img): img is ModuleImage => !!img?.sourceUrl);
 }
 
 export default function CenterCampaignModule({

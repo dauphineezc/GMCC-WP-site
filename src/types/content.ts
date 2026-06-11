@@ -59,7 +59,7 @@ export type Program = {
   instructors?: string[];    // e.g., "/staff/sam-lee"
   taxonomies: Taxonomies;
   externalSchedule?: ExternalSchedule;
-  mediaGallery?: ImageAsset[];
+  gallery?: ImageAsset[];
   attachments?: { label: string; url: string; fileType?: string }[];
   relatedPrograms?: string[];
   seo?: SEO;
