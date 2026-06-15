@@ -12,8 +12,12 @@ query EventBySlug($slug: ID!) {
     eventFields {
       summary
       longDescription
-      startDateTime
-      endDateTime
+      eventSchedule {
+        datetime {
+          startDatetime
+          endDatetime
+        }
+      }
       cost
       registrationInformation {
         registrationLink

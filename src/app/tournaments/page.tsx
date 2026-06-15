@@ -3,6 +3,7 @@ import { wpFetch } from "@/lib/wp";
 import { asImageField, asString, collectGalleryPhotos, type ImageField } from "@/lib/acf";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
+import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
 import PhotoGallery from "@/components/photoGallery";
 import SimpleCampaign, { SimpleCampaignData } from "@/components/simpleCampaign";
 import NavyWaveSection from "@/components/navyWaveSection";
@@ -90,8 +91,7 @@ const TOURNAMENTS_EVENTS_QUERY = /* GraphQL */ `
         }
         eventFields {
           summary
-          startDateTime
-          endDateTime
+          ${EVENT_SCHEDULE_GRAPHQL}
           registrationInformation {
             registrationLink
           }
@@ -123,8 +123,7 @@ type TournamentEventWP = {
   featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
   eventFields?: {
     summary?: string | null;
-    startDateTime?: string | null;
-    endDateTime?: string | null;
+    eventSchedule?: unknown;
     registrationInformation?: { registrationLink?: string | null } | null;
     center?: { nodes?: { slug?: string | null; title?: string | null }[] | null } | null;
     audience?: { nodes?: { name?: string | null; slug?: string | null }[] | null } | null;
@@ -150,16 +149,15 @@ type TournamentCard = {
 function mapTournamentEvent(wp: TournamentEventWP, now: Date): TournamentCard {
   const f = wp.eventFields ?? {};
   const hero = wp.featuredImage?.node;
-  const end = f.endDateTime ? new Date(f.endDateTime) : null;
-  const start = f.startDateTime ? new Date(f.startDateTime) : null;
-  const isPast = end ? end < now : start ? start < now : false;
+  const dateInfo = getEventDateInfo(f.eventSchedule, now);
+  const isPast = dateInfo.hasSchedule ? dateInfo.isPast : false;
   return {
     id: wp.id,
     slug: wp.slug,
     title: wp.title ?? "",
     summary: f.summary ?? "",
-    startDateTime: f.startDateTime ?? null,
-    endDateTime: f.endDateTime ?? null,
+    startDateTime: dateInfo.start,
+    endDateTime: dateInfo.end,
     heroUrl: hero?.sourceUrl ?? null,
     heroAlt: hero?.altText ?? "",
     centers:

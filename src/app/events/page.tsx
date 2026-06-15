@@ -6,6 +6,7 @@ import {
   resolvePhotoWaveHeaderProps,
 } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
+import { EVENT_SCHEDULE_GRAPHQL } from "@/lib/events/eventSchedule";
 import ExploreEventsClient from "./exploreEventsClient";
 
 const PAGE_SIZE = 24;
@@ -29,8 +30,7 @@ const EVENTS_LIST_QUERY = `
         }
         eventFields {
           summary
-          startDateTime
-          endDateTime
+          ${EVENT_SCHEDULE_GRAPHQL}
           center {
             nodes {
               ... on Center {

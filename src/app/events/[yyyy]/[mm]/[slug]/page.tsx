@@ -3,6 +3,7 @@ import { acfAttachmentItems, wpFetch } from "@/lib/wp";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { formatEventDate } from "@/lib/events/formatEventDate";
+import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
 import ImageCarousel from "@/components/imageCarousel";
 import { TestimonialSection, normalizeTestimonials } from "@/components/testimonials";
 import PhoneLink from "@/components/phoneLink";
@@ -23,8 +24,7 @@ const EVENT_BY_SLUG_QUERY = `
       eventFields {
         summary
         longDescription
-        startDateTime
-        endDateTime
+        ${EVENT_SCHEDULE_GRAPHQL}
         cost
         eventType
         locationOverride
@@ -87,6 +87,8 @@ const EVENT_BY_SLUG_QUERY = `
             linkLabel
             link
           }
+          linkLabel
+          link
         }
 
         testimonials {
@@ -129,8 +131,7 @@ const EVENT_BY_SLUG_QUERY = `
               slug
               eventFields {
                 summary
-                startDateTime
-                endDateTime
+                ${EVENT_SCHEDULE_GRAPHQL}
               }
               featuredImage {
                 node {
@@ -181,7 +182,17 @@ export default async function EventPage(props: EventPageProps) {
 
   const centers = (f.center?.nodes ?? []).map((c: any) => ({ title: c.title, slug: c.slug }));
 
-  const dateRangeLabel = formatEventDate(f.startDateTime ?? null, f.endDateTime ?? null);
+  // Resolve the schedule: for recurring events, show remaining upcoming
+  // occurrences; if every occurrence has passed, fall back to the most recent.
+  const dateInfo = getEventDateInfo(f.eventSchedule);
+  const displayOccurrences = dateInfo.isPast
+    ? dateInfo.active
+      ? [dateInfo.active]
+      : []
+    : dateInfo.upcoming;
+  const dateRangeLabels = displayOccurrences
+    .map((o) => formatEventDate(o.start, o.end))
+    .filter((label): label is string => Boolean(label));
 
   return (
     <main>
@@ -289,11 +300,19 @@ export default async function EventPage(props: EventPageProps) {
           <h2 className="h2 pt-8 mb-2">Event details</h2>
           <div className="card">
             <dl className="mt-3 stack-2 body">
-              {dateRangeLabel && (
+              {dateRangeLabels.length > 0 && (
                 <div className="flex justify-between gap-3">
                   <dt className="text-neutral-500">When</dt>
                   <dd className="text-right">
-                    {dateRangeLabel}
+                    {dateRangeLabels.length === 1 ? (
+                      dateRangeLabels[0]
+                    ) : (
+                      <ul className="stack-1">
+                        {dateRangeLabels.map((label, i) => (
+                          <li key={i}>{label}</li>
+                        ))}
+                      </ul>
+                    )}
                   </dd>
                 </div>
               )}
@@ -473,19 +492,22 @@ export default async function EventPage(props: EventPageProps) {
       </section>
 
 
+
       {f.relatedEvents?.nodes && f.relatedEvents.nodes.length > 0 && (
         <section className="stack-4 scroll-mt-24" id="similar-events">
           <h2 className="h2 pt-8 mb-2">Explore Similar Events</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {f.relatedEvents.nodes.map((re: any) => {
               const reEventFields = re.eventFields ?? {};
-              const reEndIso = reEventFields.endDateTime ?? null;
+              const reDateInfo = getEventDateInfo(reEventFields.eventSchedule);
+              const reStartIso = reDateInfo.start;
+              const reEndIso = reDateInfo.end;
               const featuredImage = re.featuredImage?.node;
 
               return (
                 <a
                   key={re.slug}
-                  href={buildEventHref(re.slug, reEventFields.startDateTime ?? "")}
+                  href={buildEventHref(re.slug, reStartIso ?? "")}
                   className="group card card-hover card-link overflow-hidden h-[380px] flex flex-col"
                 >
                 {/* Full-bleed image */}
@@ -507,9 +529,9 @@ export default async function EventPage(props: EventPageProps) {
                         {re.title}
                     </h3>
 
-                    {(reEventFields.startDateTime || reEndIso) && (
+                    {(reStartIso || reEndIso) && (
                     <span className="mt-2 badge badge-green w-fit">
-                        {formatEventDate(reEventFields.startDateTime ?? null, reEndIso)}
+                        {formatEventDate(reStartIso, reEndIso)}
                     </span>
                     )}
 

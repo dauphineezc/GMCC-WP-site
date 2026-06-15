@@ -5,6 +5,11 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { formatEventDate } from "@/lib/events/formatEventDate";
+import {
+  parseEventSchedule,
+  resolveEventDateInfo,
+  type EventOccurrence,
+} from "@/lib/events/eventSchedule";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 
 type EventWP = any;
@@ -18,8 +23,7 @@ type EventCard = {
     slug: string;
     title: string;
     summary: string;
-    startDateTime: string | null;
-    endDateTime: string | null;
+    occurrences: EventOccurrence[];
     heroUrl: string | null;
     heroAlt: string;
     centers: { slug: string; title: string }[];
@@ -36,8 +40,7 @@ type EventCard = {
       slug: wp.slug,
       title: wp.title ?? "",
       summary: f.summary ?? "",
-      startDateTime: f.startDateTime ?? null,
-      endDateTime: f.endDateTime ?? null,
+      occurrences: parseEventSchedule(f.eventSchedule),
       heroUrl: hero?.sourceUrl ?? null,
       heroAlt: hero?.altText ?? "",
       centers:
@@ -245,40 +248,48 @@ export default function ExploreEventsClient({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const now = new Date();
-  
-    const list = all.filter(e => {
-      // text search
-      if (q) {
-        const hay = `${e.title} ${e.summary}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-  
-      // audience
-      if (audience.length) {
-        if (!e.audience.some(a => audience.includes(a.slug))) return false;
-      }
-  
-      // event type
-      if (eventTypes.length) {
-        if (!e.eventType.some(t => eventTypes.includes(t))) return false;
-      }      
-  
-      // date
-      if (dateFilter !== "all" && e.startDateTime) {
-        const start = new Date(e.startDateTime);
-        const end = e.endDateTime ? new Date(e.endDateTime) : null;
-        if (dateFilter === "upcoming" && end && end < now) return false;
-        if (dateFilter === "past" && end && end >= now) return false;
-      }
-  
-      return true;
-    });
 
-    const startKey = (e: EventCard) => {
-      if (!e.startDateTime) {
+    const list = all
+      // Resolve each event's active occurrence (rolls forward to next date)
+      .map(e => {
+        const info = resolveEventDateInfo(e.occurrences, now);
+        return {
+          ...e,
+          displayStart: info.start,
+          displayEnd: info.end,
+          isPast: info.isPast,
+          hasSchedule: info.hasSchedule,
+        };
+      })
+      .filter(e => {
+        // text search
+        if (q) {
+          const hay = `${e.title} ${e.summary}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+
+        // audience
+        if (audience.length) {
+          if (!e.audience.some(a => audience.includes(a.slug))) return false;
+        }
+
+        // event type
+        if (eventTypes.length) {
+          if (!e.eventType.some(t => eventTypes.includes(t))) return false;
+        }
+
+        // date: an event is "upcoming" until its last occurrence ends
+        if (dateFilter === "upcoming" && e.hasSchedule && e.isPast) return false;
+        if (dateFilter === "past" && (!e.hasSchedule || !e.isPast)) return false;
+
+        return true;
+      });
+
+    const startKey = (e: { displayStart: string | null }) => {
+      if (!e.displayStart) {
         return dateFilter === "past" ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
       }
-      return new Date(e.startDateTime).getTime();
+      return new Date(e.displayStart).getTime();
     };
 
     return [...list].sort((a, b) =>
@@ -500,7 +511,7 @@ export default function ExploreEventsClient({
               {filtered.map((e) => (
                 <a
                   key={e.slug}
-                  href={buildEventHref(e.slug, e.startDateTime ?? "")}
+                  href={buildEventHref(e.slug, e.displayStart ?? "")}
                   className="group card card-hover card-link overflow-hidden h-[380px] flex flex-col"
                 >
                   {/* Full-bleed image */}
@@ -522,9 +533,9 @@ export default function ExploreEventsClient({
                         {e.title}
                     </h3>
 
-                    {(e.startDateTime || e.endDateTime) && (
+                    {(e.displayStart || e.displayEnd) && (
                     <span className="mt-2 badge badge-green w-fit">
-                        {formatEventDate(e.startDateTime, e.endDateTime)}
+                        {formatEventDate(e.displayStart, e.displayEnd)}
                     </span>
                     )}
 

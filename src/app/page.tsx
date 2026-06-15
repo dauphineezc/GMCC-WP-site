@@ -9,6 +9,7 @@ import ImpactSection from "./(home)/sections/impact";
 import HistorySection from "./(home)/sections/history";
 import CentersSection from "./(home)/sections/centers";
 import EventsSection from "./(home)/sections/events";
+import { getEventDateInfo } from "@/lib/events/eventSchedule";
 import NewsSection from "./(home)/sections/news";
 import UtilityMenu from "@/components/nav/utilityMenu";
 
@@ -173,7 +174,7 @@ type HomeData = {
           title?: string | null;
           uri?: string | null;
           featuredImage?: GqlImage | null;
-          eventFields?: { startDateTime?: string | null; summary?: string | null } | null;
+          eventFields?: { eventSchedule?: unknown; summary?: string | null } | null;
         }> | null;
       } | null;
 
@@ -536,7 +537,15 @@ query HomePage($uri: ID!) {
             title
             uri
             featuredImage { node { sourceUrl altText } }
-            eventFields { startDateTime summary }
+            eventFields {
+              summary
+              eventSchedule {
+                datetime {
+                  startDatetime
+                  endDatetime
+                }
+              }
+            }
           }
         }
       }
@@ -606,7 +615,7 @@ export default async function HomePage() {
         id: e.id,
         title: e.title ?? "",
         uri: e.uri ?? "",
-        date: e.eventFields?.startDateTime ?? "",
+        date: getEventDateInfo(e.eventFields?.eventSchedule).start ?? "",
         summary: e.eventFields?.summary ?? "",
         featuredImage: e.featuredImage ?? null,
       }))} />

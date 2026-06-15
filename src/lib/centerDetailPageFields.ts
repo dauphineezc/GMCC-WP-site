@@ -1,4 +1,5 @@
 import { buildEventHref } from "@/lib/events/buildEventHref";
+import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
 import { wpFetch } from "@/lib/wp";
 import { pageUriCandidatesForSlug } from "@/lib/pageHeroFields";
 
@@ -71,7 +72,7 @@ const CURLING_MEMBERSHIP_CTA_LINK = `
                 ... on Event {
                   slug
                   eventFields {
-                    startDateTime
+                    ${EVENT_SCHEDULE_GRAPHQL}
                   }
                 }
               }
@@ -91,7 +92,7 @@ export type CenterPageReadyToJoinSection = {
 type FeaturedProgramEventNode = {
   __typename?: string | null;
   slug?: string | null;
-  eventFields?: { startDateTime?: string | null } | null;
+  eventFields?: { eventSchedule?: unknown } | null;
 };
 
 export type CenterPageMembershipReplacementCta = CenterPageReadyToJoinSection & {
@@ -228,14 +229,15 @@ export function resolveFeaturedProgramEventHref(
 ): string | null {
   if (!node?.slug) return null;
   const tn = node.__typename ?? "";
+  const eventStart = getEventDateInfo(node.eventFields?.eventSchedule).start;
   if (tn === "Event" || tn.endsWith("Event")) {
-    return buildEventHref(node.slug, node.eventFields?.startDateTime ?? "");
+    return buildEventHref(node.slug, eventStart ?? "");
   }
   if (tn === "Program" || tn.endsWith("Program")) {
     return `/programs/${encodeURIComponent(node.slug)}`;
   }
-  if (node.eventFields?.startDateTime) {
-    return buildEventHref(node.slug, node.eventFields.startDateTime);
+  if (eventStart) {
+    return buildEventHref(node.slug, eventStart);
   }
   return `/programs/${encodeURIComponent(node.slug)}`;
 }

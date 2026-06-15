@@ -161,8 +161,6 @@ const PROGRAM_BY_SLUG_QUERY = `
                 slug
                 eventFields {
                   summary
-                  startDateTime
-                  endDateTime
                 }
                 featuredImage {
                   node {

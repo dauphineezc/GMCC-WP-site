@@ -106,6 +106,21 @@ export function acfAttachmentItems(attachments: unknown): AttachmentItem[] {
   });
 }
 
+export type LabeledLinkItem = { linkLabel: string; link: string };
+
+/** ACF link repeater (e.g. camps `links`, event `additionalInformationLinks`): `[{ linkLabel, link }, ...]`. */
+export function acfLabeledLinkItems(rows: unknown): LabeledLinkItem[] {
+  const list = Array.isArray(rows) ? rows : rows ? [rows] : [];
+  return list.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const r = row as { linkLabel?: string | null; link?: unknown };
+    const link = acfCtaHref(r.link);
+    const linkLabel = (r.linkLabel ?? "").trim();
+    if (!link || !linkLabel) return [];
+    return [{ linkLabel, link }];
+  });
+}
+
 /** ACF corporatePartners repeater: `[{ logo: { node }, pageLink }, ...]`. */
 export function acfCorporatePartnerItems(partners: unknown): CorporatePartnerItem[] {
   const rows = Array.isArray(partners) ? partners : partners ? [partners] : [];
