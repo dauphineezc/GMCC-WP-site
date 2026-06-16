@@ -1,5 +1,6 @@
 import Accordion from "@/components/accordion";
 import HeaderImage from "@/components/headerImage";
+import { LEAGUE_SCHEDULE_EMBED_URL } from "@/lib/constants";
 
 export default function LeagueSchedulesPage() {
 
@@ -15,7 +16,7 @@ export default function LeagueSchedulesPage() {
 
           <div className="gmcc-schedule-embed mt-4">
             <iframe
-            src="https://gmcc-league-management-system.vercel.app"
+            src={LEAGUE_SCHEDULE_EMBED_URL}
             style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"

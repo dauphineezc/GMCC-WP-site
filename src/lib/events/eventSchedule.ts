@@ -117,3 +117,30 @@ export function resolveEventDateInfo(
 export function getEventDateInfo(eventSchedule: unknown, now: Date = new Date()): EventDateInfo {
   return resolveEventDateInfo(parseEventSchedule(eventSchedule), now);
 }
+
+export type UpcomingEventSource = {
+  id: string;
+  slug: string;
+  title?: string | null;
+  featuredImage?: unknown;
+  eventFields?: { summary?: string | null; eventSchedule?: unknown } | null;
+};
+
+/** Pick the next N events with an upcoming occurrence, sorted by active start date. */
+export function selectNextUpcomingEvents<T extends UpcomingEventSource>(
+  events: T[],
+  limit = 4,
+  now: Date = new Date()
+): Array<{ event: T; dateInfo: EventDateInfo }> {
+  return events
+    .map((event) => ({
+      event,
+      dateInfo: getEventDateInfo(event.eventFields?.eventSchedule, now),
+    }))
+    .filter(({ dateInfo }) => dateInfo.hasSchedule && !dateInfo.isPast && dateInfo.start)
+    .sort(
+      (a, b) =>
+        new Date(a.dateInfo.start!).getTime() - new Date(b.dateInfo.start!).getTime()
+    )
+    .slice(0, limit);
+}

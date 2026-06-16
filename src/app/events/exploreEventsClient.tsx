@@ -304,7 +304,7 @@ export default function ExploreEventsClient({
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
         <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
           {/* FILTER SIDEBAR */}
-          <aside className="card h-fit lg:sticky lg:top-18">
+          <aside className="card h-fit">
             {/* Mobile toggle button */}
             <button
                 onClick={() => setFiltersOpen(!filtersOpen)}
@@ -499,7 +499,7 @@ export default function ExploreEventsClient({
           {/* RESULTS */}
           <section className="stack-4">
             <div className="flex items-center justify-between">
-              <h2 className="h2">Results</h2>
+              <h2 className="h2">What's Coming Up</h2>
               <div className="body">
                 {filtered.length === 1
                   ? `${filtered.length} event`
@@ -576,7 +576,7 @@ export default function ExploreEventsClient({
 
               {pageInfo.hasNextPage && (
                 <div className="flex items-center justify-center py-6 text-sm text-neutral-600">
-                  {isLoadingMore ? "Loading more events…" : "Scroll to load more"}
+                  {isLoadingMore ? "Loading more events…" : ""}
                 </div>
               )}
 

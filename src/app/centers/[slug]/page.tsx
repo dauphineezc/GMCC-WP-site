@@ -19,6 +19,78 @@ import {
   resolveFeaturedProgramEventHref,
 } from "@/lib/centerDetailPageFields";
 
+
+
+const TODAY_SCHEDULE: Record<string, { time: string; activity: string }[]> = {
+  "Community Center": [
+    { time: "6:00 AM-7:00 AM", activity: "Aqua Fit" },
+    { time: "8:30 AM-9:30 AM", activity: "Zumba" },
+    { time: "10:00 AM-4:00 PM", activity: "Open Lap Swim" },
+    { time: "12:00 PM-1:00 PM", activity: "Mah Jongg" },
+    { time: "5:30 PM-6:30 PM", activity: "Yoga" },
+    { time: "All Day", activity: "Walking Track\nBilliards\nPuzzles" },
+
+  ],
+  "Tennis Center": [
+    { time: "10:00 AM-11:00 AM", activity: "Tennis 101" },
+    { time: "12:00 PM-1:00 PM", activity: "Sweat It Off" },
+    { time: "All Day", activity: "Drop-In Tennis\nDrop-In Pickleball" },
+  ],
+  "Coleman Family Center": [
+    { time: "10:00 AM-11:00 AM", activity: "Mindful Movement" },
+    { time: "5:00 PM-6:00 PM", activity: "Cardio Drumming" },
+    { time: "5:00 PM-7:00 PM", activity: "Adult Drop-In Basketball" },
+    { time: "All Day", activity: "Billiards" },
+  ],
+  "North Family Center": [
+    { time: "7:00 AM-9:00 AM", activity: "Drop-In Pickleball" },
+    { time: "11:00 AM-12:00 PM", activity: "Functional Fitness" },
+    { time: "2:00 PM-4:00 PM", activity: "Drop-In Pickleball" },
+    { time: "All Day", activity: "Billiards" },
+  ],
+};
+
+const CENTER_SCHEDULE_LABEL_BY_SLUG: Record<string, string> = {
+  "community-center": "Community Center",
+  "tennis-center": "Tennis Center",
+  "coleman-family-center": "Coleman Family Center",
+  "north-family-center": "North Family Center",
+};
+
+function resolveCenterScheduleLabel(slug: string, title: string): string | null {
+  const fromSlug = CENTER_SCHEDULE_LABEL_BY_SLUG[slug];
+  if (fromSlug && TODAY_SCHEDULE[fromSlug]) return fromSlug;
+
+  if (title in TODAY_SCHEDULE) return title;
+
+  return null;
+}
+
+const TODAY_EVENTS: Record<string, { title: string; time: string; description: string }> = {
+  "Community Center": {
+    title: "Family Fun Night",
+    time: "6:00 – 8:00 PM",
+    description: "Games, activities, and snacks for the whole family. Free with membership or day pass.",
+  },
+  "Coleman Family Center": {
+    title: "Family Fun Night",
+    time: "6:00 – 8:00 PM",
+    description: "Games, activities, and snacks for the whole family. Free with membership or day pass.",
+  },
+  "Tennis Center": {
+    title: "Dinks and Drinks",
+    time: "5:00 – 7:00 PM",
+    description: "Meet other tennis players and enjoy an informal round-robin. All skill levels welcome.",
+  },
+  "North Family Center": {
+    title: "Family Fun Night",
+    time: "6:00 – 8:00 PM",
+    description: "Games, activities, and snacks for the whole family. Free with membership or day pass.",
+  },
+};
+
+
+
 const CENTER_BY_SLUG_QUERY = `
   query CenterBySlug($slug: ID!) {
     center(id: $slug, idType: SLUG) {
@@ -476,6 +548,11 @@ export default async function CenterPage(props: CenterPageProps) {
   const hoursReplacement = coerceWpRichText(curlingLayout?.hoursReplacementStatement).trim();
   const showCurlingHoursReplacement = isCurlingCenter && hoursReplacement.length > 0;
 
+  const centerScheduleLabel = resolveCenterScheduleLabel(slug, center.title ?? "");
+  const todaySchedule = centerScheduleLabel ? (TODAY_SCHEDULE[centerScheduleLabel] ?? []) : [];
+  const todayEvent = centerScheduleLabel ? TODAY_EVENTS[centerScheduleLabel] : null;
+  const showTodaySection = todaySchedule.length > 0 || todayEvent != null;
+
   const replacementCta = curlingLayout?.membershipReplacementCta;
   const membershipPlansHref = `/membership?center=${encodeURIComponent(slug)}#plans`;
 
@@ -658,7 +735,7 @@ export default async function CenterPage(props: CenterPageProps) {
             )}
           </div>
           {hasBrochures ? (
-            <div className="stack-3 md:col-span-2">
+            <div className="stack-3 md:col-span-2 mt-[-5rem]">
               {brochureHeader ? <h2 className="h2 mb-4 text-white">{brochureHeader}</h2> : null}
               <div className="flex flex-wrap gap-3">
                 {programBrochureUrl ? (
@@ -686,6 +763,92 @@ export default async function CenterPage(props: CenterPageProps) {
           ) : null}
         </div>
       </NavyWaveSection>
+
+
+      {/* ── Section 2: What's Happening Today? ───────────────────────────── */}
+      {showTodaySection ? (
+      <section className="page-section" id="today">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-10">
+            <h2 className="h2 text-center">What&rsquo;s Happening Today?</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+
+            <div className="col-span-1">
+
+          {todaySchedule.length > 0 ? (
+            <>
+              {/* Desktop single-center schedule */}
+              <div className="hidden overflow-x-auto rounded-2xl border border-neutral-200 bg-white shadow-sm md:block">
+                <div className="border-b border-neutral-200 bg-gmcc-navy px-5 py-4 text-center text-sm font-semibold text-white">
+                  {centerScheduleLabel}
+                </div>
+                <div className="px-12 py-6">
+                  <ul className="space-y-3 ">
+                    {todaySchedule.map((item, ii) => (
+                      <li key={ii} className="flex gap-20 grid grid-cols-2">
+                        <span className="mt-0.5 shrink-0 text-xs font-semibold text-gmcc-teal col-span-1 justify-self-end">
+                          {item.time}
+                        </span>
+                        <span className="whitespace-pre-line text-gmcc-grey-dark col-span-1">{item.activity}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Mobile schedule card */}
+              <div className="card md:hidden">
+                <h3 className="h3 mb-3 border-b border-neutral-100 bg-gmcc-navy pb-2 text-center text-white">
+                  {centerScheduleLabel}
+                </h3>
+                <ul className="space-y-2">
+                  {todaySchedule.map((item, ii) => (
+                    <li key={ii} className="flex gap-2 text-sm">
+                      <span className="w-16 shrink-0 font-semibold text-gmcc-teal">{item.time}</span>
+                      <span className="text-gmcc-grey-dark">{item.activity}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          ) : null}
+
+          </div>
+
+          <div className="col-span-1">
+
+          {todayEvent ? (
+            <div>
+              <div className="grid gap-5">
+                <div className="card card-hover border-l-4 border-l-gmcc-teal bg-gmcc-blue-light/30 p-0">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="col-span-1 py-4 pl-4">
+                      <div>
+                        <h4 className="h3 mb-1">{todayEvent.title}</h4>
+                        <p className="small mb-2 font-semibold text-gmcc-teal-dark">{todayEvent.time}</p>
+                        <p className="body">{todayEvent.description}</p>
+                      </div>
+                    </div>
+                    <div className="col-span-1">
+                      <img
+                        src="/images/VisitPhoto.png"
+                        alt={todayEvent.title}
+                        className="h-full w-full rounded-r-2xl object-cover"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          </div>
+        </div>
+
+        </div>
+      </section>
+      ) : null}
 
       <section className="page-section stack-4">
         <h2 className="h2 mb-4">What you'll find here</h2>

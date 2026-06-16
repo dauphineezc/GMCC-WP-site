@@ -871,7 +871,7 @@ export default function ExploreProgramsClient({
 
             {pageInfo.hasNextPage && (
               <div className="flex items-center justify-center py-6 text-sm text-neutral-600">
-                {isLoadingMore ? "Loading more programs…" : "Scroll to load more"}
+                {isLoadingMore ? "Loading more programs…" : ""}
               </div>
             )}
 

@@ -19,7 +19,7 @@ export type SimpleCampaignData = {
   title?: string | null;
   uri?: string | null;
   featuredImage?: {
-    node?: { sourceUrl: string; altText?: string | null } | null;
+    node?: { sourceUrl?: string | null; altText?: string | null } | null;
   } | null;
   campaignFields?: SimpleCampaignFields;
 };

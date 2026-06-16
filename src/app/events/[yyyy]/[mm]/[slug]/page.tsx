@@ -4,10 +4,11 @@ import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { formatEventDate } from "@/lib/events/formatEventDate";
 import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
-import ImageCarousel from "@/components/imageCarousel";
 import { TestimonialSection, normalizeTestimonials } from "@/components/testimonials";
-import PhoneLink from "@/components/phoneLink";
 import SponsorsGrid, { normalizeSponsors } from "@/components/sponsorsGrid";
+import AttachmentsCard from "@/components/detail/attachmentsCard";
+import DetailGalleryCarousel from "@/components/detail/detailGalleryCarousel";
+import RegistrationSidebar from "@/components/detail/registrationSidebar";
 
 const EVENT_BY_SLUG_QUERY = `
   query EventBySlug($slug: ID!) {
@@ -261,40 +262,7 @@ export default async function EventPage(props: EventPageProps) {
           )}
 
           {/* Attachments card */}
-          {attachments.length > 0 && (
-            <div>
-              <h3 className="eyebrow mb-3">Relevant documents</h3>
-              <div className="flex flex-wrap gap-3">
-                {attachments.map((att, i: number) => (
-                  <a 
-                    key={i}
-                    href={att.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="group flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 transition-all hover:border-gmcc-teal hover:bg-white hover:shadow-md"
-                  >
-                    {/* Document icon */}
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gmcc-teal/10 text-gmcc-teal">
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 3v6h6" />
-                      </svg>
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-medium text-neutral-800 group-hover:text-gmcc-navy truncate">
-                        {att.label}
-                      </span>
-                      <span className="text-xs text-neutral-500">PDF • Click to download</span>
-                    </div>
-                    {/* Download arrow icon */}
-                    <svg className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-y-0.5 group-hover:text-gmcc-teal ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
+          <AttachmentsCard attachments={attachments} />
 
           {/* Details card */}
           <h2 className="h2 pt-8 mb-2">Event details</h2>
@@ -411,83 +379,12 @@ export default async function EventPage(props: EventPageProps) {
 
         {/* RIGHT: stretch to row height like /events filters so sticky has a tall scroll span */}
         <div className="flex min-h-0 min-w-0 flex-col gap-6">
-          {/* Gallery Carousel */}
-          {(() => {
-            // gallery is the repeater: [{ photos: { node } }, ...]
-            const galleryRows = Array.isArray(f.gallery)
-              ? f.gallery
-              : f.gallery
-                ? [f.gallery]
-                : [];
+          <DetailGalleryCarousel gallery={f.gallery} />
 
-            const carouselImages = galleryRows
-              .filter((row: { photos?: { node?: { sourceUrl?: string } } }) => row?.photos?.node?.sourceUrl)
-              .map((row: { photos: { node: { sourceUrl: string; altText?: string | null } } }) => ({
-                image: {
-                  sourceUrl: row.photos.node.sourceUrl,
-                  altText: row.photos.node.altText ?? null,
-                },
-                cta: null,
-                url: null,
-              }));
-            
-            if (carouselImages.length === 0) return null;
-            
-            return (
-              <div>
-                {/* <h2 className="h2 mb-2">See {p.title} in action</h2> */}
-                <ImageCarousel images={carouselImages} />
-              </div>
-            );
-          })()}
-
-
-          <aside className="card h-fit sticky top-18 z-10 w-full min-w-0 shrink-0 border-gmcc-teal/40 bg-gmcc-blue-light/30 p-6">
-            <h2 className="h2 text-gmcc-navy">Ready to register?</h2>
-            <p className="mt-2 small mb-2">{f.registrationInformation?.instructionalSubheader}</p>
-
-            {f.registrationInformation?.registrationLink || f.registrationInformation?.phoneNumber || f.registrationInformation?.email ? (
-              <>
-              {f.registrationInformation?.registrationLink && (
-              <a
-                className="btn btn-primary w-full mt-4 mb-4"
-                href={f.registrationInformation.registrationLink}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Register now
-              </a>
-              )}
-              {f.registrationInformation?.phoneNumber && (
-                <PhoneLink className="mt-4 small text-gmcc-teal font-bold hover:text-gmcc-navy hover:underline" phone={f.registrationInformation.phoneNumber}></PhoneLink>
-              )}
-              <br />
-              {f.registrationInformation?.email && (
-                <a href={`mailto:${f.registrationInformation.email}`} className="mt-4 small text-gmcc-teal font-bold hover:text-gmcc-navy hover:underline">{f.registrationInformation.email}</a>
-              )}
-              </>
-            ) : (
-              <p className="mt-4 small">
-                Registration details will be posted soon.
-              </p>
-            )}
-
-            {(() => {
-              const { link1, link2, link3 } = f.additionalInformationLinks ?? {};
-              const links = [link1, link2, link3].filter((l: any) => l?.link && l?.linkLabel);
-              if (links.length === 0) return null;
-              return (
-                <div className="mt-4">
-                  <h2 className="h3">Need more information?</h2>
-                  <ul className="text-sm mt-2">
-                    {links.map((link: any, i: number) => (
-                      <li key={i}><a href={link.link} className="link body block text-sm">➜ {link.linkLabel}</a></li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })()}
-          </aside>
+          <RegistrationSidebar
+            registrationInformation={f.registrationInformation}
+            additionalInformationLinks={f.additionalInformationLinks}
+          />
         </div>
       </section>
 
@@ -556,7 +453,6 @@ export default async function EventPage(props: EventPageProps) {
 
       {f.sponsors?.nodes?.length > 0 && (
             <div className="stack-4 pt-16" id="sponsors">
-              {/* <h2 className="h2 pt-8 mb-4">Sponsors</h2> */}
               <SponsorsGrid sponsors={normalizeSponsors(f.sponsors.nodes)} title="Thank You to Our Sponsors" />
             </div>
           )}

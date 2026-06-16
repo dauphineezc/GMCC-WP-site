@@ -37,7 +37,6 @@ export default function AmenitiesGrid({ amenities, title = "What we offer", numC
 
   return (
     <div className="space-y-3">
-      {/* <h2 className="h2">{title}</h2> */}
       <div className="md:hidden">
         <div className="space-y-2">
           {visibleAmenities.map((amenity) => {

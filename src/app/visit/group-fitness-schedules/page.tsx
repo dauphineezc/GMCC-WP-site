@@ -4,6 +4,7 @@ import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
 } from "@/lib/pageHeroFields";
+import { scheduleEmbedUrl } from "@/lib/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -52,7 +53,7 @@ const faqItems = [
     content: (
       <div className="gmcc-schedule-embed mt-4">
         <iframe
-          src="https://gmcc-drop-in-schedule.vercel.app/?type=fitness&sub=aquatics"
+          src={scheduleEmbedUrl({ type: "fitness", sub: "aquatics" })}
           style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
@@ -66,7 +67,7 @@ const faqItems = [
     content: (
       <div className="gmcc-schedule-embed mt-4">
         <iframe
-          src="https://gmcc-drop-in-schedule.vercel.app/?type=fitness&sub=aquatics"
+          src={scheduleEmbedUrl({ type: "fitness", sub: "aquatics" })}
           style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
@@ -80,7 +81,7 @@ const faqItems = [
     content: (
       <div className="gmcc-schedule-embed mt-4">
         <iframe
-          src="https://gmcc-drop-in-schedule.vercel.app/?type=fitness&sub=aquatics"
+          src={scheduleEmbedUrl({ type: "fitness", sub: "aquatics" })}
           style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"

@@ -1,5 +1,6 @@
 import Accordion from "@/components/accordion";
 import HeaderImage from "@/components/headerImage";
+import { scheduleEmbedUrl } from "@/lib/constants";
 
 export default function PoolAvailabilityPage() {
 
@@ -15,7 +16,7 @@ export default function PoolAvailabilityPage() {
 
           <div className="gmcc-schedule-embed mt-4">
             <iframe
-            src="https://gmcc-drop-in-schedule.vercel.app/?type=dropin&sub=aquatics"
+            src={scheduleEmbedUrl({ type: "dropin", sub: "aquatics" })}
             style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"

@@ -139,7 +139,6 @@ const ACCESS_OPTIONS = [
     icon: "🎟️",
     who: "Anyone who wants to try us out without committing.",
     how: "Purchase at the Welcome Desk.",
-    price: "Starting at $7",
     includes: ["Full facility access for the day", "Drop-in classes (space permitting)", "Locker room use"],
   },
   {
@@ -149,7 +148,6 @@ const ACCESS_OPTIONS = [
     icon: "👥",
     who: "Friends or family visiting alongside a current member.",
     how: "Come in with the member and pay the guest fee at the Welcome Desk.",
-    price: "Starting at $8",
     includes: ["Same access as a Day Pass", "Must be accompanied by member", "Up to 2 guests per member visit"],
   },
   {
@@ -159,7 +157,6 @@ const ACCESS_OPTIONS = [
     icon: "✨",
     who: "Prospective members who want to experience Greater Midland before joining.",
     how: "Ask at the Welcome Desk — one free trial per household.",
-    price: "Free",
     includes: ["Full facility access for one day", "Welcome tour available", "No obligation to join"],
   },
   {
@@ -169,7 +166,6 @@ const ACCESS_OPTIONS = [
     icon: "🏅",
     who: "Anyone planning to visit more than a few times per month.",
     how: "Sign up at the Welcome Desk or online. Flexible plan options available.",
-    price: "Starting at $12/month",
     includes: ["Unlimited facility access", "Free or discounted classes", "Varying membership options"],
   },
 ];
@@ -467,7 +463,6 @@ export default function VisitPage() {
               </div>
               <div>
                 <h3 className="h3">{opt.type}</h3>
-                <p className="small mt-1 font-semibold text-gmcc-teal-dark">{opt.price}</p>
               </div>
               <p className="body">{opt.who}</p>
               <div>

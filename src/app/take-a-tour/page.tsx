@@ -1,4 +1,5 @@
 import { wpFetch } from "@/lib/wp";
+import { CENTER_TITLE_ORDER } from "@/lib/constants";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import PhoneLink from "@/components/phoneLink";
 
@@ -43,13 +44,7 @@ export default async function TakeATourPage() {
   const data = await wpFetch<any>(TAKE_A_TOUR_PAGE_QUERY, { uri: "/take-a-tour" });
   const f = data?.page?.takeATourPageFields;
 
-  const centerOrder = [
-    "community center",
-    "tennis center",
-    "coleman family center",
-    "north family center",
-    "curling center",
-  ];
+  const centerOrder = CENTER_TITLE_ORDER;
 
   return (
     <main className="pb-16">

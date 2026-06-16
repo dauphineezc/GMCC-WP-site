@@ -1,5 +1,6 @@
 import Accordion from "@/components/accordion";
 import HeaderImage from "@/components/headerImage";
+import { scheduleEmbedUrl } from "@/lib/constants";
 
 export default function CourtAvailabilityPage() {
   const faqItems = [
@@ -9,7 +10,7 @@ export default function CourtAvailabilityPage() {
       content: (
         <div className="gmcc-schedule-embed mt-4">
             <iframe
-            src="https://gmcc-drop-in-schedule.vercel.app/?type=dropin&sub=courtSports"
+            src={scheduleEmbedUrl({ type: "dropin", sub: "courtSports" })}
             style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
@@ -23,7 +24,7 @@ export default function CourtAvailabilityPage() {
       content: (
         <div className="gmcc-schedule-embed mt-4">
             <iframe
-            src="https://gmcc-drop-in-schedule.vercel.app/?type=dropin&sub=courtSports"
+            src={scheduleEmbedUrl({ type: "dropin", sub: "courtSports" })}
             style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
@@ -37,7 +38,7 @@ export default function CourtAvailabilityPage() {
       content: (
         <div className="gmcc-schedule-embed mt-4">
             <iframe
-            src="https://gmcc-drop-in-schedule.vercel.app/?type=fitness&sub=aquatics"
+            src={scheduleEmbedUrl({ type: "fitness", sub: "aquatics" })}
             style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
@@ -51,7 +52,7 @@ export default function CourtAvailabilityPage() {
       content: (
         <div className="gmcc-schedule-embed mt-4">
             <iframe
-            src="https://gmcc-drop-in-schedule.vercel.app/?type=fitness&sub=aquatics"
+            src={scheduleEmbedUrl({ type: "fitness", sub: "aquatics" })}
             style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"

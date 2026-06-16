@@ -25,6 +25,7 @@ import PhotoWaveHeader from "@/components/photoWaveHeader";
 import type { HeroCta } from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
 import { computeMembershipPricingSavings } from "@/lib/membershipPricingSavings";
+import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
 
 export type Audience = {
   name: string;
@@ -763,7 +764,7 @@ export default function ExploreMembershipsClient({
                 {fields.contactDescription}
               </p>
               <a
-                href="https://register.greatermidland.org/webtrac/web/search.html?Action=Start"
+                href={WEBTRAC_REGISTRATION_URL}
                 className="btn bg-gmcc-navy text-white hover:bg-neutral-100 mt-6 text-base px-8 py-3"
               >
                 Contact Us
@@ -809,8 +810,7 @@ export default function ExploreMembershipsClient({
 }
 
 const VISIBLE_BENEFITS = 5;
-const DEFAULT_JOIN_URL =
-  "https://register.greatermidland.org/webtrac/web/search.html?Action=Start";
+const DEFAULT_JOIN_URL = WEBTRAC_REGISTRATION_URL;
 
 function resolveJoinAction(membership: Membership): "modal" | "direct" {
   const hasAuto = Boolean(membership.autoDraftLink?.url);

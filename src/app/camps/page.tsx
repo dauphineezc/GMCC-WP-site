@@ -2,9 +2,11 @@ import Accordion from "@/components/accordion";
 import Link from "next/link";
 import { Suspense } from "react";
 import { acfCtaHref, acfFileHref, wpFetch } from "@/lib/wp";
+import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
 import {
   acfCtaTarget,
   acfCtaTitle,
+  acfImageFromField,
   asImageField,
   asString,
   collectNumberedFaqs,
@@ -55,6 +57,7 @@ const CAMPS_PAGE_QUERY = /* GraphQL */ `
         ccCampsImage {
           node {
             sourceUrl
+            mediaItemUrl
             altText
           }
         }
@@ -62,6 +65,7 @@ const CAMPS_PAGE_QUERY = /* GraphQL */ `
         tcCampsImage {
           node {
             sourceUrl
+            mediaItemUrl
             altText
           }
         }
@@ -69,6 +73,7 @@ const CAMPS_PAGE_QUERY = /* GraphQL */ `
         cfcCampsImage {
           node {
             sourceUrl
+            mediaItemUrl
             altText
           }
         }
@@ -76,6 +81,7 @@ const CAMPS_PAGE_QUERY = /* GraphQL */ `
         nfcCampsImage {
           node {
             sourceUrl
+            mediaItemUrl
             altText
           }
         }
@@ -141,6 +147,24 @@ const CAMPS_PAGE_QUERY = /* GraphQL */ `
 
         contactHeader
         contactSubheader
+      }
+    }
+  }
+`;
+
+const CAMPS_CENTER_IMAGES_QUERY = /* GraphQL */ `
+  query CampsCenterImages {
+    centers(first: 20) {
+      nodes {
+        slug
+        title
+        featuredImage {
+          node {
+            sourceUrl
+            mediaItemUrl
+            altText
+          }
+        }
       }
     }
   }
@@ -332,11 +356,9 @@ const CENTER_CAMPS_CONFIG: Array<{
 function centerHeroImage(
   fields: Record<string, unknown> | null | undefined,
   imageField: string,
+  fallbackAlt: string,
 ): { url: string; alt: string } | null {
-  const block = fields?.[imageField] as { node?: { sourceUrl?: string | null; altText?: string | null } } | null;
-  const url = block?.node?.sourceUrl?.trim();
-  if (!url) return null;
-  return { url, alt: (block?.node?.altText ?? "").trim() || "Center" };
+  return acfImageFromField(fields?.[imageField], fallbackAlt);
 }
 
 function CampsResultsSkeleton() {
@@ -427,7 +449,7 @@ function TextCardBlock({
 }
 
 export default async function CampsPage() {
-  const [data, programsData, sponsorsData] = await Promise.all([
+  const [data, programsData, sponsorsData, centersData] = await Promise.all([
     wpFetch<{
       page?:
         | (WpPageWithHeroFields & {
@@ -447,6 +469,15 @@ export default async function CampsPage() {
       after: null,
     }),
     wpFetch<{ sponsors?: unknown }>(CAMP_SPONSORS_QUERY, {}),
+    wpFetch<{
+      centers?: {
+        nodes?: Array<{
+          slug?: string | null;
+          title?: string | null;
+          featuredImage?: unknown;
+        }> | null;
+      } | null;
+    }>(CAMPS_CENTER_IMAGES_QUERY, {}),
   ]);
 
   const campSponsors = normalizeSponsorsByType(sponsorsData?.sponsors, "camp");
@@ -465,9 +496,21 @@ export default async function CampsPage() {
   const browseHeader = f.browseByCenterHeader;
   const browseSubheader = f.browseByCenterSubheader;
 
+  const centerImageBySlug = new Map(
+    (centersData?.centers?.nodes ?? []).flatMap((center) => {
+      const slug = (center.slug ?? "").trim();
+      if (!slug) return [];
+      const image = acfImageFromField(center.featuredImage, (center.title ?? "").trim() || "Center");
+      return image ? [[slug, image] as const] : [];
+    }),
+  );
+
   const browseCenterCards = CENTER_CAMPS_CONFIG.map((cfg) => {
     const text = asString((f as unknown as Record<string, unknown>)[cfg.descField]);
-    const image = centerHeroImage(f, cfg.imageField);
+    const image =
+      centerHeroImage(f, cfg.imageField, cfg.label) ??
+      centerImageBySlug.get(cfg.programsCenterSlug) ??
+      null;
     const href = `/camps?center=${encodeURIComponent(cfg.programsCenterSlug)}#camps-results`;
     return {
       key: cfg.programsCenterSlug,
@@ -580,7 +623,6 @@ export default async function CampsPage() {
                     <span className="truncate text-sm font-semibold text-gmcc-navy">
                       {item.label}
                     </span>
-                      {/* <span className="text-xs text-neutral-500">PDF • Click to download</span> */}
                   </div>
                   <svg
                     className="ml-2 h-4 w-4 shrink-0 text-gmcc-navy transition-transform group-hover:translate-y-0.5 group-hover:text-gmcc-navy"
@@ -726,7 +768,7 @@ export default async function CampsPage() {
           ) : null}
           <div className="mt-6 flex justify-center">
             <a
-              href="https://register.greatermidland.org/webtrac/web/search.html?Action=Start"
+              href={WEBTRAC_REGISTRATION_URL}
               className="btn bg-gmcc-navy px-8 py-3 text-base text-white hover:bg-neutral-100"
             >
               Contact Us

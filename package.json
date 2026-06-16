@@ -16,8 +16,6 @@
     "postinstall": "node -e \"console.log('=== POSTINSTALL ===')\""
   },
   "dependencies": {
-    "@faustwp/core": "^3.3.1",
-    "cross-fetch": "^4.1.0",
     "graphql": "^16.11.0",
     "html-react-parser": "^5.2.6",
     "next": "^16.0.10",

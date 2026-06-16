@@ -1,6 +1,7 @@
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps, WpPageWithHeroFields } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
 import { asImageField, asString, collectGalleryPhotos, type ImageField } from "@/lib/acf";
+import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
@@ -511,7 +512,7 @@ export default async function TournamentsPage() {
           <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.contactSubheader}</p>
         ) : null}
         <a
-          href="https://register.greatermidland.org/webtrac/web/search.html?Action=Start"
+          href={WEBTRAC_REGISTRATION_URL}
           className="btn bg-gmcc-navy text-white hover:bg-neutral-100 mt-6 text-base px-8 py-3"
           >
           Contact Us

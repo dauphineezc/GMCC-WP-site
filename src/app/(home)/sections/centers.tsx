@@ -9,7 +9,7 @@ type Center = {
   slug?: string | null;
   title?: string | null;
   uri?: string | null;
-  featuredImage?: { node?: { sourceUrl: string; altText?: string | null } | null } | null;
+  featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
   centersFields?: {
     address?: string | null;
     contactInfo?: { contactPhone?: string | null; contactEmail?: string | null } | null;
@@ -20,7 +20,7 @@ type Props = {
   heading: string;
   centers: Center[];
   corporateWellnessCentersCaption?: string | null;
-  corporateWellnessCentersImage?: { node?: { sourceUrl: string; altText?: string | null } | null } | null;
+  corporateWellnessCentersImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
 };
 
 function getSlug(c: { slug?: string | null; uri?: string | null }) {

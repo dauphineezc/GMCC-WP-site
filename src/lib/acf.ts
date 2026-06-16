@@ -41,6 +41,20 @@ export function asImageField(value: unknown): ImageField {
   };
 }
 
+export type AcfImage = { url: string; alt: string };
+
+/** URL + alt from an ACF image field (`{ node: { sourceUrl, mediaItemUrl, altText } }`). */
+export function acfImageFromField(value: unknown, fallbackAlt = ""): AcfImage | null {
+  if (!value || typeof value !== "object") return null;
+  const node = (value as { node?: Record<string, unknown> | null }).node;
+  if (!node || typeof node !== "object") return null;
+  const rawUrl = node.sourceUrl ?? node.mediaItemUrl;
+  const url = resolveWpMediaUrl(typeof rawUrl === "string" ? rawUrl : null);
+  if (!url) return null;
+  const alt = asString(node.altText) || fallbackAlt;
+  return { url, alt };
+}
+
 /** `target` from an ACF Link field (`_blank` / `_self`), if present. */
 export function acfCtaTarget(cta: unknown): string | null | undefined {
   if (cta && typeof cta === "object") {

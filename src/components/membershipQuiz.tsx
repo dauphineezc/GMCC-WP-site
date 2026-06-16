@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { computeMembershipPricingSavings } from "@/lib/membershipPricingSavings";
+import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
 
 export type Audience = {
   name: string;
@@ -387,7 +388,7 @@ export default function MembershipQuiz({
                           </button>
                         )}
                         <a
-                          href="https://register.greatermidland.org/webtrac/web/search.html?Action=Start"
+                          href={WEBTRAC_REGISTRATION_URL}
                           className="btn btn-secondary w-full text-xs"
                         >
                           Join or Renew
@@ -434,7 +435,7 @@ export default function MembershipQuiz({
                             ))}
                           </ul>
                           <a
-                            href="https://register.greatermidland.org/webtrac/web/search.html?Action=Start"
+                            href={WEBTRAC_REGISTRATION_URL}
                             className="btn btn-primary w-full text-xs mt-3"
                           >
                             Join or Renew

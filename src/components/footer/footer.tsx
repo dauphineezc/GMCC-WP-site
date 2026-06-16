@@ -4,6 +4,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { FooterNavItem } from "@/lib/nav/getFooterNav";
+import { CONTACT_EMAIL, CONTACT_EMAIL_HREF } from "@/lib/constants";
 
 type FooterProps = {
   items: FooterNavItem[];
@@ -78,10 +79,10 @@ export default function Footer({ items }: FooterProps) {
               (989) 923-4622
             </a>
             <a 
-              href="mailto:info@greatermidland.org" 
+              href={CONTACT_EMAIL_HREF} 
               className="hover:text-white transition-colors"
             >
-              INFO@GREATERMIDLAND.ORG
+              {CONTACT_EMAIL.toUpperCase()}
             </a>
           </div>
         </div>

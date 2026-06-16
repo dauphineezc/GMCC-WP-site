@@ -1,5 +1,6 @@
 // src/app/page.tsx
 import { wpFetch } from "@/lib/wp";
+import { acfImageFromField } from "@/lib/acf";
 import HeroSection from "./(home)/sections/hero";
 import AboutSection from "./(home)/sections/about";
 import ProgramsSection from "./(home)/sections/programs";
@@ -9,12 +10,34 @@ import ImpactSection from "./(home)/sections/impact";
 import HistorySection from "./(home)/sections/history";
 import CentersSection from "./(home)/sections/centers";
 import EventsSection from "./(home)/sections/events";
-import { getEventDateInfo } from "@/lib/events/eventSchedule";
+import { EVENT_SCHEDULE_GRAPHQL, selectNextUpcomingEvents } from "@/lib/events/eventSchedule";
+import { buildEventHref } from "@/lib/events/buildEventHref";
+import { formatEventBadgeDate } from "@/lib/events/formatEventDate";
 import NewsSection from "./(home)/sections/news";
 import UtilityMenu from "@/components/nav/utilityMenu";
 
+/** Regenerate at most once per day; cron can trigger sooner via `/api/revalidate`. */
+export const revalidate = 86400;
+
 // ---- Types (match query) ----
-type GqlImage = { node?: { sourceUrl: string; altText?: string | null } | null };
+type GqlImage = {
+  node?: { sourceUrl?: string | null; mediaItemUrl?: string | null; altText?: string | null } | null;
+};
+
+type LinkedProgramPage = {
+  uri?: string | null;
+  featuredImage?: GqlImage | null;
+  heroFields?: {
+    heroImage?: GqlImage | null;
+  } | null;
+};
+
+type HomeProgramSlot = {
+  programPageLink?: { nodes?: LinkedProgramPage[] | null } | null;
+  programLabel?: string | null;
+  programCaption?: string | null;
+  programImage?: GqlImage | null;
+};
 
 type HomeData = {
   page: {
@@ -42,54 +65,14 @@ type HomeData = {
       aboutCtaLabel?: string | null;
 
       programs?: {
-        program1?: {
-          programPageLink?: string | null;
-          programLabel?: string | null;
-          programCaption?: string | null;
-          programImage?: GqlImage | null;
-        } | null;
-        program2?: {
-          programPageLink?: string | null;
-          programLabel?: string | null;
-          programCaption?: string | null;
-          programImage?: GqlImage | null;
-        } | null;
-        program3?: {
-          programPageLink?: string | null;
-          programLabel?: string | null;
-          programCaption?: string | null;
-          programImage?: GqlImage | null;
-        } | null;
-        program4?: {
-          programPageLink?: string | null;
-          programLabel?: string | null;
-          programCaption?: string | null;
-          programImage?: GqlImage | null;
-        } | null;
-        program5?: {
-          programPageLink?: string | null;
-          programLabel?: string | null;
-          programCaption?: string | null;
-          programImage?: GqlImage | null;
-        } | null;
-        program6?: {
-          programPageLink?: string | null;
-          programLabel?: string | null;
-          programCaption?: string | null;
-          programImage?: GqlImage | null;
-        } | null;
-        program7?: {
-          programPageLink?: string | null;
-          programLabel?: string | null;
-          programCaption?: string | null;
-          programImage?: GqlImage | null;
-        } | null;
-        program8?: {
-          programPageLink?: string | null;
-          programLabel?: string | null;
-          programCaption?: string | null;
-          programImage?: GqlImage | null;
-        } | null;
+        program1?: HomeProgramSlot | null;
+        program2?: HomeProgramSlot | null;
+        program3?: HomeProgramSlot | null;
+        program4?: HomeProgramSlot | null;
+        program5?: HomeProgramSlot | null;
+        program6?: HomeProgramSlot | null;
+        program7?: HomeProgramSlot | null;
+        program8?: HomeProgramSlot | null;
       } | null;
 
       campaignBanner?: {
@@ -168,16 +151,6 @@ type HomeData = {
       corporateWellnessCentersCaption?: string | null;
       corporateWellnessCentersImage?: GqlImage | null;
 
-      upcomingEvents?: {
-        nodes?: Array<{
-          id: string;
-          title?: string | null;
-          uri?: string | null;
-          featuredImage?: GqlImage | null;
-          eventFields?: { eventSchedule?: unknown; summary?: string | null } | null;
-        }> | null;
-      } | null;
-
       newsletterSubscriptionHeader?: string | null;
       newsletterSubscriptionSubtext?: string | null;
     } | null;
@@ -197,34 +170,33 @@ type ProgramCard = {
 
 function normalizeProgramsCards(programs: HomeData["page"]["homepageFields"] extends infer H
   ? H extends { programs?: infer P }
-    ? P extends { program1?: infer P1; program2?: infer P2; program3?: infer P3; program4?: infer P4; program5?: infer P5; program6?: infer P6; program7?: infer P7; program8?: infer P8 }
-      ? { program1: P1; program2: P2; program3: P3; program4: P4; program5: P5; program6: P6; program7: P7; program8: P8 }
-      : any
-    : any
-  : any) {
+    ? P
+    : Record<string, HomeProgramSlot | null | undefined> | null | undefined
+  : Record<string, HomeProgramSlot | null | undefined> | null | undefined) {
   const slots = ["program1", "program2", "program3", "program4", "program5", "program6", "program7", "program8"] as const;
 
   return slots
     .map((k) => programs?.[k])
     .filter(Boolean)
     .map((p) => {
-      // If programPageLink ever becomes a WPGraphQL ACF Link object later,
-      // this keeps you safe.
-      const rawLink = (p as any)?.programPageLink?.nodes?.[0]?.uri;
-      const href =
-        typeof rawLink === "string"
-          ? rawLink
-          : (rawLink?.url as string | undefined) ?? "/programs";
+      const slot = p as HomeProgramSlot;
+      const linkedPage = slot.programPageLink?.nodes?.[0];
+      const rawLink = linkedPage?.uri;
+      const href = typeof rawLink === "string" ? rawLink : "/programs";
 
-      const label = ((p as any)?.programLabel ?? "").trim();
-      const caption = ((p as any)?.programCaption ?? "").trim();
+      const label = (slot.programLabel ?? "").trim();
+      const caption = (slot.programCaption ?? "").trim();
+      const resolvedImage =
+        acfImageFromField(slot.programImage, label) ??
+        acfImageFromField(linkedPage?.heroFields?.heroImage, label) ??
+        acfImageFromField(linkedPage?.featuredImage, label);
 
       return {
         href: href || "/programs",
         label,
         caption: caption || undefined,
-        imageUrl: (p as any)?.programImage?.node?.sourceUrl ?? null,
-        imageAlt: (p as any)?.programImage?.node?.altText ?? "",
+        imageUrl: resolvedImage?.url ?? null,
+        imageAlt: resolvedImage?.alt ?? "",
       } satisfies ProgramCard;
     })
     // Only keep cards with something meaningful to show
@@ -323,6 +295,38 @@ const RECENT_NEWS_QUERY = /* GraphQL */ `
   }
 `;
 
+const UPCOMING_EVENTS_LIMIT = 4;
+const UPCOMING_EVENTS_FETCH_SIZE = 100;
+
+const UPCOMING_EVENTS_QUERY = /* GraphQL */ `
+  query UpcomingEvents($first: Int!) {
+    events(first: $first) {
+      nodes {
+        id
+        slug
+        title
+        featuredImage { node { sourceUrl altText } }
+        eventFields {
+          summary
+          ${EVENT_SCHEDULE_GRAPHQL}
+        }
+      }
+    }
+  }
+`;
+
+type UpcomingEventsData = {
+  events?: {
+    nodes?: Array<{
+      id: string;
+      slug: string;
+      title?: string | null;
+      featuredImage?: GqlImage | null;
+      eventFields?: { summary?: string | null; eventSchedule?: unknown } | null;
+    }> | null;
+  } | null;
+};
+
 // ---- Query (your exact query text) ----
 const HOME_QUERY = /* GraphQL */ `
 query HomePage($uri: ID!) {
@@ -353,89 +357,161 @@ query HomePage($uri: ID!) {
 
       programs {
         program1 {
-          programPageLink { nodes { uri } }
+          programPageLink {
+            nodes {
+              ... on Page {
+                uri
+                featuredImage { node { sourceUrl mediaItemUrl altText } }
+                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
+              }
+            }
+          }
           programLabel
           programCaption
           programImage {
             node {
               sourceUrl
+              mediaItemUrl
               altText
             }
           }
         }
         program2 {
-          programPageLink { nodes { uri } }
+          programPageLink {
+            nodes {
+              ... on Page {
+                uri
+                featuredImage { node { sourceUrl mediaItemUrl altText } }
+                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
+              }
+            }
+          }
           programLabel
           programCaption
           programImage {
             node {
               sourceUrl
+              mediaItemUrl
               altText
             }
           }
         }
         program3 {
-          programPageLink { nodes { uri } }
+          programPageLink {
+            nodes {
+              ... on Page {
+                uri
+                featuredImage { node { sourceUrl mediaItemUrl altText } }
+                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
+              }
+            }
+          }
           programLabel
           programCaption
           programImage {
             node {
               sourceUrl
+              mediaItemUrl
               altText
             }
           }
         }
         program4 {
-          programPageLink { nodes { uri } }
+          programPageLink {
+            nodes {
+              ... on Page {
+                uri
+                featuredImage { node { sourceUrl mediaItemUrl altText } }
+                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
+              }
+            }
+          }
           programLabel
           programCaption
           programImage {
             node {
               sourceUrl
+              mediaItemUrl
               altText
             }
           }
         }
         program5 {
-          programPageLink { nodes { uri } }
+          programPageLink {
+            nodes {
+              ... on Page {
+                uri
+                featuredImage { node { sourceUrl mediaItemUrl altText } }
+                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
+              }
+            }
+          }
           programLabel
           programCaption
           programImage {
             node {
               sourceUrl
+              mediaItemUrl
               altText
             }
           }
         }
         program6 {
-          programPageLink { nodes { uri } }
+          programPageLink {
+            nodes {
+              ... on Page {
+                uri
+                featuredImage { node { sourceUrl mediaItemUrl altText } }
+                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
+              }
+            }
+          }
           programLabel
           programCaption
           programImage {
             node {
               sourceUrl
+              mediaItemUrl
               altText
             }
           }
         }
         program7 {
-          programPageLink { nodes { uri } }
+          programPageLink {
+            nodes {
+              ... on Page {
+                uri
+                featuredImage { node { sourceUrl mediaItemUrl altText } }
+                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
+              }
+            }
+          }
           programLabel
           programCaption
           programImage {
             node {
               sourceUrl
+              mediaItemUrl
               altText
             }
           }
         }
         program8 {
-          programPageLink { nodes { uri } }
+          programPageLink {
+            nodes {
+              ... on Page {
+                uri
+                featuredImage { node { sourceUrl mediaItemUrl altText } }
+                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
+              }
+            }
+          }
           programLabel
           programCaption
           programImage {
             node {
               sourceUrl
+              mediaItemUrl
               altText
             }
           }
@@ -530,26 +606,6 @@ query HomePage($uri: ID!) {
       corporateWellnessCentersCaption
       corporateWellnessCentersImage { node { sourceUrl altText } }
 
-      upcomingEvents {
-        nodes {
-          ... on Event {
-            id
-            title
-            uri
-            featuredImage { node { sourceUrl altText } }
-            eventFields {
-              summary
-              eventSchedule {
-                datetime {
-                  startDatetime
-                  endDatetime
-                }
-              }
-            }
-          }
-        }
-      }
-
       newsletterSubscriptionHeader
       newsletterSubscriptionSubtext
     }
@@ -558,9 +614,10 @@ query HomePage($uri: ID!) {
 `;
 
 export default async function HomePage() {
-  const [data, recentNewsData] = await Promise.all([
+  const [data, recentNewsData, upcomingEventsData] = await Promise.all([
     wpFetch<HomeData>(HOME_QUERY, { uri: "/" }),
     wpFetch<RecentNewsData>(RECENT_NEWS_QUERY, { first: 50 }),
+    wpFetch<UpcomingEventsData>(UPCOMING_EVENTS_QUERY, { first: UPCOMING_EVENTS_FETCH_SIZE }),
   ]);
   const f = data?.page?.homepageFields;
 
@@ -572,6 +629,10 @@ export default async function HomePage() {
   const corporateWellnessCentersCaption = f?.corporateWellnessCentersCaption;
   const corporateWellnessCentersImage = f?.corporateWellnessCentersImage;
   const news = getRecentNewsItems(recentNewsData);
+  const upcomingEvents = selectNextUpcomingEvents(
+    upcomingEventsData?.events?.nodes ?? [],
+    UPCOMING_EVENTS_LIMIT
+  );
 
   const impactStats = normalizeImpactStats(f?.impact?.impactStats);
   const timeline = normalizeTimelineItems(f?.historyTimeline?.timelineItems);
@@ -611,14 +672,19 @@ export default async function HomePage() {
 
       <FeaturedCampaignSection campaign={campaign}/>
 
-      <EventsSection events={f?.upcomingEvents?.nodes?.map((e) => ({
-        id: e.id,
-        title: e.title ?? "",
-        uri: e.uri ?? "",
-        date: getEventDateInfo(e.eventFields?.eventSchedule).start ?? "",
-        summary: e.eventFields?.summary ?? "",
-        featuredImage: e.featuredImage ?? null,
-      }))} />
+      <EventsSection events={upcomingEvents.map(({ event, dateInfo }) => {
+        const badge = formatEventBadgeDate(dateInfo.start);
+        return {
+          id: event.id,
+          title: event.title ?? "",
+          uri: buildEventHref(event.slug, dateInfo.start ?? ""),
+          summary: event.eventFields?.summary ?? "",
+          badgeDay: badge.day,
+          badgeMonth: badge.month,
+          imageUrl: event.featuredImage?.node?.sourceUrl ?? null,
+          imageAlt: event.featuredImage?.node?.altText ?? "",
+        };
+      })} />
 
       <TestimonialSection
         heading={f?.testimonialHeader ?? "Testimonial"}

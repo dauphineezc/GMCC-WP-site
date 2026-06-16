@@ -18,6 +18,12 @@ query GetInvolvedPage($uri: ID!) {
 
       volunteerGroup {
         volunteerCardSummary
+        volunteerCardIcon {
+          node {
+            sourceUrl
+            altText
+          }
+        }
         volunteerLongDescription
         volunteerApplication
         volunteerImage {
@@ -34,6 +40,12 @@ query GetInvolvedPage($uri: ID!) {
 
       donateGroup {
         donateCardSummary
+        donateCardIcon {
+          node {
+            sourceUrl
+            altText
+          }
+        }
         donateLongDescription
         physicalDonationDescription
         physicalDonationList
@@ -52,6 +64,12 @@ query GetInvolvedPage($uri: ID!) {
 
       sponsorGroup {
         sponsorCardSummary
+        sponsorCardIcon {
+          node {
+            sourceUrl
+            altText
+          }
+        }
         sponsorLongDescription
 
         sponsorImage {
@@ -102,6 +120,7 @@ type GetInvolvedFields = {
 
   volunteerGroup?: {
     volunteerCardSummary?: string | null;
+    volunteerCardIcon?: MaybeImage;
     volunteerLongDescription?: string | null;
     volunteerApplication?: string | null;
     volunteerImage?: MaybeImage;
@@ -109,6 +128,7 @@ type GetInvolvedFields = {
 
   donateGroup?: {
     donateCardSummary?: string | null;
+    donateCardIcon?: MaybeImage;
     donateLongDescription?: string | null;
     physicalDonationDescription?: string | null;
     physicalDonationList?: string | null;
@@ -118,6 +138,7 @@ type GetInvolvedFields = {
 
   sponsorGroup?: {
     sponsorCardSummary?: string | null;
+    sponsorCardIcon?: MaybeImage;
     sponsorLongDescription?: string | null;
     sponsorImage?: MaybeImage;
     sponsorApplication?: string | null;

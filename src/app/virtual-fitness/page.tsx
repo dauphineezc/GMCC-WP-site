@@ -222,8 +222,6 @@ export default async function VirtualFitnessPage() {
           </div>
 
           <div className="relative mx-auto max-w-xl rounded-2xl border border-neutral-300 bg-neutral-100 p-6 shadow-sm">
-            {/* <h3 className="h2 text-4xl text-gmcc-navy">Contact Form</h3> */}
-
             <form className="mt-4 space-y-4" aria-label="Placeholder contact form">
               <div className="grid grid-cols-2 gap-4">
               <div>

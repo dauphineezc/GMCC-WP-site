@@ -1,4 +1,5 @@
 import { wpFetch } from "@/lib/wp";
+import { CENTER_TITLE_ORDER } from "@/lib/constants";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import PhoneLink from "@/components/phoneLink";
 
@@ -62,13 +63,7 @@ const CONTACT_PAGE_QUERY = /* GraphQL */ `
 export default async function ContactPage() {
   const data = await wpFetch<any>(CONTACT_PAGE_QUERY, { uri: "/contact" });
   const f = data?.page?.contactPageFields;
-  const centerOrder = [
-    "community center",
-    "tennis center",
-    "coleman family center",
-    "north family center",
-    "curling center",
-  ];
+  const centerOrder = CENTER_TITLE_ORDER;
   const centers = (f?.centers?.nodes ?? [])
     .filter((center: any) => !!center?.title)
     .sort((a: any, b: any) => {

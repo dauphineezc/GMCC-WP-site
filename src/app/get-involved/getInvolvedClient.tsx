@@ -24,6 +24,7 @@ type GetInvolvedFields = {
 
   volunteerGroup?: {
     volunteerCardSummary?: string | null;
+    volunteerCardIcon?: MaybeImage;
     volunteerLongDescription?: string | null;
     volunteerApplication?: string | null;
     volunteerImage?: MaybeImage;
@@ -31,6 +32,7 @@ type GetInvolvedFields = {
 
   donateGroup?: {
     donateCardSummary?: string | null;
+    donateCardIcon?: MaybeImage;
     donateLongDescription?: string | null;
     physicalDonationDescription?: string | null;
     physicalDonationList?: string | null;
@@ -40,6 +42,7 @@ type GetInvolvedFields = {
 
   sponsorGroup?: {
     sponsorCardSummary?: string | null;
+    sponsorCardIcon?: MaybeImage;
     sponsorLongDescription?: string | null;
     sponsorImage?: MaybeImage;
     sponsorApplication?: string | null;
@@ -50,7 +53,15 @@ type GetInvolvedFields = {
   } | null;
 };
 
-function Img({ image, fallbackAlt }: { image?: MaybeImage; fallbackAlt: string }) {
+function Img({
+  image,
+  fallbackAlt,
+  className = "w-full h-full object-cover rounded-md",
+}: {
+  image?: MaybeImage;
+  fallbackAlt: string;
+  className?: string;
+}) {
   const src = image?.node?.sourceUrl ?? "";
   if (!src) return null;
 
@@ -58,7 +69,7 @@ function Img({ image, fallbackAlt }: { image?: MaybeImage; fallbackAlt: string }
     <img
       src={src}
       alt={image?.node?.altText || fallbackAlt}
-      className="w-full h-full object-cover rounded-md"
+      className={className}
       loading="lazy"
       decoding="async"
     />
@@ -84,13 +95,8 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
         {/* Volunteer */}
         <div className="relative card card-hover bg-gmcc-blue-light/30 stack-4 flex flex-col overflow-hidden">
           {/* icon */}
-          <img
-            src="/images/VolunteerIcon.png"
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute left-4 top-4 h-14 w-14"
-          />
-
+          <Img image={volunteer?.volunteerCardIcon} fallbackAlt="Volunteer" className="pointer-events-none absolute left-4 top-4 h-14 w-14" />
+    
           <h3 className="h2 text-center mb-2 pt-4">Volunteer</h3>
           <p className="body text-center flex-grow whitespace-pre-line">
             {volunteer?.volunteerCardSummary ?? ""}
@@ -103,12 +109,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
         {/* Donate */}
         <div className="relative card card-hover bg-gmcc-blue-light/30 stack-4 flex flex-col overflow-hidden">
           {/* icon */}
-          <img
-            src="/images/DonateIcon.png"
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute left-4 top-4 h-14 w-14"
-          />
+          <Img image={donate?.donateCardIcon} fallbackAlt="Donate" className="pointer-events-none absolute left-4 top-4 h-14 w-14" />
 
           <h3 className="h2 text-center mb-2 pt-4">Donate</h3>
           <p className="body text-center flex-grow whitespace-pre-line">
@@ -122,12 +123,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
         {/* Sponsor */}
         <div className="relative card card-hover bg-gmcc-blue-light/30 stack-4 flex flex-col overflow-hidden">
           {/* icon */}
-          <img
-            src="/images/SponsorshipIcon.png"
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute left-4 top-4 h-14 w-14"
-          />
+          <Img image={sponsor?.sponsorCardIcon} fallbackAlt="Sponsor" className="pointer-events-none absolute left-4 top-4 h-14 w-14" />
 
           <h3 className="h2 text-center mb-2 pt-4">Sponsor</h3>
           <p className="body text-center flex-grow whitespace-pre-line">

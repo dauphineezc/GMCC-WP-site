@@ -313,20 +313,8 @@ function CenterPartyPackageCard({
             className="h-full w-full object-cover"
             loading="lazy"
           />
-          {/* <div className="absolute inset-x-0 top-0 flex items-center justify-center bg-gmcc-teal py-2">
-            <span className="text-lg font-semibold uppercase tracking-wide text-white">
-              {centerLabel}
-            </span>
-          </div> */}
         </div>
       )}
-      {/* {!selectedImage?.sourceUrl && (
-        // <div className="card-bleed flex items-center justify-center rounded-t-2xl bg-gmcc-teal py-2">
-        //   <span className="text-sm font-semibold uppercase tracking-wide text-white">
-        //     {centerLabel}
-        //   </span>
-        // </div>
-      )} */}
 
       <div className="flex flex-1 flex-col gap-3 mt-4">
         <h3 className="h3 text-2xl font-semibold">{centerLabel}</h3>

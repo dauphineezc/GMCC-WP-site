@@ -31,11 +31,11 @@ export default function AboutSection({
       </div>
 
 
-      <div aria-hidden className="mt-8 pl:4 pr:4 pointer-events-none absolute inset-0 z-20 overflow-hidden border-0">
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-20 overflow-hidden border-0">
           <img
             src="/LineArt.png"
             alt=""
-            className="absolute bottom-[140px] left-0 w-full select-none opacity-100"
+            className="absolute bottom-[140px] left-1/2 w-full max-w-[1440px] -translate-x-1/2 px-8 select-none opacity-100"
             draggable={false}
           />
         </div>

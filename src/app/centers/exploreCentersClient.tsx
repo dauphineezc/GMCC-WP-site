@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import PhoneLink from "@/components/phoneLink";
+import { CENTER_SLUG_ORDER } from "@/lib/constants";
 
 type CenterNode = any;
 type ProgramNode = any;
@@ -209,14 +210,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
     amenitiesSelected.length + areasSelected.length + programsSelected.length;
 
   // Preferred display order for centers
-  const centerOrder = [
-    "community-center",
-    "tennis-center",
-    "curling-center",
-    "coleman-family-center",
-    "north-family-center",
-    "corporate-wellness-center",
-  ];
+  const centerOrder = CENTER_SLUG_ORDER;
 
   // Filtering logic:
   // - AND across categories

@@ -3,6 +3,23 @@
  * Same calendar day: "Sep 20, 2026 • 9:30 AM–10:30 AM"
  * Multiple days: "Sep 20, 2026–Sep 26, 2026" (no times; avoids implying same-day times)
  */
+
+/** Fixed timezone for event date badges (matches GMCC service area). */
+export const EVENT_DISPLAY_TIMEZONE = "America/Detroit";
+
+/** Day/month badge for home page event cards — uses a fixed timezone for SSR stability. */
+export function formatEventBadgeDate(iso?: string | null): { day: string; month: string } {
+  if (!iso) return { day: "--", month: "" };
+
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { day: "--", month: "" };
+
+  return {
+    day: d.toLocaleDateString("en-US", { day: "2-digit", timeZone: EVENT_DISPLAY_TIMEZONE }),
+    month: d.toLocaleDateString("en-US", { month: "long", timeZone: EVENT_DISPLAY_TIMEZONE }),
+  };
+}
+
 export function formatEventDate(
   start?: string | null,
   end?: string | null
