@@ -19,6 +19,10 @@ function normalizeWpUrlToPath(url: string) {
     "Our Purpose": "/about",
   };
 
+  const JOIN_OUR_TEAM_PAGE: Record<string, string> = {
+    "Join Our Team": "/careers",
+  };
+
   const MEMBERSHIP_PAGES: Record<string, string> = {
     "Join Now": "/membership",
     "Take a Tour": "/take-a-tour",
@@ -29,18 +33,58 @@ function normalizeWpUrlToPath(url: string) {
   
   // program filter rules
   const PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
+    // Aquatics
     "Aquatics": "/programs?" + buildQuery({ programArea: "Aquatics" }),
     "Youth Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "youth" }),
-    "Adult Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "youth,family,adult,activeOlderAdult" }),
-    "Fitness": "/programs?" + buildQuery({ programArea: "Fitness" }),
+    "Adult Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "family,adult,activeOlderAdult" }),
+
+    // Fitness
+    "Fitness": "/programs?" + buildQuery({ offeringType: "Class,Drop-In,Lessons/Training", programArea: "Aquatics,Group Fitness,Personal Training,SilverSneakers,Walking" }),
+    "Group Fitness Classes": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness" }),
+    "SilverSneakers": "/programs?" + buildQuery({ offeringType: "Class", programArea: "SilverSneakers,Group Fitness" }),
+    "Renew Active/One Pass": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness" }),
+
+    // Sports and Recreation
+    "Sports and Recreation": "/programs?" + buildQuery({ programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports" }),
+    "Youth Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", audience: "youth" }),
+    "Youth Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", audience: "youth" }),
+    "Adult Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "teen,adult,senior" }),
+    "Adult Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "teen,adult,senior" }),
+
+    // Camps
     "Camps": "/camps",
     "Full Day Camps": "/camps?" + buildQuery({ campType: "full-day" }),
     "Mini Day Camps": "/camps?" + buildQuery({ campType: "mini-day" }),
     "Specialty/Art Camps": "/camps?" + buildQuery({ campType: "specialty-art" }),
     "Sport/Aquatics Camps": "/camps?" + buildQuery({ campType: "sport-aquatics" }),
-    "Childcare": "/programs?" + buildQuery({ programArea: "Childcare" }),
-    "Youth Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Middle School Sports" }),
+
+    // Community
+    "Community": "/programs?" + buildQuery({ campType: "full-day" }),
+  };
+
+  // Unique program pages that link to specific pages
+  const UNIQUE_PROGRAM_PAGES: Record<string, string> = {
     "Dolphins Swim Team": "/programs/dolphins-swim-team",
+    "Lifeguard Training": "/programs/lifeguard-training",
+
+    "Personal Training": "/personal-training",
+    "Rock Steady Boxing": "/programs/rock-steady-boxing",
+    "Virtual Fitness": "/virtual-fitness",
+
+    "Private Tennis/Pickleball Lessons": "/private-lessons",
+
+    "Residence Camp Neyati": "/programs/camp-neyati",
+
+    "Early Childhood" : "/early-childhood",
+    "Drop-In Child Watch" : "/early-childhood",
+    "On-Site Care" : "/early-childhood",
+    "Before/After School Care" : "/early-childhood",
+    "Preschool" : "/early-childhood",
+
+    "Driver's Training": "/programs/drivers-training",
+    "Tax Aide Program": "/programs/tax-aide",
+    "Food Distributions": "/programs/food-distributions",
+    "Food, Clothes, & Hygiene Pantries": "/programs/pantries",
   };
 
   // Event filter rules (label-based for navbar items)
@@ -50,26 +94,6 @@ function normalizeWpUrlToPath(url: string) {
     "Socials": "/events?" + buildQuery({ eventType: "Social" }),
     "Trips": "/events?" + buildQuery({ eventType: "Trip" }),
     "Food Distributions": "/events?" + buildQuery({ eventType: "Food Distribution" }),
-  };
-
-  // Unique program pages that link directly to /programs/[slug]
-  const UNIQUE_PROGRAM_PAGES: Record<string, string> = {
-    "Drop-In Swim": "/programs/drop-in-swim",
-    "Dolphins Swim Team": "/programs/dolphins",
-    "Lifeguard Training": "/programs/lifeguard-training",
-    "Group Fitness Classes": "/programs?" + buildQuery({ programArea: "Group Fitness" }),
-    "Personal Training": "/personal-training",
-    "SilverSneakers": "/programs/silver-sneakers",
-    "Virtual Fitness": "/virtual-fitness",
-    "Rock Steady Boxing": "/programs/rock-steady-boxing",
-    "Drop-In Care": "/programs/drop-in-care",
-    "On-Site Care": "/programs/on-site-care",
-    "Before & After School Care": "/programs/before-after-school",
-    "Preschool": "/programs/preschool",
-    "Driver's Training": "/programs/drivers-training",
-    "Tax Aide Program": "/programs/tax-aide",
-    "Food Distributions": "/programs/food-distributions",
-    "Food, Clothes, & Hygiene Pantries": "/programs/pantries",
   };
 
   const SCHEDULE_PAGES: Record<string, string> = {
@@ -94,6 +118,9 @@ function normalizeWpUrlToPath(url: string) {
 
     const ourPurposePage = OUR_PURPOSE_PAGE[label];
     if (ourPurposePage) return ourPurposePage;
+    
+    const joinOurTeamPage = JOIN_OUR_TEAM_PAGE[label];
+    if (joinOurTeamPage) return joinOurTeamPage;
 
     const membershipPage = MEMBERSHIP_PAGES[label];
     if (membershipPage) return membershipPage;
@@ -125,6 +152,7 @@ function normalizeWpUrlToPath(url: string) {
 
 const ALL_LABEL_OVERRIDES: Record<string, string> = {
   ...OUR_PURPOSE_PAGE,
+  ...JOIN_OUR_TEAM_PAGE,
   ...MEMBERSHIP_PAGES,
   ...PROGRAM_FILTER_BY_LABEL,
   ...EVENT_FILTER_BY_LABEL,

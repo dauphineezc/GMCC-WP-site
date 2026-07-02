@@ -21,6 +21,11 @@ export default async function SitemapPage() {
     getFooterNav(),
   ]);
 
+  const sitemapUtilityNav = utilityNav.filter((item) => {
+    const label = item.label.toLowerCase();
+    return label !== "accessibility options" && label !== "language";
+  });
+
   return (
     <main>
       <SolidNavyWaveHeader
@@ -59,10 +64,10 @@ export default async function SitemapPage() {
           </div>
         </section>
 
-        {utilityNav.length > 0 ? (
+        {sitemapUtilityNav.length > 0 ? (
           <section className="mb-12">
             <h2 className="h2 mb-4">Quick links</h2>
-            <SitemapFlatLinks items={utilityNav} />
+            <SitemapFlatLinks items={sitemapUtilityNav} />
           </section>
         ) : null}
 

@@ -16,7 +16,12 @@ type PageInfo = {
   endCursor: string | null;
 };
 
+export type ProgramsSearchParams = Record<string, string | string[] | undefined>;
+
+export type ProgramBadge = "silversneakers" | "specialty" | null;
+
 export type ProgramCard = {
+  id: string;
   slug: string;
   title: string;
   summary: string;
@@ -28,11 +33,52 @@ export type ProgramCard = {
   audience: { slug: string; name: string }[];
   centers: { slug: string; title: string }[];
   programAreas: { slug: string; name: string }[];
-  groupFitnessClassType: string | null;
+  badge: ProgramBadge;
+  isSpecialtyFitnessClass: boolean;
   registrationLink: string | null;
   priceFrom: number | null;
   campTypes: { slug: string; name: string }[];
 };
+
+function normalizeAcfBoolean(value: unknown): boolean {
+  if (value === true || value === 1 || value === "1" || value === "true") return true;
+  return false;
+}
+
+function isSilverSneakersProgramArea(areas: { slug: string }[]): boolean {
+  return areas.some((area) => {
+    const slug = area.slug?.toLowerCase() ?? "";
+    return slug === "silversneakers" || slug === "silver-sneakers";
+  });
+}
+
+function resolveProgramBadge(
+  programAreas: { slug: string }[],
+  isSpecialtyRaw: unknown,
+): ProgramBadge {
+  if (isSilverSneakersProgramArea(programAreas)) return "silversneakers";
+  if (normalizeAcfBoolean(isSpecialtyRaw)) return "specialty";
+  return null;
+}
+
+function compareProgramsByTitle(a: ProgramCard, b: ProgramCard): number {
+  const byTitle = a.title.localeCompare(b.title, "en", { sensitivity: "base" });
+  if (byTitle !== 0) return byTitle;
+  return (a.id || a.slug).localeCompare(b.id || b.slug, "en");
+}
+
+function searchParamsFromRecord(record: ProgramsSearchParams): URLSearchParams {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(record)) {
+    if (value == null) continue;
+    if (Array.isArray(value)) {
+      if (value.length > 0) params.set(key, value.join(","));
+    } else if (value !== "") {
+      params.set(key, value);
+    }
+  }
+  return params;
+}
 
 export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
   const f = wp.programFields ?? {};
@@ -58,12 +104,12 @@ export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
       name: n?.name,
     })).filter((x: any) => x?.slug && x?.name) ?? [];
 
-  const ageMinRaw = f.ageRange?.min ?? null;
-  const ageMaxRaw = f.ageRange?.max ?? null;
+  const isSpecialtyFitnessClass = normalizeAcfBoolean(f.isSpecialtyFitnessClass);
 
   return {
-    slug: wp.slug,
-    title: wp.title,
+    id: String(wp.id ?? wp.slug ?? ""),
+    slug: wp.slug ?? "",
+    title: wp.title ?? "",
     summary: f.summary ?? "",
     heroUrl: hero?.sourceUrl ?? galleryHero?.sourceUrl ?? null,
     heroAlt: hero?.altText ?? galleryHero?.altText ?? "",
@@ -86,11 +132,8 @@ export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
       name: n?.name,
     })).filter((x: any) => x?.slug && x?.name) ?? [],
 
-    groupFitnessClassType: Array.isArray(f.groupFitnessClassType)
-      ? (f.groupFitnessClassType[0] ?? null)
-      : typeof f.groupFitnessClassType === "string"
-      ? f.groupFitnessClassType
-      : null,
+    badge: resolveProgramBadge(programAreas, f.isSpecialtyFitnessClass),
+    isSpecialtyFitnessClass,
     registrationLink: f.registrationInformation?.registrationLink ?? null,
   };
 }
@@ -98,11 +141,13 @@ export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
 export default function ExploreProgramsClient({
   initialPrograms,
   initialPageInfo,
+  initialSearchParams = {},
   pageSize,
   directoryHeaderData,
 }: {
   initialPrograms: ProgramWP[];
   initialPageInfo: PageInfo;
+  initialSearchParams?: ProgramsSearchParams;
   pageSize: number;
   directoryHeaderData: ProgramsPageACF;
 }) {
@@ -231,10 +276,21 @@ export default function ExploreProgramsClient({
   // --- Read URL search params ---
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const clientSearchParams = useSearchParams();
+  const [hasHydrated, setHasHydrated] = useState(false);
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
+
+  const serverSearchParams = useMemo(
+    () => searchParamsFromRecord(initialSearchParams),
+    [initialSearchParams],
+  );
+  const filterSearchParams = hasHydrated ? clientSearchParams : serverSearchParams;
+
   const searchParamsObj = useMemo(
-    () => Object.fromEntries(searchParams.entries()),
-    [searchParams]
+    () => Object.fromEntries(filterSearchParams.entries()),
+    [filterSearchParams]
   );
   const hasSpecializedHeader = useMemo(
     () => getProgramsDirectoryHeaderVariant(searchParamsObj) !== null,
@@ -250,12 +306,12 @@ export default function ExploreProgramsClient({
 
   // Parse initial values from URL
   const initialFilters = useMemo(() => {
-    const programAreaParam = searchParams.get("programArea");
-    const audienceParam = searchParams.get("audience");
-    const offeringTypeParam = searchParams.get("offeringType");
-    const centerParam = searchParams.get("center");
-    const skillLevelParam = searchParams.get("skillLevel");
-    const campTypeParam = searchParams.get("campType");
+    const programAreaParam = filterSearchParams.get("programArea");
+    const audienceParam = filterSearchParams.get("audience");
+    const offeringTypeParam = filterSearchParams.get("offeringType");
+    const centerParam = filterSearchParams.get("center");
+    const skillLevelParam = filterSearchParams.get("skillLevel");
+    const campTypeParam = filterSearchParams.get("campType");
 
     // programArea can be slugs or names from nav links.
     const programAreaSlugs: string[] = [];
@@ -341,7 +397,7 @@ export default function ExploreProgramsClient({
       skillLevels: skillLevelValues,
       campTypes: campTypeSlugs,
     };
-  }, [searchParams, programAreaOptions, audienceOptions, offeringTypeOptions, centerOptions, skillLevelOptions]);
+  }, [filterSearchParams, programAreaOptions, audienceOptions, offeringTypeOptions, centerOptions, skillLevelOptions]);
 
   // --- filter state ---
   const [search, setSearch] = useState("");
@@ -359,7 +415,7 @@ export default function ExploreProgramsClient({
     if (isApplyingUrlStateRef.current) return;
     if (!shouldSyncUrlFromUserActionRef.current) return;
 
-    const nextParams = new URLSearchParams(searchParams.toString());
+    const nextParams = new URLSearchParams(clientSearchParams.toString());
 
     if (offeringTypes.length) {
       nextParams.set("offeringType", offeringTypes.join(","));
@@ -373,14 +429,14 @@ export default function ExploreProgramsClient({
       nextParams.delete("programArea");
     }
 
-    const current = searchParams.toString();
+    const current = clientSearchParams.toString();
     const next = nextParams.toString();
     if (next !== current) {
       const href = next ? `${pathname}?${next}` : pathname;
       router.replace(href, { scroll: false });
     }
     shouldSyncUrlFromUserActionRef.current = false;
-  }, [offeringTypes, programAreas, pathname, router, searchParams]);
+  }, [offeringTypes, programAreas, pathname, router, clientSearchParams]);
 
   // Sync state when URL params change (e.g., navigating from navbar)
   useEffect(() => {
@@ -489,8 +545,7 @@ export default function ExploreProgramsClient({
       return true;
     });
 
-    // Sort alphabetically by title
-    return results.sort((a, b) => a.title.localeCompare(b.title));
+    return [...results].sort(compareProgramsByTitle);
   }, [
     all,
     search,
@@ -765,7 +820,7 @@ export default function ExploreProgramsClient({
             {filtered.map((p) => (
 
           <div
-            key={p.slug}
+            key={p.id || p.slug}
             className="group card card-hover relative overflow-hidden flex flex-col"
           >
             {/* Full-bleed image */}
@@ -780,11 +835,11 @@ export default function ExploreProgramsClient({
                 />
               )}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
-              {p.groupFitnessClassType === "silversneakers" ? (
+              {p.badge === "silversneakers" ? (
                 <span className="absolute top-2 right-2 rounded-full bg-[#6DB626] px-2.5 py-0.75 text-xs font-semibold text-white shadow">
                   SilverSneakers® Exclusive
                 </span>
-              ) : p.groupFitnessClassType === "specialty fitness" ? (
+              ) : p.badge === "specialty" ? (
                 <span className="absolute top-2 right-2 rounded-full bg-[#FF004D] px-2.5 py-0.75 text-xs font-semibold text-white shadow">
                   Specialty Program
                 </span>
@@ -807,7 +862,7 @@ export default function ExploreProgramsClient({
               <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
                 {(() => {
                   const isGroupFitness = p.programAreas.some(a => a.slug === "group-fitness");
-                  const isSpecialty = p.groupFitnessClassType === "specialty fitness" || p.groupFitnessClassType === "silversneakers";
+                  const isSpecialty = p.badge === "specialty" || p.badge === "silversneakers";
                   const showQuickRegister = isGroupFitness && !isSpecialty && p.registrationLink;
                   return showQuickRegister ? (
                     <a

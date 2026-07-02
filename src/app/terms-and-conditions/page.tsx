@@ -12,26 +12,25 @@ import {
 import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Policies",
-  description: "Greater Midland policies and handbooks.",
+  title: "Terms and Conditions",
+  description: "Greater Midland terms and conditions.",
 };
 
-const POLICIES_PAGE_QUERY = /* GraphQL */ `
-  query PoliciesPage($uri: ID!) {
+const TERMS_AND_CONDITIONS_PAGE_QUERY = /* GraphQL */ `
+  query TermsAndConditionsPage($uri: ID!) {
     page(id: $uri, idType: URI) {
       id
       title
       slug
 
-      policiesPageFields {
+      termsAndConditionsPageFields {
         heroHeader
         heroSubheader
         introductionHeader
         introductionBody
-        policies {
-          policyName
-          policyBody
-          policyFileVersion { node { sourceUrl mediaItemUrl title } }
+        termAndorCondition {
+          header
+          body
         }
         contactHeader
         contactSubheader
@@ -40,35 +39,20 @@ const POLICIES_PAGE_QUERY = /* GraphQL */ `
   }
 `;
 
-type PolicyItem = {
-  policyName?: string | null;
-  policyBody?: string | null;
-  policyFileVersion?: WpMediaFieldInput | null;
+type TermAndConditionItem = {
+  header?: string | null;
+  body?: string | null;
 };
 
-type PoliciesPageFields = {
+type TermsAndConditionsPageFields = {
   heroHeader?: string | null;
   heroSubheader?: string | null;
   introductionHeader?: string | null;
   introductionBody?: string | null;
-  policies?: PolicyItem[] | null;
-  contactHeader?: string | null;
-  contactSubheader?: string | null;
+  termAndorCondition?: TermAndConditionItem[] | null;
 };
 
-function policyFileAttachment(file: WpMediaFieldInput | null | undefined): AttachmentItem | null {
-  const url = acfFileHref(file ?? undefined);
-  if (!url) return null;
-
-  const node: WpMediaRef | undefined =
-    file && typeof file === "object" && "node" in file
-      ? file.node
-      : (file as WpMediaRef | undefined);
-
-  return { label: (node?.title ?? "Download policy").trim(), url };
-}
-
-function renderPolicyBody(body: string) {
+function renderTermAndConditionBody(body: string) {
   const trimmed = body.trim();
   const looksLikeHtml = /<[a-z][\s\S]*>/i.test(trimmed);
 
@@ -86,36 +70,18 @@ function renderPolicyBody(body: string) {
   );
 }
 
-function renderPolicyContent(policy: PolicyItem) {
-  const body = policy.policyBody?.trim();
-  const attachment = policyFileAttachment(policy.policyFileVersion);
-
+function renderTermAndConditionContent(termAndCondition: TermAndConditionItem) {
+  const body = termAndCondition.body?.trim();
   return (
     <div>
-      {body ? renderPolicyBody(body) : null}
-      {attachment ? (
-        <div className="mt-6">
-          <AttachmentsCard attachments={[attachment]} />
-        </div>
-      ) : null}
+      {body ? renderTermAndConditionBody(body) : null}
     </div>
   );
 }
 
-export default async function PoliciesPage() {
-  const data = await wpFetch<any>(POLICIES_PAGE_QUERY, { uri: "/policies" });
-  const fields = data?.page?.policiesPageFields;
-
-  const policyItems = (fields?.policies ?? []).filter(
-    (policy: PolicyItem): policy is PolicyItem =>
-      Boolean(policy?.policyName?.trim() || policy?.policyBody?.trim() || policy?.policyFileVersion),
-  );
-
-  const accordionItems = policyItems.map((policy: PolicyItem, index: number) => ({
-    id: `policy-${index}`,
-    title: policy.policyName?.trim() || `Policy ${index + 1}`,
-    content: renderPolicyContent(policy),
-  }));
+export default async function TermsAndConditionsPage() {
+  const data = await wpFetch<any>(TERMS_AND_CONDITIONS_PAGE_QUERY, { uri: "/terms-and-conditions" });
+  const fields = data?.page?.termsAndConditionsPageFields;
 
   return (
     <main>
@@ -131,8 +97,12 @@ export default async function PoliciesPage() {
           </p>
         ) : null}
 
-        {accordionItems.length > 0 ? (
-          <Accordion items={accordionItems} allowMultiple={false} defaultOpenIds={[]} />
+        {fields?.termAndorCondition?.length > 0 ? (
+          <Accordion items={fields?.termAndorCondition?.map((termAndCondition: TermAndConditionItem, index: number) => ({
+            id: `term-and-condition-${index}`,
+            title: termAndCondition.header?.trim() || `Term and Condition ${index + 1}`,
+            content: renderTermAndConditionContent(termAndCondition),
+          }))} allowMultiple={false} defaultOpenIds={[]} />
         ) : null}
       </section>
 

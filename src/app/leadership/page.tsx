@@ -146,7 +146,7 @@ export default async function LeadershipPage() {
   return (
     <main>
       {/* HERO */}
-      <section className="relative mb-8 mt-24 overflow-hidden md:mt-28">
+      <section className="relative mb-8 overflow-hidden">
         <div
           className="absolute inset-0"
           aria-hidden

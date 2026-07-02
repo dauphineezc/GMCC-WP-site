@@ -9,6 +9,42 @@ import DetailGalleryCarousel from "@/components/detail/detailGalleryCarousel";
 import RegistrationSidebar from "@/components/detail/registrationSidebar";
 
 /** Map age range to audience slug(s) for filtering */
+type AgeRangeValue = string | number | null | undefined;
+
+function ageRangeHasMonths(value: AgeRangeValue): boolean {
+  return typeof value === "string" && value.toLowerCase().includes("months");
+}
+
+function parseAgeNumber(value: AgeRangeValue): number | null {
+  if (value == null || value === "") return null;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    if (ageRangeHasMonths(value)) return 0;
+    const parsed = Number.parseFloat(value.replace(/[^\d.]/g, ""));
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function getAudienceSlugFromAgeRange(min: AgeRangeValue, max: AgeRangeValue): string | null {
+  if (ageRangeHasMonths(min) || ageRangeHasMonths(max)) return "youth";
+  return getAudienceSlugFromAge(parseAgeNumber(min), parseAgeNumber(max));
+}
+
+function formatAgeRangeLabel(min: AgeRangeValue, max: AgeRangeValue): string {
+  const hasMin = min != null && min !== "";
+  const hasMax = max != null && max !== "";
+  if (hasMin && hasMax) return `Ages ${min}–${max}`;
+  if (hasMin) return `Ages ${min}+`;
+  if (hasMax) return `Ages up to ${max}`;
+  return "";
+}
+
+function hasAgeRangeData(ageRange: { min?: AgeRangeValue; max?: AgeRangeValue } | null | undefined): boolean {
+  if (!ageRange) return false;
+  return (ageRange.min != null && ageRange.min !== "") || (ageRange.max != null && ageRange.max !== "");
+}
+
 function getAudienceSlugFromAge(min: number | null, max: number | null): string | null {
   // If no age data, can't determine audience
   if (min == null && max == null) return null;
@@ -239,20 +275,19 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             ))}
 
           {/* Age range - link to audience filter based on age mapping */}
-          {p.ageRange && (p.ageRange.min || p.ageRange.max) && (() => {
-            let audienceSlug: string | null = null;
-            if (p.ageRange.min.includes("months")) { audienceSlug = "youth";}
-            else { audienceSlug = getAudienceSlugFromAge(p.ageRange.min, p.ageRange.max);}
+          {hasAgeRangeData(p.ageRange) && (() => {
+            const audienceSlug = getAudienceSlugFromAgeRange(p.ageRange.min, p.ageRange.max);
+            const ageLabel = formatAgeRangeLabel(p.ageRange.min, p.ageRange.max);
             return audienceSlug ? (
               <a 
                 href={`/programs?audience=${encodeURIComponent(audienceSlug)}`}
                 className="badge badge-green hover:opacity-80 transition-opacity"
               >
-                Ages {p.ageRange.min ?? "0"}{p.ageRange.min && p.ageRange.max ? "–" : ""}{p.ageRange.max ?? "+"}
+                {ageLabel}
               </a>
             ) : (
               <span className="badge badge-green">
-                Ages {p.ageRange.min ?? "0"}{p.ageRange.min && p.ageRange.max ? "–" : ""}{p.ageRange.max ?? "+"}
+                {ageLabel}
               </span>
             );
           })()}

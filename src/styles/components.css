@@ -142,6 +142,76 @@
       
   
     /* Links */
-    .link { @apply font-semibold text-gmcc-navy underline-offset-4 hover:underline; }  
+    .link { @apply font-semibold text-gmcc-navy underline-offset-4 hover:underline; }
+
+    /* Announcement bar */
+    .announcement-bar {
+        --announcement-bar-fill: var(--gmcc-teal-light);
+        width: 100%;
+        border-bottom: 1px solid color-mix(in srgb, var(--gmcc-teal) 25%, transparent);
+        background-color: var(--announcement-bar-fill);
+        padding: 1.5rem;
+    }
+    .announcement-bar--center {
+        --announcement-bar-fill: var(--gmcc-announcement-red);
+        margin-top: -1px;
+        border-bottom: none;
+    }
+    .announcement-bar--center .announcement-bar__primary,
+    .announcement-bar--center .announcement-bar__secondary,
+    .announcement-bar--center .announcement-bar__link,
+    .announcement-bar--center .announcement-bar__contact {
+        color: white;
+    }
+    .announcement-bar__inner {
+        margin-inline: auto;
+        display: flex;
+        max-width: 72rem;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-align: center;
+        line-height: 1.4rem;
+        color: var(--gmcc-navy);
+    }
+    .announcement-bar__primary {
+        font-family: var(--font-heading);
+        color: var(--gmcc-navy);
+        font-weight: 800;
+        font-size: 1.2rem;
+    }
+    .announcement-bar__secondary {
+        color: #404040;
+        font-size: 0.875rem;
+    }
+    .announcement-bar__link {
+        font-size: 0.8rem;
+        color: #404040;
+        text-decoration: underline;
+        font-style: italic;
+    }
+    .announcement-bar__link:hover {
+        color: var(--neutral-400);
+    }
+    .announcement-bar__contact {
+        color: #404040;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+    .announcement-bar__contact-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem 0.5rem;
+    }
+
+    /* Home hero: pull back up by announcement height on desktop (spacer still clears nav). */
+    @media (width >= 64rem) {
+        .home-hero-compensate {
+            margin-top: calc(-1 * var(--announcement-banner-height, 0px));
+        }
+    }
   }
   

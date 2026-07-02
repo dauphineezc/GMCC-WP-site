@@ -1,6 +1,7 @@
 // components/nav/navbar.tsx
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
@@ -15,9 +16,11 @@ import LanguagePopover from "@/components/nav/languagePopover";
 export default function Navbar({
   items,
   utilityItems = [],
+  banner,
 }: {
   items: NavItem[];
   utilityItems?: NavItem[];
+  banner?: ReactNode;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -26,7 +29,42 @@ export default function Navbar({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const spacerRef = useRef<HTMLDivElement>(null);
+  const bannerSlotRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const header = headerRef.current;
+    const spacer = spacerRef.current;
+    if (!header || !spacer) return;
+
+    const syncHeaderOffset = () => {
+      const height = header.offsetHeight;
+      spacer.style.height = `${height}px`;
+      document.documentElement.style.setProperty("--site-header-height", `${height}px`);
+
+      const bannerHeight = bannerSlotRef.current?.offsetHeight ?? 0;
+      document.documentElement.style.setProperty(
+        "--announcement-banner-height",
+        `${bannerHeight}px`,
+      );
+    };
+
+    syncHeaderOffset();
+
+    const observer = new ResizeObserver(syncHeaderOffset);
+    observer.observe(header);
+    if (bannerSlotRef.current) {
+      observer.observe(bannerSlotRef.current);
+    }
+    window.addEventListener("resize", syncHeaderOffset);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", syncHeaderOffset);
+    };
+  }, [banner]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -82,10 +120,11 @@ export default function Navbar({
 
   return (
     <>
-      {/* Spacer - fixed at shrunken navbar height, expanded navbar overlaps content */}
-      <div className="hidden lg:block h-[56px]" />
+      {/* Spacer matches fixed header height (nav + optional announcement banner). */}
+      <div ref={spacerRef} className="hidden lg:block" aria-hidden="true" />
 
       <header
+        ref={headerRef}
         className={`relative bg-white lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:z-50 transition-all duration-300 ${
           isScrolled ? "shadow-sm" : ""
         }`}
@@ -315,6 +354,8 @@ export default function Navbar({
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
         />
+
+        {banner ? <div ref={bannerSlotRef}>{banner}</div> : null}
       </header>
     </>
   );

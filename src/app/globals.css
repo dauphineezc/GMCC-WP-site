@@ -4,6 +4,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --announcement-banner-height: 0px;
   
   /* Brand colors */
   /* Primary Palette */
@@ -30,6 +31,7 @@
   --gmcc-baltic: #2CA6A4;
   --gmcc-orange-tiger: #F26419;
   --gmcc-love-child: #BDDD3C;
+  --gmcc-announcement-red: #C93D30;
 }
 
 /* Tailwind v4 theme - registers custom tokens as utility classes */
@@ -56,6 +58,7 @@
   --color-gmcc-baltic: var(--gmcc-baltic);
   --color-gmcc-orange-tiger: var(--gmcc-orange-tiger);
   --color-gmcc-love-child: var(--gmcc-love-child);
+  --color-gmcc-announcement-rorange: var(--gmcc-announcement-red);
   /* Fonts - loaded deterministically in src/app/fonts.ts, with local fallbacks */
   --font-heading: var(--font-heading-loaded), "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif;
   --font-secondary: var(--font-secondary-loaded), "Futura PT", Futura, "Century Gothic", Arial, sans-serif;

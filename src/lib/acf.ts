@@ -10,7 +10,9 @@ export type { WpMediaRef as MediaRef, WpMediaFieldInput as MediaFieldInput };
 
 /** Trimmed string, or "" for any non-string value. */
 export function asString(v: unknown): string {
-  return typeof v === "string" ? v.trim() : "";
+  if (typeof v === "string") return v.trim();
+  if (Array.isArray(v) && v.length > 0) return asString(v[0]);
+  return "";
 }
 
 /** Split a textarea value into trimmed, non-empty lines. */

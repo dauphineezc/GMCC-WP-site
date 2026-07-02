@@ -12,26 +12,25 @@ import {
 import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Policies",
-  description: "Greater Midland policies and handbooks.",
+  title: "Privacy Policy",
+  description: "Greater Midland privacy policy.",
 };
 
-const POLICIES_PAGE_QUERY = /* GraphQL */ `
-  query PoliciesPage($uri: ID!) {
+const PRIVACY_POLICY_PAGE_QUERY = /* GraphQL */ `
+  query PrivacyPolicyPage($uri: ID!) {
     page(id: $uri, idType: URI) {
       id
       title
       slug
 
-      policiesPageFields {
+      privacyPolicyPageFields {
         heroHeader
         heroSubheader
         introductionHeader
         introductionBody
         policies {
-          policyName
-          policyBody
-          policyFileVersion { node { sourceUrl mediaItemUrl title } }
+          header
+          body
         }
         contactHeader
         contactSubheader
@@ -41,32 +40,17 @@ const POLICIES_PAGE_QUERY = /* GraphQL */ `
 `;
 
 type PolicyItem = {
-  policyName?: string | null;
-  policyBody?: string | null;
-  policyFileVersion?: WpMediaFieldInput | null;
+  header?: string | null;
+  body?: string | null;
 };
 
-type PoliciesPageFields = {
+type PrivacyPolicyPageFields = {
   heroHeader?: string | null;
   heroSubheader?: string | null;
   introductionHeader?: string | null;
   introductionBody?: string | null;
   policies?: PolicyItem[] | null;
-  contactHeader?: string | null;
-  contactSubheader?: string | null;
 };
-
-function policyFileAttachment(file: WpMediaFieldInput | null | undefined): AttachmentItem | null {
-  const url = acfFileHref(file ?? undefined);
-  if (!url) return null;
-
-  const node: WpMediaRef | undefined =
-    file && typeof file === "object" && "node" in file
-      ? file.node
-      : (file as WpMediaRef | undefined);
-
-  return { label: (node?.title ?? "Download policy").trim(), url };
-}
 
 function renderPolicyBody(body: string) {
   const trimmed = body.trim();
@@ -87,35 +71,17 @@ function renderPolicyBody(body: string) {
 }
 
 function renderPolicyContent(policy: PolicyItem) {
-  const body = policy.policyBody?.trim();
-  const attachment = policyFileAttachment(policy.policyFileVersion);
-
+  const body = policy.body?.trim();
   return (
     <div>
       {body ? renderPolicyBody(body) : null}
-      {attachment ? (
-        <div className="mt-6">
-          <AttachmentsCard attachments={[attachment]} />
-        </div>
-      ) : null}
     </div>
   );
 }
 
-export default async function PoliciesPage() {
-  const data = await wpFetch<any>(POLICIES_PAGE_QUERY, { uri: "/policies" });
-  const fields = data?.page?.policiesPageFields;
-
-  const policyItems = (fields?.policies ?? []).filter(
-    (policy: PolicyItem): policy is PolicyItem =>
-      Boolean(policy?.policyName?.trim() || policy?.policyBody?.trim() || policy?.policyFileVersion),
-  );
-
-  const accordionItems = policyItems.map((policy: PolicyItem, index: number) => ({
-    id: `policy-${index}`,
-    title: policy.policyName?.trim() || `Policy ${index + 1}`,
-    content: renderPolicyContent(policy),
-  }));
+export default async function PrivacyPolicyPage() {
+  const data = await wpFetch<any>(PRIVACY_POLICY_PAGE_QUERY, { uri: "/privacy-policy" });
+  const fields = data?.page?.privacyPolicyPageFields;
 
   return (
     <main>
@@ -131,8 +97,12 @@ export default async function PoliciesPage() {
           </p>
         ) : null}
 
-        {accordionItems.length > 0 ? (
-          <Accordion items={accordionItems} allowMultiple={false} defaultOpenIds={[]} />
+        {fields?.policies?.length > 0 ? (
+          <Accordion items={fields?.policies?.map((policy: PolicyItem, index: number) => ({
+            id: `policy-${index}`,
+            title: policy.header?.trim() || `Policy ${index + 1}`,
+            content: renderPolicyContent(policy),
+          }))} allowMultiple={false} defaultOpenIds={[]} />
         ) : null}
       </section>
 

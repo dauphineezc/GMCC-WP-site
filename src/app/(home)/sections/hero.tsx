@@ -55,13 +55,13 @@ export default function HeroSection({
   }, []);
 
   return (
-    <section className="pb-0">
+    <section className="home-hero-compensate pb-0">
       <div className="relative mb-8 w-full overflow-hidden bg-neutral-100">
         <div className="relative">
           {/* Media */}
           <div
             ref={containerRef}
-            className="relative isolate h-[100svh] min-h-[700px] w-full overflow-hidden bg-neutral-200 select-none"
+            className="relative isolate h-[100svh] w-full overflow-hidden bg-neutral-200 select-none md:min-h-[700px]"
           >
             {/* Video layer */}
             <div className="absolute inset-x-0 -top-24 bottom-0 z-0 overflow-hidden md:top-0">
@@ -95,9 +95,9 @@ export default function HeroSection({
             {/* Dark overlay */}
             <div className="absolute inset-0 z-10 pointer-events-none bg-black/40" />
 
-            {/* Copy */}
-            <div className="absolute inset-0 z-20 flex items-center">
-              <div className="w-full px-8 py-10 md:px-12">
+            {/* Copy — top-aligned on mobile so subhead/CTAs clear the bottom wave */}
+            <div className="absolute inset-0 z-20 flex items-start md:items-center">
+              <div className="w-full px-8 pt-14 pb-36 md:px-12 md:py-10">
                 <div className="max-w-2xl text-white">
                   <h1 className="text-5xl font-semibold tracking-tight md:text-7xl">
                     {headline}

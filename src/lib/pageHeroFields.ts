@@ -71,6 +71,8 @@ export async function fetchPageWithHeroFields<
     ${extraFields}
   `;
 
+  let lastError: unknown = null;
+
   // --- Attempt 1: idType URI ---
   const uriQuery = /* GraphQL */ `
     query PageByUri($pageUri: ID!) {
@@ -87,7 +89,8 @@ export async function fetchPageWithHeroFields<
         { suppressGraphQLErrorLogging: true },
       );
       if (data?.page) return data.page;
-    } catch {
+    } catch (error) {
+      lastError = error;
       // URI form not recognised — try next
     }
   }
@@ -123,8 +126,13 @@ export async function fetchPageWithHeroFields<
       );
       if (data?.page) return data.page;
     }
-  } catch {
+  } catch (error) {
+    lastError = error;
     // exhausted options
+  }
+
+  if (process.env.NODE_ENV === "development" && lastError) {
+    console.warn(`[pageHeroFields] Failed to load page "${slug}":`, lastError);
   }
 
   return null;

@@ -11,6 +11,8 @@ import { resolveHeroCta } from "@/lib/pageHeroFields";
 import type { HeroCta } from "@/components/photoWaveHeader";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
+import { CenterAnnouncementBar } from "@/components/announcementBar";
+import { getCenterAnnouncement } from "@/lib/wordpress/announcements";
 import {
   coerceWpRichText,
   fetchCenterDetailPageFields,
@@ -405,9 +407,10 @@ type CenterPageProps = {
 
 export default async function CenterPage(props: CenterPageProps) {
   const { slug } = await props.params;
-  const [data, centerDetailFields] = await Promise.all([
+  const [data, centerDetailFields, centerAnnouncement] = await Promise.all([
     wpFetch<any>(CENTER_BY_SLUG_QUERY, { slug }),
     fetchCenterDetailPageFields(),
+    getCenterAnnouncement(slug),
   ]);
 
   const center = data?.center;
@@ -599,6 +602,9 @@ export default async function CenterPage(props: CenterPageProps) {
         className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip scroll-mt-24"
         fullBleed={false}
         topWave={false}
+        bottomWaveUnderfillClassName={
+          centerAnnouncement ? "bg-[var(--gmcc-announcement-red)]" : undefined
+        }
         bandClassName="py-10"
         contentClassName="mx-auto max-w-6xl px-6"
       >
@@ -764,6 +770,7 @@ export default async function CenterPage(props: CenterPageProps) {
         </div>
       </NavyWaveSection>
 
+      {centerAnnouncement ? <CenterAnnouncementBar centerSlug={slug} /> : null}
 
       {/* ── Section 2: What's Happening Today? ───────────────────────────── */}
       {showTodaySection ? (

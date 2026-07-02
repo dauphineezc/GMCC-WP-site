@@ -88,8 +88,6 @@ const EVENT_BY_SLUG_QUERY = `
             linkLabel
             link
           }
-          linkLabel
-          link
         }
 
         testimonials {

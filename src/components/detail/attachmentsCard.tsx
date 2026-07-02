@@ -4,12 +4,12 @@ import type { AttachmentItem } from "@/lib/wp";
  * "Relevant documents" download list shared by the program and event detail
  * pages. Renders nothing when there are no attachments.
  */
-export default function AttachmentsCard({ attachments }: { attachments: AttachmentItem[] }) {
+export default function AttachmentsCard({ header = "Relevant documents", attachments }: { header?: string; attachments: AttachmentItem[] }) {
   if (!attachments.length) return null;
 
   return (
     <div>
-      <h3 className="eyebrow mb-3">Relevant documents</h3>
+      <h3 className="eyebrow mb-3">{header}</h3>
       <div className="flex flex-wrap gap-3">
         {attachments.map((att, i) => (
           <a
@@ -29,7 +29,7 @@ export default function AttachmentsCard({ attachments }: { attachments: Attachme
               <span className="text-sm font-medium text-neutral-800 group-hover:text-gmcc-navy truncate">
                 {att.label}
               </span>
-              <span className="text-xs text-neutral-500">PDF • Click to download</span>
+              <span className="text-xs text-neutral-500">PDF • Click to open in a new tab</span>
             </div>
             <svg className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-y-0.5 group-hover:text-gmcc-teal ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

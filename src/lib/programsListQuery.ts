@@ -57,7 +57,7 @@ export const PROGRAMS_LIST_QUERY = /* GraphQL */ `
             }
           }
           programArea { nodes { name slug } }
-          groupFitnessClassType
+          isSpecialtyFitnessClass
           registrationInformation {
             registrationLink
           }

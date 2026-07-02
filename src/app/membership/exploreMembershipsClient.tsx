@@ -760,7 +760,7 @@ export default function ExploreMembershipsClient({
               <h2 className="h2">
                 {fields.contactHeader}
               </h2>
-              <p className="mt-3 text-gmcc-navy/70 max-w-xl mx-auto">
+              <p className="mt-3 text-neutral-700 max-w-xl mx-auto">
                 {fields.contactDescription}
               </p>
               <a

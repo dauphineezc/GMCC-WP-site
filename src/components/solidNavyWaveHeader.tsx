@@ -21,7 +21,7 @@ export default function SolidNavyWaveHeader({
 }: SolidNavyWaveHeaderProps) {
   return (
     <section className={`relative overflow-hidden bg-gmcc-navy ${className}`}>
-      <div className={`relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-12 md:pb-38 lg:pt-44 ${containerClassName}`}>
+      <div className={`relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-12 md:pb-38 lg:pt-24 ${containerClassName}`}>
         {eyebrow ? <p className="text-base font-semibold tracking-wide text-white/90 md:text-lg">{eyebrow}</p> : null}
         {title ? <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-white md:text-5xl">{title}</h1> : null}
         {description ? (

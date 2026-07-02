@@ -73,7 +73,7 @@ export default function PhotoWaveHeader({
 }: PhotoWaveHeaderProps) {
   return (
     <section
-      className={`relative overflow-hidden lg:mt-28 z-10 py-6 ${flushBottom ? "mb-0" : "mb-8"} ${minHeight ? "min-h-[400px] h-[70dvh] max-h-[700px]" : ""}`}
+      className={`relative overflow-hidden z-10 py-6 ${flushBottom ? "mb-0" : "mb-8"} ${minHeight ? "min-h-[400px] h-[70dvh] max-h-[700px]" : ""}`}
     >
       <div
         className="absolute inset-0"

@@ -316,7 +316,13 @@ function normalizeGroupFitnessDirectoryData(
 }
 
 
-export default async function ExploreProgramsPage() {
+export default async function ExploreProgramsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = await searchParams;
+
   const [heroPage, programsData] = await Promise.all([
     fetchPageWithHeroFields("programs"),
     wpFetch<{
@@ -411,6 +417,7 @@ export default async function ExploreProgramsPage() {
         <ExploreProgramsClient
           initialPrograms={programs}
           initialPageInfo={pageInfo}
+          initialSearchParams={resolvedSearchParams}
           pageSize={PROGRAMS_PAGE_SIZE}
           directoryHeaderData={directoryHeaderData}
         />
