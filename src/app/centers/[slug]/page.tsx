@@ -12,7 +12,9 @@ import type { HeroCta } from "@/components/photoWaveHeader";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
 import { CenterAnnouncementBar } from "@/components/announcementBar";
+import AutoHeightScheduleIframe from "@/components/schedule/autoHeightScheduleIframe";
 import { getCenterAnnouncement } from "@/lib/wordpress/announcements";
+import { todayCenterScheduleEmbedUrl } from "@/lib/constants";
 import {
   coerceWpRichText,
   fetchCenterDetailPageFields,
@@ -780,49 +782,15 @@ export default async function CenterPage(props: CenterPageProps) {
             <h2 className="h2 text-center">What&rsquo;s Happening Today?</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 items-start gap-8 sm:grid-cols-2">
 
-            <div className="col-span-1">
-
-          {todaySchedule.length > 0 ? (
-            <>
-              {/* Desktop single-center schedule */}
-              <div className="hidden overflow-x-auto rounded-2xl border border-neutral-200 bg-white shadow-sm md:block">
-                <div className="border-b border-neutral-200 bg-gmcc-navy px-5 py-4 text-center text-sm font-semibold text-white">
-                  {centerScheduleLabel}
-                </div>
-                <div className="px-12 py-6">
-                  <ul className="space-y-3 ">
-                    {todaySchedule.map((item, ii) => (
-                      <li key={ii} className="flex gap-20 grid grid-cols-2">
-                        <span className="mt-0.5 shrink-0 text-xs font-semibold text-gmcc-teal col-span-1 justify-self-end">
-                          {item.time}
-                        </span>
-                        <span className="whitespace-pre-line text-gmcc-grey-dark col-span-1">{item.activity}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Mobile schedule card */}
-              <div className="card md:hidden">
-                <h3 className="h3 mb-3 border-b border-neutral-100 bg-gmcc-navy pb-2 text-center text-white">
-                  {centerScheduleLabel}
-                </h3>
-                <ul className="space-y-2">
-                  {todaySchedule.map((item, ii) => (
-                    <li key={ii} className="flex gap-2 text-sm">
-                      <span className="w-16 shrink-0 font-semibold text-gmcc-teal">{item.time}</span>
-                      <span className="text-gmcc-grey-dark">{item.activity}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </>
-          ) : null}
-
-          </div>
+            <div className="gmcc-schedule-embed col-span-1">
+              <AutoHeightScheduleIframe
+                src={todayCenterScheduleEmbedUrl(slug)}
+                title={`${centerScheduleLabel ?? center.title ?? "Center"} Today's Schedule`}
+                defaultHeight={1100}
+              />
+            </div>
 
           <div className="col-span-1">
 

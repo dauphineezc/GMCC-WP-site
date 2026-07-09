@@ -14,39 +14,11 @@ import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
 } from "@/lib/pageHeroFields";
+import AutoHeightScheduleIframe from "@/components/schedule/autoHeightScheduleIframe";
+import { TODAY_ALL_CENTERS_SCHEDULE_EMBED_URL } from "@/lib/constants";
 
 /** Regenerate at most once per day; cron can trigger sooner via `/api/revalidate`. */
 export const revalidate = 86400;
-
-// ─── Today's schedule (not yet in WP ACF) ───────────────────────────────────
-
-const TODAY_SCHEDULE: Record<string, { time: string; activity: string }[]> = {
-  "Community Center": [
-    { time: "6:00 AM-7:00 AM", activity: "Early Bird Aqua Fit" },
-    { time: "8:30 AM-9:30 AM", activity: "Zumba" },
-    { time: "10:00 AM-4:00 PM", activity: "Open Lap Swim" },
-    { time: "12:00 PM-1:00 PM", activity: "Mah Jong" },
-    { time: "5:30 PM-6:30 PM", activity: "Yoga" },
-    { time: "All Day", activity: "Walking Track\nBilliards\nPuzzles" },
-  ],
-  "Tennis Center": [
-    { time: "10:00 AM-11:00 AM", activity: "Tennis 101" },
-    { time: "12:00 PM-1:00 PM", activity: "Sweat It Off" },
-    { time: "All Day", activity: "Drop-In Tennis\nDrop-In Pickleball" },
-  ],
-  "Coleman Family Center": [
-    { time: "10:00 AM-11:00 AM", activity: "Mindful Movement" },
-    { time: "5:00 PM-6:00 PM", activity: "Cardio Drumming" },
-    { time: "5:00 PM-7:00 PM", activity: "Adult Drop-In Basketball" },
-    { time: "All Day", activity: "Billiards" },
-  ],
-  "North Family Center": [
-    { time: "7:00 AM-9:00 AM", activity: "Drop-In Pickleball" },
-    { time: "11:00 AM-12:00 PM", activity: "Functional Fitness" },
-    { time: "2:00 PM-4:00 PM", activity: "Drop-In Pickleball" },
-    { time: "All Day", activity: "Billiards" },
-  ],
-};
 
 const TODAY_EVENTS = [
   {
@@ -655,63 +627,13 @@ export default async function VisitPage() {
             <h2 className="h2 text-center">{todaysScheduleHeader}</h2>
           </div>
 
-          {/* Desktop table */}
-          <div className="hidden overflow-x-auto rounded-2xl border border-neutral-200 bg-white shadow-sm md:block">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-neutral-200 bg-gmcc-navy text-white">
-                  {Object.keys(TODAY_SCHEDULE).map((center) => (
-                    <th
-                      key={center}
-                      className="px-5 py-4 text-center font-semibold text-sm"
-                    >
-                      {center}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="align-top">
-                  {Object.values(TODAY_SCHEDULE).map((items, ci) => (
-                    <td key={ci} className="px-5 py-4 border-r border-neutral-100 last:border-0">
-                      <ul className="space-y-3">
-                        {items.map((item, ii) => (
-                          <li key={ii} className="flex gap-2">
-                            <span className="mt-0.5 shrink-0 text-xs font-semibold text-gmcc-teal w-16">
-                              {item.time}
-                            </span>
-                            <span className="text-gmcc-grey-dark whitespace-pre-line">
-                              {item.activity}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile stacked cards */}
-          <div className="grid gap-4 md:hidden">
-            {Object.entries(TODAY_SCHEDULE).map(([center, items]) => (
-              <div key={center} className="card">
-                <h3 className="h3 mb-3 border-b border-neutral-100 pb-2 bg-gmcc-navy text-white text-center">
-                  {center}
-                </h3>
-                <ul className="space-y-2">
-                  {items.map((item, ii) => (
-                    <li key={ii} className="flex gap-2 text-sm">
-                      <span className="shrink-0 font-semibold text-gmcc-teal w-16">
-                        {item.time}
-                      </span>
-                      <span className="text-gmcc-grey-dark">{item.activity}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          <div className="gmcc-schedule-embed">
+            <AutoHeightScheduleIframe
+              id="gmcc-today-schedule"
+              src={TODAY_ALL_CENTERS_SCHEDULE_EMBED_URL}
+              title="Today's Schedule"
+              defaultHeight={1500}
+            />
           </div>
 
           {TODAY_EVENTS.length > 0 && (

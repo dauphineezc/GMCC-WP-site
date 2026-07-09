@@ -93,6 +93,15 @@
     .card-bleed-bottom {
         @apply -mx-4 -mb-4 overflow-hidden;
     }
+
+    /* Schedule iframe embeds — height is set per-iframe (see AutoHeightScheduleIframe). */
+    .gmcc-schedule-embed {
+        @apply w-full;
+    }
+    .gmcc-schedule-embed iframe {
+        @apply block w-full border-0;
+    }
+
     /* Optional: content padding helpers */
     .card-pad { @apply p-5; }
     .card-pad-sm { @apply p-4; }

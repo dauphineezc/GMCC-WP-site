@@ -38,6 +38,25 @@ export function scheduleEmbedUrl(params: {
   return url.toString();
 }
 
+/** Maps center CPT slugs to the `center` query param used by today-center.html. */
+const CENTER_TODAY_SCHEDULE_EMBED_KEY: Record<string, string> = {
+  "community-center": "community",
+  "tennis-center": "tennis",
+  "coleman-family-center": "coleman",
+  "north-family-center": "north",
+};
+
+/** Today's schedule embed for a single center (used on center detail pages). */
+export function todayCenterScheduleEmbedUrl(centerSlug: string): string {
+  const centerKey = CENTER_TODAY_SCHEDULE_EMBED_KEY[centerSlug] ?? "community";
+  const url = new URL(`${SCHEDULE_EMBED_BASE_URL}/today-center.html`);
+  url.searchParams.set("center", centerKey);
+  return url.toString();
+}
+
+/** All-centers today's schedule embed (used on Plan Your Visit). */
+export const TODAY_ALL_CENTERS_SCHEDULE_EMBED_URL = `${SCHEDULE_EMBED_BASE_URL}/today.html`;
+
 /**
  * Canonical center display order, keyed by center CPT slug.
  * Centers not listed sort to the end.
