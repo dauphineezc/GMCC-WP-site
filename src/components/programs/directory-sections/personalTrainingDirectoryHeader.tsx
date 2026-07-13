@@ -1,5 +1,5 @@
-// components/programs/directory-sections/PersonalTrainingDirectoryHeader.tsx
 import React from "react";
+import TrainersCarousel from "@/components/trainersCarousel";
 import { DirectoryHeaderData, DirectoryHeaderShell } from "../directoryHeaderShared";
 
 export function PersonalTrainingDirectoryHeader({
@@ -9,6 +9,19 @@ export function PersonalTrainingDirectoryHeader({
   data: DirectoryHeaderData | null | undefined;
   className?: string;
 }) {
-  return <DirectoryHeaderShell data={data} className={className} />;
-}
+  const trainers = (data?.trainers ?? []).filter(
+    (trainer) => !!trainer?.name || !!trainer?.jobTitle || !!trainer?.photo?.sourceUrl,
+  );
 
+  const dataWithoutTrainers: DirectoryHeaderData = {
+    ...(data ?? {}),
+    trainers: [],
+  };
+
+  return (
+    <>
+      <DirectoryHeaderShell data={dataWithoutTrainers} className={className} />
+      {trainers.length ? <TrainersCarousel trainers={trainers} /> : null}
+    </>
+  );
+}

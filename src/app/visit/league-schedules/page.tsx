@@ -1,28 +1,48 @@
-import Accordion from "@/components/accordion";
-import HeaderImage from "@/components/headerImage";
+import PhotoWaveHeader from "@/components/photoWaveHeader";
+import {
+  fetchPageWithHeroFields,
+  resolvePhotoWaveHeaderProps,
+} from "@/lib/pageHeroFields";
 import { LEAGUE_SCHEDULE_EMBED_URL } from "@/lib/constants";
+import type { Metadata } from "next";
 
-export default function LeagueSchedulesPage() {
+export const metadata: Metadata = {
+  title: "League Schedules",
+  description:
+    "View schedules for in-house leagues including basketball, volleyball, and more.",
+};
 
+export default async function LeagueSchedulesPage() {
+  const page = await fetchPageWithHeroFields("league-schedules");
+  const hero = resolvePhotoWaveHeaderProps(page, "League Schedules");
 
   return (
     <main>
-        <HeaderImage src="/images/LeaguePhoto.png" alt="League Schedules" />
-        <div className="page-section stack-8">
-          <h1 className="text-3xl font-bold text-gmcc-navy tracking-tight sm:text-4xl mb-4">League Schedules</h1>
-          <h3 className="text-xl text-neutral-700 mt-0 mb-4">Need to check the schedule for a league you're playing in, or want to watch a thrilling 
-            game? View the schedules for all in-house leagues (including basketball, volleyball, and more) below.</h3>
-          <p className="text-neutral-700 text-xl mt-0 mb-8">Select the league you're interested in to view the schedule.</p>
+      <PhotoWaveHeader
+        title={hero.title}
+        subheader={hero.subheader}
+        imageUrl={hero.imageUrl ?? "/images/LeaguePhoto.png"}
+        ctas={hero.ctas}
+      />
 
-          <div className="gmcc-schedule-embed mt-4">
-            <iframe
+      <div className="page-section stack-8">
+        <h3 className="text-xl text-neutral-700 mt-0 mb-4">
+          Need to check the schedule for a league you&apos;re playing in, or want to watch a thrilling
+          game? View the schedules for all in-house leagues (including basketball, volleyball, and more)
+          below.
+        </h3>
+        <p className="text-neutral-700 text-xl mt-0 mb-8">
+          Select the league you&apos;re interested in to view the schedule.
+        </p>
+
+        <div className="gmcc-schedule-embed mt-4">
+          <iframe
             src={LEAGUE_SCHEDULE_EMBED_URL}
             style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            ></iframe>
+          />
         </div>
-
       </div>
     </main>
   );

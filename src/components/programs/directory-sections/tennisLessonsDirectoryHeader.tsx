@@ -21,9 +21,7 @@ export function TennisLessonsDirectoryHeader({
   return (
     <>
       <DirectoryHeaderShell data={dataWithoutTrainers} className={className} />
-      {trainers.length ? (
-        <TrainersCarousel trainers={trainers} title="Meet the instructors" />
-      ) : null}
+      {trainers.length ? <TrainersCarousel trainers={trainers} /> : null}
     </>
   );
 }

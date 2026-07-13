@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 import Accordion from "@/components/accordion";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import { PersonalTrainingDirectoryHeader } from "@/components/programs/directory-sections/personalTrainingDirectoryHeader";
-import type { DirectoryTrainer } from "@/components/programs/directoryHeaderShared";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
 import FeaturedTestimonialsCarousel from "@/components/featuredTestimonialsCarousel";
 import type { NormalizedTestimonial } from "@/components/testimonials";
 import type { LessonBenefit, WPProgram } from "@/lib/programs/lessonsDirectory";
+import type { DirectoryTrainer } from "./directoryHeaderShared";
 
 type Faq = { question: string; answer: string };
 

@@ -53,6 +53,7 @@ function normalizeWpUrlToPath(url: string) {
 
     // Camps
     "Camps": "/camps",
+    "Preschool Half-Day Camps": "/camps?" + buildQuery({ campType: "mini-day" }),
     "Full Day Camps": "/camps?" + buildQuery({ campType: "full-day" }),
     "Mini Day Camps": "/camps?" + buildQuery({ campType: "mini-day" }),
     "Specialty/Art Camps": "/camps?" + buildQuery({ campType: "specialty-art" }),
@@ -118,7 +119,7 @@ function normalizeWpUrlToPath(url: string) {
 
     const ourPurposePage = OUR_PURPOSE_PAGE[label];
     if (ourPurposePage) return ourPurposePage;
-    
+
     const joinOurTeamPage = JOIN_OUR_TEAM_PAGE[label];
     if (joinOurTeamPage) return joinOurTeamPage;
 

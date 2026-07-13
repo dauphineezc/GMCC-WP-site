@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import type { ProgramsPageACF } from "@/components/programs/programsDirectoryHeader";
 import type { DirectoryHeaderData } from "@/components/programs/directoryHeaderSection";
+import type { DirectoryTrainer } from "@/components/programs/directoryHeaderShared";
 import {
   DROP_IN_CARE_FIELDS_GRAPHQL,
   hasDropInCareContent,
@@ -22,6 +23,7 @@ import {
   PROGRAMS_ALL_AT_ONCE,
   LAZY_LOAD_PROGRAMS,
 } from "@/lib/programsListQuery";
+import { LESSONS_TRAINERS_GQL } from "@/lib/programs/lessonsDirectory";
 import ExploreProgramsClient from "./exploreProgramsClient";
 
 const DIRECTORY_HEADER_FIELDS = `
@@ -117,6 +119,7 @@ const PERSONAL_TRAINING_DIRECTORY_HEADER_QUERY = `
     page(id: $uri, idType: URI) {
       personalTrainingDirectoryPageFields {
         ${DIRECTORY_HEADER_FIELDS}
+        ${LESSONS_TRAINERS_GQL}
       }
     }
   }
@@ -127,6 +130,23 @@ const TENNIS_DIRECTORY_HEADER_QUERY = `
     page(id: $uri, idType: URI) {
       tennisLessonsDirectoryPageFields {
         ${DIRECTORY_HEADER_FIELDS}
+        tennisInstructors {
+          nodes {
+            ... on StaffProfile {
+              title
+              featuredImage {
+                node {
+                  sourceUrl
+                  altText
+                }
+              }
+              staffProfilesFields {
+                title
+                bio
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -159,6 +179,7 @@ const RENEW_ACTIVE_DIRECTORY_HEADER_QUERY = `
 
 function normalizeDirectoryHeaderData(
   field?: any,
+  trainerConnectionKey: "trainers" | "tennisInstructors" = "trainers",
 ): DirectoryHeaderData | undefined {
   if (!field) return undefined;
   const normalizeAttachment = (att: any) => {
@@ -168,6 +189,25 @@ function normalizeDirectoryHeaderData(
       file: att.file?.node ?? att.file ?? null,
     };
   };
+
+  const trainerNodes = field?.[trainerConnectionKey]?.nodes ?? [];
+  const trainers =
+    trainerNodes
+      .map((trainer: any) => ({
+        name: trainer?.title ?? null,
+        photo: trainer?.featuredImage?.node
+          ? {
+              sourceUrl: trainer.featuredImage.node.sourceUrl ?? null,
+              altText: trainer.featuredImage.node.altText ?? null,
+            }
+          : null,
+        jobTitle: trainer?.staffProfilesFields?.title ?? null,
+        bio: trainer?.staffProfilesFields?.bio ?? null,
+      }))
+      .filter(
+        (trainer: DirectoryTrainer) =>
+          !!trainer.name || !!trainer.jobTitle || !!trainer.photo?.sourceUrl || !!trainer.bio,
+      ) ?? [];
 
   const sponsorNodes = field?.sponsors?.nodes ?? [];
   const sponsors = sponsorNodes.flatMap((node: any) => {
@@ -194,6 +234,7 @@ function normalizeDirectoryHeaderData(
         }
       : null,
     sponsors: sponsors.length ? sponsors : null,
+    trainers: trainers.length ? trainers : null,
     redirectLabel: field.redirectLabel ?? null,
     redirectUrl: field.redirectUrl ?? null,
   };
@@ -211,9 +252,11 @@ function hasDirectoryHeaderContent(field?: any) {
 
     
   const hasSponsors = (field?.sponsors?.nodes ?? field?.sponsors ?? []).length > 0;
+  const hasTrainers =
+    (field?.trainers?.nodes ?? field?.tennisInstructors?.nodes ?? field?.trainers ?? []).length > 0;
   const hasRedirect = (field?.redirectLabel ?? field?.redirectUrl ?? "").trim();
 
-  return Boolean(header || body || hasAttachment || hasSponsors || hasRedirect);
+  return Boolean(header || body || hasAttachment || hasSponsors || hasTrainers || hasRedirect);
 }
 
 async function fetchFieldFromUris<TPage extends Record<string, any>>(
@@ -390,8 +433,8 @@ export default async function ExploreProgramsPage({
       groupFitnessRaw?.dropInCare
     ),
     middleSchoolSportsDirectoryPageFields: normalizeDirectoryHeaderData(middleSchoolSportsRaw),
-    personalTrainingDirectoryPageFields: normalizeDirectoryHeaderData(personalTrainingRaw),
-    tennisLessonsDirectoryPageFields: normalizeDirectoryHeaderData(tennisLessonsRaw),
+    personalTrainingDirectoryPageFields: normalizeDirectoryHeaderData(personalTrainingRaw, "trainers"),
+    tennisLessonsDirectoryPageFields: normalizeDirectoryHeaderData(tennisLessonsRaw, "tennisInstructors"),
     silversneakersDirectoryPageFields: normalizeDirectoryHeaderData(silversneakersRaw),
     renewActiveDirectoryPageFields: normalizeDirectoryHeaderData(renewActiveRaw),
   };
