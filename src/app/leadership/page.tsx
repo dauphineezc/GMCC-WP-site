@@ -201,88 +201,86 @@ export default async function LeadershipPage() {
         </div>
       </section>
 
-        {/* Organization Section */}
-        {fields?.organizationHeader && (
+        {/* Organization + Executive Leaders */}
+        {(fields?.organizationHeader || elts.length > 0) && (
           <section className="page-section stack-6">
-            <h2 className="h2 text-gmcc-navy text-center mb-4">
-              {fields.organizationHeader}
-            </h2>
-            {fields.organizationBlurb && (
-              <div 
-                className="text-center text-neutral-700 max-w-4xl mx-auto mb-16"
+            {fields?.organizationHeader ? (
+              <h2 className="h2 text-gmcc-navy text-center">
+                {fields.organizationHeader}
+              </h2>
+            ) : null}
+            {fields?.organizationBlurb ? (
+              <div
+                className="body text-center text-neutral-700 max-w-4xl mx-auto"
                 dangerouslySetInnerHTML={{ __html: fields.organizationBlurb }}
               />
-            )}
-          </section>
-        )}
+            ) : null}
+            {elts.length > 0 ? (
+              <>
+                <h2 className="h2 text-gmcc-navy text-center">
+                  Executive Leaders
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {elts.map((staff, index) => {
+                    const dotCardLink = staff.staffProfilesFields?.dotCardLink;
+                    const cardClassName =
+                      "flex flex-col rounded-2xl border border-neutral-100 bg-white shadow-md overflow-hidden transition hover:-translate-y-0.5 hover:shadow-xl hover:border-neutral-300";
 
-        {/* Executive Leaders Section */}
-        {elts.length > 0 && (
-          <section className="page-section stack-6">
-            <h2 className="h2 text-gmcc-navy text-center mb-6">
-              Executive Leaders
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-              {elts.map((staff, index) => {
-                const dotCardLink = staff.staffProfilesFields?.dotCardLink;
-                const cardClassName =
-                  "flex flex-col rounded-2xl border border-neutral-100 bg-white shadow-md overflow-hidden transition hover:-translate-y-0.5 hover:shadow-xl hover:border-neutral-300";
+                    const cardBody = (
+                      <>
+                        {staff.featuredImage?.node?.sourceUrl && (
+                          <div className="relative w-full aspect-square">
+                            <Image
+                              src={staff.featuredImage.node.sourceUrl}
+                              alt={staff.featuredImage.node.altText || staff.title || ""}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="bg-gmcc-navy text-white p-4 flex-grow">
+                          <h3 className="font-semibold text-lg">{staff.title}</h3>
+                          {staff.staffProfilesFields?.title && (
+                            <p className="text-sm opacity-90 italic">
+                              {staff.staffProfilesFields.title}
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    );
 
-                const cardBody = (
-                  <>
-                    {staff.featuredImage?.node?.sourceUrl && (
-                      <div className="relative w-full aspect-square">
-                        <Image
-                          src={staff.featuredImage.node.sourceUrl}
-                          alt={staff.featuredImage.node.altText || staff.title || ""}
-                          fill
-                          className="object-cover"
-                        />
+                    return dotCardLink ? (
+                      <Link key={index} href={dotCardLink} className={cardClassName}>
+                        {cardBody}
+                      </Link>
+                    ) : (
+                      <div key={index} className={cardClassName}>
+                        {cardBody}
                       </div>
-                    )}
-                    <div className="bg-gmcc-navy text-white p-4 flex-grow">
-                      <h3 className="font-semibold text-lg">{staff.title}</h3>
-                      {staff.staffProfilesFields?.title && (
-                        <p className="text-sm opacity-90 italic">
-                          {staff.staffProfilesFields.title}
-                        </p>
-                      )}
-                    </div>
-                  </>
-                );
-
-                return (
-                  dotCardLink ? (
-                    <Link key={index} href={dotCardLink} className={cardClassName}>
-                      {cardBody}
-                    </Link>
-                  ) : (
-                    <div key={index} className={cardClassName}>
-                      {cardBody}
-                    </div>
-                  )
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : null}
           </section>
         )}
 
         {/* Board of Trustees Section */}
         {fields?.boardOfTrusteesHeader && (
           <section className="page-section stack-6">
-            <h2 className="h2 text-gmcc-navy text-center mb-4">
+            <h2 className="h2 text-gmcc-navy text-center">
               {fields.boardOfTrusteesHeader}
             </h2>
-            {fields.boardOfTrusteesBlurb && (
-              <div 
-                className="text-center text-neutral-700 max-w-4xl mx-auto mb-8"
+            {fields.boardOfTrusteesBlurb ? (
+              <div
+                className="body text-center text-neutral-700 max-w-4xl mx-auto"
                 dangerouslySetInnerHTML={{ __html: fields.boardOfTrusteesBlurb }}
               />
-            )}
+            ) : null}
 
             {/* Board Members Table */}
             {boardMembers.length > 0 && (
-              <div className="max-w-4xl mx-auto mb-16">
+              <div className="max-w-4xl mx-auto">
                 <table className="w-full table-fixed">
                   <colgroup>
                     <col className="w-1/4" />
@@ -317,7 +315,7 @@ export default async function LeadershipPage() {
 
         {/* Operating Unit Boards Accordion */}
         <section className="page-section stack-6">
-        <h2 className="eyebrow pl-28 mb-8">
+          <h2 className="eyebrow pl-28">
             Operating Unit Boards
           </h2>
           <div className="max-w-4xl mx-auto">

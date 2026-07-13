@@ -13,8 +13,14 @@ import PhotoWaveHeader from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
 import { CenterAnnouncementBar } from "@/components/announcementBar";
 import AutoHeightScheduleIframe from "@/components/schedule/autoHeightScheduleIframe";
+import TodayEventCard from "@/components/events/todayEventCard";
 import { getCenterAnnouncement } from "@/lib/wordpress/announcements";
-import { todayCenterScheduleEmbedUrl } from "@/lib/constants";
+import {
+  hasTodayCenterScheduleEmbed,
+  resolveCenterScheduleLabel,
+  todayCenterScheduleEmbedUrl,
+} from "@/lib/constants";
+import { fetchTodaysEvents } from "@/lib/events/todayEvents";
 import {
   coerceWpRichText,
   fetchCenterDetailPageFields,
@@ -22,76 +28,6 @@ import {
   resolveCenterSocialLinks,
   resolveFeaturedProgramEventHref,
 } from "@/lib/centerDetailPageFields";
-
-
-
-const TODAY_SCHEDULE: Record<string, { time: string; activity: string }[]> = {
-  "Community Center": [
-    { time: "6:00 AM-7:00 AM", activity: "Aqua Fit" },
-    { time: "8:30 AM-9:30 AM", activity: "Zumba" },
-    { time: "10:00 AM-4:00 PM", activity: "Open Lap Swim" },
-    { time: "12:00 PM-1:00 PM", activity: "Mah Jongg" },
-    { time: "5:30 PM-6:30 PM", activity: "Yoga" },
-    { time: "All Day", activity: "Walking Track\nBilliards\nPuzzles" },
-
-  ],
-  "Tennis Center": [
-    { time: "10:00 AM-11:00 AM", activity: "Tennis 101" },
-    { time: "12:00 PM-1:00 PM", activity: "Sweat It Off" },
-    { time: "All Day", activity: "Drop-In Tennis\nDrop-In Pickleball" },
-  ],
-  "Coleman Family Center": [
-    { time: "10:00 AM-11:00 AM", activity: "Mindful Movement" },
-    { time: "5:00 PM-6:00 PM", activity: "Cardio Drumming" },
-    { time: "5:00 PM-7:00 PM", activity: "Adult Drop-In Basketball" },
-    { time: "All Day", activity: "Billiards" },
-  ],
-  "North Family Center": [
-    { time: "7:00 AM-9:00 AM", activity: "Drop-In Pickleball" },
-    { time: "11:00 AM-12:00 PM", activity: "Functional Fitness" },
-    { time: "2:00 PM-4:00 PM", activity: "Drop-In Pickleball" },
-    { time: "All Day", activity: "Billiards" },
-  ],
-};
-
-const CENTER_SCHEDULE_LABEL_BY_SLUG: Record<string, string> = {
-  "community-center": "Community Center",
-  "tennis-center": "Tennis Center",
-  "coleman-family-center": "Coleman Family Center",
-  "north-family-center": "North Family Center",
-};
-
-function resolveCenterScheduleLabel(slug: string, title: string): string | null {
-  const fromSlug = CENTER_SCHEDULE_LABEL_BY_SLUG[slug];
-  if (fromSlug && TODAY_SCHEDULE[fromSlug]) return fromSlug;
-
-  if (title in TODAY_SCHEDULE) return title;
-
-  return null;
-}
-
-const TODAY_EVENTS: Record<string, { title: string; time: string; description: string }> = {
-  "Community Center": {
-    title: "Family Fun Night",
-    time: "6:00 – 8:00 PM",
-    description: "Games, activities, and snacks for the whole family. Free with membership or day pass.",
-  },
-  "Coleman Family Center": {
-    title: "Family Fun Night",
-    time: "6:00 – 8:00 PM",
-    description: "Games, activities, and snacks for the whole family. Free with membership or day pass.",
-  },
-  "Tennis Center": {
-    title: "Dinks and Drinks",
-    time: "5:00 – 7:00 PM",
-    description: "Meet other tennis players and enjoy an informal round-robin. All skill levels welcome.",
-  },
-  "North Family Center": {
-    title: "Family Fun Night",
-    time: "6:00 – 8:00 PM",
-    description: "Games, activities, and snacks for the whole family. Free with membership or day pass.",
-  },
-};
 
 
 
@@ -409,10 +345,11 @@ type CenterPageProps = {
 
 export default async function CenterPage(props: CenterPageProps) {
   const { slug } = await props.params;
-  const [data, centerDetailFields, centerAnnouncement] = await Promise.all([
+  const [data, centerDetailFields, centerAnnouncement, todaysEvents] = await Promise.all([
     wpFetch<any>(CENTER_BY_SLUG_QUERY, { slug }),
     fetchCenterDetailPageFields(),
     getCenterAnnouncement(slug),
+    fetchTodaysEvents({ centerSlug: slug, fallbackImageUrl: "/images/VisitPhoto.png" }),
   ]);
 
   const center = data?.center;
@@ -554,9 +491,8 @@ export default async function CenterPage(props: CenterPageProps) {
   const showCurlingHoursReplacement = isCurlingCenter && hoursReplacement.length > 0;
 
   const centerScheduleLabel = resolveCenterScheduleLabel(slug, center.title ?? "");
-  const todaySchedule = centerScheduleLabel ? (TODAY_SCHEDULE[centerScheduleLabel] ?? []) : [];
-  const todayEvent = centerScheduleLabel ? TODAY_EVENTS[centerScheduleLabel] : null;
-  const showTodaySection = todaySchedule.length > 0 || todayEvent != null;
+  const hasScheduleEmbed = hasTodayCenterScheduleEmbed(slug);
+  const showTodaySection = hasScheduleEmbed || todaysEvents.length > 0;
 
   const replacementCta = curlingLayout?.membershipReplacementCta;
   const membershipPlansHref = `/membership?center=${encodeURIComponent(slug)}#plans`;
@@ -782,44 +718,39 @@ export default async function CenterPage(props: CenterPageProps) {
             <h2 className="h2 text-center">What&rsquo;s Happening Today?</h2>
           </div>
 
-          <div className="grid grid-cols-1 items-start gap-8 sm:grid-cols-2">
+          {hasScheduleEmbed ? (
+            todaysEvents.length > 0 ? (
+              <div className="grid grid-cols-1 items-start gap-8 sm:grid-cols-2">
+                <div className="gmcc-schedule-embed col-span-1">
+                  <AutoHeightScheduleIframe
+                    src={todayCenterScheduleEmbedUrl(slug)}
+                    title={`${centerScheduleLabel ?? center.title ?? "Center"} Today's Schedule`}
+                  />
+                </div>
 
-            <div className="gmcc-schedule-embed col-span-1">
-              <AutoHeightScheduleIframe
-                src={todayCenterScheduleEmbedUrl(slug)}
-                title={`${centerScheduleLabel ?? center.title ?? "Center"} Today's Schedule`}
-                defaultHeight={1100}
-              />
-            </div>
-
-          <div className="col-span-1">
-
-          {todayEvent ? (
-            <div>
-              <div className="grid gap-5">
-                <div className="card card-hover border-l-4 border-l-gmcc-teal bg-gmcc-blue-light/30 p-0">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="col-span-1 py-4 pl-4">
-                      <div>
-                        <h4 className="h3 mb-1">{todayEvent.title}</h4>
-                        <p className="small mb-2 font-semibold text-gmcc-teal-dark">{todayEvent.time}</p>
-                        <p className="body">{todayEvent.description}</p>
-                      </div>
-                    </div>
-                    <div className="col-span-1">
-                      <img
-                        src="/images/VisitPhoto.png"
-                        alt={todayEvent.title}
-                        className="h-full w-full rounded-r-2xl object-cover"
-                      />
-                    </div>
-                  </div>
+                <div className="col-span-1 grid gap-5">
+                  {todaysEvents.map((event) => (
+                    <TodayEventCard key={event.id} event={event} />
+                  ))}
                 </div>
               </div>
+            ) : (
+              <div className="mx-auto max-w-3xl">
+                <div className="gmcc-schedule-embed">
+                  <AutoHeightScheduleIframe
+                    src={todayCenterScheduleEmbedUrl(slug)}
+                    title={`${centerScheduleLabel ?? center.title ?? "Center"} Today's Schedule`}
+                  />
+                </div>
+              </div>
+            )
+          ) : todaysEvents.length > 0 ? (
+            <div className="mx-auto max-w-2xl grid gap-5">
+              {todaysEvents.map((event) => (
+                <TodayEventCard key={event.id} event={event} />
+              ))}
             </div>
           ) : null}
-          </div>
-        </div>
 
         </div>
       </section>

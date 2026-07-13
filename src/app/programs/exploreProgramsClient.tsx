@@ -282,6 +282,21 @@ export default function ExploreProgramsClient({
     setHasHydrated(true);
   }, []);
 
+  // Capture headerVariant from the initial URL and immediately strip it from
+  // the address bar so it never stays visible to the user.
+  const [forcedVariant, setForcedVariant] = useState<string | null>(() => {
+    const hv = initialSearchParams["headerVariant"];
+    return typeof hv === "string" ? hv : Array.isArray(hv) ? hv[0] ?? null : null;
+  });
+  useEffect(() => {
+    if (!hasHydrated) return;
+    const hv = clientSearchParams.get("headerVariant");
+    if (!hv) return;
+    const next = new URLSearchParams(clientSearchParams.toString());
+    next.delete("headerVariant");
+    router.replace(next.toString() ? `${pathname}?${next}` : pathname, { scroll: false });
+  }, [hasHydrated]);
+
   const serverSearchParams = useMemo(
     () => searchParamsFromRecord(initialSearchParams),
     [initialSearchParams],
@@ -292,9 +307,17 @@ export default function ExploreProgramsClient({
     () => Object.fromEntries(filterSearchParams.entries()),
     [filterSearchParams]
   );
+
+  // Merge the stored forcedVariant back in so the header detector sees it even
+  // after we've stripped it from the URL.
+  const headerSearchParams = useMemo(
+    () => forcedVariant ? { ...searchParamsObj, headerVariant: forcedVariant } : searchParamsObj,
+    [searchParamsObj, forcedVariant]
+  );
+
   const hasSpecializedHeader = useMemo(
-    () => getProgramsDirectoryHeaderVariant(searchParamsObj) !== null,
-    [searchParamsObj]
+    () => getProgramsDirectoryHeaderVariant(headerSearchParams) !== null,
+    [headerSearchParams]
   );
 
   // Helper to find slug by name (case-insensitive)
@@ -494,11 +517,13 @@ export default function ExploreProgramsClient({
 
   function setOfferingTypesFromUser(next: string[]) {
     shouldSyncUrlFromUserActionRef.current = true;
+    setForcedVariant(null);
     setOfferingTypes(next);
   }
 
   function setProgramAreasFromUser(next: string[]) {
     shouldSyncUrlFromUserActionRef.current = true;
+    setForcedVariant(null);
     setProgramAreas(next);
   }
 
@@ -565,7 +590,7 @@ export default function ExploreProgramsClient({
         <header className="stack-2">
           {hasSpecializedHeader ? (
             <ProgramsDirectoryHeader
-              searchParams={searchParamsObj}
+              searchParams={headerSearchParams}
               acf={directoryHeaderData}
             />
           ) : (
@@ -802,6 +827,7 @@ export default function ExploreProgramsClient({
               setMemberships([]);
               setAudience([]);
               setOpenDropdowns(new Set());
+              setForcedVariant(null);
             }}
           >
             Clear filters

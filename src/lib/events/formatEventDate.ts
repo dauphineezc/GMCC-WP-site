@@ -20,9 +20,36 @@ export function formatEventBadgeDate(iso?: string | null): { day: string; month:
   };
 }
 
+export function formatEventTimeRange(
+  start?: string | null,
+  end?: string | null,
+  timeZone: string = EVENT_DISPLAY_TIMEZONE,
+): string | null {
+  if (!start) return null;
+
+  const timeOpts: Intl.DateTimeFormatOptions = {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  };
+  const startDate = new Date(start);
+  if (Number.isNaN(startDate.getTime())) return null;
+
+  if (!end) {
+    return startDate.toLocaleTimeString("en-US", timeOpts);
+  }
+
+  const endDate = new Date(end);
+  if (Number.isNaN(endDate.getTime())) {
+    return startDate.toLocaleTimeString("en-US", timeOpts);
+  }
+
+  return `${startDate.toLocaleTimeString("en-US", timeOpts)} – ${endDate.toLocaleTimeString("en-US", timeOpts)}`;
+}
+
 export function formatEventDate(
   start?: string | null,
-  end?: string | null
+  end?: string | null,
 ): string | null {
   if (!start) return null;
 

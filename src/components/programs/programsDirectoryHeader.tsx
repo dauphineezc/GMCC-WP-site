@@ -34,6 +34,12 @@ export function getProgramsDirectoryHeaderVariant(
   const offeringType = getParam(searchParams, "offeringType");
   const programArea = getParam(searchParams, "programArea");
 
+  // Explicit headerVariant param takes top priority (set by nav links).
+  // Use raw value (not normalizeParam) to preserve hyphens.
+  const rawHeaderVariant = (getParam(searchParams, "headerVariant") ?? "").trim().toLowerCase();
+  if (rawHeaderVariant === "silversneakers") return "silversneakers";
+  if (rawHeaderVariant === "renew-active" || rawHeaderVariant === "renewactive") return "renew-active";
+
   const offeringTypeValues = (offeringType ?? "")
     .split(",")
     .map(normalizeParam)
@@ -49,6 +55,9 @@ export function getProgramsDirectoryHeaderVariant(
 
   if (hasAny(programAreaValues, ["aquatics"])) return "aquatics";
   if (hasAny(programAreaValues, ["childcare"])) return "childcare";
+  // Silversneakers must come before group-fitness since its nav link includes both areas.
+  if (hasAny(programAreaValues, ["silversneakers", "silver sneakers", "silver-sneakers"])) return "silversneakers";
+  if (hasAny(programAreaValues, ["renew active", "renew-active", "renewactive", "one pass", "onepass"])) return "renew-active";
   if (hasAny(programAreaValues, ["group fitness"])) return "group-fitness";
   if (hasAny(programAreaValues, ["middle school sports", "middle-school-sports", "middleschoolsports"])) return "middle-school-sports";
   if (hasAny(programAreaValues, ["personal training"])) return "personal-training";

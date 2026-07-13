@@ -2,10 +2,7 @@
 import { Suspense } from "react";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import type { ProgramsPageACF } from "@/components/programs/programsDirectoryHeader";
-import type {
-  DirectoryHeaderData,
-  DirectoryTrainer,
-} from "@/components/programs/directoryHeaderSection";
+import type { DirectoryHeaderData } from "@/components/programs/directoryHeaderSection";
 import {
   DROP_IN_CARE_FIELDS_GRAPHQL,
   hasDropInCareContent,
@@ -120,23 +117,6 @@ const PERSONAL_TRAINING_DIRECTORY_HEADER_QUERY = `
     page(id: $uri, idType: URI) {
       personalTrainingDirectoryPageFields {
         ${DIRECTORY_HEADER_FIELDS}
-        trainers {
-          nodes {
-            ... on StaffProfile {
-              title
-              featuredImage {
-                node {
-                  sourceUrl
-                  altText
-                }
-              }
-              staffProfilesFields {
-                title
-                bio
-              }
-            }
-          }
-        }
       }
     }
   }
@@ -147,31 +127,38 @@ const TENNIS_DIRECTORY_HEADER_QUERY = `
     page(id: $uri, idType: URI) {
       tennisLessonsDirectoryPageFields {
         ${DIRECTORY_HEADER_FIELDS}
-        tennisInstructors {
-          nodes {
-            ... on StaffProfile {
-              title
-              featuredImage {
-                node {
-                  sourceUrl
-                  altText
-                }
-              }
-              staffProfilesFields {
-                title
-                bio
-              }
-            }
-          }
-        }
       }
     }
   }
 `;
 
+const SILVERSNEAKERS_DIRECTORY_HEADER_QUERY = `
+  query SilversneakersDirectoryHeader($uri: ID!) {
+    page(id: $uri, idType: URI) {
+      silversneakersDirectoryPageFields {
+        ${DIRECTORY_HEADER_FIELDS}
+        redirectLabel
+        redirectUrl
+      }
+    }
+  }
+`;
+
+const RENEW_ACTIVE_DIRECTORY_HEADER_QUERY = `
+  query RenewActiveDirectoryHeader($uri: ID!) {
+    page(id: $uri, idType: URI) {
+      renewActiveDirectoryPageFields {
+        ${DIRECTORY_HEADER_FIELDS}
+        redirectLabel
+        redirectUrl
+      }
+    }
+  }
+`;
+
+
 function normalizeDirectoryHeaderData(
   field?: any,
-  trainerConnectionKey: "trainers" | "tennisInstructors" = "trainers"
 ): DirectoryHeaderData | undefined {
   if (!field) return undefined;
   const normalizeAttachment = (att: any) => {
@@ -181,20 +168,6 @@ function normalizeDirectoryHeaderData(
       file: att.file?.node ?? att.file ?? null,
     };
   };
-
-  const trainerNodes = field?.[trainerConnectionKey]?.nodes ?? [];
-  const trainers: DirectoryTrainer[] =
-    trainerNodes.map((trainer: any) => ({
-      name: trainer?.title ?? null,
-      photo: trainer?.featuredImage?.node
-        ? {
-            sourceUrl: trainer.featuredImage.node.sourceUrl ?? null,
-            altText: trainer.featuredImage.node.altText ?? null,
-          }
-        : null,
-      jobTitle: trainer?.staffProfilesFields?.title ?? null,
-      bio: trainer?.staffProfilesFields?.bio ?? null,
-    })).filter((t: DirectoryTrainer) => t.name || t.jobTitle || t.photo?.sourceUrl || t.bio) ?? [];
 
   const sponsorNodes = field?.sponsors?.nodes ?? [];
   const sponsors = sponsorNodes.flatMap((node: any) => {
@@ -220,8 +193,9 @@ function normalizeDirectoryHeaderData(
           attachment4: normalizeAttachment(field.attachments.attachment4),
         }
       : null,
-    trainers,
     sponsors: sponsors.length ? sponsors : null,
+    redirectLabel: field.redirectLabel ?? null,
+    redirectUrl: field.redirectUrl ?? null,
   };
 }
 
@@ -235,10 +209,11 @@ function hasDirectoryHeaderContent(field?: any) {
   const hasAttachment = [atts?.attachment1, atts?.attachment2, atts?.attachment3, atts?.attachment4]
     .some((a: any) => (a?.label ?? "").trim() || (a?.file?.node?.sourceUrl ?? a?.file?.sourceUrl ?? a?.file?.mediaItemUrl ?? "").trim());
 
-  const hasTrainers = (field?.trainers?.nodes ?? field?.trainers ?? []).length > 0;
+    
   const hasSponsors = (field?.sponsors?.nodes ?? field?.sponsors ?? []).length > 0;
+  const hasRedirect = (field?.redirectLabel ?? field?.redirectUrl ?? "").trim();
 
-  return Boolean(header || body || hasAttachment || hasTrainers || hasSponsors);
+  return Boolean(header || body || hasAttachment || hasSponsors || hasRedirect);
 }
 
 async function fetchFieldFromUris<TPage extends Record<string, any>>(
@@ -261,6 +236,7 @@ async function fetchFieldFromUris<TPage extends Record<string, any>>(
   }
   return undefined;
 }
+
 
 type GroupFitnessDirectoryQueryPage = {
   groupFitnessDirectoryPageFields?: DirectoryHeaderData | null;
@@ -346,6 +322,8 @@ export default async function ExploreProgramsPage({
     middleSchoolSportsRaw,
     personalTrainingRaw,
     tennisLessonsRaw,
+    silversneakersRaw,
+    renewActiveRaw,
   ] = await Promise.all([
     fetchFieldFromUris<{ aquaticsDirectoryPageFields?: DirectoryHeaderData | null }>(
       AQUATICS_DIRECTORY_HEADER_QUERY,
@@ -384,13 +362,22 @@ export default async function ExploreProgramsPage({
       ["/personal-training", "/personal-training/", "personal-training"],
       "personalTrainingDirectoryPageFields"
     ),
-
     fetchFieldFromUris<
       { tennisLessonsDirectoryPageFields?: DirectoryHeaderData | null }
     >(
       TENNIS_DIRECTORY_HEADER_QUERY,
       ["/tennis-lessons", "/tennis-lessons/", "tennis-lessons"],
       "tennisLessonsDirectoryPageFields"
+    ),
+    fetchFieldFromUris<{ silversneakersDirectoryPageFields?: DirectoryHeaderData | null }>(
+      SILVERSNEAKERS_DIRECTORY_HEADER_QUERY,
+      ["/silversneakers/", "/silversneakers", "silversneakers", "/silver-sneakers/", "/silver-sneakers"],
+      "silversneakersDirectoryPageFields"
+    ),
+    fetchFieldFromUris<{ renewActiveDirectoryPageFields?: DirectoryHeaderData | null }>(
+      RENEW_ACTIVE_DIRECTORY_HEADER_QUERY,
+      ["/renew-active-one-pass/", "/renew-active-one-pass", "renew-active-one-pass", "/renew-active/", "/renew-active"],
+      "renewActiveDirectoryPageFields"
     ),
   ]);
 
@@ -403,8 +390,10 @@ export default async function ExploreProgramsPage({
       groupFitnessRaw?.dropInCare
     ),
     middleSchoolSportsDirectoryPageFields: normalizeDirectoryHeaderData(middleSchoolSportsRaw),
-    personalTrainingDirectoryPageFields: normalizeDirectoryHeaderData(personalTrainingRaw, "trainers"),
-    tennisLessonsDirectoryPageFields: normalizeDirectoryHeaderData(tennisLessonsRaw, "tennisInstructors"),
+    personalTrainingDirectoryPageFields: normalizeDirectoryHeaderData(personalTrainingRaw),
+    tennisLessonsDirectoryPageFields: normalizeDirectoryHeaderData(tennisLessonsRaw),
+    silversneakersDirectoryPageFields: normalizeDirectoryHeaderData(silversneakersRaw),
+    renewActiveDirectoryPageFields: normalizeDirectoryHeaderData(renewActiveRaw),
   };
 
   const programs = programsData?.programs?.nodes ?? [];

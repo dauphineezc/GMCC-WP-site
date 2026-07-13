@@ -41,8 +41,8 @@ function normalizeWpUrlToPath(url: string) {
     // Fitness
     "Fitness": "/programs?" + buildQuery({ offeringType: "Class,Drop-In,Lessons/Training", programArea: "Aquatics,Group Fitness,Personal Training,SilverSneakers,Walking" }),
     "Group Fitness Classes": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness" }),
-    "SilverSneakers": "/programs?" + buildQuery({ offeringType: "Class", programArea: "SilverSneakers,Group Fitness" }),
-    "Renew Active/One Pass": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness" }),
+    "SilverSneakers": "/programs?" + buildQuery({ offeringType: "Class", programArea: "SilverSneakers,Group Fitness", headerVariant: "silversneakers" }),
+    "Renew Active/One Pass": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness", headerVariant: "renew-active" }),
 
     // Sports and Recreation
     "Sports and Recreation": "/programs?" + buildQuery({ programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports" }),

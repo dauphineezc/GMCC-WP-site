@@ -15,27 +15,12 @@ import {
   resolvePhotoWaveHeaderProps,
 } from "@/lib/pageHeroFields";
 import AutoHeightScheduleIframe from "@/components/schedule/autoHeightScheduleIframe";
+import TodayEventsGrid from "@/components/events/todayEventsGrid";
 import { TODAY_ALL_CENTERS_SCHEDULE_EMBED_URL } from "@/lib/constants";
+import { fetchTodaysEvents } from "@/lib/events/todayEvents";
 
 /** Regenerate at most once per day; cron can trigger sooner via `/api/revalidate`. */
 export const revalidate = 86400;
-
-const TODAY_EVENTS = [
-  {
-    title: "Family Fun Night",
-    center: "Coleman Family Center",
-    time: "6:00 – 8:00 PM",
-    description:
-      "Games, activities, and snacks for the whole family. Free with membership or day pass.",
-  },
-  {
-    title: "Dinks and Drinks",
-    center: "Tennis Center",
-    time: "5:00 – 7:00 PM",
-    description:
-      "Meet other tennis players and enjoy an informal round-robin. All skill levels welcome.",
-  },
-];
 
 // ─── GraphQL fields ───────────────────────────────────────────────────────────
 
@@ -98,7 +83,6 @@ const PLAN_YOUR_VISIT_PAGE_FIELDS = `
     }
 
     todaysScheduleHeader
-    todaysEventsHeader
 
     accessOptionsHeader
     accessOptionsSubheader
@@ -333,7 +317,6 @@ type PlanYourVisitPageFields = {
   offeringCategoryCard5?: OfferingCategoryCard | null;
   offeringCategoryCard6?: OfferingCategoryCard | null;
   todaysScheduleHeader?: string | null;
-  todaysEventsHeader?: string | null;
   accessOptionsHeader?: string | null;
   accessOptionsSubheader?: string | null;
   dayPassCard?: AccessCardFields | null;
@@ -488,10 +471,10 @@ function renderRichOrPlain(html: string) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function VisitPage() {
-  const page = await fetchPageWithHeroFields<PlanYourVisitExtra>(
-    "visit",
-    PLAN_YOUR_VISIT_PAGE_FIELDS,
-  );
+  const [page, todaysEvents] = await Promise.all([
+    fetchPageWithHeroFields<PlanYourVisitExtra>("visit", PLAN_YOUR_VISIT_PAGE_FIELDS),
+    fetchTodaysEvents({ fallbackImageUrl: "/images/VisitPhoto.png" }),
+  ]);
   const hero = resolvePhotoWaveHeaderProps(page, "Plan Your Visit");
   const fields = page?.planYourVisitPageFields;
 
@@ -534,9 +517,6 @@ export default async function VisitPage() {
     asString(fields?.offeringsOverviewHeader) || "What Are You Looking For?";
   const todaysScheduleHeader =
     asString(fields?.todaysScheduleHeader) || "What\u2019s Happening Today?";
-  const todaysEventsHeader =
-    asString(fields?.todaysEventsHeader) ||
-    "Don\u2019t Miss These Fun Events Happening Today!";
   const accessOptionsHeader =
     asString(fields?.accessOptionsHeader) || "Visiting For the Day?";
   const accessOptionsSubheader =
@@ -632,43 +612,13 @@ export default async function VisitPage() {
               id="gmcc-today-schedule"
               src={TODAY_ALL_CENTERS_SCHEDULE_EMBED_URL}
               title="Today's Schedule"
-              defaultHeight={1500}
             />
           </div>
 
-          {TODAY_EVENTS.length > 0 && (
-            <div className="mt-12">
-              <h3 className="h3 mb-6">{todaysEventsHeader}</h3>
-              <div className="grid gap-5 sm:grid-cols-2">
-                {TODAY_EVENTS.map((event) => (
-                  <div
-                    key={event.title}
-                    className="card card-hover p-0 border-l-4 border-l-gmcc-teal bg-gmcc-blue-light/30"
-                  >
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="col-span-1 pl-4 py-4">
-                        <div>
-                          <p className="eyebrow mb-1">{event.center}</p>
-                          <h4 className="h3 mb-1">{event.title}</h4>
-                          <p className="small mb-2 font-semibold text-gmcc-teal-dark">
-                            {event.time}
-                          </p>
-                          <p className="body">{event.description}</p>
-                        </div>
-                      </div>
-                      <div className="col-span-1">
-                        <img
-                          src={hero.imageUrl ?? "/images/VisitPhoto.png"}
-                          alt={event.title}
-                          className="w-full h-full object-cover rounded-r-2xl"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <TodayEventsGrid
+            events={todaysEvents}
+            showCenter
+          />
         </div>
       </section>
 
@@ -746,9 +696,9 @@ export default async function VisitPage() {
             ))}
           </div>
 
-          <div className="body mt-12 text-center text-neutral-200">
+          <div className="body mt-12 text-center">
             {contactPrompt ? (
-              renderRichOrPlain(contactPrompt)
+              <p className="text-neutral-200">{contactPrompt}</p>
             ) : (
               <p>
                 Questions about access?{" "}

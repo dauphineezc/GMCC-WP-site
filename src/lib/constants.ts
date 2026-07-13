@@ -39,19 +39,40 @@ export function scheduleEmbedUrl(params: {
 }
 
 /** Maps center CPT slugs to the `center` query param used by today-center.html. */
-const CENTER_TODAY_SCHEDULE_EMBED_KEY: Record<string, string> = {
+export const CENTER_TODAY_SCHEDULE_EMBED_KEY: Record<string, string> = {
   "community-center": "community",
   "tennis-center": "tennis",
   "coleman-family-center": "coleman",
   "north-family-center": "north",
 };
 
+export function hasTodayCenterScheduleEmbed(centerSlug: string): boolean {
+  return centerSlug in CENTER_TODAY_SCHEDULE_EMBED_KEY;
+}
+
+/** Display label for centers that have a today-center schedule embed. */
+export const CENTER_SCHEDULE_LABEL_BY_SLUG: Record<string, string> = {
+  "community-center": "Community Center",
+  "tennis-center": "Tennis Center",
+  "coleman-family-center": "Coleman Family Center",
+  "north-family-center": "North Family Center",
+};
+
+export function resolveCenterScheduleLabel(slug: string, title: string): string | null {
+  const fromSlug = CENTER_SCHEDULE_LABEL_BY_SLUG[slug];
+  if (fromSlug) return fromSlug;
+
+  const match = Object.values(CENTER_SCHEDULE_LABEL_BY_SLUG).find(
+    (label) => label.toLowerCase() === title.trim().toLowerCase(),
+  );
+  return match ?? null;
+}
+
 /** Today's schedule embed for a single center (used on center detail pages). */
 export function todayCenterScheduleEmbedUrl(centerSlug: string): string {
   const centerKey = CENTER_TODAY_SCHEDULE_EMBED_KEY[centerSlug] ?? "community";
-  const url = new URL(`${SCHEDULE_EMBED_BASE_URL}/today-center.html`);
-  url.searchParams.set("center", centerKey);
-  return url.toString();
+  const params = new URLSearchParams({ center: centerKey });
+  return `${SCHEDULE_EMBED_BASE_URL}/today-center.html?${params.toString()}`;
 }
 
 /** All-centers today's schedule embed (used on Plan Your Visit). */

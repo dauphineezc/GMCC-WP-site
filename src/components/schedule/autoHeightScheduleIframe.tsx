@@ -10,11 +10,19 @@ type AutoHeightScheduleIframeProps = {
   id?: string;
   /** Minimum iframe height in pixels. */
   minHeight?: number;
-  /** Initial / fallback height until the embed reports its content height. */
+  /** Initial height before the embed reports its content height. Keep small so scrollHeight reflects content, not the iframe viewport. */
   defaultHeight?: number;
+  /** Safety cap — ignores runaway resize feedback from the embed. */
+  maxHeight?: number;
 };
 
 const SCHEDULE_EMBED_ORIGIN = new URL(SCHEDULE_EMBED_BASE_URL).origin;
+
+function isAllowedScheduleEmbedOrigin(origin: string): boolean {
+  if (origin === SCHEDULE_EMBED_ORIGIN) return true;
+  if (typeof window !== "undefined" && origin === window.location.origin) return true;
+  return false;
+}
 
 function parseScheduleHeightMessage(data: unknown): number | null {
   if (!data || typeof data !== "object") return null;
@@ -32,21 +40,22 @@ export default function AutoHeightScheduleIframe({
   className = "",
   id,
   minHeight = 320,
-  defaultHeight = 1100,
+  defaultHeight = 400,
+  maxHeight = 1400,
 }: AutoHeightScheduleIframeProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(defaultHeight);
 
   const applyHeight = useCallback(
     (next: number) => {
-      setHeight(Math.max(minHeight, Math.ceil(next)));
+      setHeight(Math.min(Math.max(minHeight, Math.ceil(next)), maxHeight));
     },
-    [minHeight],
+    [minHeight, maxHeight],
   );
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
-      if (event.origin !== SCHEDULE_EMBED_ORIGIN) return;
+      if (!isAllowedScheduleEmbedOrigin(event.origin)) return;
 
       const nextHeight = parseScheduleHeightMessage(event.data);
       if (nextHeight == null) return;

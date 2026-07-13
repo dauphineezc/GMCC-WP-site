@@ -355,7 +355,7 @@ export default function Navbar({
           onClose={() => setMobileMenuOpen(false)}
         />
 
-        {banner ? <div ref={bannerSlotRef}>{banner}</div> : null}
+        <div ref={bannerSlotRef}>{banner ?? null}</div>
       </header>
     </>
   );

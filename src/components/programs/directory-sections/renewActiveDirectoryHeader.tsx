@@ -1,8 +1,8 @@
-// components/programs/directory-sections/PersonalTrainingDirectoryHeader.tsx
+// components/programs/directory-sections/RenewActiveDirectoryHeader.tsx
 import React from "react";
 import { DirectoryHeaderData, DirectoryHeaderShell } from "../directoryHeaderShared";
 
-export function PersonalTrainingDirectoryHeader({
+export function RenewActiveDirectoryHeader({
   data,
   className,
 }: {
@@ -11,4 +11,3 @@ export function PersonalTrainingDirectoryHeader({
 }) {
   return <DirectoryHeaderShell data={data} className={className} />;
 }
-
