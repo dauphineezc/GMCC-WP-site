@@ -11,10 +11,10 @@ import {
 } from "@/lib/wp";
 import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
 
-export const metadata: Metadata = {
-  title: "Terms and Conditions",
-  description: "Greater Midland terms and conditions.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/terms-and-conditions");
+}
 
 const TERMS_AND_CONDITIONS_PAGE_QUERY = /* GraphQL */ `
   query TermsAndConditionsPage($uri: ID!) {

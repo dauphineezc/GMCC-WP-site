@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import RichText from "@/components/richText";
 import { draftMode } from "next/headers";
+import { getYoastMetadata } from "@/lib/wordpress/seo";
 
 export const revalidate = 60;
 
@@ -34,6 +35,11 @@ async function getPost(slug: string) {
 }
 
 type RouteParams = { slug: string };
+
+export async function generateMetadata({ params }: { params: Promise<RouteParams> }) {
+  const { slug } = await params;
+  return getYoastMetadata(`/blog/${slug}`);
+}
 
 export default async function PostPage({ params }: { params: Promise<RouteParams> }) {
   const { slug } = await params;

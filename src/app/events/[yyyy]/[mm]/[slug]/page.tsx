@@ -9,6 +9,7 @@ import SponsorsGrid, { normalizeSponsors } from "@/components/sponsorsGrid";
 import AttachmentsCard from "@/components/detail/attachmentsCard";
 import DetailGalleryCarousel from "@/components/detail/detailGalleryCarousel";
 import RegistrationSidebar from "@/components/detail/registrationSidebar";
+import { getYoastMetadata } from "@/lib/wordpress/seo";
 
 const EVENT_BY_SLUG_QUERY = `
   query EventBySlug($slug: ID!) {
@@ -153,6 +154,11 @@ type EventPageProps = {
     slug: string;
   }>;
 };
+
+export async function generateMetadata({ params }: EventPageProps) {
+  const { yyyy, mm, slug } = await params;
+  return getYoastMetadata(`/events/${yyyy}/${mm}/${slug}`);
+}
 
 export default async function EventPage(props: EventPageProps) {
   const { slug } = await props.params;

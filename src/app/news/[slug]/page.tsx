@@ -2,6 +2,7 @@
 import { wpFetch } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
+import { getYoastMetadata } from "@/lib/wordpress/seo";
 
 const NEWS_BY_SLUG_QUERY = /* GraphQL */ `
   query NewsBySlug($slug: ID!) {
@@ -63,6 +64,11 @@ function formatPublishDate(d?: string | null) {
 type NewsDetailPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: NewsDetailPageProps) {
+  const { slug } = await params;
+  return getYoastMetadata(`/news/${slug}`);
+}
 
 export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
     const { slug } = await params;

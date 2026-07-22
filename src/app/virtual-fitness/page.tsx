@@ -330,3 +330,8 @@ export default async function VirtualFitnessPage() {
     </main>
   );
 }
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/virtual-fitness");
+}

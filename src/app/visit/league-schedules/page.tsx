@@ -6,11 +6,10 @@ import {
 import { LEAGUE_SCHEDULE_EMBED_URL } from "@/lib/constants";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "League Schedules",
-  description:
-    "View schedules for in-house leagues including basketball, volleyball, and more.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/visit/league-schedules");
+}
 
 export default async function LeagueSchedulesPage() {
   const page = await fetchPageWithHeroFields("league-schedules");

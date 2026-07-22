@@ -1,6 +1,6 @@
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
-import { wpFetch } from "@/lib/wp";
+import { wpFetch, WpMediaFieldInput } from "@/lib/wp";
 import { pageUriCandidatesForSlug } from "@/lib/pageHeroFields";
 
 /** WordPress page slug that holds `centerPageFields` (ACF on center template page). */
@@ -41,6 +41,13 @@ const CENTER_DETAIL_PAGE_FIELDS_CORE = `
         }
         curlingCenterPageFields {
           hoursReplacementStatement
+          historySection {
+            header
+            body {
+              historyItem
+            }
+            icon { node { sourceUrl mediaItemUrl altText }}
+          }
         }
       }
 `;
@@ -89,6 +96,26 @@ export type CenterPageReadyToJoinSection = {
   ctaLabel?: string | null;
 };
 
+export type CenterPageHistoryItem = {
+  historyItem?: string | null;
+};
+
+export type CenterPageHistorySection = {
+  header?: string | null;
+  body?: Array<CenterPageHistoryItem | null> | null;
+  icon?: WpMediaFieldInput | null;
+};
+
+/** Non-empty history paragraphs from the curling history repeater. */
+export function normalizeCurlingHistoryItems(
+  body: CenterPageHistorySection["body"],
+): string[] {
+  if (!Array.isArray(body)) return [];
+  return body
+    .map((row) => coerceWpRichText(row?.historyItem).trim())
+    .filter(Boolean);
+}
+
 type FeaturedProgramEventNode = {
   __typename?: string | null;
   slug?: string | null;
@@ -104,6 +131,7 @@ export type CenterPageMembershipReplacementCta = CenterPageReadyToJoinSection & 
 export type CenterPageCurlingFields = {
   hoursReplacementStatement?: string | null;
   membershipReplacementCta?: CenterPageMembershipReplacementCta | null;
+  historySection?: CenterPageHistorySection | null;
 };
 
 export type CenterSocialIconNode = {
@@ -197,11 +225,15 @@ function mergeCenterDetailParts(
         }
       : null;
 
+  const historySection =
+    baseCurl?.historySection ?? copyCurl?.historySection ?? linkCurl?.historySection ?? null;
+
   const hasCurlingBlock =
     baseCurl?.hoursReplacementStatement != null ||
     copyCurl?.hoursReplacementStatement != null ||
     linkCurl?.hoursReplacementStatement != null ||
-    membershipReplacementCta != null;
+    membershipReplacementCta != null ||
+    historySection != null;
 
   return {
     testimonialHeader:
@@ -216,6 +248,7 @@ function mergeCenterDetailParts(
             copyCurl?.hoursReplacementStatement ??
             linkCurl?.hoursReplacementStatement,
           membershipReplacementCta: membershipReplacementCta ?? null,
+          historySection,
         }
       : null,
   };

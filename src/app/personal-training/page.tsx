@@ -186,3 +186,8 @@ export default async function PersonalTrainingPage() {
     />
   );
 }
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/personal-training");
+}

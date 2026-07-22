@@ -12,11 +12,10 @@ import {
 import type { Metadata } from "next";
 import type { SimpleCampaignData } from "@/components/simpleCampaign";
 
-export const metadata: Metadata = {
-  title: "Accessibility",
-  description:
-    "Accessibility amenities and features available at Greater Midland locations.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/accessibility");
+}
 
 const CAMPAIGN_FRAGMENT = `
   ... on Campaign {

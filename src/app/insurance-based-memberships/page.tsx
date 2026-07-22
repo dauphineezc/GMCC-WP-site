@@ -1,4 +1,5 @@
 // src/app/membership/insurance-based/page.tsx
+import NavyWaveSection from "@/components/navyWaveSection";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import {
   PAGE_HERO_FIELDS_GRAPHQL,
@@ -49,7 +50,8 @@ const INSURANCE_BASED_MEMBERSHIPS_QUERY = `
           phoneNumber
         }
 
-        silversneakersClasses
+        ssClasses
+        renewClasses
       }
     }
   }
@@ -86,10 +88,11 @@ type InsuranceBasedMembershipsData = {
       contact?: {
         contactName?: string | null;
         personContext?: string | null;
-        phoneNumber?: number | string | null;
+        phoneNumber?: string | null;
       } | null;
 
-      silversneakersClasses?: string | null;
+      ssClasses?: string | null;
+      renewClasses?: string | null;
     } | null;
   } | null;
 };
@@ -219,7 +222,8 @@ export default async function InsuranceBasedMembershipsPage() {
 
   const contact = fields?.contact ?? null;
   const contactPhone = ensureString(contact?.phoneNumber);
-  const classesUrl = fields?.silversneakersClasses ?? null;
+  const ssClassesUrl = fields?.ssClasses ?? null;
+  const renewClassesUrl = fields?.renewClasses ?? null;
 
   return (
     <main>
@@ -260,7 +264,7 @@ export default async function InsuranceBasedMembershipsPage() {
           </div>
         </section>
 
-        <section>
+          <section className="page-section text-white">
         {/* Insurance benefits */}
         {insurance ? (
           <>
@@ -284,25 +288,34 @@ export default async function InsuranceBasedMembershipsPage() {
         </section>
 
         {/* SilverSneakers classes link */}
-        {classesUrl ? (
-          <section className="card">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="h3">SilverSneakers classes</h2>
+        {ssClassesUrl && renewClassesUrl ? (
+          <section className="page-section stack-8">
+            <div className="flex flex-col grid-cols-2 gap-3 sm:flex-row sm:items-center sm:justify-between text-center">
+              <div className="col-span-1">
+                <h2 className="h3">SilverSneakers Classes</h2>
                 <p className="small mt-1">
-                  View class options and schedules for SilverSneakers participants.
+                  Explore class options and schedules for SilverSneakers participants.
                 </p>
-              </div>
-              <ExternalLink href={classesUrl} className="btn btn-secondary">
+              <ExternalLink href={ssClassesUrl} className="btn btn-secondary mt-4">
                 View classes
               </ExternalLink>
+            </div>
+            <div className="col-span-1">
+                <h2 className="h3">Renew Active/One Pass Classes</h2>
+                <p className="small mt-1">
+                  Explore class options and schedules for Renew Active/One Pass participants.
+                </p>
+              <ExternalLink href={renewClassesUrl} className="btn btn-secondary mt-4">
+                View classes
+              </ExternalLink>
+            </div>
             </div>
           </section>
         ) : null}
 
         {/* Contact */}
         {(contact?.contactName || contact?.personContext || contactPhone) ? (
-          <>
+          <section className="page-section stack-8">
             <h2 className="h2 mb-4 text-center">Have Questions?</h2>
             <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-start text-center">
               <div>
@@ -328,9 +341,14 @@ export default async function InsuranceBasedMembershipsPage() {
                 ) : null}
               </div>
             </div>
-          </>
+          </section>
         ) : null}
       </div>
     </main>
   );
+}
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/insurance-based-memberships");
 }

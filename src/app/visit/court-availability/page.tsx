@@ -7,11 +7,10 @@ import {
 import { scheduleEmbedUrl } from "@/lib/constants";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Court Availability",
-  description:
-    "View court availability for tennis, pickleball, basketball, and volleyball at your preferred center.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/visit/court-availability");
+}
 
 const faqItems = [
   {

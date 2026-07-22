@@ -8,11 +8,10 @@ import type { Metadata } from "next";
 import AttachmentsCard from "@/components/detail/attachmentsCard";
 import { acfFileHref, type AttachmentItem, type WpMediaFieldInput, type WpMediaRef } from "@/lib/wp";
 
-export const metadata: Metadata = {
-  title: "Session Calendar",
-  description:
-    "View session calendars by center to see what programs are available and what fits your schedule.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/visit/session-calendar");
+}
 
 const SESSION_CALENDAR_EXTRA_FIELDS = `
   sessionCalendarPageFields {

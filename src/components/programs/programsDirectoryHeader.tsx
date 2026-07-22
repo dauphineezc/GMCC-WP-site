@@ -34,11 +34,22 @@ export function getProgramsDirectoryHeaderVariant(
   const offeringType = getParam(searchParams, "offeringType");
   const programArea = getParam(searchParams, "programArea");
 
-  // Explicit headerVariant param takes top priority (set by nav links).
-  // Use raw value (not normalizeParam) to preserve hyphens.
+  // Explicit headerVariant param takes top priority (set by nav links, then
+  // stripped from the URL so it doesn't stay visible). Use the raw value so
+  // hyphens are preserved.
   const rawHeaderVariant = (getParam(searchParams, "headerVariant") ?? "").trim().toLowerCase();
+  if (rawHeaderVariant === "none" || rawHeaderVariant === "default") return null;
   if (rawHeaderVariant === "silversneakers") return "silversneakers";
   if (rawHeaderVariant === "renew-active" || rawHeaderVariant === "renewactive") return "renew-active";
+  if (rawHeaderVariant === "sports-and-recreation" || rawHeaderVariant === "sportsandrecreation") return "sports-and-recreation";
+  if (rawHeaderVariant === "community") return "community";
+  if (rawHeaderVariant === "group-fitness" || rawHeaderVariant === "groupfitness") return "group-fitness";
+  if (rawHeaderVariant === "middle-school-sports" || rawHeaderVariant === "middleschoolsports") return "middle-school-sports";
+  if (rawHeaderVariant === "personal-training" || rawHeaderVariant === "personaltraining") return "personal-training";
+  if (rawHeaderVariant === "aquatics") return "aquatics";
+  if (rawHeaderVariant === "childcare") return "childcare";
+  if (rawHeaderVariant === "camps") return "camps";
+  if (rawHeaderVariant === "tennis-lessons" || rawHeaderVariant === "tennislessons") return "tennis-lessons";
 
   const offeringTypeValues = (offeringType ?? "")
     .split(",")
@@ -53,25 +64,22 @@ export function getProgramsDirectoryHeaderVariant(
     return "camps";
   }
 
-  if (hasAny(programAreaValues, ["aquatics"])) return "aquatics";
-  if (hasAny(programAreaValues, ["childcare"])) return "childcare";
-  // Silversneakers must come before group-fitness since its nav link includes both areas.
-  if (hasAny(programAreaValues, ["silversneakers", "silver sneakers", "silver-sneakers"])) return "silversneakers";
-  if (hasAny(programAreaValues, ["renew active", "renew-active", "renewactive", "one pass", "onepass"])) return "renew-active";
-  if (hasAny(programAreaValues, ["group fitness"])) return "group-fitness";
-  if (hasAny(programAreaValues, ["middle school sports", "middle-school-sports", "middleschoolsports"])) return "middle-school-sports";
-  if (hasAny(programAreaValues, ["personal training"])) return "personal-training";
-  if (hasAny(offeringTypeValues, [
-    "lessons/training",
-    "lessons training",
-    "lesson/training",
-    "lesson training",
-  ])) {
-    if (hasAny(programAreaValues, ["tennis"])) {
-      return "tennis-lessons";
-    } else {
-      return "personal-training";
-    }
+  // Exact / exclusive filter matches (sidebar). More specific first.
+  if (hasAny(programAreaValues, ["middle school sports"]) && programAreaValues.length === 1) {
+    return "middle-school-sports";
+  }
+  if (hasAny(programAreaValues, ["silversneakers"]) && !hasAny(programAreaValues, ["group fitness"])) {
+    return "silversneakers";
+  }
+  // SilverSneakers + Group Fitness together (sidebar or leftover URL) → silversneakers
+  if (hasAny(programAreaValues, ["silversneakers"])) return "silversneakers";
+  if (hasAny(programAreaValues, ["community", "community partners"])) return "community";
+  if (hasAny(programAreaValues, ["aquatics"]) && programAreaValues.length === 1) return "aquatics";
+  if (hasAny(programAreaValues, ["before after school", "onsite care"])) return "childcare";
+  if (hasAny(programAreaValues, ["group fitness"]) && programAreaValues.length === 1) return "group-fitness";
+  if (hasAny(programAreaValues, ["personal training"]) && programAreaValues.length === 1) return "personal-training";
+  if (hasAny(programAreaValues, ["basketball", "cheer and pom", "curling", "misc other sports", "racquet sports", "middle school sports"])) {
+    return "sports-and-recreation";
   }
 
   return null;

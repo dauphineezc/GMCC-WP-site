@@ -6,10 +6,10 @@ import type { Metadata } from "next";
 import PhoneLink from "@/components/phoneLink";
 import Image from "next/image";
 
-export const metadata: Metadata = {
-  title: "Corporate Wellness Centers",
-  description: "Explore Greater Midland corporate wellness center partners.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/corporate-wellness-centers");
+}
 
 const CORPORATE_WELLNESS_PAGE_EXTRA_FIELDS = /* GraphQL */ `
   corporateWellnessPageFields {

@@ -433,3 +433,8 @@ export default async function ExploreMembershipsPage() {
     </Suspense>
   );
 }
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/membership");
+}

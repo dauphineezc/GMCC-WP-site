@@ -12,8 +12,10 @@ import { bodyFont, headingFont, scriptFont, secondaryFont } from "./fonts";
 import GoogleTranslateInit from "@/components/GoogleTranslateInit";
 import { AnnouncementBarClient } from "@/components/announcementBarClient";
 import { getGlobalAnnouncement } from "@/lib/wordpress/announcements";
+import { getSiteBaseUrl } from "@/lib/sitemap/siteUrl";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteBaseUrl()),
   title: "Greater Midland",
   description: "Greater Midland Community Center",
 };

@@ -816,3 +816,8 @@ export default async function VisitPage() {
     </main>
   );
 }
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/visit");
+}

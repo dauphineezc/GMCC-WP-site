@@ -199,3 +199,8 @@ export default async function TakeATourPage() {
     </main>
   );
 }
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/take-a-tour");
+}

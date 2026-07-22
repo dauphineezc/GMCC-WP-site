@@ -7,11 +7,10 @@ import {
 import { scheduleEmbedUrl } from "@/lib/constants";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Community Activity Schedules",
-  description:
-    "View community activity schedules at the Community Center. Free for members; $7 per non-member participant.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/visit/community-activity-schedules");
+}
 
 const faqItems = [
   {

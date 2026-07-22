@@ -6,11 +6,10 @@ import {
 import { scheduleEmbedUrl } from "@/lib/constants";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Pool Availability",
-  description:
-    "View drop-in swim schedules at the Community Center pool.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/visit/pool-availability");
+}
 
 export default async function PoolAvailabilityPage() {
   const page = await fetchPageWithHeroFields("pool-availability");

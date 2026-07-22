@@ -2,7 +2,16 @@
 import { getCenterWpToNextMap } from "@/lib/nav/centerMap";
 import { resolveContentNodeHref } from "@/lib/nav/resolveHref";
 import { wpFetch } from "@/lib/wp";
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/search", {
+    title: "Search",
+    robots: { index: false, follow: true },
+  });
+}
 
 type SearchResultNode = {
   id: string;

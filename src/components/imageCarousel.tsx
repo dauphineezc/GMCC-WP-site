@@ -6,6 +6,7 @@ type CarouselImage = {
   image: {
     sourceUrl: string;
     altText: string | null;
+    label: string | null;
   } | null;
   cta: string | null;
   url: string | null;
@@ -38,12 +39,19 @@ export default function ImageCarousel({ images }: ImageCarouselProps) {
     <div className="relative w-full overflow-hidden bg-neutral-100">
       {/* Image */}
       {currentImage?.image?.sourceUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={currentImage.image.sourceUrl}
-          alt={currentImage.image.altText ?? ""}
-          className="h-60 w-full object-cover sm:h-96 lg:h-[24rem] rounded-lg"
-        />
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={currentImage.image.sourceUrl}
+            alt={currentImage.image.altText ?? ""}
+            className="h-60 w-full rounded-lg object-cover sm:h-96 lg:h-[24rem]"
+          />
+          {currentImage.image.label && (
+            <span className="badge bg-[#DEF1F6] text-gmcc-teal-dark absolute left-4 top-4 z-10">
+              {currentImage.image.label}
+            </span>
+          )}
+        </>
       )}
 
       {/* Navigation Arrows */}

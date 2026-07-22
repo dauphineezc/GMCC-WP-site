@@ -67,3 +67,8 @@ export default async function CentersPage() {
     </main>
   );
 }
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/centers");
+}

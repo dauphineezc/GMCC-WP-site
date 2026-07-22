@@ -32,6 +32,9 @@ function normalizeWpUrlToPath(url: string) {
   };
   
   // program filter rules
+  // headerVariant is captured client-side then immediately stripped from the
+  // address bar, so it never stays visible. Use it whenever the filter set
+  // would otherwise resolve to the wrong specialized header.
   const PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
     // Aquatics
     "Aquatics": "/programs?" + buildQuery({ programArea: "Aquatics" }),
@@ -39,17 +42,17 @@ function normalizeWpUrlToPath(url: string) {
     "Adult Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "family,adult,activeOlderAdult" }),
 
     // Fitness
-    "Fitness": "/programs?" + buildQuery({ offeringType: "Class,Drop-In,Lessons/Training", programArea: "Aquatics,Group Fitness,Personal Training,SilverSneakers,Walking" }),
-    "Group Fitness Classes": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness" }),
+    "Fitness": "/programs?" + buildQuery({ offeringType: "Class,Drop-In,Lessons/Training", programArea: "Aquatics,Group Fitness,Personal Training,SilverSneakers,Walking", headerVariant: "none" }),
+    "Group Fitness Classes": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness", headerVariant: "group-fitness" }),
     "SilverSneakers": "/programs?" + buildQuery({ offeringType: "Class", programArea: "SilverSneakers,Group Fitness", headerVariant: "silversneakers" }),
     "Renew Active/One Pass": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness", headerVariant: "renew-active" }),
 
     // Sports and Recreation
-    "Sports and Recreation": "/programs?" + buildQuery({ programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports" }),
-    "Youth Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", audience: "youth" }),
-    "Youth Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", audience: "youth" }),
-    "Adult Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "teen,adult,senior" }),
-    "Adult Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "teen,adult,senior" }),
+    "Sports and Recreation": "/programs?" + buildQuery({ programArea: "Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", headerVariant: "sports-and-recreation" }),
+    "Youth Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", audience: "youth" }),
+    "Youth Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", audience: "youth" }),
+    "Adult Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "teen,adult,senior" }),
+    "Adult Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "teen,adult,senior" }),
 
     // Camps
     "Camps": "/camps",
@@ -60,7 +63,7 @@ function normalizeWpUrlToPath(url: string) {
     "Sport/Aquatics Camps": "/camps?" + buildQuery({ campType: "sport-aquatics" }),
 
     // Community
-    "Community": "/programs?" + buildQuery({ campType: "full-day" }),
+    "Community": "/programs?" + buildQuery({ programArea: "Community Partners", headerVariant: "community" }),
   };
 
   // Unique program pages that link to specific pages
@@ -77,7 +80,7 @@ function normalizeWpUrlToPath(url: string) {
     "Residence Camp Neyati": "/programs/camp-neyati",
 
     "Early Childhood" : "/early-childhood",
-    "Drop-In Child Watch" : "/early-childhood",
+    "Drop-In Child Watch" : "/amenities/childwatch",
     "On-Site Care" : "/early-childhood",
     "Before/After School Care" : "/early-childhood",
     "Preschool" : "/early-childhood",

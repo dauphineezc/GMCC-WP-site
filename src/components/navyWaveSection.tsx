@@ -167,7 +167,7 @@ export default function NavyWaveSection({
   fullBleed = true,
   children,
 }: NavyWaveSectionProps) {
-  const sectionClass = `relative scroll-mt-24 ${topWave ? "section-gap" : "-mt-px"} ${className}`.trim();
+  const sectionClass = `relative scroll-mt-24 ${topWave ? "section-gap" : "-mt-px" } ${bottomWave ? "mb-8" : ""} ${className}`.trim();
   const bottomWaveEl = bottomWave ? (
     <NavyBottomWave
       fillClassName={bottomWaveFillClassName}

@@ -83,6 +83,11 @@ export default async function ExploreEventsPage() {
   );
 }
 
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/events");
+}
+
 function EventsLoadingSkeleton() {
   return (
     <main>

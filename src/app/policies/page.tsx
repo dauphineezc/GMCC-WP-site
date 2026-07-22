@@ -11,10 +11,10 @@ import {
 } from "@/lib/wp";
 import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
 
-export const metadata: Metadata = {
-  title: "Policies",
-  description: "Greater Midland policies and handbooks.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/policies");
+}
 
 const POLICIES_PAGE_QUERY = /* GraphQL */ `
   query PoliciesPage($uri: ID!) {

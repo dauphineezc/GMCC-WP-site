@@ -559,3 +559,8 @@ export default async function CortevaFitnessCenterPage() {
         </main>
     );
 }
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/corteva-fitness-center");
+}

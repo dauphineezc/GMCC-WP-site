@@ -11,22 +11,22 @@
         margin-inline: auto;
         max-width: 72rem;
         padding-inline: 1.5rem;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
     }
     .page-section-narrow {
         margin-inline: auto;
         max-width: 64rem;
         padding-inline: 1.5rem;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
     }
     .page-section-wide {
         margin-inline: auto;
         max-width: 56rem;
         padding-inline: 1.5rem;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
     }
     .stack-8 { @apply space-y-8; }
     .stack-6 { @apply space-y-6; }
@@ -45,7 +45,7 @@
         .page-section-narrow,
         .page-section-wide {
             padding-top: 3rem;
-            padding-bottom: 3rem;
+            padding-bottom: 2rem;
         }
     }
 

@@ -12,10 +12,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { TestimonialSection, normalizeTestimonials } from "@/components/testimonials";
 
-export const metadata: Metadata = {
-  title: "Corporate Wellness Centers",
-  description: "Explore Greater Midland corporate wellness center partners.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/corporate-memberships");
+}
 
 const CORPORATE_MEMBERSHIPS_PAGE_QUERY = /* GraphQL */ `
 query CorporateMembershipsPage($uri: ID!) {

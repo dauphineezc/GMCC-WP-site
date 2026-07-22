@@ -114,3 +114,8 @@ export default async function OurSponsorsPage() {
     </main>
   );
 }
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/our-sponsors");
+}

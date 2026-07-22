@@ -282,8 +282,9 @@ export default function ExploreProgramsClient({
     setHasHydrated(true);
   }, []);
 
-  // Capture headerVariant from the initial URL and immediately strip it from
-  // the address bar so it never stays visible to the user.
+  // Capture headerVariant from the URL (nav links set it) and immediately strip
+  // it from the address bar so it never stays visible. Re-run when the search
+  // params change so soft navigation between nav items updates the header.
   const [forcedVariant, setForcedVariant] = useState<string | null>(() => {
     const hv = initialSearchParams["headerVariant"];
     return typeof hv === "string" ? hv : Array.isArray(hv) ? hv[0] ?? null : null;
@@ -292,10 +293,11 @@ export default function ExploreProgramsClient({
     if (!hasHydrated) return;
     const hv = clientSearchParams.get("headerVariant");
     if (!hv) return;
+    setForcedVariant(hv);
     const next = new URLSearchParams(clientSearchParams.toString());
     next.delete("headerVariant");
     router.replace(next.toString() ? `${pathname}?${next}` : pathname, { scroll: false });
-  }, [hasHydrated]);
+  }, [hasHydrated, clientSearchParams, pathname, router]);
 
   const serverSearchParams = useMemo(
     () => searchParamsFromRecord(initialSearchParams),

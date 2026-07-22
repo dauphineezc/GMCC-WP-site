@@ -73,7 +73,7 @@ export default function PhotoWaveHeader({
 }: PhotoWaveHeaderProps) {
   return (
     <section
-      className={`relative overflow-hidden z-10 py-6 ${flushBottom ? "mb-0" : "mb-8"} ${minHeight ? "min-h-[400px] h-[70dvh] max-h-[700px]" : ""}`}
+      className={`relative overflow-hidden z-10 py-6 ${flushBottom ? "mb-0" : "mb-8"} ${minHeight ? "md:min-h-[max(400px,70dvh)]" : ""}`}
     >
       <div
         className="absolute inset-0"
@@ -109,7 +109,7 @@ export default function PhotoWaveHeader({
       />
 
       <div className="absolute inset-0" aria-hidden />
-      <div className="relative z-20 max-w-6xl px-8 pb-20 pt-10 md:py-16 md:px-12">
+      <div className="relative z-20 max-w-6xl px-8 pb-12 pt-10 md:px-12 md:pb-24 md:pt-16">
         <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
           {title}
         </h1>
@@ -123,7 +123,7 @@ export default function PhotoWaveHeader({
         ) : null}
 
         {(ctas && ctas.length > 0) || children ? (
-          <div className="mt-6 mb-12 flex flex-wrap items-center gap-3">
+          <div className="mt-6 mb-0 flex flex-wrap items-center gap-3 md:mb-12">
             {childrenBeforeCtas ? children : null}
             {ctas?.map((cta) => (
               <Link
@@ -139,7 +139,7 @@ export default function PhotoWaveHeader({
         ) : null}
       </div>
 
-      <div className={`pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none`}>
+      <div className="pointer-events-none absolute bottom-0 left-0 z-10 w-full overflow-hidden leading-none">
         <svg
           viewBox="0 0 1440 120"
           className={`-ml-px block h-10 w-[calc(100%+2px)] md:h-16 ${waveFillClassName}`}

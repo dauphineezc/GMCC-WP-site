@@ -14,7 +14,7 @@ export async function CenterAnnouncementBar({ centerSlug }: { centerSlug: string
   const announcement = await getCenterAnnouncement(centerSlug);
   if (!announcement) return null;
   return (
-    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip -mt-px">
+    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip -mt-[2rem]">
       <AnnouncementBarClient announcement={announcement} variant="center" />
     </div>
   );

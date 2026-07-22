@@ -4,7 +4,6 @@ import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
 } from "@/lib/pageHeroFields";
-import type { Metadata } from "next";
 import { ImageField } from "@/lib/acf";
 import { resolveWpMediaUrl } from "@/lib/wp";
 import Image from "next/image";
@@ -50,11 +49,10 @@ type CareersExtra = {
   careersPageFields?: CareersPageFields | null;
 };
 
-export const metadata: Metadata = {
-  title: "Careers",
-  description:
-    "Explore career and internship opportunities at Greater Midland.",
-};
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/careers");
+}
 
 export default async function CareersPage() {
   const page = await fetchPageWithHeroFields<CareersExtra>(
@@ -76,15 +74,49 @@ export default async function CareersPage() {
         ctas={hero.ctas}
       />
 
-      <section className="page-section stack-8">
-        {fields?.introductionHeader ? (
-          <h2 className="h2">{fields.introductionHeader}</h2>
-        ) : null}
-        {fields?.introductionBody ? (
-          <p className="body whitespace-pre-line text-neutral-700">
-            {fields.introductionBody}
-          </p>
-        ) : null}
+      <section className="page-section">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-12 md:grid-cols-3">
+          <div className="space-y-8 md:col-span-2">
+            {fields?.introductionHeader ? (
+              <h2 className="h2">{fields.introductionHeader}</h2>
+            ) : null}
+            {fields?.introductionBody ? (
+              <p className="body whitespace-pre-line text-neutral-700">
+                {fields.introductionBody}
+              </p>
+            ) : null}
+          </div>
+          <div className="w-full md:col-span-1 md:flex md:justify-end">
+            {fields?.linkedinLink ? (
+              <a
+                href={fields.linkedinLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group card card-hover card-link flex h-fit w-full flex-col items-center justify-end gap-2 overflow-hidden bg-gmcc-blue-light/30 p-8 text-center no-underline md:w-fit"
+              >
+                {fields?.stayConnectedHeader ? (
+                  <h2 className="h3 transition-colors group-hover:text-gmcc-teal">
+                    {fields.stayConnectedHeader}
+                  </h2>
+                ) : null}
+                {fields?.stayConnectedSubheader ? (
+                  <p className="body text-neutral-700 transition-colors group-hover:text-gmcc-teal">
+                    {fields.stayConnectedSubheader}
+                  </p>
+                ) : null}
+                {linkedinLogoUrl ? (
+                  <Image
+                    src={linkedinLogoUrl}
+                    alt={linkedinLogoAlt}
+                    width={90}
+                    height={90}
+                    className="h-8 w-8 shrink-0 object-contain"
+                  />
+                ) : null}
+              </a>
+            ) : null}
+          </div>
+        </div>
       </section>
 
       <section className="page-section stack-8">
@@ -107,64 +139,14 @@ export default async function CareersPage() {
       </section>
 
       <section className="page-section stack-8">
-        <div className="mx-auto grid max-w-6xl gap-6 px-6 md:grid-cols-2">
-          <article className="relative card card-hover bg-gmcc-blue-light/30 overflow-hidden p-8 text-center">
-            {fields?.internshipOpportunitiesHeader ? (
-              <h2 className="h2 mb-4">{fields.internshipOpportunitiesHeader}</h2>
-            ) : null}
-            {fields?.internshipOpportunitiesBody ? (
-              <p className="body whitespace-pre-line">
-                {fields.internshipOpportunitiesBody}
-              </p>
-            ) : null}
-          </article>
-          {fields?.linkedinLink ? (
-            <a
-              href={fields.linkedinLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group card card-hover card-link relative flex h-full flex-col items-center gap-4 overflow-hidden bg-gmcc-blue-light/30 p-8 text-center no-underline"
-            >
-              {fields?.stayConnectedHeader ? (
-                <h2 className="h2 transition-colors group-hover:text-gmcc-teal">
-                  {fields.stayConnectedHeader}
-                </h2>
-              ) : null}
-              {fields?.stayConnectedSubheader ? (
-                <h3 className="h3 text-neutral-700 transition-colors group-hover:text-gmcc-teal">
-                  {fields.stayConnectedSubheader}
-                </h3>
-              ) : null}
-              {linkedinLogoUrl ? (
-                <Image
-                  src={linkedinLogoUrl}
-                  alt={linkedinLogoAlt}
-                  width={90}
-                  height={90}
-                  className="h-16 w-16 shrink-0 object-contain"
-                />
-              ) : null}
-            </a>
-          ) : (
-            <article className="relative card card-hover bg-gmcc-blue-light/30 overflow-hidden p-8 text-center">
-              {fields?.stayConnectedHeader ? (
-                <h2 className="h2">{fields.stayConnectedHeader}</h2>
-              ) : null}
-              {fields?.stayConnectedSubheader ? (
-                <h3 className="h3 mt-4 text-neutral-700">{fields.stayConnectedSubheader}</h3>
-              ) : null}
-              {linkedinLogoUrl ? (
-                <Image
-                  src={linkedinLogoUrl}
-                  alt={linkedinLogoAlt}
-                  width={150}
-                  height={150}
-                  className="mx-auto mt-4 h-20 w-20 shrink-0 object-contain"
-                />
-              ) : null}
-            </article>
-          )}
-        </div>
+          {fields?.internshipOpportunitiesHeader ? (
+            <h2 className="h2">{fields.internshipOpportunitiesHeader}</h2>
+          ) : null}
+          {fields?.internshipOpportunitiesBody ? (
+            <p className="body whitespace-pre-line">
+              {fields.internshipOpportunitiesBody}
+            </p>
+          ) : null}
       </section>
 
       <section className="page-section stack-8 text-center">

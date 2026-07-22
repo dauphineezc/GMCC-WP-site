@@ -4,6 +4,7 @@ import ImageCarousel from "@/components/imageCarousel";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import { specialAmenities } from "@/lib/amenities/specialAmenities";
 import Link from "next/link";
+import { getYoastMetadata } from "@/lib/wordpress/seo";
 
 const AMENITY_BY_SLUG_QUERY = `
   query AmenityBySlug($slug: ID!) {
@@ -79,6 +80,11 @@ type AmenityPageProps = {
   params: Promise<{ slug: string }>;
 };
 
+export async function generateMetadata({ params }: AmenityPageProps) {
+  const { slug } = await params;
+  return getYoastMetadata(`/amenities/${slug}`);
+}
+
 export default async function AmenityPage(props: AmenityPageProps) {
   const { slug } = await props.params;
 
@@ -107,7 +113,7 @@ export default async function AmenityPage(props: AmenityPageProps) {
 
   // Collect all available images for the carousel
   const carouselImages: Array<{
-    image: { sourceUrl: string; altText: string | null } | null;
+    image: { sourceUrl: string; altText: string | null; label: string | null; } | null;
     cta: string | null;
     url: string | null;
   }> = [];
@@ -115,11 +121,18 @@ export default async function AmenityPage(props: AmenityPageProps) {
   // Add center-specific images (amenityImage1-5)
   for (let i = 1; i <= 5; i++) {
     const imageNode = af[`amenityImage${i}` as keyof typeof af] as any;
+    const centerNodes = (af[`center${i}` as keyof typeof af] as any)?.nodes ?? [];
+    const centerLabel = centerNodes
+      .map((center: { title?: string | null }) => center?.title)
+      .filter(Boolean)
+      .join(", ");
+
     if (imageNode?.node?.sourceUrl) {
       carouselImages.push({
         image: {
           sourceUrl: imageNode.node.sourceUrl,
           altText: imageNode.node.altText ?? null,
+          label: centerLabel || null,
         },
         cta: null,
         url: null,
@@ -133,6 +146,7 @@ export default async function AmenityPage(props: AmenityPageProps) {
       image: {
         sourceUrl: af.additionalImage.node.sourceUrl,
         altText: af.additionalImage.node.altText ?? null,
+        label: af.centerLabel ?? null,
       },
       cta: null,
       url: null,

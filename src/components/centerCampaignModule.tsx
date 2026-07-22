@@ -121,7 +121,7 @@ export default function CenterCampaignModule({
   }
 
   return (
-    <section className="section-y">
+    <section>
       <div className="mx-auto max-w-[1240px]">
         {(header || description) && (
           <div className="mb-8 lg:mb-10">
@@ -235,7 +235,7 @@ export default function CenterCampaignModule({
 
           {/* Right content card */}
           <div className="lg:col-span-2 max-w-[600px]">
-            <div className="h-full rounded-[18px] bg-[#DCE3E8] px-6 py-6 md:px-7 md:py-7">
+            <div className="h-full rounded-[18px] bg-gmcc-blue-light/30 px-6 py-6 md:px-7 md:py-7">
               {subheader && (
                 <h3 className="h3">
                   {subheader}

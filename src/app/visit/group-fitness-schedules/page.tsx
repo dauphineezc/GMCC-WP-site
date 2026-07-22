@@ -7,11 +7,10 @@ import {
 import { scheduleEmbedUrl } from "@/lib/constants";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Group Fitness Schedules",
-  description:
-    "View group fitness class schedules by center to find classes that fit your schedule, goals, and interests.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/visit/group-fitness-schedules");
+}
 
 const GROUP_FITNESS_SCHEDULES_EXTRA_FIELDS = `
   groupFitnessSchedulesPageFields {

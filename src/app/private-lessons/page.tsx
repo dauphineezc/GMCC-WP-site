@@ -107,3 +107,8 @@ export default async function PrivateLessonsPage() {
     />
   );
 }
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/private-lessons");
+}

@@ -74,6 +74,17 @@ ${AMENITIES_FIELDS_BLOCK}
   }
 `;
 
+const ALL_AMENITIES_QUERY = `
+  query AllAmenities($first: Int!) {
+    amenities(first: $first) {
+      nodes {
+        name
+        slug
+      }
+    }
+  }
+`;
+
 
 export function toAmenityDisplayForCenter(
   amenities: AmenityWithImage[],
@@ -348,6 +359,27 @@ export async function fetchAccessibilityAmenitiesWithImages(
 }
 
 const MAX_ACCESSIBILITY_AMENITIES = 100;
+const MAX_AMENITIES = 200;
+
+export type AmenityLink = {
+  name: string;
+  slug: string;
+};
+
+/**
+ * Loads all published amenities from WordPress (name + slug for navigation/sitemap).
+ */
+export async function fetchAllAmenityLinks(): Promise<AmenityLink[]> {
+  const data = await wpFetch<any>(ALL_AMENITIES_QUERY, { first: MAX_AMENITIES });
+  const nodes = data?.amenities?.nodes ?? [];
+
+  return nodes
+    .filter((n: { name?: string; slug?: string }) => n?.name && n?.slug)
+    .map((n: { name: string; slug: string }) => ({ name: n.name, slug: n.slug }))
+    .sort((a: AmenityLink, b: AmenityLink) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+    );
+}
 
 /**
  * Loads all accessibility amenities (accessibility taxonomy / CPT in WordPress) with images and center links.

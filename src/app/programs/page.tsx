@@ -176,6 +176,26 @@ const RENEW_ACTIVE_DIRECTORY_HEADER_QUERY = `
   }
 `;
 
+  const COMMUNITY_DIRECTORY_HEADER_QUERY = `
+  query CommunityDirectoryHeader($uri: ID!) {
+    page(id: $uri, idType: URI) {
+      communityDirectoryPageFields {
+        ${DIRECTORY_HEADER_FIELDS}
+      }
+    }
+  }
+`;
+
+const SPORTS_AND_RECREATION_DIRECTORY_HEADER_QUERY = `
+  query SportsAndRecreationDirectoryHeader($uri: ID!) {
+    page(id: $uri, idType: URI) {
+      sportsAndRecreationDirectoryPageFields {
+        ${DIRECTORY_HEADER_FIELDS}
+      }
+    }
+  }
+`;
+
 
 function normalizeDirectoryHeaderData(
   field?: any,
@@ -367,6 +387,8 @@ export default async function ExploreProgramsPage({
     tennisLessonsRaw,
     silversneakersRaw,
     renewActiveRaw,
+    communityRaw,
+    sportsAndRecreationRaw,
   ] = await Promise.all([
     fetchFieldFromUris<{ aquaticsDirectoryPageFields?: DirectoryHeaderData | null }>(
       AQUATICS_DIRECTORY_HEADER_QUERY,
@@ -422,6 +444,16 @@ export default async function ExploreProgramsPage({
       ["/renew-active-one-pass/", "/renew-active-one-pass", "renew-active-one-pass", "/renew-active/", "/renew-active"],
       "renewActiveDirectoryPageFields"
     ),
+    fetchFieldFromUris<{ communityDirectoryPageFields?: DirectoryHeaderData | null }>(
+      COMMUNITY_DIRECTORY_HEADER_QUERY,
+      ["/community", "/community/", "community"],
+      "communityDirectoryPageFields"
+    ),
+    fetchFieldFromUris<{ sportsAndRecreationDirectoryPageFields?: DirectoryHeaderData | null }>(
+      SPORTS_AND_RECREATION_DIRECTORY_HEADER_QUERY,
+      ["/sports-and-recreation", "/sports-and-recreation/", "sports-and-recreation"],
+      "sportsAndRecreationDirectoryPageFields"
+    ),
   ]);
 
   const directoryHeaderData: ProgramsPageACF = {
@@ -437,6 +469,8 @@ export default async function ExploreProgramsPage({
     tennisLessonsDirectoryPageFields: normalizeDirectoryHeaderData(tennisLessonsRaw, "tennisInstructors"),
     silversneakersDirectoryPageFields: normalizeDirectoryHeaderData(silversneakersRaw),
     renewActiveDirectoryPageFields: normalizeDirectoryHeaderData(renewActiveRaw),
+    sportsAndRecreationDirectoryPageFields: normalizeDirectoryHeaderData(sportsAndRecreationRaw),
+    communityDirectoryPageFields: normalizeDirectoryHeaderData(communityRaw),
   };
 
   const programs = programsData?.programs?.nodes ?? [];
@@ -456,6 +490,11 @@ export default async function ExploreProgramsPage({
       </Suspense>
     </main>
   );
+}
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/programs");
 }
 
 function ProgramsLoadingSkeleton() {

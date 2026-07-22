@@ -3,23 +3,31 @@ import SitemapNavTree, {
   SitemapFlatLinks,
   SitemapLink,
 } from "@/components/sitemap/sitemapNavTree";
+import { fetchAllAmenityLinks } from "@/lib/amenities";
 import { getFooterNav } from "@/lib/nav/getFooterNav";
 import { getPrimaryNav } from "@/lib/nav/getPrimaryNav";
 import { getUtilityNav } from "@/lib/nav/getUtilityMenu";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Sitemap",
-  description: "Browse all pages and sections on the Greater Midland website.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/sitemap");
+}
 
 export default async function SitemapPage() {
-  const [primaryNav, utilityNav, footerNav] = await Promise.all([
+  const [primaryNav, utilityNav, footerNav, amenityLinks] = await Promise.all([
     getPrimaryNav(),
     getUtilityNav(),
     getFooterNav(),
+    fetchAllAmenityLinks(),
   ]);
+
+  const amenityNavItems = amenityLinks.map((amenity) => ({
+    id: amenity.slug,
+    label: amenity.name,
+    href: `/amenities/${amenity.slug}`,
+  }));
 
   const sitemapUtilityNav = utilityNav.filter((item) => {
     const label = item.label.toLowerCase();
@@ -64,19 +72,32 @@ export default async function SitemapPage() {
           </div>
         </section>
 
-        {sitemapUtilityNav.length > 0 ? (
-          <section className="mb-12">
-            <h2 className="h2 mb-4">Quick links</h2>
-            <SitemapFlatLinks items={sitemapUtilityNav} />
-          </section>
-        ) : null}
+        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+          <div className="space-y-12">
+            {amenityNavItems.length > 0 ? (
+              <section>
+                <h2 className="h2 mb-4">Amenities</h2>
+                <SitemapFlatLinks items={amenityNavItems} />
+              </section>
+            ) : null}
+          </div>
 
-        {footerNav.length > 0 ? (
-          <section>
-            <h2 className="h2 mb-4">Footer</h2>
-            <SitemapFlatLinks items={footerNav} />
-          </section>
-        ) : null}
+          <div className="space-y-12">
+            {sitemapUtilityNav.length > 0 ? (
+              <section>
+                <h2 className="h2 mb-4">Quick links</h2>
+                <SitemapFlatLinks items={sitemapUtilityNav} />
+              </section>
+            ) : null}
+
+            {footerNav.length > 0 ? (
+              <section>
+                <h2 className="h2 mb-4">Footer</h2>
+                <SitemapFlatLinks items={footerNav} />
+              </section>
+            ) : null}
+          </div>
+        </div>
       </div>
     </main>
   );

@@ -21,13 +21,17 @@ import {
   todayCenterScheduleEmbedUrl,
 } from "@/lib/constants";
 import { fetchTodaysEvents } from "@/lib/events/todayEvents";
+import { getYoastMetadata } from "@/lib/wordpress/seo";
+import { acfImageFromField } from "@/lib/acf";
 import {
   coerceWpRichText,
   fetchCenterDetailPageFields,
   isCurlingCenterSlug,
+  normalizeCurlingHistoryItems,
   resolveCenterSocialLinks,
   resolveFeaturedProgramEventHref,
 } from "@/lib/centerDetailPageFields";
+import CurlingHistoryTimeline from "@/components/curlingHistoryTimeline";
 
 
 
@@ -343,6 +347,11 @@ type CenterPageProps = {
   params: Promise<{ slug: string }>;
 };
 
+export async function generateMetadata({ params }: CenterPageProps) {
+  const { slug } = await params;
+  return getYoastMetadata(`/centers/${slug}`);
+}
+
 export default async function CenterPage(props: CenterPageProps) {
   const { slug } = await props.params;
   const [data, centerDetailFields, centerAnnouncement, todaysEvents] = await Promise.all([
@@ -490,6 +499,15 @@ export default async function CenterPage(props: CenterPageProps) {
   const hoursReplacement = coerceWpRichText(curlingLayout?.hoursReplacementStatement).trim();
   const showCurlingHoursReplacement = isCurlingCenter && hoursReplacement.length > 0;
 
+  const curlingHistoryHeader = coerceWpRichText(curlingLayout?.historySection?.header).trim();
+  const curlingHistoryItems = normalizeCurlingHistoryItems(curlingLayout?.historySection?.body);
+  const curlingHistoryStone = acfImageFromField(
+    curlingLayout?.historySection?.icon,
+    curlingHistoryHeader || "Curling history",
+  );
+  const showCurlingHistory =
+    isCurlingCenter && Boolean(curlingHistoryHeader || curlingHistoryItems.length > 0);
+
   const centerScheduleLabel = resolveCenterScheduleLabel(slug, center.title ?? "");
   const hasScheduleEmbed = hasTodayCenterScheduleEmbed(slug);
   const showTodaySection = hasScheduleEmbed || todaysEvents.length > 0;
@@ -546,7 +564,7 @@ export default async function CenterPage(props: CenterPageProps) {
         bandClassName="py-10"
         contentClassName="mx-auto max-w-6xl px-6"
       >
-        <div className="grid gap-8 md:grid-cols-3 md:gap-16 items-start">
+        <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-16">
           <div className="stack-3">
             <h2 className="h2 mb-4 text-white">Location</h2>
             <p className="flex items-start gap-2 mt-2 body text-neutral-200 hover:text-white hover:underline">
@@ -560,7 +578,7 @@ export default async function CenterPage(props: CenterPageProps) {
               </a>
             </p>
           </div>
-          <div className="stack-3">
+          <div className="stack-3 md:col-start-1 lg:col-start-2 lg:row-start-1">
             <h2 className="h2 mb-4 text-white">Contact</h2>
             <p className="flex items-center gap-2 body text-neutral-200 hover:text-white hover:underline">
               <PhoneIcon />
@@ -602,12 +620,16 @@ export default async function CenterPage(props: CenterPageProps) {
               </div>
             ) : null}
           </div>
-          <div className={`stack-3 md:mb-0${hasBrochures ? " md:row-span-2" : ""}`}>
+          <div
+            className={`stack-3 md:col-start-2 md:row-start-1 lg:col-start-3 lg:row-start-1${
+              hasBrochures ? " md:row-span-3 lg:row-span-2" : " md:row-span-2"
+            }`}
+          >
             <h2 className="h2 mb-4 text-white">Hours</h2>
             {showCurlingHoursReplacement ? (
               renderHoursReplacementContent(hoursReplacement)
             ) : (
-              <div className="grid grid-cols-2 items-center">
+              <div className="grid w-fit grid-cols-[auto_auto] items-baseline gap-x-12">
                 <div className="flex flex-col text-left">
                   <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Monday</p>
                   <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Tuesday</p>
@@ -617,7 +639,7 @@ export default async function CenterPage(props: CenterPageProps) {
                   <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Saturday</p>
                   <p className="body text-sm text-neutral-200 font-bold uppercase tracking-wide">Sunday</p>
                 </div>
-                <div className="flex flex-col text-right">
+                <div className="flex flex-col text-left">
                   {centerFields.hours.mondayHours.closedMonday ? (
                     <p className="body text-neutral-200">Closed</p>
                   ) : (
@@ -679,7 +701,7 @@ export default async function CenterPage(props: CenterPageProps) {
             )}
           </div>
           {hasBrochures ? (
-            <div className="stack-3 md:col-span-2 mt-[-5rem]">
+            <div className="stack-3 md:col-start-1 lg:col-span-2">
               {brochureHeader ? <h2 className="h2 mb-4 text-white">{brochureHeader}</h2> : null}
               <div className="flex flex-wrap gap-3">
                 {programBrochureUrl ? (
@@ -739,7 +761,7 @@ export default async function CenterPage(props: CenterPageProps) {
                 <div className="gmcc-schedule-embed">
                   <AutoHeightScheduleIframe
                     src={todayCenterScheduleEmbedUrl(slug)}
-                    title={`${centerScheduleLabel ?? center.title ?? "Center"} Today's Schedule`}
+                    title={`${centerScheduleLabel ?? center.title ?? ""} Today's Schedule`}
                   />
                 </div>
               </div>
@@ -763,12 +785,23 @@ export default async function CenterPage(props: CenterPageProps) {
         {amenitiesForThisCenter.length > 0 && (
           <AmenitiesGrid amenities={amenitiesForThisCenter} title="What we offer" />
         )}
-        
+      </section>
+
+      {showCurlingHistory ? (
+        <CurlingHistoryTimeline
+          heading={curlingHistoryHeader}
+          items={curlingHistoryItems}
+          stoneUrl={curlingHistoryStone?.url}
+          stoneAlt={curlingHistoryStone?.alt}
+        />
+      ) : null}
+
+      <section className="page-section stack-4">
         <CenterCampaignModule module={campaignModule} />
       </section>
 
       {featuredTestimonials.length > 0 ? (
-        <section className="">
+        <section className="page-section">
           <div>
             <div className="relative text-center">
               <h2 className="h2 text-gmcc-navy">{testimonialHeader}</h2>
@@ -782,7 +815,7 @@ export default async function CenterPage(props: CenterPageProps) {
         </section>
       ) : null}
 
-      <section className="page-section stack-4">
+      <section className="page-section stack-4 mb-12">
         <h2 className="h2 mb-2">{joinSectionHeader}</h2>
         {joinSectionSubheader ? (
           <p className="body mb-4">{joinSectionSubheader}</p>
@@ -804,7 +837,7 @@ export default async function CenterPage(props: CenterPageProps) {
       </section>
 
       {showNewsletterSignUp ? (
-        <section className="page-section-wide text-center mt-[-4rem]">
+        <section className="page-section-wide text-center mt-[-4rem] md:mt-[-5rem] mb-12">
           <div className="card bg-gmcc-navy">
             <div className="col-span-1">
               {newsletterHeader ? <h3 className="h3 mb-2 text-white">{newsletterHeader}</h3> : null}

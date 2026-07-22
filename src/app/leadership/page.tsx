@@ -315,7 +315,7 @@ export default async function LeadershipPage() {
 
         {/* Operating Unit Boards Accordion */}
         <section className="page-section stack-6">
-          <h2 className="eyebrow pl-28">
+          <h2 className="h2 text-center">
             Operating Unit Boards
           </h2>
           <div className="max-w-4xl mx-auto">
@@ -330,5 +330,10 @@ export default async function LeadershipPage() {
         </section>
     </main>
   );
+}
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/leadership");
 }
 

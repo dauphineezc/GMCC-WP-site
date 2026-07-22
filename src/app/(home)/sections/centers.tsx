@@ -166,7 +166,7 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
 
   return (
     // no top padding; full-width section handled inside
-    <section className="relative z-10 -mt-14 pt-0 md:-mt-16">
+    <section className="relative z-10 -mt-14 pt-0 md:-mt-16 mb-16">
       
       {/* Mobile: desktop-like accordion + image beneath */}
       <div className="md:hidden">
@@ -235,7 +235,7 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
       </div>
 
       {/* Desktop */}
-      <div className="mt-0 hidden md:block">
+      <div className="mt-0 hidden md:block mb-12">
         <div className="relative w-full">
           <div className="relative h-[700px] w-full overflow-hidden">
             {/* Background image – fixed 700px so zoom never changes with content */}

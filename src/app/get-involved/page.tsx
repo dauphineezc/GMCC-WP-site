@@ -174,3 +174,8 @@ export default async function GetInvolvedPage() {
     </main>
   );
 }
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/get-involved");
+}

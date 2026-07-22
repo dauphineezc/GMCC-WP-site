@@ -69,7 +69,7 @@ export function DropInCareSection({
 
   return (
     <section className={`${layoutClass} section-y ${className}`.trim()}>
-      {fields.dropInCareHeader ? <h2 className="h2">{fields.dropInCareHeader}</h2> : null}
+      {fields.dropInCareHeader ? <h2 className="h3">{fields.dropInCareHeader}</h2> : null}
       {fields.dropInCareDescription ? (
         <p className="body mt-2 whitespace-pre-line text-neutral-700 mb-8">
           {fields.dropInCareDescription}

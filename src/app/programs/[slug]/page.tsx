@@ -7,6 +7,7 @@ import { TestimonialSection, normalizeTestimonials } from "@/components/testimon
 import AttachmentsCard from "@/components/detail/attachmentsCard";
 import DetailGalleryCarousel from "@/components/detail/detailGalleryCarousel";
 import RegistrationSidebar from "@/components/detail/registrationSidebar";
+import { getYoastMetadata } from "@/lib/wordpress/seo";
 
 /** Map age range to audience slug(s) for filtering */
 type AgeRangeValue = string | number | null | undefined;
@@ -219,6 +220,11 @@ const PROGRAM_BY_SLUG_QUERY = `
 type ProgramPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: ProgramPageProps) {
+  const { slug } = await params;
+  return getYoastMetadata(`/programs/${slug}`);
+}
 
 export default async function ProgramPage({ params }: ProgramPageProps) {
   const { slug } = await params;

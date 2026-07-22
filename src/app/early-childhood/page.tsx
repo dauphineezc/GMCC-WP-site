@@ -176,11 +176,10 @@ type EarlyChildhoodQueryData = {
   page?: (WpPageWithHeroFields & { earlyChildhoodPageFields?: Record<string, unknown> | null }) | null;
 };
 
-export const metadata: Metadata = {
-  title: "Early Childhood Education",
-  description:
-    "Drop-in childcare, preschool, and early learning programs across Greater Midland Community Centers.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/early-childhood");
+}
 
 function BenefitCard({ item }: { item: TextCardFields }) {
   const hasCta = Boolean(item.ctaHref && (item.ctaLabel || item.ctaHref));

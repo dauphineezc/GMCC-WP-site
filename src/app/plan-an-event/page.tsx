@@ -185,3 +185,8 @@ export default async function PlanAnEventPage() {
     </main>
   );
 }
+
+export async function generateMetadata() {
+  const { getYoastMetadata } = await import("@/lib/wordpress/seo");
+  return getYoastMetadata("/plan-an-event");
+}
