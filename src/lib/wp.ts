@@ -73,7 +73,7 @@ export function acfGalleryCarouselImages(gallery: unknown) {
       const sourceUrl = resolveWpMediaUrl(node.sourceUrl ?? node.mediaItemUrl);
       if (!sourceUrl) return null;
       return {
-        image: { sourceUrl, altText: node.altText ?? null },
+        image: { sourceUrl, altText: node.altText ?? null, label: null },
         cta: null,
         url: null,
       };
