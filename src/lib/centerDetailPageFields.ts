@@ -41,9 +41,11 @@ const CENTER_DETAIL_PAGE_FIELDS_CORE = `
         }
         curlingCenterPageFields {
           hoursReplacementStatement
+          midlandCurlingClubLogo { node { sourceUrl mediaItemUrl altText }}
           historySection {
             header
             body {
+              historyItemHeader
               historyItem
             }
             icon { node { sourceUrl mediaItemUrl altText }}
@@ -61,29 +63,7 @@ const CURLING_MEMBERSHIP_CTA_COPY = `
             subheader
             cardText
             ctaLabel
-          }
-        }
-      }
-`;
-
-const CURLING_MEMBERSHIP_CTA_LINK = `
-      centerPageFields {
-        curlingCenterPageFields {
-          membershipReplacementCta {
-            featuredProgramEvent {
-              node {
-                __typename
-                ... on Program {
-                  slug
-                }
-                ... on Event {
-                  slug
-                  eventFields {
-                    ${EVENT_SCHEDULE_GRAPHQL}
-                  }
-                }
-              }
-            }
+            ctaUrl
           }
         }
       }
@@ -94,9 +74,11 @@ export type CenterPageReadyToJoinSection = {
   subheader?: string | null;
   cardText?: string | null;
   ctaLabel?: string | null;
+  ctaUrl?: string | null;
 };
 
 export type CenterPageHistoryItem = {
+  historyItemHeader?: string | null;
   historyItem?: string | null;
 };
 
@@ -109,27 +91,21 @@ export type CenterPageHistorySection = {
 /** Non-empty history paragraphs from the curling history repeater. */
 export function normalizeCurlingHistoryItems(
   body: CenterPageHistorySection["body"],
-): string[] {
+): Array<CenterPageHistoryItem> {
   if (!Array.isArray(body)) return [];
   return body
-    .map((row) => coerceWpRichText(row?.historyItem).trim())
-    .filter(Boolean);
+    .map((row) => ({
+      historyItemHeader: (row?.historyItemHeader ?? "").trim() || null,
+      historyItem: coerceWpRichText(row?.historyItem).trim() || null,
+    }))
+    .filter((row) => Boolean(row.historyItemHeader || row.historyItem));
 }
 
-type FeaturedProgramEventNode = {
-  __typename?: string | null;
-  slug?: string | null;
-  eventFields?: { eventSchedule?: unknown } | null;
-};
-
-export type CenterPageMembershipReplacementCta = CenterPageReadyToJoinSection & {
-  featuredProgramEvent?: {
-    node?: FeaturedProgramEventNode | null;
-  } | null;
-};
+export type CenterPageMembershipReplacementCta = CenterPageReadyToJoinSection;
 
 export type CenterPageCurlingFields = {
   hoursReplacementStatement?: string | null;
+  midlandCurlingClubLogo?: WpMediaFieldInput | null;
   membershipReplacementCta?: CenterPageMembershipReplacementCta | null;
   historySection?: CenterPageHistorySection | null;
 };
@@ -198,81 +174,53 @@ export type CenterDetailPageFields = {
 function mergeCenterDetailParts(
   core: CenterDetailPageFields | null | undefined,
   curlingCtaCopy: CenterDetailPageFields | null | undefined,
-  curlingCtaLink: CenterDetailPageFields | null | undefined,
 ): CenterDetailPageFields | null {
-  if (!core && !curlingCtaCopy && !curlingCtaLink) return null;
+  if (!core && !curlingCtaCopy) return null;
 
   const baseCurl = core?.curlingCenterPageFields;
   const copyCurl = curlingCtaCopy?.curlingCenterPageFields;
-  const linkCurl = curlingCtaLink?.curlingCenterPageFields;
 
   const textMrc = copyCurl?.membershipReplacementCta;
-  const linkMrc = linkCurl?.membershipReplacementCta;
   const membershipReplacementCta =
-    textMrc || linkMrc || baseCurl?.membershipReplacementCta
+    textMrc || baseCurl?.membershipReplacementCta
       ? {
-          header: textMrc?.header ?? linkMrc?.header ?? baseCurl?.membershipReplacementCta?.header,
-          subheader:
-            textMrc?.subheader ?? linkMrc?.subheader ?? baseCurl?.membershipReplacementCta?.subheader,
-          cardText:
-            textMrc?.cardText ?? linkMrc?.cardText ?? baseCurl?.membershipReplacementCta?.cardText,
-          ctaLabel:
-            textMrc?.ctaLabel ?? linkMrc?.ctaLabel ?? baseCurl?.membershipReplacementCta?.ctaLabel,
-          featuredProgramEvent:
-            linkMrc?.featuredProgramEvent ??
-            textMrc?.featuredProgramEvent ??
-            baseCurl?.membershipReplacementCta?.featuredProgramEvent,
+          header: textMrc?.header ?? baseCurl?.membershipReplacementCta?.header,
+          subheader: textMrc?.subheader ?? baseCurl?.membershipReplacementCta?.subheader,
+          cardText: textMrc?.cardText ?? baseCurl?.membershipReplacementCta?.cardText,
+          ctaLabel: textMrc?.ctaLabel ?? baseCurl?.membershipReplacementCta?.ctaLabel,
+          ctaUrl: textMrc?.ctaUrl ?? baseCurl?.membershipReplacementCta?.ctaUrl,
         }
       : null;
 
   const historySection =
-    baseCurl?.historySection ?? copyCurl?.historySection ?? linkCurl?.historySection ?? null;
+    baseCurl?.historySection ?? copyCurl?.historySection ?? null;
 
   const hasCurlingBlock =
     baseCurl?.hoursReplacementStatement != null ||
     copyCurl?.hoursReplacementStatement != null ||
-    linkCurl?.hoursReplacementStatement != null ||
     membershipReplacementCta != null ||
+    baseCurl?.midlandCurlingClubLogo != null ||
+    copyCurl?.midlandCurlingClubLogo != null ||
     historySection != null;
 
   return {
     testimonialHeader:
-      core?.testimonialHeader ?? curlingCtaCopy?.testimonialHeader ?? curlingCtaLink?.testimonialHeader,
+      core?.testimonialHeader ?? curlingCtaCopy?.testimonialHeader,
     readyToJoinSection:
-      core?.readyToJoinSection ?? curlingCtaCopy?.readyToJoinSection ?? curlingCtaLink?.readyToJoinSection,
-    socialIcons: core?.socialIcons ?? curlingCtaCopy?.socialIcons ?? curlingCtaLink?.socialIcons,
+      core?.readyToJoinSection ?? curlingCtaCopy?.readyToJoinSection,
+    socialIcons: core?.socialIcons ?? curlingCtaCopy?.socialIcons,
     curlingCenterPageFields: hasCurlingBlock
       ? {
           hoursReplacementStatement:
             baseCurl?.hoursReplacementStatement ??
             copyCurl?.hoursReplacementStatement ??
-            linkCurl?.hoursReplacementStatement,
+            null,
+          midlandCurlingClubLogo: baseCurl?.midlandCurlingClubLogo ?? copyCurl?.midlandCurlingClubLogo ?? null,
           membershipReplacementCta: membershipReplacementCta ?? null,
           historySection,
         }
       : null,
   };
-}
-
-/**
- * Resolve CTA href for curling center: linked Program or Event from ACF.
- */
-export function resolveFeaturedProgramEventHref(
-  node: FeaturedProgramEventNode | null | undefined,
-): string | null {
-  if (!node?.slug) return null;
-  const tn = node.__typename ?? "";
-  const eventStart = getEventDateInfo(node.eventFields?.eventSchedule).start;
-  if (tn === "Event" || tn.endsWith("Event")) {
-    return buildEventHref(node.slug, eventStart ?? "");
-  }
-  if (tn === "Program" || tn.endsWith("Program")) {
-    return `/programs/${encodeURIComponent(node.slug)}`;
-  }
-  if (eventStart) {
-    return buildEventHref(node.slug, eventStart);
-  }
-  return `/programs/${encodeURIComponent(node.slug)}`;
 }
 
 async function loadCenterDetailCenterPageFieldsBody(pageInnerBody: string): Promise<CenterDetailPageFields | null> {
@@ -344,12 +292,11 @@ async function loadCenterDetailCenterPageFieldsBody(pageInnerBody: string): Prom
  * cannot hide header, subheader, card text, or button label.
  */
 export async function fetchCenterDetailPageFields(): Promise<CenterDetailPageFields | null> {
-  const [core, curlingCtaCopy, curlingCtaLink] = await Promise.all([
+  const [core, curlingCtaCopy] = await Promise.all([
     loadCenterDetailCenterPageFieldsBody(CENTER_DETAIL_PAGE_FIELDS_CORE),
     loadCenterDetailCenterPageFieldsBody(CURLING_MEMBERSHIP_CTA_COPY),
-    loadCenterDetailCenterPageFieldsBody(CURLING_MEMBERSHIP_CTA_LINK).catch(() => null),
   ]);
-  return mergeCenterDetailParts(core, curlingCtaCopy, curlingCtaLink);
+  return mergeCenterDetailParts(core, curlingCtaCopy);
 }
 
 /** True if this center should use curling-specific ACF (URL slug or WP Center slug). */

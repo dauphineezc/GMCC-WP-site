@@ -1,6 +1,9 @@
 import { cache } from "react";
 import { acfCtaHref, wpFetch } from "@/lib/wp";
 
+/** Cache tag for announcement GraphQL fetches — purge via `/api/revalidate?tag=announcements`. */
+export const ANNOUNCEMENTS_CACHE_TAG = "announcements";
+
 export type Announcement = {
   id: string;
   displayScope: "global" | "center";
@@ -142,7 +145,10 @@ export const getActiveAnnouncements = cache(async (): Promise<Announcement[]> =>
   try {
     const data = await wpFetch<{
       announcementBars?: { nodes?: WpAnnouncementBarNode[] | null } | null;
-    }>(ANNOUNCEMENTS_QUERY, { first: 50 }, { suppressGraphQLErrorLogging: true });
+    }>(ANNOUNCEMENTS_QUERY, { first: 50 }, {
+      suppressGraphQLErrorLogging: true,
+      tags: [ANNOUNCEMENTS_CACHE_TAG],
+    });
 
     return (data?.announcementBars?.nodes ?? [])
       .map(mapAnnouncementNode)

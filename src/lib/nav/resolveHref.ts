@@ -42,7 +42,7 @@ function normalizeWpUrlToPath(url: string) {
     "Adult Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "family,adult,activeOlderAdult" }),
 
     // Fitness
-    "Fitness": "/programs?" + buildQuery({ offeringType: "Class,Drop-In,Lessons/Training", programArea: "Aquatics,Group Fitness,Personal Training,SilverSneakers,Walking", headerVariant: "none" }),
+    "Fitness": "/programs?" + buildQuery({ offeringType: "Class,Drop-In,Lessons/Training", programArea: "Aquatics,Group Fitness,Personal Training,SilverSneakers,Walking", headerVariant: "fitness" }),
     "Group Fitness Classes": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness", headerVariant: "group-fitness" }),
     "SilverSneakers": "/programs?" + buildQuery({ offeringType: "Class", programArea: "SilverSneakers,Group Fitness", headerVariant: "silversneakers" }),
     "Renew Active/One Pass": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness", headerVariant: "renew-active" }),
@@ -50,7 +50,7 @@ function normalizeWpUrlToPath(url: string) {
     // Sports and Recreation
     "Sports and Recreation": "/programs?" + buildQuery({ programArea: "Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", headerVariant: "sports-and-recreation" }),
     "Youth Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", audience: "youth" }),
-    "Youth Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", audience: "youth" }),
+    "Youth Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", audience: "youth", headerVariant: "middle-school-sports" }),
     "Adult Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "teen,adult,senior" }),
     "Adult Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "teen,adult,senior" }),
 

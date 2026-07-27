@@ -55,7 +55,7 @@ export default function HeroSection({
   }, []);
 
   return (
-    <section className="home-hero-compensate pb-0">
+    <section className="pb-0">
       <div className="relative mb-8 w-full overflow-hidden bg-neutral-100">
         <div className="relative">
           {/* Media */}

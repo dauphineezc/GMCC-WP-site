@@ -121,18 +121,21 @@ export default function Navbar({
   return (
     <>
       {/* Spacer matches fixed header height (nav + optional announcement banner). */}
-      <div ref={spacerRef} className="hidden lg:block" aria-hidden="true" />
+      <div ref={spacerRef} className="hidden xl:block" aria-hidden="true" />
 
       <header
         ref={headerRef}
-        className={`relative bg-white lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:z-50 transition-all duration-300 ${
+        className={`relative bg-white xl:fixed xl:top-0 xl:left-0 xl:right-0 xl:z-50 transition-all duration-300 ${
           isScrolled ? "shadow-sm" : ""
         }`}
         onMouseLeave={() => setOpenId(null)}
       >
+        {/* Announcement sits above utility/nav so it stays at the very top */}
+        <div ref={bannerSlotRef}>{banner ?? null}</div>
+
         {/* Utility bar (desktop) - OUTER wrapper allows popovers to overflow */}
         {showUtility && (
-          <div className="hidden lg:block bg-neutral-50 border-b border-neutral-200/70 overflow-visible relative z-[70]">
+          <div className="hidden xl:block bg-neutral-50 border-b border-neutral-200/70 overflow-visible relative z-[70]">
             {/* Inner wrapper handles collapse animation and can clip its own height */}
             <div
               className={`transition-all duration-300 overflow-hidden ${
@@ -277,13 +280,13 @@ export default function Navbar({
               alt="Greater Midland"
               width={220}
               height={96}
-              className={`w-auto transition-all duration-300 ${isScrolled ? "h-10 lg:h-12" : "h-16 lg:h-[96px]"}`}
+              className={`w-auto transition-all duration-300 ${isScrolled ? "h-10 xl:h-12" : "h-16 xl:h-[96px]"}`}
               priority
             />
           </Link>
 
-          {/* Desktop nav items - hidden on mobile */}
-          <nav aria-label="Primary" className="hidden lg:flex flex-1 justify-center">
+          {/* Desktop nav items - hidden below xl (mega menu needs ~1280px) */}
+          <nav aria-label="Primary" className="hidden xl:flex flex-1 justify-center">
             <ul className="flex items-center gap-2">
               {mainItems.map((top) => {
                 const hasDropdown = top.children.length > 0;
@@ -313,7 +316,7 @@ export default function Navbar({
           {/* Mobile hamburger button */}
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors ml-auto"
+            className="xl:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors ml-auto"
             aria-label="Open menu"
           >
             <svg className="w-8 h-8 text-gmcc-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -334,7 +337,7 @@ export default function Navbar({
 
         {/* Desktop full-width dropdown panel */}
         {hasOpenDropdown && (
-          <div className="hidden lg:block absolute left-0 right-0 top-full z-50 w-full bg-white shadow-lg border-t border-gray-100">
+          <div className="hidden xl:block absolute left-0 right-0 top-full z-50 w-full bg-white shadow-lg border-t border-gray-100">
             <div className="mx-auto max-w-7xl px-6 py-10">
               <div className="flex justify-center">
                 {isMegaMenu(openItem) ? (
@@ -354,8 +357,6 @@ export default function Navbar({
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
         />
-
-        <div ref={bannerSlotRef}>{banner ?? null}</div>
       </header>
     </>
   );

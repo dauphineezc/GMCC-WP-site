@@ -215,12 +215,5 @@
         justify-content: center;
         gap: 0.25rem 0.5rem;
     }
-
-    /* Home hero: pull back up by announcement height on desktop (spacer still clears nav). */
-    @media (width >= 64rem) {
-        .home-hero-compensate {
-            margin-top: calc(-1 * var(--announcement-banner-height, 0px));
-        }
-    }
   }
   

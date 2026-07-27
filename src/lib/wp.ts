@@ -215,6 +215,10 @@ function releaseSlot() {
 
 type WpFetchOptions = {
   suppressGraphQLErrorLogging?: boolean;
+  /** Next.js Data Cache tags for on-demand revalidation via `/api/revalidate`. */
+  tags?: string[];
+  /** Override default ISR window (seconds). Defaults to 60. */
+  revalidate?: number | false;
 };
 
 async function wpFetchInternal<T>(
@@ -228,13 +232,18 @@ async function wpFetchInternal<T>(
   }
 
   const body = JSON.stringify(variables ? { query, variables } : { query });
+  const revalidate = options?.revalidate ?? 60;
+  const tags = options?.tags;
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body,
-      next: { revalidate: 60 },
+      next: {
+        revalidate,
+        ...(tags?.length ? { tags } : {}),
+      },
     });
 
     const text = await res.text();

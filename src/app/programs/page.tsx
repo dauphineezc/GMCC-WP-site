@@ -51,17 +51,25 @@ const CAMPS_DIRECTORY_HEADER_QUERY = `
   query CampsDirectoryHeader($uri: ID!) {
     page(id: $uri, idType: URI) {
       campsDirectoryPageFields {
-        ${DIRECTORY_HEADER_FIELDS}
+        programDirectoryPageHeader {
+          ${DIRECTORY_HEADER_FIELDS}
+          campsPageLinkLabel
+          campsPageLink
+        }
       }
     }
   }
 `;
 
-const CHILDCARE_DIRECTORY_HEADER_QUERY = `
-  query ChildcareDirectoryHeader($uri: ID!) {
+const EARLY_CHILDHOOD_DIRECTORY_HEADER_QUERY = `
+  query EarlyChildhoodDirectoryHeader($uri: ID!) {
     page(id: $uri, idType: URI) {
-      childcareDirectoryPageFields {
-        ${DIRECTORY_HEADER_FIELDS}
+      earlyChildhoodPageFields {
+        programDirectoryPageHeader {
+          ${DIRECTORY_HEADER_FIELDS}
+          ecePageLinkLabel
+          ecePageLink
+        }
       }
     }
   }
@@ -260,6 +268,20 @@ function normalizeDirectoryHeaderData(
   };
 }
 
+/** Map camps/early-childhood page-link fields onto the shared redirect shape. */
+function mapProgramDirectoryPageHeader(
+  headerGroup?: any,
+  linkKeys?: { label: string; url: string },
+): any | undefined {
+  if (!headerGroup) return undefined;
+  if (!linkKeys) return headerGroup;
+  return {
+    ...headerGroup,
+    redirectLabel: headerGroup.redirectLabel ?? headerGroup[linkKeys.label] ?? null,
+    redirectUrl: headerGroup.redirectUrl ?? headerGroup[linkKeys.url] ?? null,
+  };
+}
+
 function hasDirectoryHeaderContent(field?: any) {
   if (!field) return false;
   const header = (field?.header ?? "").trim();
@@ -274,7 +296,15 @@ function hasDirectoryHeaderContent(field?: any) {
   const hasSponsors = (field?.sponsors?.nodes ?? field?.sponsors ?? []).length > 0;
   const hasTrainers =
     (field?.trainers?.nodes ?? field?.tennisInstructors?.nodes ?? field?.trainers ?? []).length > 0;
-  const hasRedirect = (field?.redirectLabel ?? field?.redirectUrl ?? "").trim();
+  const hasRedirect = (
+    field?.redirectLabel ??
+    field?.redirectUrl ??
+    field?.campsPageLinkLabel ??
+    field?.campsPageLink ??
+    field?.ecePageLinkLabel ??
+    field?.ecePageLink ??
+    ""
+  ).trim();
 
   return Boolean(header || body || hasAttachment || hasSponsors || hasTrainers || hasRedirect);
 }
@@ -293,6 +323,41 @@ async function fetchFieldFromUris<TPage extends Record<string, any>>(
       );
       const field = (data?.page?.[fieldName] as DirectoryHeaderData | null | undefined) ?? null;
       if (hasDirectoryHeaderContent(field)) return field;
+    } catch {
+      // try next candidate
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Fetch a nested `programDirectoryPageHeader` group from a parent ACF field
+ * (campsDirectoryPageFields / earlyChildhoodPageFields).
+ */
+async function fetchProgramDirectoryPageHeaderFromUris<
+  TPage extends Record<string, any>,
+>(
+  query: string,
+  uriCandidates: string[],
+  parentFieldName: keyof TPage,
+  linkKeys: { label: string; url: string },
+) {
+  for (const uri of uriCandidates) {
+    try {
+      const data = await wpFetch<{ page?: TPage | null }>(
+        query,
+        { uri },
+        { suppressGraphQLErrorLogging: true }
+      );
+      const parent = data?.page?.[parentFieldName] as
+        | { programDirectoryPageHeader?: any }
+        | null
+        | undefined;
+      const mapped = mapProgramDirectoryPageHeader(
+        parent?.programDirectoryPageHeader,
+        linkKeys,
+      );
+      if (hasDirectoryHeaderContent(mapped)) return mapped;
     } catch {
       // try next candidate
     }
@@ -395,15 +460,21 @@ export default async function ExploreProgramsPage({
       ["/aquatics", "/aquatics/", "aquatics"],
       "aquaticsDirectoryPageFields"
     ),
-    fetchFieldFromUris<{ campsDirectoryPageFields?: DirectoryHeaderData | null }>(
+    fetchProgramDirectoryPageHeaderFromUris<{
+      campsDirectoryPageFields?: { programDirectoryPageHeader?: any } | null;
+    }>(
       CAMPS_DIRECTORY_HEADER_QUERY,
-      ["/camps", "/camps/", "camps"],
-      "campsDirectoryPageFields"
+      pageUriCandidatesForSlug("camps"),
+      "campsDirectoryPageFields",
+      { label: "campsPageLinkLabel", url: "campsPageLink" }
     ),
-    fetchFieldFromUris<{ childcareDirectoryPageFields?: DirectoryHeaderData | null }>(
-      CHILDCARE_DIRECTORY_HEADER_QUERY,
-      ["/childcare", "/childcare/", "childcare"],
-      "childcareDirectoryPageFields"
+    fetchProgramDirectoryPageHeaderFromUris<{
+      earlyChildhoodPageFields?: { programDirectoryPageHeader?: any } | null;
+    }>(
+      EARLY_CHILDHOOD_DIRECTORY_HEADER_QUERY,
+      pageUriCandidatesForSlug("early-childhood"),
+      "earlyChildhoodPageFields",
+      { label: "ecePageLinkLabel", url: "ecePageLink" }
     ),
     fetchGroupFitnessDirectoryWithDropInCare(),
     fetchFieldFromUris<

@@ -43,6 +43,7 @@ export function getProgramsDirectoryHeaderVariant(
   if (rawHeaderVariant === "renew-active" || rawHeaderVariant === "renewactive") return "renew-active";
   if (rawHeaderVariant === "sports-and-recreation" || rawHeaderVariant === "sportsandrecreation") return "sports-and-recreation";
   if (rawHeaderVariant === "community") return "community";
+  if (rawHeaderVariant === "fitness") return "fitness";
   if (rawHeaderVariant === "group-fitness" || rawHeaderVariant === "groupfitness") return "group-fitness";
   if (rawHeaderVariant === "middle-school-sports" || rawHeaderVariant === "middleschoolsports") return "middle-school-sports";
   if (rawHeaderVariant === "personal-training" || rawHeaderVariant === "personaltraining") return "personal-training";
@@ -62,6 +63,12 @@ export function getProgramsDirectoryHeaderVariant(
 
   if (offeringTypeValues.includes("camp") || offeringTypeValues.includes("camps")) {
     return "camps";
+  }
+  if (
+    offeringTypeValues.includes("childcare") ||
+    offeringTypeValues.includes("child care")
+  ) {
+    return "childcare";
   }
 
   // Exact / exclusive filter matches (sidebar). More specific first.

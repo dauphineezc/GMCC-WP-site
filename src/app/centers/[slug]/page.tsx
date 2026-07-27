@@ -19,6 +19,7 @@ import {
   hasTodayCenterScheduleEmbed,
   resolveCenterScheduleLabel,
   todayCenterScheduleEmbedUrl,
+  CURLING_WEEKLY_SCHEDULE_EMBED_URL,
 } from "@/lib/constants";
 import { fetchTodaysEvents } from "@/lib/events/todayEvents";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
@@ -29,7 +30,6 @@ import {
   isCurlingCenterSlug,
   normalizeCurlingHistoryItems,
   resolveCenterSocialLinks,
-  resolveFeaturedProgramEventHref,
 } from "@/lib/centerDetailPageFields";
 import CurlingHistoryTimeline from "@/components/curlingHistoryTimeline";
 
@@ -507,10 +507,13 @@ export default async function CenterPage(props: CenterPageProps) {
   );
   const showCurlingHistory =
     isCurlingCenter && Boolean(curlingHistoryHeader || curlingHistoryItems.length > 0);
+  const midlandCurlingClubLogo = isCurlingCenter
+    ? acfImageFromField(curlingLayout?.midlandCurlingClubLogo, "Midland Curling Club")
+    : null;
 
   const centerScheduleLabel = resolveCenterScheduleLabel(slug, center.title ?? "");
-  const hasScheduleEmbed = hasTodayCenterScheduleEmbed(slug);
-  const showTodaySection = hasScheduleEmbed || todaysEvents.length > 0;
+  const hasTodayScheduleEmbed = hasTodayCenterScheduleEmbed(slug);
+  const showTodaySection = hasTodayScheduleEmbed || isCurlingCenter || todaysEvents.length > 0;
 
   const replacementCta = curlingLayout?.membershipReplacementCta;
   const membershipPlansHref = `/membership?center=${encodeURIComponent(slug)}#plans`;
@@ -528,7 +531,7 @@ export default async function CenterPage(props: CenterPageProps) {
     joinCardText = coerceWpRichText(replacementCta?.cardText).trim();
     joinCtaLabel = coerceWpRichText(replacementCta?.ctaLabel).trim() || "Learn more";
     joinCtaHref =
-      resolveFeaturedProgramEventHref(replacementCta?.featuredProgramEvent?.node ?? undefined) ??
+      replacementCta?.ctaUrl ??
       null;
   } else {
     joinSectionHeader = (readyToJoinLayout?.header ?? "").trim() || "Ready to join?";
@@ -732,15 +735,39 @@ export default async function CenterPage(props: CenterPageProps) {
 
       {centerAnnouncement ? <CenterAnnouncementBar centerSlug={slug} /> : null}
 
+      {midlandCurlingClubLogo ? (
+          <div className="flex justify-center mb-[-1rem]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={midlandCurlingClubLogo.url}
+              alt={midlandCurlingClubLogo.alt}
+              className="h-24 w-auto max-w-[220px] object-contain md:h-28"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        ) : null}
+
       {/* ── Section 2: What's Happening Today? ───────────────────────────── */}
       {showTodaySection ? (
       <section className="page-section" id="today">
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-10">
-            <h2 className="h2 text-center">What&rsquo;s Happening Today?</h2>
+            <h2 className="h2 text-center">
+              {isCurlingCenter ? <>This Week&rsquo;s Schedule</> : <>What&rsquo;s Happening Today?</>}
+            </h2>
           </div>
 
-          {hasScheduleEmbed ? (
+          {isCurlingCenter ? (
+            <div className="mx-auto max-w-3xl">
+              <div className="gmcc-schedule-embed">
+                <AutoHeightScheduleIframe
+                  src={CURLING_WEEKLY_SCHEDULE_EMBED_URL}
+                  title="Midland Curling Club Weekly Schedule"
+                />
+              </div>
+            </div>
+          ) : hasTodayScheduleEmbed ? (
             todaysEvents.length > 0 ? (
               <div className="grid grid-cols-1 items-start gap-8 sm:grid-cols-2">
                 <div className="gmcc-schedule-embed col-span-1">

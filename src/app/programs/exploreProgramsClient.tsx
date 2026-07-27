@@ -435,7 +435,7 @@ export default function ExploreProgramsClient({
   const [campTypes, setCampTypes] = useState<string[]>(initialFilters.campTypes);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Keep URL in sync for the two filters that drive directory header selection.
+  // Keep URL in sync for filters that are deep-linked (header selection + audience).
   useEffect(() => {
     if (isApplyingUrlStateRef.current) return;
     if (!shouldSyncUrlFromUserActionRef.current) return;
@@ -454,6 +454,12 @@ export default function ExploreProgramsClient({
       nextParams.delete("programArea");
     }
 
+    if (audience.length) {
+      nextParams.set("audience", audience.join(","));
+    } else {
+      nextParams.delete("audience");
+    }
+
     const current = clientSearchParams.toString();
     const next = nextParams.toString();
     if (next !== current) {
@@ -461,7 +467,7 @@ export default function ExploreProgramsClient({
       router.replace(href, { scroll: false });
     }
     shouldSyncUrlFromUserActionRef.current = false;
-  }, [offeringTypes, programAreas, pathname, router, clientSearchParams]);
+  }, [offeringTypes, programAreas, audience, pathname, router, clientSearchParams]);
 
   // Sync state when URL params change (e.g., navigating from navbar)
   useEffect(() => {
@@ -528,6 +534,12 @@ export default function ExploreProgramsClient({
     setForcedVariant(null);
     setProgramAreas(next);
   }
+
+  function setAudienceFromUser(next: string[]) {
+    shouldSyncUrlFromUserActionRef.current = true;
+    setAudience(next);
+  }
+
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -806,7 +818,7 @@ export default function ExploreProgramsClient({
                     <input
                       type="checkbox"
                       checked={audience.includes(a.slug)}
-                      onChange={() => setAudience(toggle(audience, a.slug))}
+                      onChange={() => setAudienceFromUser(toggle(audience, a.slug))}
                       className="cursor-pointer"
                     />
                     <span>{a.name}</span>

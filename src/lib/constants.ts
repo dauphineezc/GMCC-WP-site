@@ -19,6 +19,8 @@ export const CONTACT_EMAIL_HREF = `mailto:${CONTACT_EMAIL}`;
 /** Base URL of the drop-in / fitness schedule embed app. */
 export const SCHEDULE_EMBED_BASE_URL = "https://gmcc-drop-in-schedule.vercel.app";
 
+export const CURLING_WEEKLY_SCHEDULE_EMBED_URL = `${SCHEDULE_EMBED_BASE_URL}/week-curling.html`;
+
 /** Standalone league-management schedule embed app. */
 export const LEAGUE_SCHEDULE_EMBED_URL =
   "https://gmcc-league-management-system.vercel.app";

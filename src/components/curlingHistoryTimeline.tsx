@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import NavyWaveSection from "./navyWaveSection";
+import type { CenterPageHistoryItem } from "@/lib/centerDetailPageFields";
 
 const FALLBACK_STONE_SRC = "/primaryNavIcons/CurlingCenterIcon.png";
 const STONE_SIZE_PX = 64;
@@ -13,7 +14,7 @@ const MOBILE_CARD_VW = 0.85;
 
 export type CurlingHistoryTimelineProps = {
   heading?: string | null;
-  items: string[];
+  items: CenterPageHistoryItem[];
   /** Curling stone image used as the scrubber handle. */
   stoneUrl?: string | null;
   stoneAlt?: string | null;
@@ -39,8 +40,7 @@ export default function CurlingHistoryTimeline({
   stoneUrl,
   stoneAlt,
 }: CurlingHistoryTimelineProps) {
-  const cleanItems = (items ?? []).map((t) => t.trim()).filter(Boolean);
-  const count = cleanItems.length;
+  const count = items.length;
   const labelId = useId();
 
   const scrollerRef = useRef<HTMLDivElement | null>(null);
@@ -352,7 +352,7 @@ export default function CurlingHistoryTimeline({
               style={{ width: `${fraction * 100}%` }}
             />
 
-            {cleanItems.map((_, idx) => (
+            {items.map((_, idx) => (
               <button
                 key={idx}
                 type="button"
@@ -430,7 +430,7 @@ export default function CurlingHistoryTimeline({
                   : "100%",
             }}
           >
-            {cleanItems.map((text, idx) => (
+            {items.map((item, idx) => (
               <div
                 key={idx}
                 ref={(el) => {
@@ -453,9 +453,14 @@ export default function CurlingHistoryTimeline({
                   <p className="text-xs font-semibold uppercase tracking-widest text-gmcc-teal">
                     {idx + 1} / {count}
                   </p>
-                  <p className="body mt-3 whitespace-pre-line leading-relaxed text-neutral-700">
-                    {text}
-                  </p>
+                  {item.historyItemHeader ? (
+                    <h3 className="h3 text-gmcc-navy text-center">{item.historyItemHeader}</h3>
+                  ) : null}
+                  {item.historyItem ? (
+                    <p className="body mt-3 whitespace-pre-line leading-relaxed text-neutral-700 text-center">
+                      {item.historyItem}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             ))}
