@@ -1,45 +1,40 @@
 // src/app/(home)/sections/hero.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  HERO_VIDEO_VIMEO_EMBED_URL,
+  HERO_VIDEO_VIMEO_THUMBNAIL_URL,
+} from "@/lib/constants";
+import { useReduceMotionPreference } from "@/lib/useReduceMotionPreference";
+import Player from "@vimeo/player";
+import Image from "next/image";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Linkish = { title?: string | null; url?: string | null };
 
-function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReduced(mq.matches);
-
-    onChange();
-    mq.addEventListener?.("change", onChange);
-    return () => mq.removeEventListener?.("change", onChange);
-  }, []);
-
-  return reduced;
-}
+const coverMediaClassName =
+  "absolute left-1/2 top-1/2 h-[56.25vw] min-h-full w-[177.78vh] min-w-full -translate-x-1/2 -translate-y-1/2";
 
 export default function HeroSection({
   headline,
   subheadline,
-  mediaUrl,
-  mediaMimeType,
   primaryCta,
   secondaryCta,
 }: {
   headline: string;
   subheadline: string;
-  mediaUrl?: string | null;
-  mediaMimeType?: string | null;
   primaryCta: Linkish;
   secondaryCta?: Linkish | null;
 }) {
-  const reducedMotion = useReducedMotion();
+  const reduceMotion = useReduceMotionPreference();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const playerRef = useRef<Player | null>(null);
   const [inView, setInView] = useState(false);
+  const [videoPaused, setVideoPaused] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
 
-  const hasVideo = !!mediaUrl?.trim();
+  const showVideo = !reduceMotion && inView;
 
   useEffect(() => {
     const el = containerRef.current;
@@ -54,6 +49,67 @@ export default function HeroSection({
     return () => io.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (reduceMotion) {
+      setVideoPaused(false);
+      setPlayerReady(false);
+    }
+  }, [reduceMotion]);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!showVideo || !iframe) {
+      playerRef.current?.destroy().catch(() => {});
+      playerRef.current = null;
+      setPlayerReady(false);
+      return;
+    }
+
+    const player = new Player(iframe);
+    playerRef.current = player;
+    let cancelled = false;
+
+    player
+      .ready()
+      .then(() => {
+        if (!cancelled) setPlayerReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setPlayerReady(false);
+      });
+
+    const onPlay = () => setVideoPaused(false);
+    const onPause = () => setVideoPaused(true);
+
+    player.on("play", onPlay);
+    player.on("pause", onPause);
+
+    return () => {
+      cancelled = true;
+      player.off("play", onPlay);
+      player.off("pause", onPause);
+      player.destroy().catch(() => {});
+      playerRef.current = null;
+      setPlayerReady(false);
+    };
+  }, [showVideo]);
+
+  const toggleVideoPlayback = useCallback(async () => {
+    const player = playerRef.current;
+    if (!player) return;
+
+    try {
+      const paused = await player.getPaused();
+      if (paused) {
+        await player.play();
+      } else {
+        await player.pause();
+      }
+    } catch {
+      // Ignore transient player errors (e.g. during teardown).
+    }
+  }, []);
+
   return (
     <section className="pb-0">
       <div className="relative mb-8 w-full overflow-hidden bg-neutral-100">
@@ -63,37 +119,54 @@ export default function HeroSection({
             ref={containerRef}
             className="relative isolate h-[100svh] w-full overflow-hidden bg-neutral-200 select-none md:min-h-[700px]"
           >
-            {/* Video layer */}
-            <div className="absolute inset-x-0 -top-24 bottom-0 z-0 overflow-hidden md:top-0">
-              {hasVideo && !reducedMotion && inView ? (
-                <div
-                  className="
-                    absolute left-1/2 top-1/2
-                    h-[56.25vw] min-h-full
-                    w-[177.78vh] min-w-full
-                    -translate-x-1/2 -translate-y-1/2
-                  "
-                >
-                  <video
-                    className="h-full w-full object-cover pointer-events-none"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                    aria-hidden="true"
-                  >
-                    <source
-                      src={mediaUrl ?? undefined}
-                      type={mediaMimeType ?? (mediaUrl?.toLowerCase().endsWith(".mp4") ? "video/mp4" : undefined)}
-                    />
-                  </video>
+            {/* Video / thumbnail layer */}
+            <div
+              id="hero-background-media"
+              className="absolute inset-x-0 -top-24 bottom-0 z-0 overflow-hidden md:top-0"
+              aria-hidden="true"
+            >
+              {reduceMotion || !showVideo ? (
+                <div className={`${coverMediaClassName} relative`}>
+                  <Image
+                    src={HERO_VIDEO_VIMEO_THUMBNAIL_URL}
+                    alt=""
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="pointer-events-none object-cover"
+                  />
+                </div>
+              ) : null}
+
+              {showVideo ? (
+                <div className={coverMediaClassName}>
+                  <iframe
+                    ref={iframeRef}
+                    src={HERO_VIDEO_VIMEO_EMBED_URL}
+                    className="pointer-events-none h-full w-full"
+                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    title="Hero Video"
+                  />
                 </div>
               ) : null}
             </div>
 
+            {!reduceMotion ? (
+              <button
+                type="button"
+                className="absolute right-4 top-4 z-50 rounded-full border border-white/40 bg-black/40 px-3 py-2 text-xs font-sm text-white backdrop-blur-sm transition hover:bg-black/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60 md:right-8 md:top-8"
+                aria-pressed={!videoPaused}
+                aria-controls="hero-background-media"
+                disabled={!playerReady}
+                onClick={() => void toggleVideoPlayback()}
+              >
+                {videoPaused ? "Play" : "Pause"}
+              </button>
+            ) : null}
+
             {/* Dark overlay */}
-            <div className="absolute inset-0 z-10 pointer-events-none bg-black/40" />
+            <div className="pointer-events-none absolute inset-0 z-10 bg-black/40" />
 
             {/* Copy — top-aligned on mobile so subhead/CTAs clear the bottom wave */}
             <div className="absolute inset-0 z-20 flex items-start md:items-center">
@@ -124,10 +197,10 @@ export default function HeroSection({
             </div>
 
             {/* Bottom navy block to let wave cover ~1/3 of hero */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 md:h-[10%] h-[15%] bg-gmcc-navy" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[15%] bg-gmcc-navy md:h-[10%]" />
 
             {/* Wave */}
-            <div className="pointer-events-none absolute inset-x-0 md:bottom-[8.5%] bottom-[15%] z-40 w-full overflow-hidden leading-none">
+            <div className="pointer-events-none absolute inset-x-0 bottom-[15%] z-40 w-full overflow-hidden leading-none md:bottom-[8.5%]">
               <svg
                 viewBox="0 0 1440 180"
                 className="-ml-px block h-20 w-[calc(100%+2px)] md:h-28 lg:h-36"

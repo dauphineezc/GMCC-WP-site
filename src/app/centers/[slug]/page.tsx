@@ -754,7 +754,7 @@ export default async function CenterPage(props: CenterPageProps) {
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-10">
             <h2 className="h2 text-center">
-              {isCurlingCenter ? <>This Week&rsquo;s Schedule</> : <>What&rsquo;s Happening Today?</>}
+              {isCurlingCenter ? <>What&rsquo;s Happening This Week?</> : <>What&rsquo;s Happening Today?</>}
             </h2>
           </div>
 

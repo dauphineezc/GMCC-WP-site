@@ -39,6 +39,7 @@ export default async function LeagueSchedulesPage() {
             src={LEAGUE_SCHEDULE_EMBED_URL}
             style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
             loading="lazy"
+            allow="storage-access *"
             referrerPolicy="no-referrer-when-downgrade"
           />
         </div>

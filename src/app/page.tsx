@@ -47,13 +47,6 @@ type HomeData = {
       hero?: {
         heroHeadline?: string | null;
         heroSubheadline?: string | null;
-        heroMedia?: {
-          node?: {
-            sourceUrl?: string | null;
-            mediaItemUrl?: string | null;
-            mimeType?: string | null;
-          } | null;
-        } | null;
         heroPrimaryCtaLabel?: string | null;
         heroPrimaryCtaUrl?: string | null;
         heroSecondaryCtaLabel?: string | null;
@@ -649,8 +642,6 @@ export default async function HomePage() {
       <HeroSection
         headline={hero?.heroHeadline ?? "Serving Greater Midland for Over a Century"}
         subheadline={hero?.heroSubheadline ?? "Building healthier people, stronger families, and a more connected community."}
-        mediaUrl={hero?.heroMedia?.node?.sourceUrl ?? hero?.heroMedia?.node?.mediaItemUrl ?? null}
-        mediaMimeType={hero?.heroMedia?.node?.mimeType ?? null}
         primaryCta={{
           title: hero?.heroPrimaryCtaLabel ?? "Explore Programs",
           url: hero?.heroPrimaryCtaUrl ?? "/programs",

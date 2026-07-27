@@ -6,6 +6,14 @@
  * so they can't drift apart.
  */
 
+/** Vimeo embed for the homepage hero background video. */
+export const HERO_VIDEO_VIMEO_EMBED_URL =
+  "https://player.vimeo.com/video/1213380941?badge=0&autopause=0&autoplay=1&muted=1&loop=1";
+
+/** Static poster frame for the hero video (reduced motion + paused state). */
+export const HERO_VIDEO_VIMEO_THUMBNAIL_URL =
+  "https://i.vimeocdn.com/video/2184033906-2ef5f76ed298e195f1f61fc55065fe04e7c74e28f7a2dbd52b51a3f7a4e50ae8-d_1280?region=us";
+
 /** WebTrac online registration / "join now" entry point. */
 export const WEBTRAC_REGISTRATION_URL =
   "https://register.greatermidland.org/webtrac/web/search.html?Action=Start";
