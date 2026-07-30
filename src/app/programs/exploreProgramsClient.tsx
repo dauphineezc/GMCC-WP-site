@@ -435,30 +435,29 @@ export default function ExploreProgramsClient({
   const [campTypes, setCampTypes] = useState<string[]>(initialFilters.campTypes);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Keep URL in sync for filters that are deep-linked (header selection + audience).
+  // Keep URL in sync with the sidebar filters. Every filter that the effect
+  // below reads back out of the URL must also be written here, otherwise
+  // changing one filter wipes the others when the URL round-trips.
   useEffect(() => {
     if (isApplyingUrlStateRef.current) return;
     if (!shouldSyncUrlFromUserActionRef.current) return;
 
     const nextParams = new URLSearchParams(clientSearchParams.toString());
 
-    if (offeringTypes.length) {
-      nextParams.set("offeringType", offeringTypes.join(","));
-    } else {
-      nextParams.delete("offeringType");
-    }
+    const setOrDelete = (key: string, values: string[]) => {
+      if (values.length) {
+        nextParams.set(key, values.join(","));
+      } else {
+        nextParams.delete(key);
+      }
+    };
 
-    if (programAreas.length) {
-      nextParams.set("programArea", programAreas.join(","));
-    } else {
-      nextParams.delete("programArea");
-    }
-
-    if (audience.length) {
-      nextParams.set("audience", audience.join(","));
-    } else {
-      nextParams.delete("audience");
-    }
+    setOrDelete("offeringType", offeringTypes);
+    setOrDelete("programArea", programAreas);
+    setOrDelete("audience", audience);
+    setOrDelete("center", centers);
+    setOrDelete("skillLevel", skillLevels);
+    setOrDelete("campType", campTypes);
 
     const current = clientSearchParams.toString();
     const next = nextParams.toString();
@@ -467,7 +466,17 @@ export default function ExploreProgramsClient({
       router.replace(href, { scroll: false });
     }
     shouldSyncUrlFromUserActionRef.current = false;
-  }, [offeringTypes, programAreas, audience, pathname, router, clientSearchParams]);
+  }, [
+    offeringTypes,
+    programAreas,
+    audience,
+    centers,
+    skillLevels,
+    campTypes,
+    pathname,
+    router,
+    clientSearchParams,
+  ]);
 
   // Sync state when URL params change (e.g., navigating from navbar)
   useEffect(() => {
@@ -538,6 +547,16 @@ export default function ExploreProgramsClient({
   function setAudienceFromUser(next: string[]) {
     shouldSyncUrlFromUserActionRef.current = true;
     setAudience(next);
+  }
+
+  function setCentersFromUser(next: string[]) {
+    shouldSyncUrlFromUserActionRef.current = true;
+    setCenters(next);
+  }
+
+  function setSkillLevelsFromUser(next: string[]) {
+    shouldSyncUrlFromUserActionRef.current = true;
+    setSkillLevels(next);
   }
 
 
@@ -716,7 +735,7 @@ export default function ExploreProgramsClient({
                     <input
                       type="checkbox"
                       checked={centers.includes(c.slug)}
-                      onChange={() => setCenters(toggle(centers, c.slug))}
+                      onChange={() => setCentersFromUser(toggle(centers, c.slug))}
                       className="cursor-pointer"
                     />
                     <span>{c.title}</span>
@@ -784,7 +803,7 @@ export default function ExploreProgramsClient({
                     <input
                       type="checkbox"
                       checked={skillLevels.includes(sl)}
-                      onChange={() => setSkillLevels(toggle(skillLevels, sl))}
+                      onChange={() => setSkillLevelsFromUser(toggle(skillLevels, sl))}
                       className="cursor-pointer"
                     />
                     <span>{sl}</span>
@@ -840,6 +859,7 @@ export default function ExploreProgramsClient({
               setSkillLevels([]);
               setMemberships([]);
               setAudience([]);
+              setCampTypes([]);
               setOpenDropdowns(new Set());
               setForcedVariant(null);
             }}

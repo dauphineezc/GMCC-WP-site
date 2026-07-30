@@ -782,7 +782,7 @@ export default async function VisitPage() {
             ) : null}
 
             {varyingScheduleDisclaimer ? (
-            <p className="body mt-6 text-center text-neutral-600 whitespace-pre-line">
+            <p className="text-xs italic mt-4 text-center text-neutral-600 whitespace-pre-line">
               {varyingScheduleDisclaimer}
             </p>
           ) : null}

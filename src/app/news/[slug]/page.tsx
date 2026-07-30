@@ -88,39 +88,33 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
 
       {/* Page content - constrained width */}
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-          {/* LEFT COLUMN */}
-          <div className="col-span-1">
-            <header className="stack-3 max-w-3xl">
+      <header className="stack-3 max-w-3xl">
             <p className="text-sm text-neutral-600">{formatPublishDate(n.newsFields?.publishDate)}</p>
             <h1 className="h1 mt-4 mb-4">{n.title}</h1>
             <p className="text-sm text-neutral-600 mb-8">{n.newsFields?.author?.nodes?.map((a: any) => a.title + ", " + a.staffProfilesFields?.title).join(", ") ?? ""}</p>
             </header>
-         
-            {n.newsFields?.body ? (
-            <article className="prose max-w-3xl">
-                {/* If body is plain text area, keep newlines: */}
-                <div className="whitespace-pre-line">{n.newsFields.body}</div>
-            </article>
-            ) : null}
-            </div>
 
-            {/* RIGHT COLUMN */}
-            <div className="col-span-1">
-                {n.featuredImage?.node?.sourceUrl ? (
-                <div className="overflow-hidden rounded-2xl bg-neutral-100">
-                    <img
-                    src={n.featuredImage.node.sourceUrl}
-                    alt={n.featuredImage.node.altText || n.title}
-                    className="w-full h-auto object-cover"
-                    loading="eager"
-                    decoding="async"
-                    />
-                </div>
-                ) : null}
+        <article className="prose max-w-6xl">
+          {n.featuredImage?.node?.sourceUrl ? (
+            <div className="mb-12 overflow-hidden bg-neutral-100 sm:float-right sm:mb-8 sm:ml-16 sm:w-1/2 sm:max-w-md">
+              <img
+                src={n.featuredImage.node.sourceUrl}
+                alt={n.featuredImage.node.altText || n.title}
+                className="w-full h-auto object-cover"
+                loading="eager"
+                decoding="async"
+              />
             </div>
-        </div>
+          ) : null}
+
+          {n.newsFields?.body ? (
+            /* If body is plain text area, keep newlines: */
+            <div className="whitespace-pre-line">{n.newsFields.body}</div>
+          ) : null}
+
+          <div className="clear-both" />
+        </article>
       </div>
     </main>
   );
