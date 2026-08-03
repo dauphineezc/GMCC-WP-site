@@ -808,7 +808,7 @@ export default async function VisitPage() {
         ) : null}
         <Link
           href="/contact"
-          className="btn bg-gmcc-navy text-white hover:bg-neutral-100 mt-6 text-base px-8 py-3"
+          className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
         >
           Contact Us
         </Link>

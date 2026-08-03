@@ -408,8 +408,8 @@ export default async function AboutPage() {
 
         <div className="mt-6 grid gap-8 md:grid-cols-3">
           {/* Volunteer */}
-          <a href={volunteerCta ?? "#"} className="group overflow-hidden rounded-xl bg-gmcc-teal shadow-sm ring-1 ring-neutral-200">
-            <div className="aspect-[16/9] w-full">
+          <a href={volunteerCta ?? "#"} className="card card-hover bg-gmcc-teal overflow-hidden">
+            <div className="aspect-[16/9] w-full object-cover">
               <ImageOrPlaceholder src={volunteerImageUrl} alt={volunteerImageAlt} />
             </div>
             <div className="p-5">
@@ -420,8 +420,8 @@ export default async function AboutPage() {
           </a>
 
           {/* Donate */}
-          <a href={donateCta ?? "#"} className="group overflow-hidden rounded-xl bg-gmcc-teal shadow-sm ring-1 ring-neutral-200">
-            <div className="aspect-[16/9] w-full">
+          <a href={donateCta ?? "#"} className="card card-hover bg-gmcc-teal overflow-hidden">
+            <div className="aspect-[16/9] rounded-2xl">
               <ImageOrPlaceholder src={donateImageUrl} alt={donateImageAlt} />
             </div>
             <div className="p-5">
@@ -432,7 +432,7 @@ export default async function AboutPage() {
           </a>
 
           {/* Sponsor */}
-          <a href={sponsorCta ?? "#"} className="group overflow-hidden rounded-xl bg-gmcc-teal shadow-sm ring-1 ring-neutral-200">
+          <a href={sponsorCta ?? "#"} className="card card-hover bg-gmcc-teal overflow-hidden">
             <div className="aspect-[16/9] w-full">
               <ImageOrPlaceholder src={sponsorImageUrl} alt={sponsorImageAlt} />
             </div>

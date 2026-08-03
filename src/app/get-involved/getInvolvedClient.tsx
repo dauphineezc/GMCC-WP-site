@@ -149,11 +149,10 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
       </section>
 
       <section id="donate" className="page-section stack-6 scroll-mt-24">
-        <div className="grid gap-16 md:grid-cols-2 items-start">
+        <h2 className="h2 mb-2">Donate</h2>
+        <div className="grid gap-16 md:grid-cols-2 items-start pt-4">
           {/* LEFT COLUMN */}
           <div className="stack-6">
-            <h2 className="h2 mb-2">Donate</h2>
-
             <TextBlock text={donate?.donateLongDescription} />
 
             {/* physical donation content */}
@@ -201,9 +200,9 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
         fullBleed={false}
         bandClassName="py-12"
       >
-        <div className="grid gap-16 md:grid-cols-2 items-start">
+        <h2 className="h2 mb-2 text-white">Volunteer</h2>
+        <div className="grid gap-16 md:grid-cols-2 items-start pt-4">
           <div className="stack-3 [&_p]:text-white">
-            <h2 className="h2 mb-2 text-white">Volunteer</h2>
             <TextBlock text={volunteer?.volunteerLongDescription} />
 
             {volunteer?.volunteerApplication ? (
@@ -237,8 +236,6 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
       {/* SPONSOR */}
       <section id="sponsor" className="page-section stack-6 scroll-mt-24">
         <h2 className="h2 mb-2">Sponsor</h2>
-
-        <TextBlock text={sponsor?.sponsorLongDescription} />
             <div className="stack-6 pt-4">
               <div className="grid gap-16 md:grid-cols-2 items-start">
                 <div className="stack-3">

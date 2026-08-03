@@ -271,16 +271,13 @@ export default function ExploreMembershipsClient({
 
   const { intro, bullets } = getBodyParts(fields.quizDescription);
 
-  const isCorporateCenter = activeCenter.toLowerCase().includes("corteva") ||
-    activeCenter.toLowerCase().includes("corporate");
-
   const isActivityPassTitle = useCallback((title: string) => {
     return title.toLowerCase().includes("activity pass");
   }, []);
 
-  /** Community Center only: activity pass shown as a fourth, secondary card */
+  /** Community Center only: activity pass in the primary grid with secondary styling */
   const activityPassTier: TierGroup | null = useMemo(() => {
-    if (!activeCenter || isCorporateCenter) return null;
+    if (!activeCenter) return null;
     const centerName = centerLinks.find((c) => c.slug === activeCenter)?.label ?? "";
     const centerLower = centerName.toLowerCase();
     const isCommunity =
@@ -306,14 +303,13 @@ export default function ExploreMembershipsClient({
     memberships,
     activeCenter,
     centerLinks,
-    isCorporateCenter,
     getMembershipTierName,
     getAudienceFromTitle,
     isActivityPassTitle,
   ]);
 
   const tierGroups: TierGroup[] = useMemo(() => {
-    if (!activeCenter || isCorporateCenter) return [];
+    if (!activeCenter) return [];
     const centerName = centerLinks.find((c) => c.slug === activeCenter)?.label ?? "";
     const centerLower = centerName.toLowerCase();
     const isCommunity =
@@ -366,7 +362,6 @@ export default function ExploreMembershipsClient({
     memberships,
     activeCenter,
     centerLinks,
-    isCorporateCenter,
     getMembershipTierName,
     getAudienceFromTitle,
     isActivityPassTitle,
@@ -375,12 +370,14 @@ export default function ExploreMembershipsClient({
   const MEMBERSHIP_TIER_COLS = 3;
   const maxVisibleTierCards = Math.max(1, MEMBERSHIP_TIER_COLS);
   const hiddenTierCount = Math.max(0, tierGroups.length - maxVisibleTierCards);
-  const hiddenActivityPassCount = activityPassTier ? 1 : 0;
-  const hiddenMembershipCardCount = hiddenTierCount + hiddenActivityPassCount;
-  const hasHiddenMembershipCards = hiddenMembershipCardCount > 0;
-  const visibleTierGroups = showAllTierCards
-    ? tierGroups
-    : tierGroups.slice(0, maxVisibleTierCards);
+  const hasHiddenMembershipCards = hiddenTierCount > 0;
+  // Activity pass sits in the primary grid (always visible) with secondary styling
+  const visibleTierGroups = [
+    ...(showAllTierCards
+      ? tierGroups
+      : tierGroups.slice(0, maxVisibleTierCards)),
+    ...(activityPassTier ? [activityPassTier] : []),
+  ];
 
   useEffect(() => {
     setShowAllTierCards(false);
@@ -541,79 +538,43 @@ export default function ExploreMembershipsClient({
               </div>
 
               {/* Membership tier cards */}
-              {isCorporateCenter ? (
-                <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-sm">
-                  <h3 className="h3 mb-2">Corporate Wellness</h3>
-                  <p className="body mb-4">
-                    Corporate memberships are available through Corporate partners. Please visit the dedicated page for pricing and enrollment details.
-                  </p>
-                  <a href="/membership/corporate" className="btn btn-primary">
-                    View Corporate Wellness Options
-                  </a>
-                </div>
-              ) : tierGroups.length > 0 || activityPassTier ? (
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    {tierGroups.length > 0 ? (
-                      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                        {visibleTierGroups.map((group) => (
-                          <TierCard
-                            key={`${activeCenter}-${group.tierName}`}
-                            tierName={group.tierName}
-                            variants={group.variants}
-                            getAudienceFromTitle={getAudienceFromTitle}
-                            featured={isAllAccessTier(group.tierName)}
-                          />
-                        ))}
-                      </div>
-                    ) : null}
-                    {hasHiddenMembershipCards && !showAllTierCards ? (
-                      <div className="pt-4 flex justify-center items-center">
-                        <button
-                          type="button"
-                          onClick={() => setShowAllTierCards(true)}
-                          className="text-gmcc-navy hover:underline text-sm font-semibold"
-                        >
-                          {`Show more (${hiddenMembershipCardCount} more)`}
-                        </button>
-                      </div>
-                    ) : null}
-                    {hasHiddenMembershipCards && showAllTierCards && !activityPassTier ? (
-                      <div className="pt-4 flex justify-center items-center">
-                        <button
-                          type="button"
-                          onClick={() => setShowAllTierCards(false)}
-                          className="text-gmcc-navy hover:underline text-sm font-semibold"
-                        >
-                          Show less
-                        </button>
-                      </div>
-                    ) : null}
+              {visibleTierGroups.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {visibleTierGroups.map((group) => {
+                      const isActivityPass = isActivityPassTitle(group.tierName);
+                      return (
+                        <TierCard
+                          key={`${activeCenter}-${group.tierName}`}
+                          tierName={group.tierName}
+                          variants={group.variants}
+                          getAudienceFromTitle={getAudienceFromTitle}
+                          featured={!isActivityPass && isAllAccessTier(group.tierName)}
+                          secondary={isActivityPass}
+                        />
+                      );
+                    })}
                   </div>
-                  {activityPassTier && showAllTierCards ? (
-                    <div className="space-y-3">
-                      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                        <div className="lg:col-start-2">
-                          <TierCard
-                            key={`${activeCenter}-${activityPassTier.tierName}`}
-                            tierName={activityPassTier.tierName}
-                            variants={activityPassTier.variants}
-                            getAudienceFromTitle={getAudienceFromTitle}
-                            secondary
-                          />
-                        </div>
-                      </div>
-                      {hasHiddenMembershipCards ? (
-                        <div className="pt-4 flex justify-center items-center">
-                          <button
-                            type="button"
-                            onClick={() => setShowAllTierCards(false)}
-                            className="text-gmcc-navy hover:underline text-sm font-semibold"
-                          >
-                            Show less
-                          </button>
-                        </div>
-                      ) : null}
+                  {hasHiddenMembershipCards && !showAllTierCards ? (
+                    <div className="pt-4 flex justify-center items-center">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllTierCards(true)}
+                        className="text-gmcc-navy hover:underline text-sm font-semibold"
+                      >
+                        {`Show more (${hiddenTierCount} more)`}
+                      </button>
+                    </div>
+                  ) : null}
+                  {hasHiddenMembershipCards && showAllTierCards ? (
+                    <div className="pt-4 flex justify-center items-center">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllTierCards(false)}
+                        className="text-gmcc-navy hover:underline text-sm font-semibold"
+                      >
+                        Show less
+                      </button>
                     </div>
                   ) : null}
                 </div>
@@ -765,7 +726,7 @@ export default function ExploreMembershipsClient({
               </p>
               <a
                 href={WEBTRAC_REGISTRATION_URL}
-                className="btn bg-gmcc-navy text-white hover:bg-neutral-100 mt-6 text-base px-8 py-3"
+                className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
               >
                 Contact Us
               </a>

@@ -1,5 +1,5 @@
 import { wpFetch } from "@/lib/wp";
-import { CENTER_TITLE_ORDER } from "@/lib/constants";
+import { CENTER_TITLE_ORDER, WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import PhoneLink from "@/components/phoneLink";
 
@@ -55,6 +55,8 @@ const CONTACT_PAGE_QUERY = /* GraphQL */ `
         contactFormDescription
 
         serveWithHeartStatement
+        serveWithHeartButtonLabel
+        serveWithHeartButtonLink
       }
     }
   }
@@ -196,7 +198,15 @@ export default async function ContactPage() {
 
       {f?.serveWithHeartStatement ? (
         <section className="page-section stack-2">
-          <p className="mb-4 text-center text-lg text-neutral-700">{f?.serveWithHeartStatement}</p>
+          <p className="text-center text-lg text-neutral-700">{f?.serveWithHeartStatement}</p>
+          <div className="text-center">
+            <a
+              href={f?.serveWithHeartButtonLink ?? "#"}
+              className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
+            >
+              {f?.serveWithHeartButtonLabel}
+            </a>
+          </div>
         </section>
       ) : null}
     </main>

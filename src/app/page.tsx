@@ -24,19 +24,18 @@ type GqlImage = {
   node?: { sourceUrl?: string | null; mediaItemUrl?: string | null; altText?: string | null } | null;
 };
 
-type LinkedProgramPage = {
-  uri?: string | null;
-  featuredImage?: GqlImage | null;
-  heroFields?: {
-    heroImage?: GqlImage | null;
-  } | null;
-};
-
 type HomeProgramSlot = {
-  programPageLink?: { nodes?: LinkedProgramPage[] | null } | null;
+  programPageLink?: string | null;
   programLabel?: string | null;
   programCaption?: string | null;
   programImage?: GqlImage | null;
+};
+
+type TimelineItemRow = {
+  date?: string | null;
+  title?: string | null;
+  body?: string | null;
+  image?: GqlImage | null;
 };
 
 type HomeData = {
@@ -66,6 +65,8 @@ type HomeData = {
         program6?: HomeProgramSlot | null;
         program7?: HomeProgramSlot | null;
         program8?: HomeProgramSlot | null;
+        program9?: HomeProgramSlot | null;
+        program10?: HomeProgramSlot | null;
       } | null;
 
       campaignBanner?: {
@@ -103,16 +104,7 @@ type HomeData = {
 
       historyTimeline?: {
         historyHeader?: string | null;
-        timelineItems?: {
-          item1?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
-          item2?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
-          item3?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
-          item4?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
-          item5?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
-          item6?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
-          item7?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
-          item8?: { date?: string | null; title?: string | null; body?: string | null; image?: GqlImage | null } | null;
-        } | null;
+        timelineItems?: Array<TimelineItemRow | null> | null;
       } | null;
 
       testimonialHeader?: string | null;
@@ -166,26 +158,22 @@ function normalizeProgramsCards(programs: HomeData["page"]["homepageFields"] ext
     ? P
     : Record<string, HomeProgramSlot | null | undefined> | null | undefined
   : Record<string, HomeProgramSlot | null | undefined> | null | undefined) {
-  const slots = ["program1", "program2", "program3", "program4", "program5", "program6", "program7", "program8"] as const;
+  const slots = ["program1", "program2", "program3", "program4", "program5", "program6", "program7", "program8", "program9", "program10"] as const;
 
   return slots
     .map((k) => programs?.[k])
     .filter(Boolean)
     .map((p) => {
       const slot = p as HomeProgramSlot;
-      const linkedPage = slot.programPageLink?.nodes?.[0];
-      const rawLink = linkedPage?.uri;
-      const href = typeof rawLink === "string" ? rawLink : "/programs";
+      const rawLink = (slot.programPageLink ?? "").trim();
+      const href = rawLink || "/programs";
 
       const label = (slot.programLabel ?? "").trim();
       const caption = (slot.programCaption ?? "").trim();
-      const resolvedImage =
-        acfImageFromField(slot.programImage, label) ??
-        acfImageFromField(linkedPage?.heroFields?.heroImage, label) ??
-        acfImageFromField(linkedPage?.featuredImage, label);
+      const resolvedImage = acfImageFromField(slot.programImage, label);
 
       return {
-        href: href || "/programs",
+        href,
         label,
         caption: caption || undefined,
         imageUrl: resolvedImage?.url ?? null,
@@ -211,18 +199,21 @@ function normalizeImpactStats(stats: HomeData["page"]["homepageFields"] extends 
     .filter((s) => (s.value || "").trim() || (s.label || "").trim() || (s.context || "").trim());
 }
 
-function normalizeTimelineItems(timelineItems: any) {
-  const slots = ["item1", "item2", "item3", "item4", "item5", "item6"] as const;
-  return slots
-    .map((k) => timelineItems?.[k])
+function normalizeTimelineItems(timelineItems?: Array<TimelineItemRow | null> | null) {
+  const rows = Array.isArray(timelineItems) ? timelineItems : [];
+  return rows
     .filter(Boolean)
-    .map((it: any) => ({
-      date: it?.date ?? "",
-      title: it?.title ?? "",
-      body: it?.body ?? "",
-      imageUrl: it?.image?.node?.sourceUrl ?? null,
-      imageAlt: it?.image?.node?.altText ?? "",
-    }))
+    .map((it) => {
+      const row = it as TimelineItemRow;
+      const resolvedImage = acfImageFromField(row.image, row.title ?? "");
+      return {
+        date: row.date ?? "",
+        title: row.title ?? "",
+        body: row.body ?? "",
+        imageUrl: resolvedImage?.url ?? null,
+        imageAlt: resolvedImage?.alt ?? "",
+      };
+    })
     .filter((it) => (it.date || "").trim() || (it.title || "").trim() || (it.body || "").trim());
 }
 
@@ -350,15 +341,7 @@ query HomePage($uri: ID!) {
 
       programs {
         program1 {
-          programPageLink {
-            nodes {
-              ... on Page {
-                uri
-                featuredImage { node { sourceUrl mediaItemUrl altText } }
-                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
-              }
-            }
-          }
+          programPageLink
           programLabel
           programCaption
           programImage {
@@ -370,15 +353,7 @@ query HomePage($uri: ID!) {
           }
         }
         program2 {
-          programPageLink {
-            nodes {
-              ... on Page {
-                uri
-                featuredImage { node { sourceUrl mediaItemUrl altText } }
-                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
-              }
-            }
-          }
+          programPageLink
           programLabel
           programCaption
           programImage {
@@ -390,15 +365,7 @@ query HomePage($uri: ID!) {
           }
         }
         program3 {
-          programPageLink {
-            nodes {
-              ... on Page {
-                uri
-                featuredImage { node { sourceUrl mediaItemUrl altText } }
-                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
-              }
-            }
-          }
+          programPageLink
           programLabel
           programCaption
           programImage {
@@ -410,15 +377,7 @@ query HomePage($uri: ID!) {
           }
         }
         program4 {
-          programPageLink {
-            nodes {
-              ... on Page {
-                uri
-                featuredImage { node { sourceUrl mediaItemUrl altText } }
-                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
-              }
-            }
-          }
+          programPageLink
           programLabel
           programCaption
           programImage {
@@ -430,15 +389,7 @@ query HomePage($uri: ID!) {
           }
         }
         program5 {
-          programPageLink {
-            nodes {
-              ... on Page {
-                uri
-                featuredImage { node { sourceUrl mediaItemUrl altText } }
-                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
-              }
-            }
-          }
+          programPageLink
           programLabel
           programCaption
           programImage {
@@ -450,15 +401,7 @@ query HomePage($uri: ID!) {
           }
         }
         program6 {
-          programPageLink {
-            nodes {
-              ... on Page {
-                uri
-                featuredImage { node { sourceUrl mediaItemUrl altText } }
-                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
-              }
-            }
-          }
+          programPageLink
           programLabel
           programCaption
           programImage {
@@ -470,15 +413,7 @@ query HomePage($uri: ID!) {
           }
         }
         program7 {
-          programPageLink {
-            nodes {
-              ... on Page {
-                uri
-                featuredImage { node { sourceUrl mediaItemUrl altText } }
-                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
-              }
-            }
-          }
+          programPageLink
           programLabel
           programCaption
           programImage {
@@ -490,15 +425,31 @@ query HomePage($uri: ID!) {
           }
         }
         program8 {
-          programPageLink {
-            nodes {
-              ... on Page {
-                uri
-                featuredImage { node { sourceUrl mediaItemUrl altText } }
-                heroFields { heroImage { node { sourceUrl mediaItemUrl altText } } }
-              }
+          programPageLink
+          programLabel
+          programCaption
+          programImage {
+            node {
+              sourceUrl
+              mediaItemUrl
+              altText
             }
           }
+        }
+          program9 {
+          programPageLink
+          programLabel
+          programCaption
+          programImage {
+            node {
+              sourceUrl
+              mediaItemUrl
+              altText
+            }
+          }
+        }
+        program10 {
+          programPageLink
           programLabel
           programCaption
           programImage {
@@ -552,14 +503,10 @@ query HomePage($uri: ID!) {
       historyTimeline {
         historyHeader
         timelineItems {
-          item1 { date title body image { node { sourceUrl altText } } }
-          item2 { date title body image { node { sourceUrl altText } } }
-          item3 { date title body image { node { sourceUrl altText } } }
-          item4 { date title body image { node { sourceUrl altText } } }
-          item5 { date title body image { node { sourceUrl altText } } }
-          item6 { date title body image { node { sourceUrl altText } } }
-          item7 { date title body image { node { sourceUrl altText } } }
-          item8 { date title body image { node { sourceUrl altText } } }
+          date
+          title
+          body
+          image { node { sourceUrl mediaItemUrl altText } }
         }
       }
 

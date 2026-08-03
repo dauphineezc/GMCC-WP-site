@@ -1,7 +1,7 @@
 // src/app/(home)/sections/programs.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type HTMLAttributes } from "react";
 import Link from "next/link";
 import { getScrollerContentWidth } from "@/lib/scrollerContentWidth";
 
@@ -22,14 +22,13 @@ type ProgramsSectionProps = {
 const DESKTOP_COLS = 4;
 const COL_GAP_PX = 24; // gap-6
 const EDGE_PAD_PX = 6; // scroller px-[6px]; scroll-padding only
-/** Subpixel / gap / floor(column width) can make the last snap a few px past maxScrollLeft; too small breaks the final desktop "page". */
-const SNAP_EPSILON_PX = { md: 32, sm: 12 } as const;
+/** Triple the track so we can jump between identical copies without a visible reset. */
+const LOOP_COPIES = 3;
 
 export default function ProgramsSection({
   programs,
   heading = "Programs",
-}: 
-  ProgramsSectionProps) {
+}: ProgramsSectionProps) {
   const items = useMemo(
     () =>
       (programs ?? []).filter(
@@ -49,15 +48,32 @@ export default function ProgramsSection({
   const [desktopColW, setDesktopColW] = useState<number>(260);
   const [mobileColW, setMobileColW] = useState<number>(0);
 
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [atStart, setAtStart] = useState(true);
-  const [atEnd, setAtEnd] = useState(false);
-
   const isProgrammaticScroll = useRef(false);
   const isDraggingRef = useRef(false);
   const dragStartX = useRef(0);
   const dragScrollLeft = useRef(0);
   const didDragRef = useRef(false);
+
+  const n = items.length;
+  // Loop whenever there is more than one full viewport of cards to scroll through.
+  const loopEnabled = n > (isMd ? DESKTOP_COLS : 1);
+
+  const trackItems = useMemo(() => {
+    if (!n) return [] as Array<{ program: ProgramCard; logical: number; copy: number; key: string }>;
+    const copies = loopEnabled ? LOOP_COPIES : 1;
+    const out: Array<{ program: ProgramCard; logical: number; copy: number; key: string }> = [];
+    for (let copy = 0; copy < copies; copy++) {
+      for (let i = 0; i < n; i++) {
+        out.push({
+          program: items[i],
+          logical: i,
+          copy,
+          key: `${copy}-${items[i].href}-${i}`,
+        });
+      }
+    }
+    return out;
+  }, [items, n, loopEnabled]);
 
   // Breakpoint tracking
   useEffect(() => {
@@ -103,58 +119,67 @@ export default function ProgramsSection({
     };
   }, []);
 
-  // Snap helpers
-  const getSnapLeftForCell = (el: HTMLDivElement) => el.offsetLeft;
-
-  const getSnapPositions = () =>
-    cellRefs.current
-      .map((el) => (el ? getSnapLeftForCell(el) : null))
-      .filter((v): v is number => v !== null)
-      .sort((a, b) => a - b);
-
-  // Max snap index to keep only FULL cards visible:
-  // - mobile: last card
-  // - desktop: last "frame start" = (n - DESKTOP_COLS)
-  const getMaxIndex = (n: number) => {
-    if (n <= 0) return 0;
-    if (!isMd) return n - 1;
-    return Math.max(0, n - DESKTOP_COLS);
+  const getSnapLeftForCell = (el: HTMLDivElement, scroller: HTMLDivElement) => {
+    return (
+      el.getBoundingClientRect().left -
+      scroller.getBoundingClientRect().left +
+      scroller.scrollLeft -
+      EDGE_PAD_PX
+    );
   };
 
-  // Last snap index actually reachable by scrollLeft.
-  const getMaxReachableIndex = (scroller: HTMLDivElement, positions: number[]) => {
-    const epsilon = isMd ? SNAP_EPSILON_PX.md : SNAP_EPSILON_PX.sm;
-    const maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
-    const cap = getMaxIndex(positions.length);
-    let reachable = 0;
-    for (let i = 0; i < positions.length; i++) {
-      if (positions[i] <= maxScrollLeft + epsilon) reachable = i;
-    }
-    reachable = Math.min(reachable, cap);
-    // Last desktop frame: layout math can overshoot maxScrollLeft by more than epsilon; still allow scrolling to the end.
-    if (isMd && cap > reachable && positions.length > DESKTOP_COLS) {
-      const lastSnap = positions[cap];
-      if (lastSnap > maxScrollLeft && lastSnap - maxScrollLeft <= COL_GAP_PX * 2 + 8) {
-        reachable = cap;
-      }
-    }
-    return reachable;
-  };
-
-  const syncEdgeAndActive = () => {
+  const getSnapPositions = () => {
     const scroller = scrollerRef.current;
-    if (!scroller) return;
+    if (!scroller) return [] as number[];
+    return cellRefs.current
+      .slice(0, trackItems.length)
+      .map((el) => (el ? getSnapLeftForCell(el, scroller) : null))
+      .filter((v): v is number => v !== null);
+  };
 
+  /** Width of one logical set (distance from copy 0 start → copy 1 start). */
+  const getSetWidth = () => {
+    if (!loopEnabled || n <= 0) return 0;
+    const scroller = scrollerRef.current;
+    const first = cellRefs.current[0];
+    const second = cellRefs.current[n];
+    if (!scroller || !first || !second) return 0;
+    return getSnapLeftForCell(second, scroller) - getSnapLeftForCell(first, scroller);
+  };
+
+  /** Keep scrollLeft inside the middle copy so prev/next never hit a hard edge. */
+  const normalizeLoopScroll = () => {
+    if (!loopEnabled) return;
+    const scroller = scrollerRef.current;
+    const setWidth = getSetWidth();
+    if (!scroller || setWidth <= 0) return;
+
+    let left = scroller.scrollLeft;
+    // Middle copy occupies [setWidth, 2*setWidth)
+    if (left >= setWidth && left < setWidth * 2) return;
+
+    while (left < setWidth) left += setWidth;
+    while (left >= setWidth * 2) left -= setWidth;
+
+    if (Math.abs(left - scroller.scrollLeft) < 0.5) return;
+
+    const prevSnap = scroller.style.scrollSnapType;
+    scroller.style.scrollSnapType = "none";
+    scroller.scrollLeft = left;
+    // Restore snap after the jump so the next gesture still snaps.
+    requestAnimationFrame(() => {
+      scroller.style.scrollSnapType = prevSnap || "x mandatory";
+    });
+  };
+
+  const findNearestAbsIndex = () => {
+    const scroller = scrollerRef.current;
     const positions = getSnapPositions();
-    if (!positions.length) return;
+    if (!scroller || !positions.length) return loopEnabled ? n : 0;
 
-    const epsilon = isMd ? SNAP_EPSILON_PX.md : SNAP_EPSILON_PX.sm;
     const current = scroller.scrollLeft;
-
-    // nearest snap index (History-style)
     let bestIdx = 0;
     let bestDist = Number.POSITIVE_INFINITY;
-
     for (let i = 0; i < positions.length; i++) {
       const dist = Math.abs(positions[i] - current);
       if (dist < bestDist) {
@@ -162,66 +187,84 @@ export default function ProgramsSection({
         bestIdx = i;
       }
     }
-
-    const maxIdx = getMaxReachableIndex(scroller, positions);
-    const clampedIdx = Math.max(0, Math.min(bestIdx, maxIdx));
-
-    setActiveIndex(clampedIdx);
-    setAtStart(clampedIdx === 0);
-
-    // treat as "end" if you’re within epsilon of the last full-frame snap
-    setAtEnd(
-      maxIdx === 0 ||
-        Math.abs(current - positions[maxIdx]) <= epsilon ||
-        clampedIdx === maxIdx
-    );
+    return bestIdx;
   };
 
-  const scrollToIndex = (idx: number) => {
+  const syncActiveIndex = () => {
+    if (!isProgrammaticScroll.current) normalizeLoopScroll();
+  };
+
+  const scrollToAbsIndex = (absIdx: number, behavior: ScrollBehavior = "smooth") => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
     const positions = getSnapPositions();
     if (!positions.length) return;
 
-    const n = positions.length;
-    const maxIdx = getMaxReachableIndex(scroller, positions);
-    const targetIdx = Math.max(0, Math.min(idx, maxIdx));
-    const maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
-    const lastFrameIdx = getMaxIndex(n);
-    const rawLeft = positions[targetIdx];
-    // Last desktop frame: ideal snap can sit barely beyond maxScrollLeft; scroll to the true end so card 8 is not clipped off the rail.
-    const targetLeft =
-      isMd && targetIdx === lastFrameIdx && n > DESKTOP_COLS && rawLeft > maxScrollLeft
-        ? maxScrollLeft
-        : Math.max(0, Math.min(rawLeft, maxScrollLeft));
+    const clamped = Math.max(0, Math.min(absIdx, positions.length - 1));
+    const targetLeft = Math.max(0, positions[clamped]);
 
     isProgrammaticScroll.current = true;
-    scroller.scrollTo({ left: targetLeft, behavior: "smooth" });
+    scroller.scrollTo({ left: targetLeft, behavior });
 
+    const settleMs = behavior === "smooth" ? 450 : 0;
     window.setTimeout(() => {
+      normalizeLoopScroll();
       isProgrammaticScroll.current = false;
-      syncEdgeAndActive();
-    }, 450);
+      syncActiveIndex();
+    }, settleMs);
   };
 
-  const goPrev = () => scrollToIndex(activeIndex - 1);
-  const goNext = () => scrollToIndex(activeIndex + 1);
+  const canNavigate = loopEnabled;
 
-  // Keep active + edges in sync on scroll
+  const goPrev = () => {
+    if (!canNavigate) return;
+    scrollToAbsIndex(findNearestAbsIndex() - 1);
+  };
+  const goNext = () => {
+    if (!canNavigate) return;
+    scrollToAbsIndex(findNearestAbsIndex() + 1);
+  };
+
+  // Start on the middle copy so both directions have runway.
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller || !n) return;
+
+    if (!loopEnabled) {
+      scroller.scrollLeft = 0;
+      return;
+    }
+
+    // Wait a frame so cell refs / column widths are laid out.
+    const id = requestAnimationFrame(() => {
+      const middleStart = cellRefs.current[n];
+      if (!middleStart) return;
+      isProgrammaticScroll.current = true;
+      scroller.scrollLeft = getSnapLeftForCell(middleStart, scroller);
+      requestAnimationFrame(() => {
+        isProgrammaticScroll.current = false;
+      });
+    });
+
+    return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [n, loopEnabled, isMd, desktopColW, mobileColW]);
+
+  // Normalize when the user crosses a copy boundary.
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
     const onScroll = () => {
-      if (!isProgrammaticScroll.current) syncEdgeAndActive();
+      if (!isProgrammaticScroll.current) syncActiveIndex();
     };
 
     scroller.addEventListener("scroll", onScroll, { passive: true });
-    syncEdgeAndActive();
+    syncActiveIndex();
 
-    const raf = requestAnimationFrame(() => syncEdgeAndActive());
-    const timeout = window.setTimeout(() => syncEdgeAndActive(), 60);
+    const raf = requestAnimationFrame(() => syncActiveIndex());
+    const timeout = window.setTimeout(() => syncActiveIndex(), 60);
 
     return () => {
       scroller.removeEventListener("scroll", onScroll);
@@ -229,7 +272,7 @@ export default function ProgramsSection({
       window.clearTimeout(timeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length, isMd, desktopColW, mobileColW]);
+  }, [trackItems.length, isMd, desktopColW, mobileColW, loopEnabled]);
 
   // Mouse drag-to-scroll (history-style). We disable snap while dragging and
   // suppress click-through when the gesture was actually a drag.
@@ -270,7 +313,8 @@ export default function ProgramsSection({
       scroller.style.scrollSnapType = "x mandatory";
       scroller.style.cursor = "grab";
       scroller.classList.remove("select-none");
-      syncEdgeAndActive();
+      normalizeLoopScroll();
+      syncActiveIndex();
       // Clear after click-capture phase has a chance to run.
       window.setTimeout(() => {
         didDragRef.current = false;
@@ -297,7 +341,7 @@ export default function ProgramsSection({
       scroller.removeEventListener("click", onClickCapture, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length, isMd]);
+  }, [trackItems.length, isMd, loopEnabled]);
 
   if (!items.length) return null;
 
@@ -329,7 +373,7 @@ export default function ProgramsSection({
         </div>
 
         <a
-          href={'/programs'}
+          href={"/programs"}
           className="block text-center mt-2 md:text-right md:mt-0 text-sm text-gmcc-navy font-semibold underline hover:translate-y-[-2px] hover:text-gmcc-teal"
         >
           {"View all programs"}
@@ -340,7 +384,7 @@ export default function ProgramsSection({
             <button
               type="button"
               onClick={goPrev}
-              disabled={atStart}
+              disabled={!canNavigate}
               aria-label="Previous programs"
               className={`${arrowBtn} hidden shrink-0 md:inline-flex`}
             >
@@ -377,9 +421,9 @@ export default function ProgramsSection({
                   minWidth: "100%",
                 }}
               >
-                {items.map((p, idx) => (
+                {trackItems.map((entry, idx) => (
                   <div
-                    key={`${p.href}-${idx}`}
+                    key={entry.key}
                     ref={(el) => {
                       cellRefs.current[idx] = el;
                     }}
@@ -388,9 +432,12 @@ export default function ProgramsSection({
                       scrollSnapAlign: "start",
                       scrollSnapStop: "always",
                     }}
+                    {...(loopEnabled && entry.copy !== 1
+                      ? ({ "aria-hidden": true, inert: true } satisfies HTMLAttributes<HTMLDivElement>)
+                      : {})}
                   >
                     <div className="min-w-0 w-full max-w-full">
-                      <ProgramCardView program={p} />
+                      <ProgramCardView program={entry.program} />
                     </div>
                   </div>
                 ))}
@@ -400,7 +447,7 @@ export default function ProgramsSection({
             <button
               type="button"
               onClick={goNext}
-              disabled={atEnd}
+              disabled={!canNavigate}
               aria-label="Next programs"
               className={`${arrowBtn} hidden shrink-0 md:inline-flex`}
             >
@@ -413,7 +460,7 @@ export default function ProgramsSection({
             <button
               type="button"
               onClick={goPrev}
-              disabled={atStart}
+              disabled={!canNavigate}
               aria-label="Previous programs"
               className={arrowBtn}
             >
@@ -422,7 +469,7 @@ export default function ProgramsSection({
             <button
               type="button"
               onClick={goNext}
-              disabled={atEnd}
+              disabled={!canNavigate}
               aria-label="Next programs"
               className={arrowBtn}
             >

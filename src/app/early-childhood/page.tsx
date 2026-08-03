@@ -331,7 +331,7 @@ export default async function EarlyChildhoodPage() {
           ) : null}
           <a
             href={WEBTRAC_REGISTRATION_URL}
-            className="btn bg-gmcc-navy text-white hover:bg-neutral-100 mt-6 text-base px-8 py-3"
+            className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
             >
             Contact Us
           </a>
