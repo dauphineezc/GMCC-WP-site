@@ -216,11 +216,12 @@ export default function ImpactSection({
       </div>
 
       {/* Bottom transition wave (responsive shapes for mobile/desktop) */}
-      <div className="pointer-events-none absolute bottom-0 left-0 z-10 w-full overflow-hidden leading-none md:-bottom-1">
+      <div className="pointer-events-none absolute -bottom-[3px] left-0 z-10 w-full leading-none">
         <svg
           viewBox="0 -12 390 132"
-          className="block h-20 w-full text-white md:hidden"
+          className="-ml-[2px] block h-20 w-[calc(100%+4px)] text-white md:hidden"
           preserveAspectRatio="none"
+          aria-hidden
         >
           <path
             d="
@@ -235,8 +236,9 @@ export default function ImpactSection({
 
         <svg
           viewBox="0 -60 1440 180"
-          className="hidden h-24 w-full text-white md:block"
+          className="-ml-[2px] hidden h-24 w-[calc(100%+4px)] text-white md:block"
           preserveAspectRatio="none"
+          aria-hidden
         >
           <path
             d="
@@ -248,6 +250,7 @@ export default function ImpactSection({
             fill="currentColor"
           />
         </svg>
+        <div className="absolute bottom-0 left-0 h-[4px] w-full bg-white" aria-hidden />
       </div>
     </section>
   );

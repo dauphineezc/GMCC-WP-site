@@ -15,11 +15,23 @@ function escapeXml(value: string): string {
 function buildSitemapXml(entries: MetadataRoute.Sitemap): string {
   const body = entries
     .map((entry) => {
-      const lastModified = entry.lastModified
-        ? `\n    <lastmod>${new Date(entry.lastModified).toISOString()}</lastmod>`
-        : "";
+      const parts = [`    <loc>${escapeXml(entry.url)}</loc>`];
 
-      return `  <url>\n    <loc>${escapeXml(entry.url)}</loc>${lastModified}\n  </url>`;
+      if (entry.lastModified) {
+        parts.push(
+          `    <lastmod>${new Date(entry.lastModified).toISOString()}</lastmod>`
+        );
+      }
+
+      if (entry.changeFrequency) {
+        parts.push(`    <changefreq>${entry.changeFrequency}</changefreq>`);
+      }
+
+      if (typeof entry.priority === "number") {
+        parts.push(`    <priority>${entry.priority}</priority>`);
+      }
+
+      return `  <url>\n${parts.join("\n")}\n  </url>`;
     })
     .join("\n");
 

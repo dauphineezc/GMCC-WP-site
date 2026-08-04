@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { WAVE_SVG_BLEED_CLASS, WaveEdgeBar } from "@/components/waveSeam";
 
 /** Raw CTA from WP / ACF (string link or WPGraphQL link object). */
 export type HeroFieldsCtaRaw = {
@@ -47,7 +48,7 @@ type PhotoWaveHeaderProps = {
   childrenBeforeCtas?: boolean;
   /** Wave SVG fill (Tailwind `text-*` → currentColor). Default white for pages whose content sits on white. */
   waveFillClassName?: string;
-  /** 2px bar under the wave to hide subpixel seams; match `waveFillClassName` when docking to same-colored block. */
+  /** Edge bar under the wave to hide subpixel seams; match `waveFillClassName` when docking to same-colored block. */
   waveEdgeClassName?: string;
   /** Whether to flush the bottom of the header with the content below it */
   flushBottom?: boolean;
@@ -73,42 +74,41 @@ export default function PhotoWaveHeader({
 }: PhotoWaveHeaderProps) {
   return (
     <section
-      className={`relative overflow-hidden z-10 py-6 ${flushBottom ? "mb-0" : "mb-8"} ${minHeight ? "md:min-h-[max(400px,70dvh)]" : ""}`}
+      className={`relative z-10 py-6 ${flushBottom ? "mb-0" : "mb-8"} ${minHeight ? "md:min-h-[max(400px,70dvh)]" : ""}`}
     >
-      <div
-        className="absolute inset-0"
-        aria-hidden
-        style={
-          imageUrl
-            ? {
-                backgroundImage: `url(${imageUrl})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }
-            : undefined
-        }
-      />
+      {/* Clip media/gradients only — wave hangs below to seal mobile seams */}
+      <div className="absolute inset-0 overflow-hidden" aria-hidden>
+        <div
+          className="absolute inset-0"
+          style={
+            imageUrl
+              ? {
+                  backgroundImage: `url(${imageUrl})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : undefined
+          }
+        />
 
-      {/* Mobile gradient — covers more of the header */}
-      <div
-        className="absolute inset-0 md:hidden"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 20%, rgba(0,34,68,0.60) 75%, rgba(0,0,0,.30) 90%)",
-        }}
-        aria-hidden="true"
-      />
-      {/* Desktop gradient — original */}
-      <div
-        className="absolute inset-0 hidden md:block"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
-        }}
-        aria-hidden="true"
-      />
+        {/* Mobile gradient — covers more of the header */}
+        <div
+          className="absolute inset-0 md:hidden"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 20%, rgba(0,34,68,0.60) 75%, rgba(0,0,0,.30) 90%)",
+          }}
+        />
+        {/* Desktop gradient — original */}
+        <div
+          className="absolute inset-0 hidden md:block"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
+          }}
+        />
+      </div>
 
-      <div className="absolute inset-0" aria-hidden />
       <div className="relative z-20 max-w-6xl px-8 pb-12 pt-10 md:px-12 md:pb-24 md:pt-16">
         <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
           {title}
@@ -139,11 +139,12 @@ export default function PhotoWaveHeader({
         ) : null}
       </div>
 
-      <div className="pointer-events-none absolute bottom-0 left-0 z-10 w-full overflow-hidden leading-none">
+      <div className="pointer-events-none absolute -bottom-[3px] left-0 z-10 w-full leading-none">
         <svg
           viewBox="0 0 1440 120"
-          className={`-ml-px block h-10 w-[calc(100%+2px)] md:h-16 ${waveFillClassName}`}
+          className={`${WAVE_SVG_BLEED_CLASS} h-10 md:h-16 ${waveFillClassName}`}
           preserveAspectRatio="none"
+          aria-hidden
         >
           <path
             d="
@@ -156,7 +157,7 @@ export default function PhotoWaveHeader({
             fill="currentColor"
           />
         </svg>
-        <div className={`absolute bottom-0 left-0 h-[2px] w-full ${waveEdgeClassName}`} />
+        <WaveEdgeBar side="bottom" className={waveEdgeClassName} />
       </div>
     </section>
   );

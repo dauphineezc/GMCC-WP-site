@@ -6,7 +6,7 @@ import { getPrimaryNav } from "@/lib/nav/getPrimaryNav";
 import { getUtilityNav } from "@/lib/nav/getUtilityMenu";
 import { resolveHref } from "@/lib/nav/resolveHref";
 import { fetchWpSitemapPaths } from "./fetchWpSitemapPaths";
-import { dedupeSortedPaths, flattenNavPaths, normalizePublicPath } from "./pathUtils";
+import { flattenNavPaths, normalizePublicPath } from "./pathUtils";
 import { toAbsoluteUrl } from "./siteUrl";
 
 const STATIC_INDEX_PATHS = ["/", "/sitemap", "/centers", "/programs", "/events", "/news", "/blog"];
@@ -31,27 +31,70 @@ async function fetchNavPaths(): Promise<string[]> {
   return [...primaryPaths, ...utilityPaths, ...footerPaths];
 }
 
+function changeFrequencyForPath(path: string): MetadataRoute.Sitemap[number]["changeFrequency"] {
+  if (path === "/") return "weekly";
+  if (
+    path.startsWith("/news/") ||
+    path.startsWith("/blog/") ||
+    path.startsWith("/events/")
+  ) {
+    return "weekly";
+  }
+  return "monthly";
+}
+
+function mergeByPath(
+  pathEntries: Array<{ path: string; lastModified?: Date }>
+): Map<string, Date | undefined> {
+  const byPath = new Map<string, Date | undefined>();
+
+  for (const entry of pathEntries) {
+    const existing = byPath.get(entry.path);
+    if (!byPath.has(entry.path)) {
+      byPath.set(entry.path, entry.lastModified);
+      continue;
+    }
+    if (!entry.lastModified) continue;
+    if (!existing || entry.lastModified > existing) {
+      byPath.set(entry.path, entry.lastModified);
+    }
+  }
+
+  return byPath;
+}
+
 /**
- * Builds the public sitemap from an explicit allowlist of known routes and
- * published WordPress content. No filesystem scanning — only URLs we intend
- * to expose are included.
+ * Builds the public sitemap from known routes and published WordPress content.
+ * No filesystem scanning — only URLs we intend to expose are included.
+ *
+ * Sources: static indexes, nav menus, CPT/taxonomy content, and all published
+ * WP pages (mapped to Next paths). Includes `<lastmod>` from `modifiedGmt`
+ * when available, and a heuristic `<changefreq>`.
  */
 export async function getPublicSitemapEntries(): Promise<MetadataRoute.Sitemap> {
-  const [navPaths, wpPaths] = await Promise.all([fetchNavPaths(), fetchWpSitemapPaths()]);
+  const [navPaths, wp] = await Promise.all([fetchNavPaths(), fetchWpSitemapPaths()]);
 
-  const paths = dedupeSortedPaths([
-    ...STATIC_INDEX_PATHS.map((path) => normalizePublicPath(path)).filter(
-      (path): path is string => Boolean(path)
-    ),
-    ...navPaths,
-    ...wpPaths,
+  const staticEntries = STATIC_INDEX_PATHS.map((path) => normalizePublicPath(path))
+    .filter((path): path is string => Boolean(path))
+    .map((path) => ({ path }));
+
+  const navEntries = navPaths.map((path) => ({ path }));
+
+  const byPath = mergeByPath([
+    ...staticEntries,
+    ...navEntries,
+    ...wp.contentEntries,
+    ...wp.pageEntries,
   ]);
 
-  return paths.map((path) => ({
-    url: toAbsoluteUrl(path),
-    changeFrequency: path === "/" ? "weekly" : "monthly",
-    priority: path === "/" ? 1 : 0.7,
-  }));
+  return [...byPath.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([path, lastModified]) => ({
+      url: toAbsoluteUrl(path),
+      ...(lastModified ? { lastModified } : {}),
+      changeFrequency: changeFrequencyForPath(path),
+      priority: path === "/" ? 1 : 0.7,
+    }));
 }
 
 /** Guard for any future dynamic additions — rejects external or blocked paths. */

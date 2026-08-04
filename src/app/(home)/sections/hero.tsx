@@ -199,12 +199,13 @@ export default function HeroSection({
             {/* Bottom navy block to let wave cover ~1/3 of hero */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[15%] bg-gmcc-navy md:h-[10%]" />
 
-            {/* Wave */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-[15%] z-40 w-full overflow-hidden leading-none md:bottom-[8.5%]">
+            {/* Wave — overlaps navy block + edge bar to hide mobile subpixel seam */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-[calc(15%-3px)] z-40 w-full leading-none md:bottom-[calc(8.5%-3px)]">
               <svg
                 viewBox="0 0 1440 180"
-                className="-ml-px block h-20 w-[calc(100%+2px)] md:h-28 lg:h-36"
+                className="-ml-[2px] block h-20 w-[calc(100%+4px)] md:h-28 lg:h-36"
                 preserveAspectRatio="none"
+                aria-hidden
               >
                 <path
                   d="
@@ -219,6 +220,7 @@ export default function HeroSection({
                   fill="var(--gmcc-navy)"
                 />
               </svg>
+              <div className="absolute bottom-0 left-0 h-[4px] w-full bg-gmcc-navy" aria-hidden />
             </div>
           </div>
         </div>

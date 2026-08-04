@@ -190,15 +190,18 @@ export default async function LeadershipPage() {
 
         </div>
 
-        <div className="pointer-events-none absolute bottom-[-32px] left-0 z-30 w-full overflow-hidden leading-none">
+        <div className="pointer-events-none absolute bottom-[-32px] left-0 z-30 w-full leading-none">
           <svg
             viewBox="0 -60 1440 180"
-            className="block h-16 w-full origin-center text-white [transform:scale(-1,-1)] md:h-24"
+            className="-ml-[2px] block h-16 w-[calc(100%+4px)] origin-center text-white [transform:scale(-1,-1)] md:h-24"
             preserveAspectRatio="none"
+            aria-hidden
           >
             <path d="M0,110 C300,-50 500,120 800,100 S1000,0 1440,0 L1440,0 L0,0 Z" fill="currentColor" />
           </svg>
+          <div className="absolute bottom-0 left-0 h-[4px] w-full bg-white" aria-hidden />
         </div>
+        <div className="pointer-events-none absolute bottom-0 left-0 z-[31] h-[4px] w-full bg-white" aria-hidden />
       </section>
 
         {/* Organization + Executive Leaders */}

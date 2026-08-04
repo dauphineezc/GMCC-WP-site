@@ -11,7 +11,7 @@ export default function AboutSection({
   cta?: Linkish | null;
 }) {
   return (
-    <section className="relative -mt-15 overflow-hidden bg-gmcc-navy px-4 pb-50">
+    <section className="relative -mt-15 bg-gmcc-navy px-4 pb-50">
 
       <div className="relative z-20 mx-auto max-w-6xl pb-20 md:pb-24">
 
@@ -40,12 +40,16 @@ export default function AboutSection({
           />
         </div>
 
+      {/* Seal navy→white join (mobile subpixel hairline) */}
+      <div className="pointer-events-none absolute bottom-0 left-0 z-[11] h-[4px] w-full bg-white" aria-hidden />
+
       {/* Bottom transition wave */}
-      <div className="pointer-events-none absolute bottom-[-32px] left-0 z-10 w-full overflow-hidden leading-none">
+      <div className="pointer-events-none absolute bottom-[-32px] left-0 z-10 w-full leading-none">
         <svg
           viewBox="0 -12 390 132"
-          className="block h-20 w-full text-white md:hidden [transform:scaleY(-1)]"
+          className="-ml-[2px] block h-20 w-[calc(100%+4px)] text-white md:hidden [transform:scaleY(-1)]"
           preserveAspectRatio="none"
+          aria-hidden
         >
           <path
             d="
@@ -60,8 +64,9 @@ export default function AboutSection({
 
         <svg
           viewBox="0 -60 1440 180"
-          className="hidden h-24 w-full text-white md:block [transform:scaleY(-1)]"
+          className="-ml-[2px] hidden h-24 w-[calc(100%+4px)] text-white md:block [transform:scaleY(-1)]"
           preserveAspectRatio="none"
+          aria-hidden
         >
           <path
             d="
@@ -73,6 +78,7 @@ export default function AboutSection({
             fill="currentColor"
           />
         </svg>
+        <div className="absolute bottom-0 left-0 h-[4px] w-full bg-white" aria-hidden />
       </div>
     </section>
   );

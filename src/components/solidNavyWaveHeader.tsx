@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { WAVE_SVG_BLEED_CLASS, WaveEdgeBar } from "@/components/waveSeam";
 
 type SolidNavyWaveHeaderProps = {
   eyebrow?: string | null;
@@ -8,6 +9,8 @@ type SolidNavyWaveHeaderProps = {
   className?: string;
   containerClassName?: string;
   waveFillClassName?: string;
+  /** Edge bar under the wave; match `waveFillClassName` (default white). */
+  waveEdgeClassName?: string;
 };
 
 export default function SolidNavyWaveHeader({
@@ -18,9 +21,10 @@ export default function SolidNavyWaveHeader({
   className = "",
   containerClassName = "",
   waveFillClassName = "text-white",
+  waveEdgeClassName = "bg-white",
 }: SolidNavyWaveHeaderProps) {
   return (
-    <section className={`relative overflow-hidden bg-gmcc-navy ${className}`}>
+    <section className={`relative bg-gmcc-navy ${className}`}>
       <div className={`relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-12 md:pb-38 lg:pt-24 ${containerClassName}`}>
         {eyebrow ? <p className="text-base font-semibold tracking-wide text-white/90 md:text-lg">{eyebrow}</p> : null}
         {title ? <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-white md:text-5xl">{title}</h1> : null}
@@ -30,11 +34,12 @@ export default function SolidNavyWaveHeader({
         {children ? <div className="mt-8">{children}</div> : null}
       </div>
 
-      <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
+      <div className="pointer-events-none absolute -bottom-[3px] left-0 z-20 w-full leading-none">
         <svg
           viewBox="0 0 1440 120"
-          className={`-mb-px -ml-px block h-12 w-[calc(100%+2px)] ${waveFillClassName} md:h-20`}
+          className={`${WAVE_SVG_BLEED_CLASS} h-12 ${waveFillClassName} md:h-20`}
           preserveAspectRatio="none"
+          aria-hidden
         >
           <path
             d="
@@ -46,6 +51,7 @@ export default function SolidNavyWaveHeader({
             fill="currentColor"
           />
         </svg>
+        <WaveEdgeBar side="bottom" className={waveEdgeClassName} />
       </div>
     </section>
   );

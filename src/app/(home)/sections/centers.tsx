@@ -172,7 +172,7 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
       <div className="md:hidden">
         <div className="relative w-full">
           {/* Top area: list on navy overlay */}
-          <div className="relative bg-gmcc-navy">
+          <div className="relative -mb-[3px] bg-gmcc-navy">
             {/* faint texture/overlay */}
             <div className="absolute inset-0 bg-white/5" aria-hidden="true" />
 
@@ -199,8 +199,8 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
             </div>
           </div>
 
-          {/* Bottom area: selected image with horizontal gradient */}
-          <div className="relative h-[260px] w-full overflow-hidden bg-neutral-100">
+          {/* Bottom area: selected image with horizontal gradient (-mt overlap closes mobile navy/photo seam) */}
+          <div className="relative -mt-[3px] h-[260px] w-full overflow-hidden bg-gmcc-navy">
             {bgUrl ? (
               <div
                 className="absolute inset-0"

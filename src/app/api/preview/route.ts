@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Invalid token" }, { status: 401 });
   }
 
-  const dm = await draftMode();   // 👈 await it
+  const dm = await draftMode();
   dm.enable();
 
   return NextResponse.redirect(new URL(slug ? `/blog/${slug}` : "/", req.url));

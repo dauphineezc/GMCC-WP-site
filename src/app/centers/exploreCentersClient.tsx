@@ -58,12 +58,10 @@ function CenterCardMedia({
 
   if (showMap) {
     return (
-      <div className={`card-bleed relative aspect-[16/9] bg-neutral-100 overflow-hidden rounded-t-2xl ${CARD_MEDIA_HEIGHT_CLASS}`}>
+      <div className={`card-bleed relative bg-neutral-100 overflow-hidden rounded-t-2xl ${CARD_MEDIA_HEIGHT_CLASS}`}>
         <iframe
           src={iframeSrc}
-          width="100%"
-          height="100%"
-          style={{ border: 0 }}
+          className="absolute inset-0 h-full w-full border-0"
           allowFullScreen
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
@@ -76,7 +74,7 @@ function CenterCardMedia({
 
   if (featuredImageUrl) {
     return (
-      <div className={`card-bleed relative aspect-[16/9] bg-neutral-100 overflow-hidden rounded-t-2xl ${CARD_MEDIA_HEIGHT_CLASS}`}>
+      <div className={`card-bleed relative bg-neutral-100 overflow-hidden rounded-t-2xl ${CARD_MEDIA_HEIGHT_CLASS}`}>
         <Image
           src={featuredImageUrl}
           alt={featuredImageAlt || `${title} featured image`}
@@ -89,7 +87,7 @@ function CenterCardMedia({
   }
 
   return (
-    <div className={`card-bleed w-full bg-neutral-100 flex items-center justify-center ${CARD_MEDIA_HEIGHT_CLASS}`}>
+    <div className={`card-bleed bg-neutral-100 flex items-center justify-center ${CARD_MEDIA_HEIGHT_CLASS}`}>
       <span className="small">No image available</span>
     </div>
   );
@@ -191,8 +189,8 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
   const [areasSelected, setAreasSelected] = useState<string[]>([]);
   const [programsSelected, setProgramsSelected] = useState<string[]>([]);
 
-  // Mobile filter panel state (expanded by default)
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  // Mobile filter panel state (collapsed by default)
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(
     () => new Set(["amenities", "programAreas", "programs"])
   );

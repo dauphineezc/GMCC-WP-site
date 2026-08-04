@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { WAVE_SVG_BLEED_CLASS, WaveEdgeBar } from "@/components/waveSeam";
 
 const TOP_WAVE_PATH =
   "M-20,110 C750,-90 800,120 1200,80 S1420,0 1460,0 L1460,0 L-20,0 Z";
@@ -15,10 +16,10 @@ const FULL_BLEED_CLASS =
 /** Inverted navy wave above a full-bleed navy band. */
 export function NavyTopWave() {
   return (
-    <div className="relative z-[1] pointer-events-none w-full overflow-hidden leading-none">
+    <div className="relative z-[1] -mb-[3px] pointer-events-none w-full leading-none">
       <svg
         viewBox="0 0 1440 120"
-        className="-ml-px block h-10 w-[calc(100%+2px)] text-gmcc-navy md:h-16"
+        className={`${WAVE_SVG_BLEED_CLASS} h-10 text-gmcc-navy md:h-16`}
         preserveAspectRatio="none"
         aria-hidden
       >
@@ -28,6 +29,7 @@ export function NavyTopWave() {
           fill="var(--gmcc-navy)"
         />
       </svg>
+      <WaveEdgeBar side="bottom" className="bg-gmcc-navy" />
     </div>
   );
 }
@@ -50,18 +52,16 @@ export function NavyBottomWave({
 
 function WaveBottomFill({
   className,
-  wrapperClassName = "relative z-[1] -mt-px",
+  wrapperClassName = "relative z-[1] -mt-[3px]",
 }: {
   className: string;
   wrapperClassName?: string;
 }) {
   return (
-    <div
-      className={`pointer-events-none w-full overflow-hidden leading-none ${wrapperClassName}`}
-    >
+    <div className={`pointer-events-none w-full leading-none ${wrapperClassName}`}>
       <svg
         viewBox="0 0 390 120"
-        className={`block h-14 w-full md:hidden ${className}`}
+        className={`${WAVE_SVG_BLEED_CLASS} h-14 md:hidden ${className}`}
         preserveAspectRatio="none"
         aria-hidden
       >
@@ -69,12 +69,13 @@ function WaveBottomFill({
       </svg>
       <svg
         viewBox="0 0 1440 120"
-        className={`hidden h-16 w-full md:block ${className}`}
+        className={`${WAVE_SVG_BLEED_CLASS} hidden h-16 md:block ${className}`}
         preserveAspectRatio="none"
         aria-hidden
       >
         <path d={BOTTOM_WAVE_DESKTOP_PATH} fill="currentColor" />
       </svg>
+      <WaveEdgeBar side="top" className="bg-gmcc-navy" />
     </div>
   );
 }
@@ -88,7 +89,7 @@ function WaveBottomStack({
   underfillClassName?: string;
 }) {
   return (
-    <div className="relative -mt-px w-full">
+    <div className="relative -mt-[3px] w-full">
       {underfillClassName ? (
         <div
           className={`absolute inset-0 z-0 ${underfillClassName}`}
@@ -132,7 +133,7 @@ function NavyBand({
   children,
 }: Pick<NavyWaveSectionProps, "bandClassName" | "contentClassName" | "children">) {
   const band = (
-    <div className={`relative z-0 -mt-px bg-gmcc-navy text-white ${bandClassName ?? ""}`.trim()}>
+    <div className={`relative z-0 -mt-[3px] bg-gmcc-navy text-white ${bandClassName ?? ""}`.trim()}>
       {contentClassName === false ? (
         children
       ) : (
@@ -167,7 +168,7 @@ export default function NavyWaveSection({
   fullBleed = true,
   children,
 }: NavyWaveSectionProps) {
-  const sectionClass = `relative scroll-mt-24 ${topWave ? "section-gap" : "-mt-px" } ${bottomWave ? "mb-8" : ""} ${className}`.trim();
+  const sectionClass = `relative scroll-mt-24 ${topWave ? "section-gap" : "-mt-[3px]" } ${bottomWave ? "mb-8" : ""} ${className}`.trim();
   const bottomWaveEl = bottomWave ? (
     <NavyBottomWave
       fillClassName={bottomWaveFillClassName}
