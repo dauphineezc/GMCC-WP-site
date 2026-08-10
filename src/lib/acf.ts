@@ -4,9 +4,18 @@
 // Pages should import these instead of declaring local copies.
 
 import { resolveWpMediaUrl, type WpMediaFieldInput, type WpMediaRef } from "@/lib/wp";
+import {
+  mediaFocalPositionCss,
+  pickMediaFocalPoint,
+  WP_MEDIA_IMAGE_FIELDS,
+  type MediaFocalPointFields,
+} from "@/lib/mediaFocalPoint";
 
 /** Media object (or `{ node }` wrapper) as returned for ACF file/image fields. */
 export type { WpMediaRef as MediaRef, WpMediaFieldInput as MediaFieldInput };
+
+/** GraphQL selection for ACF/featured image media nodes — re-exported for page queries. */
+export { WP_MEDIA_IMAGE_FIELDS };
 
 /** Trimmed string, or "" for any non-string value. */
 export function asString(v: unknown): string {
@@ -22,12 +31,12 @@ export function splitLines(v: unknown): string[] {
     : [];
 }
 
-/** ACF image field from WPGraphQL: `{ node: { sourceUrl, altText } }`. */
+/** ACF image field from WPGraphQL: `{ node: { sourceUrl, altText, focal… } }`. */
 export type ImageField = {
-  node?: {
+  node?: ({
     sourceUrl?: string | null;
     altText?: string | null;
-  } | null;
+  } & MediaFocalPointFields) | null;
 } | null;
 
 export function asImageField(value: unknown): ImageField {
@@ -35,17 +44,19 @@ export function asImageField(value: unknown): ImageField {
   const node = (value as { node?: unknown }).node;
   if (!node || typeof node !== "object") return null;
   const record = node as Record<string, unknown>;
+  const focal = pickMediaFocalPoint(record);
   return {
     node: {
       sourceUrl: asString(record.sourceUrl),
       altText: asString(record.altText),
+      ...focal,
     },
   };
 }
 
-export type AcfImage = { url: string; alt: string };
+export type AcfImage = { url: string; alt: string; objectPosition?: string };
 
-/** URL + alt from an ACF image field (`{ node: { sourceUrl, mediaItemUrl, altText } }`). */
+/** URL + alt (+ optional object-position) from an ACF image field. */
 export function acfImageFromField(value: unknown, fallbackAlt = ""): AcfImage | null {
   if (!value || typeof value !== "object") return null;
   const node = (value as { node?: Record<string, unknown> | null }).node;
@@ -54,7 +65,8 @@ export function acfImageFromField(value: unknown, fallbackAlt = ""): AcfImage | 
   const url = resolveWpMediaUrl(typeof rawUrl === "string" ? rawUrl : null);
   if (!url) return null;
   const alt = asString(node.altText) || fallbackAlt;
-  return { url, alt };
+  const objectPosition = mediaFocalPositionCss(pickMediaFocalPoint(node));
+  return objectPosition ? { url, alt, objectPosition } : { url, alt };
 }
 
 /** `target` from an ACF Link field (`_blank` / `_self`), if present. */
@@ -112,26 +124,29 @@ export function openLinkInNewTab(url: string, linkTarget?: string | null): boole
 /* Galleries                                                           */
 /* ------------------------------------------------------------------ */
 
-export type AcfGalleryPhoto = { url: string; alt: string; label?: string };
+export type AcfGalleryPhoto = { url: string; alt: string; label?: string; objectPosition?: string };
 
 function pushGalleryAcfRow(row: unknown, out: AcfGalleryPhoto[]) {
   if (!row || typeof row !== "object") return;
   const ro = row as Record<string, unknown>;
-  const photo = ro.photo as { node?: { sourceUrl?: string | null; altText?: string | null } } | undefined;
+  const photo = ro.photo as {
+    node?: ({ sourceUrl?: string | null; altText?: string | null } & MediaFocalPointFields) | null;
+  } | undefined;
   const node = photo?.node;
   const rawUrl = node?.sourceUrl ?? null;
   const url = resolveWpMediaUrl(rawUrl) ?? (typeof rawUrl === "string" ? rawUrl.trim() : "");
   if (!url) return;
   const alt = typeof node?.altText === "string" ? node.altText.trim() : "";
   const label = asString(ro.photoLabel) || undefined;
-  out.push({ url, alt, label });
+  const objectPosition = mediaFocalPositionCss(node);
+  out.push(objectPosition ? { url, alt, label, objectPosition } : { url, alt, label });
 }
 
 /**
  * Photos from an ACF gallery group. Supports the WP/ACF shapes used across pages:
  * - Repeater: `galleryItem[]` / `galleryItems[]` of `{ photo, photoLabel }`
  * - Numbered clones: `galleryItem1..N { photo photoLabel }`
- * - Numbered photos: `photo1..N { node { sourceUrl altText } }` (races/tournaments style)
+ * - Numbered photos: `photo1..N { node { sourceUrl altText focal… } }` (races/tournaments style)
  */
 export function collectGalleryPhotos(gallery: unknown): AcfGalleryPhoto[] {
   if (!gallery || typeof gallery !== "object") return [];
@@ -156,13 +171,16 @@ export function collectGalleryPhotos(gallery: unknown): AcfGalleryPhoto[] {
   if (out.length) return out;
 
   for (let i = 1; i <= 10; i++) {
-    const ph = go[`photo${i}`] as { node?: { sourceUrl?: string | null; altText?: string | null } } | undefined;
+    const ph = go[`photo${i}`] as {
+      node?: ({ sourceUrl?: string | null; altText?: string | null } & MediaFocalPointFields) | null;
+    } | undefined;
     const node = ph?.node;
     const rawUrl = node?.sourceUrl ?? null;
     const url = resolveWpMediaUrl(rawUrl) ?? (typeof rawUrl === "string" ? rawUrl.trim() : "");
     if (!url) continue;
     const alt = typeof node?.altText === "string" ? node.altText.trim() : "";
-    out.push({ url, alt });
+    const objectPosition = mediaFocalPositionCss(node);
+    out.push(objectPosition ? { url, alt, objectPosition } : { url, alt });
   }
   return out;
 }

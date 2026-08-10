@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { WAVE_SVG_BLEED_CLASS, WaveEdgeBar } from "@/components/waveSeam";
+import { WAVE_BLEED_CLIP_CLASS, WAVE_SVG_BLEED_CLASS, WaveEdgeBar } from "@/components/waveSeam";
 
 type SolidNavyWaveHeaderProps = {
   eyebrow?: string | null;
@@ -35,22 +35,24 @@ export default function SolidNavyWaveHeader({
       </div>
 
       <div className="pointer-events-none absolute -bottom-[3px] left-0 z-20 w-full leading-none">
-        <svg
-          viewBox="0 0 1440 120"
-          className={`${WAVE_SVG_BLEED_CLASS} h-12 ${waveFillClassName} md:h-20`}
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path
-            d="
-              M-20,110
-              C750,-90  800,120  1200,80
-              S1420,0 1460,0
-              L1460,120 L-20,120 Z
-            "
-            fill="currentColor"
-          />
-        </svg>
+        <div className={WAVE_BLEED_CLIP_CLASS}>
+          <svg
+            viewBox="0 0 1440 120"
+            className={`${WAVE_SVG_BLEED_CLASS} h-12 ${waveFillClassName} md:h-20`}
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <path
+              d="
+                M-20,110
+                C750,-90  800,120  1200,80
+                S1420,0 1460,0
+                L1460,120 L-20,120 Z
+              "
+              fill="currentColor"
+            />
+          </svg>
+        </div>
         <WaveEdgeBar side="bottom" className={waveEdgeClassName} />
       </div>
     </section>

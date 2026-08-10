@@ -8,6 +8,7 @@ export type AmenityDisplay = {
     image: {
       sourceUrl: string;
       altText: string | null;
+      objectPosition?: string;
     };
     /** Present on aggregated views (e.g. accessibility) to show which centers offer this amenity */
     centers?: Array<{ slug: string; title: string }>;

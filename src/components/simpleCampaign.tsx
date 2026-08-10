@@ -1,3 +1,5 @@
+import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
+
 export type SimpleCampaignFields = {
   headline?: string | null;
   body?: string | null;
@@ -19,7 +21,11 @@ export type SimpleCampaignData = {
   title?: string | null;
   uri?: string | null;
   featuredImage?: {
-    node?: { sourceUrl?: string | null; altText?: string | null } | null;
+    node?: ({
+      sourceUrl?: string | null;
+      altText?: string | null;
+      objectPosition?: string | null;
+    } & MediaFocalPointFields) | null;
   } | null;
   campaignFields?: SimpleCampaignFields;
 };
@@ -76,7 +82,10 @@ export default function SimpleCampaign({ campaign, stacked = false }: Props) {
   const title =
     campaign.campaignFields?.headline || campaign.title || "Featured Campaign";
   const body = campaign.campaignFields?.body || "";
-  const img = campaign.featuredImage?.node?.sourceUrl ?? null;
+  const featuredNode = campaign.featuredImage?.node;
+  const img = featuredNode?.sourceUrl ?? null;
+  const imgObjectPosition =
+    featuredNode?.objectPosition ?? mediaFocalPositionCss(featuredNode) ?? undefined;
 
   const primaryUrl =
     campaign.campaignFields?.primaryCta?.primaryCtaUrl || campaign.uri || "#";
@@ -109,8 +118,9 @@ export default function SimpleCampaign({ campaign, stacked = false }: Props) {
       {img ? (
         <img
           src={img}
-          alt={campaign.featuredImage?.node?.altText ?? ""}
+          alt={featuredNode?.altText ?? ""}
           className="absolute inset-0 h-full w-full object-cover"
+          style={imgObjectPosition ? { objectPosition: imgObjectPosition } : undefined}
         />
       ) : (
         <div className="absolute inset-0 w-full bg-neutral-700" />
@@ -128,11 +138,7 @@ export default function SimpleCampaign({ campaign, stacked = false }: Props) {
       }
     >
       <h2
-        className={
-          stacked
-            ? "text-2xl font-semibold tracking-tight sm:text-3xl"
-            : "text-3xl font-semibold tracking-tight"
-        }
+        className="font-heading text-3xl font-semibold tracking-tight"
         style={{ color: textColor }}
       >
         {title}

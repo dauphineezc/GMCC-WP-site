@@ -4,6 +4,7 @@ import { wpFetch } from "@/lib/wp";
 import GetInvolvedClient from "./getInvolvedClient";
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
+import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 const GET_INVOLVED_PAGE_QUERY = /* GraphQL */ `
 query GetInvolvedPage($uri: ID!) {
@@ -19,21 +20,14 @@ query GetInvolvedPage($uri: ID!) {
       volunteerGroup {
         volunteerCardSummary
         volunteerCardIcon {
-          node {
-            sourceUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         volunteerLongDescription
         volunteerApplication
         volunteerImage {
           node {
-            sourceUrl
-            altText
-            mediaDetails {
-              width
-              height
-            }
+            ${WP_MEDIA_IMAGE_FIELDS}
+            mediaDetails { width height }
           }
         }
       }
@@ -41,10 +35,7 @@ query GetInvolvedPage($uri: ID!) {
       donateGroup {
         donateCardSummary
         donateCardIcon {
-          node {
-            sourceUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         donateLongDescription
         physicalDonationDescription
@@ -52,12 +43,8 @@ query GetInvolvedPage($uri: ID!) {
         wishlistLink
         donationImage {
           node {
-            sourceUrl
-            altText
-            mediaDetails {
-              width
-              height
-            }
+            ${WP_MEDIA_IMAGE_FIELDS}
+            mediaDetails { width height }
           }
         }
       }
@@ -65,31 +52,20 @@ query GetInvolvedPage($uri: ID!) {
       sponsorGroup {
         sponsorCardSummary
         sponsorCardIcon {
-          node {
-            sourceUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         sponsorLongDescription
 
         sponsorImage {
           node {
-            sourceUrl
-            altText
-            mediaDetails {
-              width
-              height
-            }
+            ${WP_MEDIA_IMAGE_FIELDS}
+            mediaDetails { width height }
           }
         }
         sponsorApplication {
           node {
-            sourceUrl
-            altText
-            mediaDetails {
-              width
-              height
-            }
+            ${WP_MEDIA_IMAGE_FIELDS}
+            mediaDetails { width height }
           }
         }
         viewSponsorsPageCta {
@@ -168,6 +144,7 @@ export default async function GetInvolvedPage() {
           title={heroProps.title}
           subheader={heroProps.subheader ?? null}
           imageUrl={heroProps.imageUrl ?? null}
+          imagePosition={heroProps.imagePosition}
           ctas={heroProps.ctas}
         />
         <GetInvolvedClient fields={fields} />

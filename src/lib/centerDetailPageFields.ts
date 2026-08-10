@@ -2,6 +2,7 @@ import { buildEventHref } from "@/lib/events/buildEventHref";
 import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
 import { wpFetch, WpMediaFieldInput } from "@/lib/wp";
 import { pageUriCandidatesForSlug } from "@/lib/pageHeroFields";
+import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 /** WordPress page slug that holds `centerPageFields` (ACF on center template page). */
 export const CENTER_DETAIL_WP_PAGE_SLUG = "center-detail";
@@ -34,21 +35,21 @@ const CENTER_DETAIL_PAGE_FIELDS_CORE = `
           ctaLabel
         }
         socialIcons {
-          instagram { node { sourceUrl altText }}
-          facebook { node { sourceUrl altText }}
-          youtube { node { sourceUrl altText }}
-          tiktok { node { sourceUrl altText }}
+          instagram { node { ${WP_MEDIA_IMAGE_FIELDS} }}
+          facebook { node { ${WP_MEDIA_IMAGE_FIELDS} }}
+          youtube { node { ${WP_MEDIA_IMAGE_FIELDS} }}
+          tiktok { node { ${WP_MEDIA_IMAGE_FIELDS} }}
         }
         curlingCenterPageFields {
           hoursReplacementStatement
-          midlandCurlingClubLogo { node { sourceUrl mediaItemUrl altText }}
+          midlandCurlingClubLogo { node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }}
           historySection {
             header
             body {
               historyItemHeader
               historyItem
             }
-            icon { node { sourceUrl mediaItemUrl altText }}
+            icon { node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }}
           }
         }
       }

@@ -34,6 +34,7 @@ const TAKE_A_TOUR_PAGE_QUERY = /* GraphQL */ `
       takeATourPageFields {
         header
         subheader
+        tourHeader
         tourDescription
       }
     }
@@ -47,18 +48,18 @@ export default async function TakeATourPage() {
   const centerOrder = CENTER_TITLE_ORDER;
 
   return (
-    <main className="pb-16">
+    <main>
       <SolidNavyWaveHeader title={f?.header} description={f?.subheader} />
 
-      <section className="page-section stack-2">
-        <h2 className="mt-8 text-center text-xl font-extrabold text-gmcc-navy md:text-left md:text-2xl">
-          Schedule a tour using the form below
+      <section className="page-section">
+        <h2 className="text-center text-xl font-extrabold text-gmcc-navy md:text-left md:text-2xl">
+          {f?.tourHeader}
         </h2>
-        <p className="mb-4 text-center text-lg text-neutral-700 md:text-left">{f?.tourDescription}</p>
+        <p className="mt-4 mb-4 text-center text-lg text-neutral-700 md:text-left">{f?.tourDescription}</p>
       </section>
 
       {/* Placeholder contact form (visual only) */}
-      <div className="relative mt-8 overflow-hidden pb-8">
+      <div className="relative overflow-hidden pb-8">
           <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
             <img
               src="/GreaterLogoBG.png"

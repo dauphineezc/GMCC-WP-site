@@ -20,6 +20,7 @@ export type DirectoryTrainer = {
   photo?: Maybe<{
     sourceUrl?: Maybe<string>;
     altText?: Maybe<string>;
+    objectPosition?: Maybe<string>;
   }>;
   jobTitle?: Maybe<string>;
   bio?: Maybe<string>;

@@ -71,6 +71,11 @@ export default function AmenitiesGrid({ amenities, title = "What we offer", numC
                 src={amenity.image.sourceUrl} 
                 alt={amenity.image.altText ?? amenity.name} 
                 className={`w-full h-full object-cover ${hasDescription ? "cursor-pointer" : ""}`}
+                style={
+                  amenity.image.objectPosition
+                    ? { objectPosition: amenity.image.objectPosition }
+                    : undefined
+                }
                 onClick={() => handleAmenityClick(amenity)}
               />
               </div>
@@ -153,6 +158,11 @@ export default function AmenitiesGrid({ amenities, title = "What we offer", numC
                 src={selectedAmenity.image.sourceUrl}
                 alt={selectedAmenity.image.altText ?? selectedAmenity.name}
                 className="w-full h-48 object-cover"
+                style={
+                  selectedAmenity.image.objectPosition
+                    ? { objectPosition: selectedAmenity.image.objectPosition }
+                    : undefined
+                }
               />
             )}
 

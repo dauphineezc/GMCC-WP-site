@@ -6,6 +6,8 @@ import PhotoWaveHeader from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
 import type { RoomData, PartyPackageData, PlanAnEventFields } from "./planAnEventFields";
 import { acfGalleryPhotoNodes } from "@/lib/wp";
+import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -13,6 +15,7 @@ type HeroProps = {
   title: string;
   subheader?: string | null;
   imageUrl?: string | null;
+  imagePosition?: string | null;
   primaryCta?: { label: string; url: string; variant?: "primary" | "secondary" } | null;
   secondaryCta?: { label: string; url: string; variant?: "primary" | "secondary" } | null;
   ctas?: { label: string; url: string; variant?: "primary" | "secondary" }[];
@@ -51,18 +54,20 @@ function getFirstPhoto(room: RoomData): string | null {
   return acfGalleryPhotoNodes(room.rentableRoomFields?.gallery)[0]?.sourceUrl ?? null;
 }
 
-function getRoomGalleryPhotos(room: RoomData): { src: string; alt: string }[] {
+function getRoomGalleryPhotos(room: RoomData): { src: string; alt: string; objectPosition?: string }[] {
   const fallbackName = room.rentableRoomFields?.name ?? room.title ?? "Room";
   return acfGalleryPhotoNodes(room.rentableRoomFields?.gallery)
-    .map((node: { sourceUrl?: string | null; altText?: string | null }, index: number) => {
+    .map((node, index: number) => {
       const src = node.sourceUrl;
       if (!src) return null;
+      const objectPosition = mediaFocalPositionCss(node);
       return {
         src,
         alt: node.altText ?? `${fallbackName} photo ${index + 1}`,
+        ...(objectPosition ? { objectPosition } : {}),
       };
     })
-    .filter((photo: { src: string; alt: string } | null): photo is { src: string; alt: string } => Boolean(photo));
+    .filter((photo): photo is { src: string; alt: string; objectPosition?: string } => Boolean(photo));
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -73,12 +78,19 @@ function SectionCard({ card, href }: { card: SectionCardData | null; href?: stri
   if (!card) return null;
   const imgSrc = card.sectionImage?.node?.sourceUrl;
   const imgAlt = card.sectionImage?.node?.altText ?? card.sectionHeader ?? "";
+  const imgObjectPosition = card.sectionImage?.node ? mediaFocalPositionCss(card.sectionImage?.node) : undefined;
 
   return (
     <div className="card card-hover stack-4 flex flex-col overflow-hidden h-[410px] w-[340px]">
       {imgSrc && (
         <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
-          <img src={imgSrc} alt={imgAlt} className="h-full w-full object-cover" loading="lazy" />
+          <img
+            src={imgSrc}
+            alt={imgAlt}
+            className="h-full w-full object-cover"
+            style={imgObjectPosition ? { objectPosition: imgObjectPosition } : undefined}
+            loading="lazy"
+          />
         </div>
       )}
       <h3 className="h3 mt-2 mb-2 font-semibold">{card.sectionHeader}</h3>
@@ -136,6 +148,11 @@ function RoomCard({ room }: { room: RoomData }) {
             src={activePhoto.src}
             alt={activePhoto.alt}
             className="h-full w-full object-cover"
+            style={
+              activePhoto.objectPosition
+                ? { objectPosition: activePhoto.objectPosition }
+                : undefined
+            }
             loading="lazy"
           />
           {showNavigation && (
@@ -302,6 +319,7 @@ function CenterPartyPackageCard({
   const selectedFields = selected.partyPackageFields;
   const selectedName = selectedFields?.name ?? selected.title ?? "Package";
   const selectedImage = selectedFields?.photo?.node ?? selected.featuredImage?.node;
+  const selectedImageObjectPosition = selectedImage ? mediaFocalPositionCss(selectedImage) : undefined;
 
   return (
     <article className="card flex h-full flex-col overflow-hidden bg-white">
@@ -311,6 +329,11 @@ function CenterPartyPackageCard({
             src={selectedImage.sourceUrl}
             alt={selectedImage.altText ?? selectedName}
             className="h-full w-full object-cover"
+            style={
+              selectedImageObjectPosition
+                ? { objectPosition: selectedImageObjectPosition }
+                : undefined
+            }
             loading="lazy"
           />
         </div>
@@ -383,6 +406,7 @@ function SportsPartyPackageCard({ pkg }: { pkg: PartyPackageData }) {
   const f = pkg.partyPackageFields;
   const name = f?.name ?? pkg.title ?? "Sports Party";
   const image = f?.photo?.node ?? pkg.featuredImage?.node;
+  const imageObjectPosition = image ? mediaFocalPositionCss(image) : undefined;
 
   return (
     <article className="card flex h-full flex-col overflow-hidden bg-white">
@@ -392,6 +416,9 @@ function SportsPartyPackageCard({ pkg }: { pkg: PartyPackageData }) {
             src={image.sourceUrl}
             alt={image.altText ?? name}
             className="h-full w-full object-cover"
+            style={
+              imageObjectPosition ? { objectPosition: imageObjectPosition } : undefined
+            }
             loading="lazy"
           />
 
@@ -746,6 +773,7 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
         title={heroProps.title}
         subheader={heroProps.subheader}
         imageUrl={heroProps.imageUrl}
+        imagePosition={heroProps.imagePosition}
         ctas={heroProps.ctas}
       />
 
@@ -862,17 +890,22 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
         )}
       </NavyWaveSection>
 
-      <section className="mx-auto max-w-3xl px-6 section-y text-center">
+      <section className="page-section max-w-3xl text-center">
       <div>
           <h2 className="h2 mb-4 text-gmcc-navy">
             {fields?.contactHeader ?? "Start Planning Your Event"}
           </h2>
           {fields?.contactSubheader && (
-            <p className="body mb-8 text-neutral-700 whitespace-pre-line">{fields.contactSubheader}</p>
+            <p className="body text-neutral-700 whitespace-pre-line">{fields.contactSubheader}</p>
           )}
-          <a href="/contact" className="btn btn-primary">
-            Contact us about your event
+          <div className="flex justify-center">
+            <a
+              href={GENERAL_CONTACT_FORM_URL}
+              className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
+              >
+              Contact Us About Your Event
           </a>
+          </div>
         </div>
     </section>
 </div>

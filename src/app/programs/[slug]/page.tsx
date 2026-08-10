@@ -8,6 +8,7 @@ import AttachmentsCard from "@/components/detail/attachmentsCard";
 import DetailGalleryCarousel from "@/components/detail/detailGalleryCarousel";
 import RegistrationSidebar from "@/components/detail/registrationSidebar";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
+import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 /** Map age range to audience slug(s) for filtering */
 type AgeRangeValue = string | number | null | undefined;
@@ -74,8 +75,7 @@ const PROGRAM_BY_SLUG_QUERY = `
       slug
       featuredImage {
         node {
-          sourceUrl
-          altText
+          ${WP_MEDIA_IMAGE_FIELDS}
           mediaDetails { width height }
         }
       }
@@ -120,7 +120,10 @@ const PROGRAM_BY_SLUG_QUERY = `
 
         gallery {
           photos {
-            node { sourceUrl altText mediaDetails { width height } }
+            node {
+              ${WP_MEDIA_IMAGE_FIELDS}
+              mediaDetails { width height }
+            }
           }
         }
 
@@ -143,7 +146,7 @@ const PROGRAM_BY_SLUG_QUERY = `
                   quote
                   personName
                   personContext
-                  photo { node { sourceUrl altText } }
+                  photo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
                 }
               }
             }
@@ -187,10 +190,7 @@ const PROGRAM_BY_SLUG_QUERY = `
                   }
                 }
                 featuredImage {
-                  node {
-                    sourceUrl
-                    altText
-                  }
+                  node { ${WP_MEDIA_IMAGE_FIELDS} }
                 }
               }
               ... on Event {
@@ -200,10 +200,7 @@ const PROGRAM_BY_SLUG_QUERY = `
                   summary
                 }
                 featuredImage {
-                  node {
-                    sourceUrl
-                    altText
-                  }
+                  node { ${WP_MEDIA_IMAGE_FIELDS} }
                 }
               }
               ... on Page {
@@ -490,6 +487,11 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                   src={p.heroImage.url}
                   alt={p.heroImage.alt}
                   className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                  style={
+                    p.heroImage.objectPosition
+                      ? { objectPosition: p.heroImage.objectPosition }
+                      : undefined
+                  }
                   loading="lazy"
                   decoding="async"
                 />

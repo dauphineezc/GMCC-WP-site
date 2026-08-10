@@ -1,5 +1,7 @@
 // src/app/(home)/sections/NewsSection.tsx
 
+import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
+
 type Linkish = { title?: string | null; url?: string | null };
 
 type NewsItem = {
@@ -9,7 +11,7 @@ type NewsItem = {
   date?: string | null;
   newsFields?: { body?: string | null };
   featuredImage?: {
-    node?: { sourceUrl?: string | null; altText?: string | null } | null;
+    node?: ({ sourceUrl?: string | null; altText?: string | null } & MediaFocalPointFields) | null;
   } | null;
 };
 
@@ -57,21 +59,23 @@ export default function NewsSection({
   const top3 = sorted.slice(0, 3);
   if (top3.length === 0) return null;
 
-  const articleCards = top3.map((p) => ({
-    ...p,
-    _excerpt: stripHtml(p.newsFields?.body ?? ""),
-  }));
+  const articleCards = top3.map((p) => {
+    const objectPosition = mediaFocalPositionCss(p.featuredImage?.node);
+    return {
+      ...p,
+      _excerpt: stripHtml(p.newsFields?.body ?? ""),
+      _objectPosition: objectPosition,
+    };
+  });
 
   // Fixed height tall enough for the subscribe card (title + subtext + input + button + padding)
   // All 4 cards share the same value so every card in the 2-col grid looks identical.
   const CARD_H = "h-[250px]";
 
   return (
-    <section className="page-section relative overflow-hidden">
-      <div className="mx-auto max-w-6xl px-4">
-        <h2 className="h2 text-center">
-          {heading}
-        </h2>
+    <section className="page-section relative overflow-x-clip">
+      <div className="mx-auto min-w-0 max-w-6xl px-4">
+        <h2 className="h2 text-center">{heading}</h2>
 
         {cta?.url ? (
           <a
@@ -98,6 +102,11 @@ export default function NewsSection({
                       src={p.featuredImage.node.sourceUrl}
                       alt={p.featuredImage.node.altText ?? ""}
                       className="h-full w-full object-cover"
+                      style={
+                        p._objectPosition
+                          ? { objectPosition: p._objectPosition }
+                          : undefined
+                      }
                     />
                   ) : (
                     <div className="h-full w-full bg-neutral-200" />

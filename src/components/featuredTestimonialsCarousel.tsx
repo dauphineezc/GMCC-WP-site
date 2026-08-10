@@ -93,6 +93,11 @@ export default function FeaturedTestimonialsCarousel({
                 src={current.photoUrl}
                 alt={current.photoAlt}
                 className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+                style={
+                  current.photoObjectPosition
+                    ? { objectPosition: current.photoObjectPosition }
+                    : undefined
+                }
                 loading="lazy"
                 decoding="async"
               />

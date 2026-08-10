@@ -7,16 +7,14 @@ import type {
   PlanAnEventFields,
   RoomData,
 } from "./planAnEventFields";
+import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
   query PlanAnEventPage($uri: ID!) {
     page(id: $uri, idType: URI) {
       title
       featuredImage {
-        node {
-          sourceUrl
-          altText
-        }
+        node { ${WP_MEDIA_IMAGE_FIELDS} }
       }
       ${PAGE_HERO_FIELDS_GRAPHQL}
       planAnEventPageFields {
@@ -24,10 +22,7 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
           sectionHeader
           sectionDescription
           sectionImage {
-            node {
-              sourceUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} }
           }
           buttonLabel
         }
@@ -35,10 +30,7 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
           sectionHeader
           sectionDescription
           sectionImage {
-            node {
-              sourceUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} }
           }
           buttonLabel
         }
@@ -46,10 +38,7 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
           sectionHeader
           sectionDescription
           sectionImage {
-            node {
-              sourceUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} }
           }
           buttonLabel
         }
@@ -68,11 +57,11 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
           northFamilyCenterOfferings
         }
         centerLogos {
-          communityCenterLogo { node { sourceUrl altText } }
-          tennisCenterLogo { node { sourceUrl altText } }
-          curlingCenterLogo { node { sourceUrl altText } }
-          colemanFamilyCenterLogo { node { sourceUrl altText } }
-          northFamilyCenterLogo { node { sourceUrl altText } }
+          communityCenterLogo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          tennisCenterLogo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          curlingCenterLogo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          colemanFamilyCenterLogo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          northFamilyCenterLogo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         }
         faqs {
           faq1 {
@@ -113,10 +102,7 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
             roomAmenities
             gallery {
               photos {
-                node {
-                  sourceUrl
-                  altText
-                }
+                node { ${WP_MEDIA_IMAGE_FIELDS} }
               }
             }
           }
@@ -129,14 +115,11 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
           title
           slug
           featuredImage {
-            node {
-              sourceUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} }
           }
           partyPackageFields {
             name
-            photo { node { sourceUrl altText } }
+            photo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
             description
             price
             center {

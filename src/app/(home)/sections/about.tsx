@@ -21,7 +21,7 @@ export default function AboutSection({
         {body ? <p className="mt-6 text-lg text-neutral-200">{body}</p> : null}
 
         {cta?.url ? (
-          <div className="mt-8 mb-8 md:mb-16 flex w-full justify-center">
+          <div className="mt-8 mb-0 md:mb-16 flex w-full justify-center">
             <a href={cta.url} target={cta.target || undefined} className="btn btn-secondary">
               {cta.title || "Learn more about our mission"}
             </a>

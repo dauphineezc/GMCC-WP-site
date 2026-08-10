@@ -2,22 +2,47 @@
 // Shared utility for fetching amenity details with images
 
 import { wpFetch } from "@/lib/wp";
+import { mediaFocalPositionCss, WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 import type { AmenityDisplay } from "@/types/amenities";
 
+type AmenityMediaImage = {
+  sourceUrl: string;
+  altText: string | null;
+  objectPosition?: string;
+};
+
+function mapAmenityMediaNode(node: unknown): AmenityMediaImage | null {
+  if (!node || typeof node !== "object") return null;
+  const n = node as {
+    sourceUrl?: string | null;
+    altText?: string | null;
+    focalPointX?: number | string | null;
+    focalPointY?: number | string | null;
+    hasCustomFocalPoint?: boolean | null;
+  };
+  if (!n.sourceUrl) return null;
+  const objectPosition = mediaFocalPositionCss(n);
+  return {
+    sourceUrl: n.sourceUrl,
+    altText: n.altText ?? null,
+    ...(objectPosition ? { objectPosition } : {}),
+  };
+}
+
 const AMENITIES_FIELDS_BLOCK = `
-        amenityImage1 { node { sourceUrl altText } }
+        amenityImage1 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         center1 { nodes { ... on Center { slug title } } }
 
-        amenityImage2 { node { sourceUrl altText } }
+        amenityImage2 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         center2 { nodes { ... on Center { slug title } } }
 
-        amenityImage3 { node { sourceUrl altText } }
+        amenityImage3 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         center3 { nodes { ... on Center { slug title } } }
 
-        amenityImage4 { node { sourceUrl altText } }
+        amenityImage4 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         center4 { nodes { ... on Center { slug title } } }
 
-        amenityImage5 { node { sourceUrl altText } }
+        amenityImage5 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         center5 { nodes { ... on Center { slug title } } }
 
         relevantLink
@@ -27,8 +52,7 @@ const AMENITIES_FIELDS_BLOCK = `
         additionalInformation
         additionalImage {
           node {
-            sourceUrl
-            altText
+            ${WP_MEDIA_IMAGE_FIELDS}
           }
         }
 `;
@@ -145,14 +169,14 @@ export type AmenityWithImage = {
   isService?: boolean;
   isFeatured?: boolean;
   // default/fallback image (old behavior)
-  defaultImage: { sourceUrl: string; altText: string | null } | null;
+  defaultImage: AmenityMediaImage | null;
 
   // new: up to 5 center-specific candidates
   centerImageCandidates: Array<{
     centerSlug: string;
     centerTitle?: string | null;
     relevantLink?: string | null;
-    image: { sourceUrl: string; altText: string | null };
+    image: AmenityMediaImage;
   }>;
 
   /** All centers linked via center1–center5 (for aggregated accessibility views) */
@@ -187,11 +211,7 @@ function mapAmenityFieldsToWithImage(
 ): AmenityWithImage | null {
   if (!amenity || !af) return null;
 
-  const defaultNode = (af as any)?.amenityImage?.node ?? null;
-  const defaultImage =
-    defaultNode?.sourceUrl
-      ? { sourceUrl: defaultNode.sourceUrl, altText: defaultNode.altText ?? null }
-      : null;
+  const defaultImage = mapAmenityMediaNode((af as any)?.amenityImage?.node);
 
   const centerImageCandidates: AmenityWithImage["centerImageCandidates"] = [];
 
@@ -201,16 +221,14 @@ function mapAmenityFieldsToWithImage(
 
     const centerSlug = centerNodes?.[0]?.slug;
     const centerTitle = centerNodes?.[0]?.title ?? null;
+    const image = mapAmenityMediaNode(imageNode);
 
-    if (centerSlug && imageNode?.sourceUrl) {
+    if (centerSlug && image) {
       centerImageCandidates.push({
         centerSlug,
         centerTitle,
         relevantLink: (af as any).relevantLink ?? null,
-        image: {
-          sourceUrl: imageNode.sourceUrl,
-          altText: imageNode.altText ?? null,
-        },
+        image,
       });
     }
   }
@@ -265,7 +283,7 @@ function mapAmenityFieldsToWithImage(
 export function pickAmenityImageForCenter(
   amenity: AmenityWithImage,
   centerSlug: string
-): { sourceUrl: string; altText: string | null } | null {
+): AmenityMediaImage | null {
   const match = amenity.centerImageCandidates.find((c) => c.centerSlug === centerSlug);
   if (match) return match.image;
 
@@ -282,7 +300,7 @@ export type AmenityImage = {
   name: string;
   slug: string;
   description?: string | null;
-  image: { sourceUrl: string; altText: string | null };
+  image: AmenityMediaImage;
 };
 
 export function toAmenityImagesForCenter(

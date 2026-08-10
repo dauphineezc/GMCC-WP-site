@@ -46,10 +46,17 @@ export function mapWpPathToNextPath(path: string) {
       "drivers-training",
       "tax-aide",
       "food-distributions",
-      "pantries",
     ]);
     if (programSlugs.has(slug)) {
       return `/programs/${slug}`;
+    }
+
+    const amenityPathByWpSlug: Record<string, string> = {
+      pantries: "/amenities/pantries",
+      "food-clothes-hygiene-pantries": "/amenities/pantries",
+    };
+    if (amenityPathByWpSlug[slug]) {
+      return amenityPathByWpSlug[slug];
     }
   
     // default: just use the same path

@@ -24,6 +24,7 @@ import {
 import { fetchTodaysEvents } from "@/lib/events/todayEvents";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
 import { acfImageFromField } from "@/lib/acf";
+import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 import {
   coerceWpRichText,
   fetchCenterDetailPageFields,
@@ -45,8 +46,7 @@ const CENTER_BY_SLUG_QUERY = `
         heroSubheader
         heroImage {
           node {
-            sourceUrl
-            altText
+            ${WP_MEDIA_IMAGE_FIELDS}
           }
         }
         heroPrimaryCta {
@@ -60,8 +60,7 @@ const CENTER_BY_SLUG_QUERY = `
       }
       featuredImage {
         node {
-          sourceUrl
-          altText
+          ${WP_MEDIA_IMAGE_FIELDS}
           mediaDetails {
             width
             height
@@ -93,10 +92,7 @@ const CENTER_BY_SLUG_QUERY = `
             ... on Amenity {
               amenitiesFields {
                 amenityImage1 {
-                  node {
-                    sourceUrl
-                    altText
-                  }
+                  node { ${WP_MEDIA_IMAGE_FIELDS} }
                 }
                 center1 {
                   nodes {
@@ -107,10 +103,7 @@ const CENTER_BY_SLUG_QUERY = `
                   }
                 }
                 amenityImage2 {
-                  node {
-                    sourceUrl
-                    altText
-                  }
+                  node { ${WP_MEDIA_IMAGE_FIELDS} }
                 }
                 center2 {
                   nodes {
@@ -121,10 +114,7 @@ const CENTER_BY_SLUG_QUERY = `
                   }
                 }
                 amenityImage3 {
-                  node {
-                    sourceUrl
-                    altText
-                  }
+                  node { ${WP_MEDIA_IMAGE_FIELDS} }
                 }
                 center3 {
                   nodes {
@@ -135,10 +125,7 @@ const CENTER_BY_SLUG_QUERY = `
                   }
                 }
                 amenityImage4 {
-                  node {
-                    sourceUrl
-                    altText
-                  }
+                  node { ${WP_MEDIA_IMAGE_FIELDS} }
                 }
                 center4 {
                   nodes {
@@ -149,10 +136,7 @@ const CENTER_BY_SLUG_QUERY = `
                   }
                 }
                 amenityImage5 {
-                  node {
-                    sourceUrl
-                    altText
-                  }
+                  node { ${WP_MEDIA_IMAGE_FIELDS} }
                 }
                 center5 {
                   nodes {
@@ -167,10 +151,7 @@ const CENTER_BY_SLUG_QUERY = `
                 isService
                 additionalInformation
                 additionalImage {
-                  node {
-                    sourceUrl
-                    altText
-                  }
+                  node { ${WP_MEDIA_IMAGE_FIELDS} }
                 }
               }
             }
@@ -183,10 +164,7 @@ const CENTER_BY_SLUG_QUERY = `
             ... on AccessibilityAmenity {
               amenitiesFields {
                 amenityImage1 {
-                  node {
-                    sourceUrl
-                    altText
-                  }
+                  node { ${WP_MEDIA_IMAGE_FIELDS} }
                 }
               }
             }
@@ -248,7 +226,7 @@ const CENTER_BY_SLUG_QUERY = `
                 quote
                 personName
                 personContext
-                photo { node { sourceUrl altText } }
+                photo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
               }
             }
           }
@@ -270,8 +248,7 @@ const CENTER_BY_SLUG_QUERY = `
         gallery {
           photos {
             node {
-              sourceUrl
-              altText
+              ${WP_MEDIA_IMAGE_FIELDS}
             }
           }
         }
@@ -380,8 +357,9 @@ export default async function CenterPage(props: CenterPageProps) {
 
 
   const heroFields = center.heroFields ?? null;
-  const heroImageUrl =
-    heroFields?.heroImage?.node?.sourceUrl ?? center.featuredImage?.node?.sourceUrl ?? null;
+  const heroImageNode = heroFields?.heroImage?.node ?? center.featuredImage?.node ?? null;
+  const heroImageUrl = heroImageNode?.sourceUrl ?? null;
+  const heroImagePosition = mediaFocalPositionCss(heroImageNode);
   const heroHeader =
     (heroFields?.heroHeader ?? "").trim() || (center.title ?? "").trim() || "Center";
   const heroSubheaderRaw = (heroFields?.heroSubheader ?? "").trim();
@@ -486,10 +464,14 @@ export default async function CenterPage(props: CenterPageProps) {
     body: campaign.body ?? null,
     primaryCta: campaignPrimaryCta,
     secondaryCta: campaignSecondaryCta,
-    gallery: acfGalleryPhotoNodes(campaign.gallery).map((node) => ({
-      sourceUrl: node.sourceUrl ?? null,
-      altText: node.altText ?? null,
-    })),
+    gallery: acfGalleryPhotoNodes(campaign.gallery).map((node) => {
+      const objectPosition = mediaFocalPositionCss(node);
+      return {
+        sourceUrl: node.sourceUrl ?? null,
+        altText: node.altText ?? null,
+        ...(objectPosition ? { objectPosition } : {}),
+      };
+    }),
   };
 
   const isCurlingCenter = isCurlingCenterSlug(slug, center.slug ?? null);
@@ -550,6 +532,7 @@ export default async function CenterPage(props: CenterPageProps) {
         title={heroHeader}
         subheader={heroSubheader}
         imageUrl={heroImageUrl}
+        imagePosition={heroImagePosition}
         ctas={heroCtas.length > 0 ? heroCtas : undefined}
         flushBottom={true}
         waveFillClassName="text-gmcc-navy"
@@ -864,7 +847,7 @@ export default async function CenterPage(props: CenterPageProps) {
       </section>
 
       {showNewsletterSignUp ? (
-        <section className="page-section-wide text-center mt-[-4rem] md:mt-[-5rem] mb-12">
+        <section className="page-section-wide text-center mt-[-4rem] md:mt-[-5rem]">
           <div className="card bg-gmcc-navy">
             <div className="col-span-1">
               {newsletterHeader ? <h3 className="h3 mb-2 text-white">{newsletterHeader}</h3> : null}

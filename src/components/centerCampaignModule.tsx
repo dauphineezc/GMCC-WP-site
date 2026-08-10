@@ -9,6 +9,7 @@ type Maybe<T> = T | null | undefined;
 type ModuleImage = {
   sourceUrl?: Maybe<string>;
   altText?: Maybe<string>;
+  objectPosition?: Maybe<string>;
 };
 
 type ModuleCta = {
@@ -162,6 +163,11 @@ export default function CenterCampaignModule({
                           alt={image.altText || `Gallery image ${index + 1}`}
                           fill
                           className="object-cover"
+                          style={
+                            image.objectPosition
+                              ? { objectPosition: image.objectPosition }
+                              : undefined
+                          }
                           sizes="(max-width: 1000px) 82vw, 55vw"
                           priority={index === 0}
                         />

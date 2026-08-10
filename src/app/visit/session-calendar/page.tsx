@@ -145,7 +145,7 @@ export default async function SessionCalendarPage() {
       <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
-        imageUrl={hero.imageUrl}
+        imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}
         ctas={hero.ctas}
       />
 

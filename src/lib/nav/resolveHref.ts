@@ -88,7 +88,7 @@ function normalizeWpUrlToPath(url: string) {
     "Driver's Training": "/programs/drivers-training",
     "Tax Aide Program": "/programs/tax-aide",
     "Food Distributions": "/programs/food-distributions",
-    "Food, Clothes, & Hygiene Pantries": "/programs/pantries",
+    "Food, Clothes, & Hygiene Pantries": "/amenities/pantries",
   };
 
   // Event filter rules (label-based for navbar items)
@@ -109,6 +109,12 @@ function normalizeWpUrlToPath(url: string) {
     "Pool Availability": "/visit/pool-availability",
     "League Schedules": "/visit/league-schedules",
   };
+
+  /** WP page paths that don't match the Next.js route slug */
+  const WP_PATH_OVERRIDES: Record<string, string> = {
+    "/drivers-training": "/programs/drivers-training",
+    "/food-clothes-hygiene-pantries": "/amenities/pantries",
+  };
   
   export function resolveHref({
     wpUrl,
@@ -119,26 +125,28 @@ function normalizeWpUrlToPath(url: string) {
     label: string;
     centerMap: Map<string, string>;
   }) {
+    // Soft-match WP menu labels that differ slightly (apostrophes, & vs and, etc.)
+    const resolvedLabel = canonicalLabelFromText(label) ?? label;
 
-    const ourPurposePage = OUR_PURPOSE_PAGE[label];
+    const ourPurposePage = OUR_PURPOSE_PAGE[resolvedLabel];
     if (ourPurposePage) return ourPurposePage;
 
-    const joinOurTeamPage = JOIN_OUR_TEAM_PAGE[label];
+    const joinOurTeamPage = JOIN_OUR_TEAM_PAGE[resolvedLabel];
     if (joinOurTeamPage) return joinOurTeamPage;
 
-    const membershipPage = MEMBERSHIP_PAGES[label];
+    const membershipPage = MEMBERSHIP_PAGES[resolvedLabel];
     if (membershipPage) return membershipPage;
 
     // 1) Programs filter overrides (based on desired behavior)
-    const programOverride = PROGRAM_FILTER_BY_LABEL[label];
+    const programOverride = PROGRAM_FILTER_BY_LABEL[resolvedLabel];
     if (programOverride) return programOverride;
 
     // 1b) Events filter overrides (based on desired behavior)
-    const eventOverride = EVENT_FILTER_BY_LABEL[label];
+    const eventOverride = EVENT_FILTER_BY_LABEL[resolvedLabel];
     if (eventOverride) return eventOverride;
 
     // 2) Unique program pages that link directly to /programs/[slug]
-    const uniqueProgramPage = UNIQUE_PROGRAM_PAGES[label];
+    const uniqueProgramPage = UNIQUE_PROGRAM_PAGES[resolvedLabel];
     if (uniqueProgramPage) return uniqueProgramPage;
   
     // 3) Centers: WP page URI -> /centers/[slug]
@@ -147,10 +155,18 @@ function normalizeWpUrlToPath(url: string) {
     if (centerHref) return centerHref;
   
     // 4) Schedule pages: WP page URI -> /visit/[slug]
-    const scheduleHref = SCHEDULE_PAGES[label];
+    const scheduleHref = SCHEDULE_PAGES[resolvedLabel];
     if (scheduleHref) return scheduleHref;
+
+    // 5) Known WP path remaps (slug differs from Next route)
+    const pathOverride = WP_PATH_OVERRIDES[wpPath];
+    if (pathOverride) return pathOverride;
+
+    // 6) Generic WP → Next path mapping
+    const mappedPath = mapWpPathToNextPath(wpPath);
+    if (mappedPath !== wpPath) return mappedPath;
   
-    // 4) Otherwise: keep path as-is (works for normal pages like /about, /events, etc.)
+    // 7) Otherwise: keep path as-is (works for normal pages like /about, /events, etc.)
     return wpPath;
   }
 
@@ -181,6 +197,7 @@ const SEARCH_LABEL_ALIASES: Record<string, string> = {
   "Sports/Aquatics Camps": "Sport/Aquatics Camps",
   "Sports Aquatics Camps": "Sport/Aquatics Camps",
   "Our purpose": "Our Purpose",
+  "Food, Clothes, and Hygiene Pantries": "Food, Clothes, & Hygiene Pantries",
 };
 
 function canonicalLabelFromText(text: string): string | null {

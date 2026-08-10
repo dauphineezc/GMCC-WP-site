@@ -21,6 +21,7 @@ export default async function PoolAvailabilityPage() {
         title={hero.title}
         subheader={hero.subheader}
         imageUrl={hero.imageUrl ?? "/images/PoolPhoto.png"}
+        imagePosition={hero.imagePosition}
         ctas={hero.ctas}
       />
 

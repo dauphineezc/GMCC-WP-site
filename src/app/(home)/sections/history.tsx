@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getScrollerContentWidth } from "@/lib/scrollerContentWidth";
+import { NavyTopWave } from "@/components/navyWaveSection";
 
 type HistoryItem = {
   date: string;
@@ -9,6 +9,7 @@ type HistoryItem = {
   body: string;
   imageUrl: string | null;
   imageAlt: string;
+  objectPosition?: string;
 };
 
 type HistorySectionProps = {
@@ -91,6 +92,9 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
   /**
    * Compute mobile "gutter" padding so each card can be centered when snapping.
    * This creates equal left/right padding on the scroller, matching the mobile card width.
+   *
+   * Use clientWidth (not content-minus-padding): gutters are applied as padding on this
+   * same scroller, so subtracting padding would feedback into an infinite resize loop.
    */
   useEffect(() => {
     const scroller = scrollerRef.current;
@@ -99,12 +103,12 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
     const calc = () => {
       const md = window.matchMedia("(min-width: 768px)").matches;
       if (md) {
-        setMobileGutter(0);
-        setMobileColW(0);
+        setMobileGutter((prev) => (prev === 0 ? prev : 0));
+        setMobileColW((prev) => (prev === 0 ? prev : 0));
         return;
       }
 
-      const w = getScrollerContentWidth(scroller);
+      const w = Math.floor(scroller.clientWidth);
       const cardW = Math.min(
         MOBILE_CARD_MAX_PX,
         w,
@@ -113,8 +117,9 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
           Math.floor(w * MOBILE_CARD_VW)
         )
       );
-      setMobileColW(cardW);
-      setMobileGutter(Math.max(0, Math.floor((w - cardW) / 2)));
+      const gutter = Math.max(0, Math.floor((w - cardW) / 2));
+      setMobileColW((prev) => (prev === cardW ? prev : cardW));
+      setMobileGutter((prev) => (prev === gutter ? prev : gutter));
     };
 
     calc();
@@ -303,166 +308,172 @@ export default function HistorySection({ heading, items }: HistorySectionProps) 
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMd, mobileGutter, mobileColW]);
-
   if (!cleanItems.length) return null;
 
   return (
-    <section className="relative overflow-x-clip bg-gmcc-navy px-4 py-14 scroll-mt-24">
-      <div className="relative z-10 mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="text-center">
-          <h2 className="h2 mt-24 mb-0 text-white">{heading}</h2>
-        </div>
+    <section className="relative scroll-mt-24">
+      {/* Standard top wave — sits above the navy band so troughs show page white */}
+      <NavyTopWave />
 
-        {/* Desktop arrows */}
-        <div className="mt-0 hidden justify-end gap-2 pt-2 md:flex">
-          <button
-            type="button"
-            onClick={goPrev}
-            disabled={atStart}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
-            aria-label="Previous"
-          >
-            ←
-          </button>
-          <button
-            type="button"
-            onClick={goNext}
-            disabled={atEnd}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
-            aria-label="Next"
-          >
-            →
-          </button>
-        </div>
+      <div className="relative -mt-[3px] overflow-x-clip bg-gmcc-navy px-4 pt-8 pb-14 md:pt-10">
+        <div className="relative z-10 mx-auto max-w-6xl">
+          {/* Header */}
+          <div className="text-center">
+            <h2 className="h2 mt-8 mb-0 text-white">{heading}</h2>
+          </div>
 
-        {/* Scroller */}
-        <div
-          ref={scrollerRef}
-          className="mt-8 overflow-x-auto pb-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          style={{
-            scrollSnapType: "x mandatory",
-            WebkitOverflowScrolling: "touch",
-            cursor: "grab",
-            paddingLeft: mobileGutter,
-            paddingRight: mobileGutter,
-            scrollPaddingLeft: mobileGutter,
-            scrollPaddingRight: mobileGutter,
-          }}
-        >
+          {/* Desktop arrows */}
+          <div className="mt-0 hidden justify-end gap-2 pt-2 md:flex">
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={atStart}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
+              aria-label="Previous"
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={atEnd}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
+              aria-label="Next"
+            >
+              →
+            </button>
+          </div>
+
+          {/* Scroller */}
           <div
-            ref={gridRef}
-            className="relative inline-grid gap-8 [grid-auto-flow:column] md:[grid-auto-columns:calc((100%-64px)/3)]"
+            ref={scrollerRef}
+            className="mt-8 overflow-x-auto pb-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             style={{
-              minWidth: "100%",
-              gridAutoColumns: isMd
-                ? undefined
-                : mobileColW > 0
-                  ? `${mobileColW}px`
-                  : "100%",
+              scrollSnapType: "x mandatory",
+              WebkitOverflowScrolling: "touch",
+              cursor: "grab",
+              paddingLeft: mobileGutter,
+              paddingRight: mobileGutter,
+              scrollPaddingLeft: mobileGutter,
+              scrollPaddingRight: mobileGutter,
             }}
           >
-            {/* Timeline track line spanning full scroll width */}
             <div
-              className="pointer-events-none absolute left-0 top-[44px] h-[4px]"
+              ref={gridRef}
+              className="relative inline-grid gap-8 [grid-auto-flow:column] md:[grid-auto-columns:calc((100%-64px)/3)]"
               style={{
-                width: trackWidth ? `${trackWidth}px` : "100%",
-                backgroundColor: "var(--gmcc-teal)",
-                borderRadius: "9999px",
+                minWidth: "100%",
+                gridAutoColumns: isMd
+                  ? undefined
+                  : mobileColW > 0
+                    ? `${mobileColW}px`
+                    : "100%",
               }}
-            />
-
-            {cleanItems.map((it, idx) => (
+            >
+              {/* Timeline track line spanning full scroll width */}
               <div
-                key={`${it.date}-${idx}`}
-                ref={(el) => {
-                  cellRefs.current[idx] = el;
-                }}
-                className="relative min-w-0"
+                className="pointer-events-none absolute left-0 top-[44px] h-[4px]"
                 style={{
-                  scrollSnapAlign: isMd ? "start" : "center",
-                  scrollSnapStop: "always",
+                  width: trackWidth ? `${trackWidth}px` : "100%",
+                  backgroundColor: "var(--gmcc-teal)",
+                  borderRadius: "9999px",
                 }}
-              >
-                {/* Date label */}
-                <button
-                  type="button"
-                  onClick={() => scrollToIndex(idx)}
-                  className="group relative mx-auto block w-full select-none"
-                  aria-label={`Go to ${it.date || `item ${idx + 1}`}`}
-                >
-                  <div className="text-center text-base font-semibold tracking-widest text-white">
-                    {it.date || `Item ${idx + 1}`}
-                  </div>
-                </button>
+              />
 
-                {/* Card */}
-                <div className="mt-10 mb-2 flex justify-center">
-                  <div className="min-w-0 w-full max-w-full select-none">
-                    <PolaroidCard item={it} />
+              {cleanItems.map((it, idx) => (
+                <div
+                  key={`${it.date}-${idx}`}
+                  ref={(el) => {
+                    cellRefs.current[idx] = el;
+                  }}
+                  className="relative min-w-0"
+                  style={{
+                    scrollSnapAlign: isMd ? "start" : "center",
+                    scrollSnapStop: "always",
+                  }}
+                >
+                  {/* Date label */}
+                  <button
+                    type="button"
+                    onClick={() => scrollToIndex(idx)}
+                    className="group relative mx-auto block w-full select-none"
+                    aria-label={`Go to ${it.date || `item ${idx + 1}`}`}
+                  >
+                    <div className="text-center text-base font-semibold tracking-widest text-white">
+                      {it.date || `Item ${idx + 1}`}
+                    </div>
+                  </button>
+
+                  {/* Card */}
+                  <div className="mt-10 mb-2 flex justify-center">
+                    <div className="min-w-0 w-full max-w-full select-none">
+                      <PolaroidCard item={it} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile arrows */}
+          <div className="mt-2 flex items-center justify-center gap-2 md:hidden">
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={atStart}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
+              aria-label="Previous"
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={atEnd}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
+              aria-label="Next"
+            >
+              →
+            </button>
           </div>
         </div>
 
-        {/* Mobile arrows */}
-        <div className="mt-2 flex items-center justify-center gap-2 md:hidden">
-          <button
-            type="button"
-            onClick={goPrev}
-            disabled={atStart}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
-            aria-label="Previous"
+        {/* Custom bottom wave — absolute so Centers can overlap cleanly */}
+        <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
+          <svg
+            viewBox="0 0 390 120"
+            className="block h-14 w-full text-gmcc-navy md:hidden"
+            preserveAspectRatio="none"
+            aria-hidden
           >
-            ←
-          </button>
-          <button
-            type="button"
-            onClick={goNext}
-            disabled={atEnd}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-300 body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90"
-            aria-label="Next"
+            <path
+              d="
+                M0,98
+                C78,62 135,54 195,74
+                C255,96 322,88 390,60
+                L390,0 L0,0 Z
+              "
+              fill="currentColor"
+            />
+          </svg>
+
+          <svg
+            viewBox="0 0 1440 120"
+            className="hidden h-16 w-full text-gmcc-navy md:block"
+            preserveAspectRatio="none"
+            aria-hidden
           >
-            →
-          </button>
+            <path
+              d="
+                M0,110
+                C300,-50  500,120  800,100
+                S1000,0 1440,0
+                L1440,0 L0,0 Z
+              "
+              fill="currentColor"
+            />
+          </svg>
         </div>
-      </div>
-
-      {/* Bottom wave (responsive) */}
-      <div className="pointer-events-none absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
-        <svg
-          viewBox="0 0 390 120"
-          className="block h-14 w-full text-gmcc-navy md:hidden"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="
-              M0,98
-              C78,62 135,54 195,74
-              C255,96 322,88 390,60
-              L390,0 L0,0 Z
-            "
-            fill="currentColor"
-          />
-        </svg>
-
-        <svg
-          viewBox="0 0 1440 120"
-          className="hidden h-16 w-full text-gmcc-navy md:block"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="
-              M0,110
-              C300,-50  500,120  800,100
-              S1000,0 1440,0
-              L1440,0 L0,0 Z
-            "
-            fill="currentColor"
-          />
-        </svg>
       </div>
     </section>
   );
@@ -490,6 +501,9 @@ function PolaroidCard({ item }: { item: HistoryItem }) {
               src={item.imageUrl}
               alt={item.imageAlt || ""}
               className="aspect-[4/3] w-full select-none object-cover"
+              style={
+                item.objectPosition ? { objectPosition: item.objectPosition } : undefined
+              }
               loading="lazy"
               decoding="async"
               draggable={false}

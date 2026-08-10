@@ -6,6 +6,7 @@ import {
   type EventOccurrence,
 } from "@/lib/events/eventSchedule";
 import { wpFetch } from "@/lib/wp";
+import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 const TODAYS_EVENTS_FETCH_SIZE = 100;
 
@@ -17,10 +18,7 @@ export const TODAYS_EVENTS_QUERY = /* GraphQL */ `
         slug
         title
         featuredImage {
-          node {
-            sourceUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         eventFields {
           summary
@@ -48,6 +46,7 @@ export type TodayEventCardData = {
   href: string;
   imageUrl: string | null;
   imageAlt: string;
+  objectPosition?: string;
   centers: { slug: string; title: string }[];
   centerLabel: string | null;
   startDatetime: string;
@@ -57,7 +56,15 @@ type WpTodayEventNode = {
   id?: string | null;
   slug?: string | null;
   title?: string | null;
-  featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
+  featuredImage?: {
+    node?: {
+      sourceUrl?: string | null;
+      altText?: string | null;
+      focalPointX?: number | string | null;
+      focalPointY?: number | string | null;
+      hasCustomFocalPoint?: boolean | null;
+    } | null;
+  } | null;
   eventFields?: {
     summary?: string | null;
     eventSchedule?: unknown;
@@ -133,6 +140,7 @@ export function mapTodaysEvents(
     if (!timeLabel) continue;
 
     const hero = node.featuredImage?.node;
+    const objectPosition = mediaFocalPositionCss(hero);
 
     cards.push({
       id: node.id,
@@ -143,6 +151,7 @@ export function mapTodaysEvents(
       href: buildEventHref(node.slug, todaysOccurrence.start),
       imageUrl: hero?.sourceUrl ?? fallbackImageUrl,
       imageAlt: hero?.altText?.trim() || node.title,
+      ...(objectPosition ? { objectPosition } : {}),
       centers,
       centerLabel: centers[0]?.title ?? null,
       startDatetime: todaysOccurrence.start,

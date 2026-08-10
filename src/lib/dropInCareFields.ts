@@ -1,5 +1,5 @@
 import { acfCtaHref, resolveWpMediaUrl } from "@/lib/wp";
-import { asString, type MediaFieldInput, type MediaRef } from "@/lib/acf";
+import { asString, type MediaFieldInput, type MediaRef, WP_MEDIA_IMAGE_FIELDS } from "@/lib/acf";
 
 /** GraphQL selection set for drop-in care on `earlyChildhoodPageFields`. */
 export const DROP_IN_CARE_FIELDS_GRAPHQL = `
@@ -10,14 +10,14 @@ export const DROP_IN_CARE_FIELDS_GRAPHQL = `
     body
     ctaLabel
     cta
-    icon { node { sourceUrl altText } }
+    icon { node { ${WP_MEDIA_IMAGE_FIELDS} } }
   }
   theZoneCard {
     header
     body
     ctaLabel
     cta
-    icon { node { sourceUrl altText } }
+    icon { node { ${WP_MEDIA_IMAGE_FIELDS} } }
   }
 `;
 

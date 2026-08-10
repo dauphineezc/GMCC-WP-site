@@ -1,6 +1,7 @@
 import { wpFetch } from "@/lib/wp";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import Tabs from "@/components/tabs";
+import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 
 const VIRTUAL_FITNESS_PAGE_QUERY = /* GraphQL */ `
@@ -34,21 +35,15 @@ const VIRTUAL_FITNESS_PAGE_QUERY = /* GraphQL */ `
 
         contentImage1 {
           node {
-            sourceUrl
-            mediaDetails {
-              width
-              height
-            }
+            ${WP_MEDIA_IMAGE_FIELDS}
+            mediaDetails { width height }
           }
         }
 
         contentImage2 {
           node {
-            sourceUrl
-            mediaDetails {
-              width
-              height
-            }
+            ${WP_MEDIA_IMAGE_FIELDS}
+            mediaDetails { width height }
           }
         }
 
@@ -67,7 +62,7 @@ const VIRTUAL_FITNESS_PAGE_QUERY = /* GraphQL */ `
           monthLabel
           file {
             node {
-              sourceUrl
+              ${WP_MEDIA_IMAGE_FIELDS}
               mediaDetails {
                 width
                 height
@@ -80,7 +75,7 @@ const VIRTUAL_FITNESS_PAGE_QUERY = /* GraphQL */ `
           monthLabel
           file {
             node {
-              sourceUrl
+              ${WP_MEDIA_IMAGE_FIELDS}
               mediaDetails {
                 width
                 height
@@ -96,7 +91,11 @@ const VIRTUAL_FITNESS_PAGE_QUERY = /* GraphQL */ `
 export default async function VirtualFitnessPage() {
   const data = await wpFetch<any>(VIRTUAL_FITNESS_PAGE_QUERY, { uri: "/virtual-fitness" });
   const f = data?.page?.virtualFitnessPageFields;
-  const renderScheduleFile = (url?: string, label?: string) => {
+  const renderScheduleFile = (
+    url?: string,
+    label?: string,
+    mediaNode?: Parameters<typeof mediaFocalPositionCss>[0],
+  ) => {
     if (!url) {
       return <p className="text-neutral-600">Schedule file unavailable.</p>;
     }
@@ -117,22 +116,22 @@ export default async function VirtualFitnessPage() {
               className="h-[720px] w-full"
             />
           </div>
-          {/* <a href={url} target="_blank" rel="noopener noreferrer" className="text-gmcc-teal underline">
-            Open PDF in new tab
-          </a> */}
         </div>
       );
     }
 
     if (isImage) {
+      const objectPosition = mediaFocalPositionCss(mediaNode);
       return (
         <div className="space-y-3">
           <div className="overflow-hidden rounded-xl border border-neutral-300 bg-white">
-            <img src={url} alt={label ? `${label} schedule` : "Schedule"} className="h-auto w-full object-contain" />
+            <img
+              src={url}
+              alt={label ? `${label} schedule` : "Schedule"}
+              className="h-auto w-full object-contain"
+              style={objectPosition ? { objectPosition } : undefined}
+            />
           </div>
-          {/* <a href={url} target="_blank" rel="noopener noreferrer" className="text-gmcc-teal underline">
-            Open file in new tab
-          </a> */}
         </div>
       );
     }
@@ -182,7 +181,15 @@ export default async function VirtualFitnessPage() {
 
           <div className="overflow-hidden flex flex-col md:order-2">
             <div className="aspect-[16/9] h-full">
-              <img src={f?.contentImage1?.node?.sourceUrl} alt={f?.contentImage1?.node?.title} className="w-full h-full object-cover" />
+              <img
+                src={f?.contentImage1?.node?.sourceUrl}
+                alt={f?.contentImage1?.node?.title}
+                className="w-full h-full object-cover"
+                style={(() => {
+                  const pos = mediaFocalPositionCss(f?.contentImage1?.node);
+                  return pos ? { objectPosition: pos } : undefined;
+                })()}
+              />
             </div>
           </div>
         </div>
@@ -303,6 +310,7 @@ export default async function VirtualFitnessPage() {
                       {renderScheduleFile(
                         f?.currentMonthSchedule?.file?.node?.sourceUrl,
                         f?.currentMonthSchedule?.monthLabel,
+                        f?.currentMonthSchedule?.file?.node,
                       )}
                     </div>
                   </div>
@@ -319,6 +327,7 @@ export default async function VirtualFitnessPage() {
                       {renderScheduleFile(
                         f?.nextMonthSchedule?.file?.node?.sourceUrl,
                         f?.nextMonthSchedule?.monthLabel,
+                        f?.nextMonthSchedule?.file?.node,
                       )}
                     </div>
                   </div>

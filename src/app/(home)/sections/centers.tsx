@@ -3,13 +3,19 @@
 
 import { useMemo, useState } from "react";
 import PhoneLink from "@/components/phoneLink";
+import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
+
+type MediaNode = {
+  sourceUrl?: string | null;
+  altText?: string | null;
+} & MediaFocalPointFields;
 
 type Center = {
   id: string;
   slug?: string | null;
   title?: string | null;
   uri?: string | null;
-  featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
+  featuredImage?: { node?: MediaNode | null } | null;
   centersFields?: {
     address?: string | null;
     contactInfo?: { contactPhone?: string | null; contactEmail?: string | null } | null;
@@ -20,7 +26,7 @@ type Props = {
   heading: string;
   centers: Center[];
   corporateWellnessCentersCaption?: string | null;
-  corporateWellnessCentersImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
+  corporateWellnessCentersImage?: { node?: MediaNode | null } | null;
 };
 
 function getSlug(c: { slug?: string | null; uri?: string | null }) {
@@ -160,13 +166,15 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
   const [selectedId, setSelectedId] = useState(items[0].id);
   const selected = items.find((c) => c.id === selectedId) ?? items[0];
   const selectedIsCorporateWellness = getSlug(selected) === "corporate-wellness-centers";
-  const bgUrl = selectedIsCorporateWellness
-    ? (corporateWellnessCentersImage?.node?.sourceUrl ?? selected.featuredImage?.node?.sourceUrl ?? null)
-    : (selected.featuredImage?.node?.sourceUrl ?? null);
+  const bgNode = selectedIsCorporateWellness
+    ? (corporateWellnessCentersImage?.node ?? selected.featuredImage?.node ?? null)
+    : (selected.featuredImage?.node ?? null);
+  const bgUrl = bgNode?.sourceUrl ?? null;
+  const bgPosition = mediaFocalPositionCss(bgNode) ?? "center";
 
   return (
-    // no top padding; full-width section handled inside
-    <section className="relative z-10 -mt-14 pt-0 md:-mt-16 mb-16">
+    // no top padding; bottom padding matches page-section so News spacing matches Programs/Events
+    <section className="relative z-10 -mt-14 pt-0 pb-6 sm:pb-8 md:-mt-16">
       
       {/* Mobile: desktop-like accordion + image beneath */}
       <div className="md:hidden">
@@ -176,8 +184,8 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
             {/* faint texture/overlay */}
             <div className="absolute inset-0 bg-white/5" aria-hidden="true" />
 
-            <div className="relative mx-auto max-w-6xl px-4 py-8">
-              <h2 className="h2 mt-8 mb-0 text-3xl font-semibold tracking-wide text-white">{heading}</h2>
+            <div className="relative mx-auto max-w-6xl px-4 pt-6 pb-8 sm:pt-12">
+              <h2 className="h2 mt-16 mb-0 text-white">{heading}</h2>
 
               <ul className="mt-5 space-y-3">
                 {items.map((c) => (
@@ -207,7 +215,7 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
                 style={{
                   backgroundImage: `url(${bgUrl})`,
                   backgroundSize: "cover",
-                  backgroundPosition: "center",
+                  backgroundPosition: bgPosition,
                 }}
                 aria-hidden="true"
               />
@@ -235,7 +243,7 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
       </div>
 
       {/* Desktop */}
-      <div className="mt-0 hidden md:block mb-12">
+      <div className="mt-0 hidden md:block">
         <div className="relative w-full">
           <div className="relative h-[700px] w-full overflow-hidden">
             {/* Background image – fixed 700px so zoom never changes with content */}
@@ -246,6 +254,7 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
                 alt=""
                 aria-hidden="true"
                 className="absolute inset-x-0 top-0 h-[700px] w-full object-cover object-center"
+                style={{ objectPosition: bgPosition }}
               />
             ) : null}
 
@@ -260,7 +269,7 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
             />
 
             {/* Content – scrollable if list overflows the fixed height */}
-            <div className="relative flex h-full flex-col mx-auto max-w-6xl pl-48 pr-10 pt-16 pb-6 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="relative flex h-full flex-col mx-auto max-w-6xl pl-48 pr-10 pt-12 pb-6 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <div className="grid grid-cols-[1fr_minmax(400px,340px)] gap-10 flex-1">
                 <div />
 

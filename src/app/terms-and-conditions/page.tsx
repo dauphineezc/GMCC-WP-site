@@ -9,7 +9,7 @@ import {
   type WpMediaFieldInput,
   type WpMediaRef,
 } from "@/lib/wp";
-import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
+import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -113,13 +113,13 @@ export default async function TermsAndConditionsPage() {
           {fields?.contactSubheader ? (
             <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.contactSubheader}</p>
           ) : null}
-          <div className="mt-6 flex justify-center">
+          <div className="flex justify-center">
             <a
-              href={WEBTRAC_REGISTRATION_URL}
-              className="btn bg-gmcc-navy px-8 py-3 text-base text-white hover:bg-neutral-100"
-            >
+              href={GENERAL_CONTACT_FORM_URL}
+              className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
+              >
               Contact Us
-            </a>
+          </a>
           </div>
         </section>
       )}

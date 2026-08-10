@@ -544,6 +544,11 @@ export default function CampsProgramsExplorerClient({
                       src={p.heroUrl}
                       alt={p.heroAlt}
                       className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                      style={
+                        p.objectPosition
+                          ? { objectPosition: p.objectPosition }
+                          : undefined
+                      }
                       loading="lazy"
                       decoding="async"
                     />

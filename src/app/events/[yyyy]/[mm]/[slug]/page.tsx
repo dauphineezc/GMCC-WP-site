@@ -10,6 +10,7 @@ import AttachmentsCard from "@/components/detail/attachmentsCard";
 import DetailGalleryCarousel from "@/components/detail/detailGalleryCarousel";
 import RegistrationSidebar from "@/components/detail/registrationSidebar";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
+import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 const EVENT_BY_SLUG_QUERY = `
   query EventBySlug($slug: ID!) {
@@ -18,8 +19,7 @@ const EVENT_BY_SLUG_QUERY = `
       slug
       featuredImage {
         node {
-          sourceUrl
-          altText
+          ${WP_MEDIA_IMAGE_FIELDS}
           mediaDetails { width height }
         }
       }
@@ -34,7 +34,10 @@ const EVENT_BY_SLUG_QUERY = `
 
         gallery {
           photos {
-            node { sourceUrl altText mediaDetails { width height } }
+            node {
+              ${WP_MEDIA_IMAGE_FIELDS}
+              mediaDetails { width height }
+            }
           }
         }
 
@@ -100,7 +103,7 @@ const EVENT_BY_SLUG_QUERY = `
                   quote
                   personName
                   personContext
-                  photo { node { sourceUrl altText } }
+                  photo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
                 }
               }
             }
@@ -114,10 +117,7 @@ const EVENT_BY_SLUG_QUERY = `
                 tier
                 link
                 logo {
-                  node {
-                    sourceUrl
-                    altText
-                  }
+                  node { ${WP_MEDIA_IMAGE_FIELDS} }
                 }
               }
             }
@@ -134,10 +134,7 @@ const EVENT_BY_SLUG_QUERY = `
                 ${EVENT_SCHEDULE_GRAPHQL}
               }
               featuredImage {
-                node {
-                  sourceUrl
-                  altText
-                }
+                node { ${WP_MEDIA_IMAGE_FIELDS} }
               }
             }
           }
@@ -404,6 +401,7 @@ export default async function EventPage(props: EventPageProps) {
               const reStartIso = reDateInfo.start;
               const reEndIso = reDateInfo.end;
               const featuredImage = re.featuredImage?.node;
+              const featuredObjectPosition = mediaFocalPositionCss(featuredImage);
 
               return (
                 <a
@@ -418,6 +416,11 @@ export default async function EventPage(props: EventPageProps) {
                         src={featuredImage.sourceUrl}
                         alt={featuredImage.altText ?? ""}
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                        style={
+                          featuredObjectPosition
+                            ? { objectPosition: featuredObjectPosition }
+                            : undefined
+                        }
                         loading="lazy"
                         decoding="async"
                       />

@@ -6,6 +6,7 @@ import {
 import { wpFetch } from "@/lib/wp";
 import NewsListClient, { NewsListItem } from "./newsListClient";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
+import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 const NEWS_LIST_QUERY = /* GraphQL */ `
   query NewsList($first: Int!) {
@@ -17,12 +18,8 @@ const NEWS_LIST_QUERY = /* GraphQL */ `
 
         featuredImage {
           node {
-            sourceUrl
-            altText
-            mediaDetails {
-              width
-              height
-            }
+            ${WP_MEDIA_IMAGE_FIELDS}
+            mediaDetails { width height }
           }
         }
 
@@ -66,28 +63,32 @@ export default async function NewsPage() {
   const raw = newsData?.allNews?.nodes ?? [];
 
   const items: NewsListItem[] = raw
-    .map((n) => ({
-      id: n.id,
-      slug: n.slug,
-      title: n.title ?? "",
-      publishDate: n.newsFields?.publishDate ?? null,
-      summary: n.newsFields?.summary ?? null,
-      body: n.newsFields?.body ?? null,
-      imageUrl: n.featuredImage?.node?.sourceUrl ?? null,
-      imageAlt: n.featuredImage?.node?.altText ?? "",
-      authorName: n.author?.node?.title ?? null,
-      authorSlug: n.author?.node?.slug ?? null,
-      audience: (n.audience?.nodes ?? []).map((x: any) => ({ name: x.name, slug: x.slug })),
-      programArea: (n.programArea?.nodes ?? []).map((x: any) => ({ name: x.name, slug: x.slug })),
-      centers: (n.center?.nodes ?? []).map((x: any) => ({ title: x.title, slug: x.slug })),
-    }))
+    .map((n) => {
+      const objectPosition = mediaFocalPositionCss(n.featuredImage?.node);
+      return {
+        id: n.id,
+        slug: n.slug,
+        title: n.title ?? "",
+        publishDate: n.newsFields?.publishDate ?? null,
+        summary: n.newsFields?.summary ?? null,
+        body: n.newsFields?.body ?? null,
+        imageUrl: n.featuredImage?.node?.sourceUrl ?? null,
+        imageAlt: n.featuredImage?.node?.altText ?? "",
+        ...(objectPosition ? { objectPosition } : {}),
+        authorName: n.author?.node?.title ?? null,
+        authorSlug: n.author?.node?.slug ?? null,
+        audience: (n.audience?.nodes ?? []).map((x: any) => ({ name: x.name, slug: x.slug })),
+        programArea: (n.programArea?.nodes ?? []).map((x: any) => ({ name: x.name, slug: x.slug })),
+        centers: (n.center?.nodes ?? []).map((x: any) => ({ title: x.title, slug: x.slug })),
+      };
+    })
     .sort((a, b) => toDateValue(b.publishDate) - toDateValue(a.publishDate));
 
   const hero = resolvePhotoWaveHeaderProps(heroPage, "News");
 
   return (
     <main>
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}/>
 
       {/* Page content - constrained width */}
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">

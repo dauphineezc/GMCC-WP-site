@@ -1,9 +1,10 @@
 import { wpFetch } from "@/lib/wp";
-import HeaderImage from "@/components/headerImage";
+import PhotoWaveHeader from "@/components/photoWaveHeader";
+import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import Image from "next/image";
 import Link from "next/link";
 import LeadershipAccordion from "./leadershipAccordion";
-import UtilityMenu from "@/components/nav/utilityMenu";
+import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 const LEADERSHIP_PAGE_QUERY = /* GraphQL */ `
   query LeadershipPage($uri: ID!) {
@@ -11,18 +12,16 @@ const LEADERSHIP_PAGE_QUERY = /* GraphQL */ `
       id
       title
       slug
-  
+
+      ${PAGE_HERO_FIELDS_GRAPHQL}
       leadershipPageFields {
-        header
-        subheader
-        heroImage { node {sourceUrl altText}}
         organizationHeader
         organizationBlurb
         elts {
           nodes {
             ...on StaffProfile {
               title
-              featuredImage { node {sourceUrl altText}}
+              featuredImage { node { ${WP_MEDIA_IMAGE_FIELDS} }}
               staffProfilesFields {
                 title
                 dotCardLink
@@ -49,6 +48,9 @@ type StaffProfile = {
     node?: {
       sourceUrl?: string | null;
       altText?: string | null;
+      focalPointX?: number | string | null;
+      focalPointY?: number | string | null;
+      hasCustomFocalPoint?: boolean | null;
     } | null;
   } | null;
   staffProfilesFields?: {
@@ -58,14 +60,6 @@ type StaffProfile = {
 };
 
 type LeadershipFields = {
-  header?: string | null;
-  subheader?: string | null;
-  heroImage?: {
-    node?: {
-      sourceUrl?: string | null;
-      altText?: string | null;
-    } | null;
-  } | null;
   organizationHeader?: string | null;
   organizationBlurb?: string | null;
   elts?: {
@@ -112,6 +106,7 @@ export default async function LeadershipPage() {
   }>(LEADERSHIP_PAGE_QUERY, { uri });
 
   const fields = data?.page?.leadershipPageFields ?? null;
+  const hero = resolvePhotoWaveHeaderProps(data?.page, "Leadership");
   
   // Define the desired order for ELTs
   const eltOrder = [
@@ -145,64 +140,12 @@ export default async function LeadershipPage() {
 
   return (
     <main>
-      {/* HERO */}
-      <section className="relative mb-8 overflow-hidden">
-        <div
-          className="absolute inset-0"
-          aria-hidden
-          style={
-            fields?.heroImage?.node?.sourceUrl
-              ? {
-                  backgroundImage: `url(${fields?.heroImage?.node?.sourceUrl})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }
-              : undefined
-          }
-        />
-
-        {/* Left-side navy overlay */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(0,34,68,1) 0%, rgba(0,34,68,0.95) 10%, rgba(0,34,68,0.70) 30%, rgba(0,0,0,0) 70%)",
-          }}
-          aria-hidden="true"
-        />
-
-        <div className="absolute inset-0" aria-hidden />
-
-        <div className="relative z-20 max-w-6xl px-8 pb-20 pt-10 md:py-16 md:px-12">
-          {/* <header>
-            <div className="flex items-center justify-end">
-              <UtilityMenu />
-            </div>
-          </header> */}
-
-          <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:mt-8 md:text-6xl">
-            {fields?.header || data?.page?.title || "Leadership"}
-          </h1>
-
-          {fields?.subheader ? (
-            <p className="mt-6 mb-12 max-w-3xl text-base leading-relaxed text-neutral-100 md:text-lg">{fields?.subheader}</p>
-          ) : null}
-
-        </div>
-
-        <div className="pointer-events-none absolute bottom-[-32px] left-0 z-30 w-full leading-none">
-          <svg
-            viewBox="0 -60 1440 180"
-            className="-ml-[2px] block h-16 w-[calc(100%+4px)] origin-center text-white [transform:scale(-1,-1)] md:h-24"
-            preserveAspectRatio="none"
-            aria-hidden
-          >
-            <path d="M0,110 C300,-50 500,120 800,100 S1000,0 1440,0 L1440,0 L0,0 Z" fill="currentColor" />
-          </svg>
-          <div className="absolute bottom-0 left-0 h-[4px] w-full bg-white" aria-hidden />
-        </div>
-        <div className="pointer-events-none absolute bottom-0 left-0 z-[31] h-[4px] w-full bg-white" aria-hidden />
-      </section>
+      <PhotoWaveHeader
+        title={hero.title}
+        subheader={hero.subheader}
+        imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}
+        ctas={hero.ctas}
+      />
 
         {/* Organization + Executive Leaders */}
         {(fields?.organizationHeader || elts.length > 0) && (
@@ -238,6 +181,10 @@ export default async function LeadershipPage() {
                               alt={staff.featuredImage.node.altText || staff.title || ""}
                               fill
                               className="object-cover"
+                              style={(() => {
+                                const pos = mediaFocalPositionCss(staff.featuredImage.node);
+                                return pos ? { objectPosition: pos } : undefined;
+                              })()}
                             />
                           </div>
                         )}
@@ -339,4 +286,3 @@ export async function generateMetadata() {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
   return getYoastMetadata("/leadership");
 }
-

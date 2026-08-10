@@ -7,6 +7,7 @@ export type HomeEventCard = {
   badgeMonth: string;
   imageUrl: string | null;
   imageAlt: string;
+  objectPosition?: string;
 };
 
 export default function EventsSection({ events }: { events?: HomeEventCard[] | null }) {
@@ -39,6 +40,11 @@ export default function EventsSection({ events }: { events?: HomeEventCard[] | n
                       src={event.imageUrl}
                       alt={event.imageAlt}
                       className="h-56 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                      style={
+                        event.objectPosition
+                          ? { objectPosition: event.objectPosition }
+                          : undefined
+                      }
                       loading="lazy"
                       decoding="async"
                     />

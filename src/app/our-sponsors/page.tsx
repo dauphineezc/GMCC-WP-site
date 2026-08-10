@@ -2,6 +2,7 @@ import { wpFetch } from "@/lib/wp";
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import SponsorsGrid, { normalizeSponsors } from "@/components/sponsorsGrid";
+import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 const OUR_SPONSORS_PAGE_QUERY = /* GraphQL */ `
   query OurSponsorsPage($uri: ID!) {
@@ -16,7 +17,7 @@ const OUR_SPONSORS_PAGE_QUERY = /* GraphQL */ `
           subheader
           ctaLabel
           cta
-          photo { node { sourceUrl altText } }
+          photo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         }
       }
     }
@@ -29,10 +30,7 @@ const OUR_SPONSORS_PAGE_QUERY = /* GraphQL */ `
           tier
           link
           logo {
-            node {
-              sourceUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} }
           }
         }
       }
@@ -49,13 +47,16 @@ export default async function OurSponsorsPage() {
   const pageFields = data?.page?.ourSponsorsPageFields ?? null;
   const sponsors = normalizeSponsors(data?.sponsors?.nodes ?? []);
   const becomeASponsor = pageFields?.becomeASponsor ?? null;
+  const becomeASponsorPhotoPosition = mediaFocalPositionCss(
+    becomeASponsor?.photo?.node,
+  );
 
   return (
     <main className="overflow-x-clip">
       <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
-        imageUrl={hero.imageUrl}
+        imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}
         ctas={hero.ctas}
       />
 
@@ -103,7 +104,12 @@ export default async function OurSponsorsPage() {
                   <img
                     src={becomeASponsor.photo.node.sourceUrl}
                     alt={becomeASponsor.photo.node.altText ?? ""}
-                    className="absolute inset-0 h-full w-full object-cover object-center"
+                    className="absolute inset-0 h-full w-full object-cover"
+                    style={
+                      becomeASponsorPhotoPosition
+                        ? { objectPosition: becomeASponsorPhotoPosition }
+                        : undefined
+                    }
                   />
                 </div>
               )}

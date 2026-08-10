@@ -9,6 +9,7 @@ import {
   getProgramsDirectoryHeaderVariant,
   type ProgramsPageACF,
 } from "@/components/programs/programsDirectoryHeader";
+import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 type ProgramWP = any;
 
 type PageInfo = {
@@ -27,6 +28,7 @@ export type ProgramCard = {
   summary: string;
   heroUrl: string | null;
   heroAlt: string;
+  objectPosition?: string;
   offeringType: string[];
   skillLevel: string[];
   membershipRequirements: { slug: string; name: string }[];
@@ -105,6 +107,8 @@ export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
     })).filter((x: any) => x?.slug && x?.name) ?? [];
 
   const isSpecialtyFitnessClass = normalizeAcfBoolean(f.isSpecialtyFitnessClass);
+  const heroNode = hero ?? galleryHero;
+  const objectPosition = mediaFocalPositionCss(heroNode);
 
   return {
     id: String(wp.id ?? wp.slug ?? ""),
@@ -113,6 +117,7 @@ export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
     summary: f.summary ?? "",
     heroUrl: hero?.sourceUrl ?? galleryHero?.sourceUrl ?? null,
     heroAlt: hero?.altText ?? galleryHero?.altText ?? "",
+    ...(objectPosition ? { objectPosition } : {}),
     offeringType: Array.isArray(f.offeringType) ? f.offeringType : [],
     skillLevel: Array.isArray(f.skillLevel) ? f.skillLevel : [],
     membershipRequirements: f.membershipRequirements?.nodes?.map((n: any) => ({
@@ -890,6 +895,9 @@ export default function ExploreProgramsClient({
                   src={p.heroUrl}
                   alt={p.heroAlt}
                   className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                  style={
+                    p.objectPosition ? { objectPosition: p.objectPosition } : undefined
+                  }
                   loading="lazy"
                   decoding="async"
                 />

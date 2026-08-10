@@ -20,6 +20,7 @@ type ImpactSectionProps = {
   stats: ImpactStat[];
   imageUrl: string | null;
   imageAlt: string;
+  objectPosition?: string | null;
   cta?: Linkish | null;
 };
 
@@ -122,6 +123,7 @@ export default function ImpactSection({
   stats,
   imageUrl,
   imageAlt,
+  objectPosition,
   cta,
 }: ImpactSectionProps) {
   /**
@@ -157,101 +159,71 @@ export default function ImpactSection({
   }, []);
 
   return (
-    <section className="relative z-10 -mb-10 overflow-x-clip pt-8 pb-0 md:-mb-12">
-      <div className="relative z-30 mx-auto max-w-6xl px-4">
-        {/* Stats block */}
-        {hasStats ? (
-          <div className="relative mb-8">
-            {/* Navy backdrop behind the teal stat cards */}
-            <div
-              aria-hidden
-              className="absolute -bottom-2 left-1/2 h-200 w-screen -translate-x-1/2 bg-gmcc-navy md:h-52"
-            />
-
-            <div ref={statsRef} className="relative z-10 grid w-full gap-8 px-6 pb-6 md:grid-cols-4">
-              {stats.slice(0, 4).map((s, idx) => (
-                <div key={idx} className="bg-gmcc-teal rounded-2xl shadow-lg p-6 justify-start md:text-left">
-                  <div className="text-4xl font-bold text-white">
-                    <AnimatedStat value={s.value || ""} isInView={isInView} />
-                  </div>
-                  <div className="mb-4 mt-1 text-2xl font-bold text-white">{s.label}</div>
-                  {s.context ? <div className="text-sm text-neutral-200 justify-start">{s.context}</div> : null}
+    <>
+      {hasStats ? (
+        <section className="relative z-10 bg-gmcc-navy md:mt-26 md:pt-0 pt-8 pb-8">
+          <div
+            ref={statsRef}
+            className="relative z-10 mx-auto grid w-full max-w-6xl gap-6 px-6 md:-mt-14 md:grid-cols-4"
+          >
+            {stats.slice(0, 4).map((s, idx) => (
+              <div
+                key={idx}
+                className="justify-start rounded-2xl bg-gmcc-teal md:-mt-8 p-6 shadow-lg md:text-left"
+              >
+                <div className="text-4xl font-bold text-white">
+                  <AnimatedStat value={s.value || ""} isInView={isInView} />
                 </div>
-              ))}
+                <div className="mb-4 mt-1 text-2xl font-bold text-white">{s.label}</div>
+                {s.context ? (
+                  <div className="justify-start text-sm text-neutral-200">{s.context}</div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="page-section">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid gap-6 md:grid-cols-2 md:items-start">
+            <div className="flex flex-col items-center text-center md:items-start md:text-left">
+              <h2 className="h2 mt-4 md:mt-0">{heading}</h2>
+
+              {body ? (
+                <p className="mt-4 text-base leading-relaxed text-neutral-700">{body}</p>
+              ) : null}
+
+              {cta?.url ? (
+                <div className="mt-6 flex w-full justify-center">
+                  <a
+                    href={cta.url}
+                    target={cta.target ?? undefined}
+                    className="btn btn-primary"
+                  >
+                    {cta.title || "Get involved"}
+                  </a>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="relative overflow-hidden">
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={imageAlt || ""}
+                  className="mt-4 block h-full w-full object-cover md:mt-0"
+                  style={objectPosition ? { objectPosition } : undefined}
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <div className="aspect-square bg-neutral-200" />
+              )}
             </div>
           </div>
-        ) : null}
-
-        {/* Content + image */}
-        <div className="grid gap-6 md:grid-cols-2 md:items-start pt-8">
-          <div className="flex flex-col items-center text-center md:items-start md:text-left">
-            <h2 className="h2 mt-8 mb-0">{heading}</h2>
-
-            {body ? <p className="mt-4 text-base leading-relaxed text-neutral-700">{body}</p> : null}
-
-            {/* Centered under the blurb on mobile, aligned left on desktop */}
-            {cta?.url ? (
-              <div className="mt-6 flex w-full justify-center">
-                <a href={cta.url} target={cta.target || undefined} className="btn btn-primary">
-                  {cta.title || "Get involved"}
-                </a>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="relative z-30 translate-y-6 overflow-hidden md:translate-y-10">
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={imageAlt || ""}
-                className="block h-full w-full object-cover"
-                loading="lazy"
-                decoding="async"
-              />
-            ) : (
-              <div className="aspect-square bg-neutral-200" />
-            )}
-          </div>
         </div>
-      </div>
-
-      {/* Bottom transition wave (responsive shapes for mobile/desktop) */}
-      <div className="pointer-events-none absolute -bottom-[3px] left-0 z-10 w-full leading-none">
-        <svg
-          viewBox="0 -12 390 132"
-          className="-ml-[2px] block h-20 w-[calc(100%+4px)] text-white md:hidden"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path
-            d="
-              M0,100
-              C70,70 130,58 190,78
-              C250,98 305,90 390,62
-              L390,0 L0,0 Z
-            "
-            fill="currentColor"
-          />
-        </svg>
-
-        <svg
-          viewBox="0 -60 1440 180"
-          className="-ml-[2px] hidden h-24 w-[calc(100%+4px)] text-white md:block"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path
-            d="
-              M0,110
-              C300,-50  500,120  800,100
-              S1000,0 1440,0
-              L1440,0 L0,0 Z
-            "
-            fill="currentColor"
-          />
-        </svg>
-        <div className="absolute bottom-0 left-0 h-[4px] w-full bg-white" aria-hidden />
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

@@ -4,7 +4,7 @@ import {
   type WpPageWithHeroFields,
 } from "@/lib/pageHeroFields";
 import { acfCorporatePartnerItems, wpFetch } from "@/lib/wp";
-import { isExternalHref } from "@/lib/acf";
+import { isExternalHref, WP_MEDIA_IMAGE_FIELDS } from "@/lib/acf";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import CorporateAmenityTiles from "@/components/corporateAmenityTiles";
 import CorporateMembershipBenefits from "@/components/corporateMembershipBenefits";
@@ -57,7 +57,7 @@ query CorporateMembershipsPage($uri: ID!) {
                 quote
                 personName
                 personContext
-                photo { node { sourceUrl altText } }
+                photo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
               }
             }
           }
@@ -67,7 +67,7 @@ query CorporateMembershipsPage($uri: ID!) {
       becomeAPartnerSubheader
 
       corporatePartners {
-        logo { node { sourceUrl mediaItemUrl altText } }
+        logo { node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl } }
         pageLink
       }
     }   
@@ -181,6 +181,7 @@ export default async function CorporateMembershipsPage() {
           title={heroProps.title}
           subheader={heroProps.subheader ?? null}
           imageUrl={heroProps.imageUrl ?? null}
+          imagePosition={heroProps.imagePosition}
           ctas={heroProps.ctas}
         />
         

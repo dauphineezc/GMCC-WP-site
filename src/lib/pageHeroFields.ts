@@ -1,4 +1,5 @@
 import type { PhotoWaveHeaderFields, HeroCta, HeroFieldsCtaRaw } from "@/components/photoWaveHeader";
+import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 import { resolveWpMediaUrl, wpFetch } from "@/lib/wp";
 
 /**
@@ -15,8 +16,7 @@ export const PAGE_HERO_FIELDS_GRAPHQL = `
     heroSubheader
     heroImage {
       node {
-        sourceUrl
-        altText
+        ${WP_MEDIA_IMAGE_FIELDS}
       }
     }
     heroPrimaryCta {
@@ -185,10 +185,12 @@ export function resolvePhotoWaveHeaderProps(
   const ctas = [primaryCta, secondaryCta].filter((c): c is HeroCta => c != null);
   const heroImg = fields?.heroImage?.node;
   const rawHeroImg = heroImg?.sourceUrl ?? heroImg?.mediaItemUrl ?? undefined;
+  const imagePosition = mediaFocalPositionCss(heroImg);
   return {
     title,
     subheader: subRaw ? subRaw : undefined,
     imageUrl: resolveWpMediaUrl(rawHeroImg) ?? undefined,
+    imagePosition,
     primaryCta,
     secondaryCta,
     ctas: ctas.length > 0 ? ctas : undefined,

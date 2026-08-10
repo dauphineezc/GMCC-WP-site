@@ -7,12 +7,18 @@ import NavyWaveSection from "@/components/navyWaveSection";
 import FeaturedTestimonialsCarousel from "@/components/featuredTestimonialsCarousel";
 import type { NormalizedTestimonial } from "@/components/testimonials";
 import type { LessonBenefit, WPProgram } from "@/lib/programs/lessonsDirectory";
+import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 import type { DirectoryTrainer } from "./directoryHeaderShared";
 
 type Faq = { question: string; answer: string };
 
 type LessonsDirectoryProps = {
-  hero: { title: string; subheader?: string | null; imageUrl?: string | null };
+  hero: {
+    title: string;
+    subheader?: string | null;
+    imageUrl?: string | null;
+    imagePosition?: string | null;
+  };
   bodyHeader: string;
   introBody: string;
   benefits: LessonBenefit[];
@@ -53,6 +59,10 @@ function ProgramOptionCard({ program }: { program: WPProgram }) {
             src={program.featuredImage.node.sourceUrl}
             alt={program.featuredImage.node.altText ?? program.title ?? "Program"}
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+            style={(() => {
+              const pos = mediaFocalPositionCss(program.featuredImage.node);
+              return pos ? { objectPosition: pos } : undefined;
+            })()}
             loading="lazy"
             decoding="async"
           />
@@ -115,7 +125,7 @@ export default function LessonsDirectory({
 }: LessonsDirectoryProps) {
   return (
     <main className="overflow-x-clip">
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}/>
 
       <section className="page-section">
         <h2 className="h2 text-gmcc-navy">{bodyHeader}</h2>

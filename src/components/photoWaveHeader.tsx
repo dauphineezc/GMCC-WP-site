@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { WAVE_SVG_BLEED_CLASS, WaveEdgeBar } from "@/components/waveSeam";
+import { WAVE_BLEED_CLIP_CLASS, WAVE_SVG_BLEED_CLASS, WaveEdgeBar } from "@/components/waveSeam";
+import type { MediaFocalPointFields } from "@/lib/mediaFocalPoint";
 
 /** Raw CTA from WP / ACF (string link or WPGraphQL link object). */
 export type HeroFieldsCtaRaw = {
@@ -24,7 +25,11 @@ export type PhotoWaveHeaderFields = {
   primaryCta?: HeroFieldsCtaRaw | null;
   secondaryCta?: HeroFieldsCtaRaw | null;
   heroImage?: {
-    node?: { sourceUrl?: string | null; mediaItemUrl?: string | null; altText?: string | null } | null;
+    node?: ({
+      sourceUrl?: string | null;
+      mediaItemUrl?: string | null;
+      altText?: string | null;
+    } & MediaFocalPointFields) | null;
   } | null;
 };
 
@@ -40,6 +45,8 @@ type PhotoWaveHeaderProps = {
   title: string;
   subheader?: string | null;
   imageUrl?: string | null;
+  /** CSS background-position from WP focal point, e.g. `"69.2% 38.7%"` */
+  imagePosition?: string | null;
   /** Optional CTA buttons rendered below the subheader */
   ctas?: HeroCta[];
   /** Extra content below subheader, inside the hero (rare) */
@@ -64,6 +71,7 @@ export default function PhotoWaveHeader({
   title,
   subheader,
   imageUrl,
+  imagePosition,
   ctas,
   children,
   childrenBeforeCtas = false,
@@ -85,7 +93,7 @@ export default function PhotoWaveHeader({
               ? {
                   backgroundImage: `url(${imageUrl})`,
                   backgroundSize: "cover",
-                  backgroundPosition: "center",
+                  backgroundPosition: imagePosition?.trim() || "center",
                 }
               : undefined
           }
@@ -140,23 +148,25 @@ export default function PhotoWaveHeader({
       </div>
 
       <div className="pointer-events-none absolute -bottom-[3px] left-0 z-10 w-full leading-none">
-        <svg
-          viewBox="0 0 1440 120"
-          className={`${WAVE_SVG_BLEED_CLASS} h-10 md:h-16 ${waveFillClassName}`}
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path
-            d="
-              M-20,110
-              C750,-90  800,120  1200,80
-              S1420,0 1460,0
-              L1460,0 L-20,0 Z
-            "
-            transform="translate(0 120) scale(1 -1)"
-            fill="currentColor"
-          />
-        </svg>
+        <div className={WAVE_BLEED_CLIP_CLASS}>
+          <svg
+            viewBox="0 0 1440 120"
+            className={`${WAVE_SVG_BLEED_CLASS} h-10 md:h-16 ${waveFillClassName}`}
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <path
+              d="
+                M-20,110
+                C750,-90  800,120  1200,80
+                S1420,0 1460,0
+                L1460,0 L-20,0 Z
+              "
+              transform="translate(0 120) scale(1 -1)"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
         <WaveEdgeBar side="bottom" className={waveEdgeClassName} />
       </div>
     </section>

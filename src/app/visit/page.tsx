@@ -9,6 +9,7 @@ import {
   collectNumberedFaqs,
   resolveAcfLink,
   type FaqItem,
+  WP_MEDIA_IMAGE_FIELDS,
 } from "@/lib/acf";
 import {
   fetchPageWithHeroFields,
@@ -16,7 +17,7 @@ import {
 } from "@/lib/pageHeroFields";
 import AutoHeightScheduleIframe from "@/components/schedule/autoHeightScheduleIframe";
 import TodayEventsGrid from "@/components/events/todayEventsGrid";
-import { TODAY_ALL_CENTERS_SCHEDULE_EMBED_URL } from "@/lib/constants";
+import { GENERAL_CONTACT_FORM_URL, TODAY_ALL_CENTERS_SCHEDULE_EMBED_URL } from "@/lib/constants";
 import { fetchTodaysEvents } from "@/lib/events/todayEvents";
 
 /** Regenerate at most once per day; cron can trigger sooner via `/api/revalidate`. */
@@ -88,10 +89,7 @@ const PLAN_YOUR_VISIT_PAGE_FIELDS = `
     accessOptionsSubheader
     dayPassCard {
       icon {
-        node {
-          sourceUrl
-          altText
-        }
+        node { ${WP_MEDIA_IMAGE_FIELDS} }
       }
       badgeLabel
       title
@@ -105,10 +103,7 @@ const PLAN_YOUR_VISIT_PAGE_FIELDS = `
     }
     guestPassCard {
       icon {
-        node {
-          sourceUrl
-          altText
-        }
+        node { ${WP_MEDIA_IMAGE_FIELDS} }
       }
       badgeLabel
       title
@@ -122,10 +117,7 @@ const PLAN_YOUR_VISIT_PAGE_FIELDS = `
     }
     freeTrialCard {
       icon {
-        node {
-          sourceUrl
-          altText
-        }
+        node { ${WP_MEDIA_IMAGE_FIELDS} }
       }
       badgeLabel
       title
@@ -139,10 +131,7 @@ const PLAN_YOUR_VISIT_PAGE_FIELDS = `
     }
     membershipCard {
       icon {
-        node {
-          sourceUrl
-          altText
-        }
+        node { ${WP_MEDIA_IMAGE_FIELDS} }
       }
       badgeLabel
       title
@@ -542,7 +531,7 @@ export default async function VisitPage() {
       <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
-        imageUrl={hero.imageUrl}
+        imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}
         ctas={hero.ctas}
         waveFillClassName="text-gmcc-navy"
         waveEdgeClassName="bg-gmcc-navy"
@@ -806,12 +795,12 @@ export default async function VisitPage() {
         {contactSubheader ? (
           <p className="body mt-4 whitespace-pre-line text-neutral-700">{contactSubheader}</p>
         ) : null}
-        <Link
-          href="/contact"
+        <a
+          href={GENERAL_CONTACT_FORM_URL}
           className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
-        >
+          >
           Contact Us
-        </Link>
+        </a>
       </section>
     </main>
   );

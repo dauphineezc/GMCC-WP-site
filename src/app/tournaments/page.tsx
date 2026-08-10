@@ -1,7 +1,8 @@
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps, WpPageWithHeroFields } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
-import { asImageField, asString, collectGalleryPhotos, type ImageField } from "@/lib/acf";
-import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
+import { asImageField, asString, collectGalleryPhotos, type ImageField, WP_MEDIA_IMAGE_FIELDS } from "@/lib/acf";
+import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
+import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
@@ -14,20 +15,17 @@ const TOURNAMENTS_PAGE_QUERY = /* GraphQL */ `
     page(id: $uri, idType: URI) {
       title
       featuredImage {
-        node {
-          sourceUrl
-          altText
-        }
+        node { ${WP_MEDIA_IMAGE_FIELDS} }
       }
       ${PAGE_HERO_FIELDS_GRAPHQL}
       tournamentsPageFields {
         tournamentPartnersHeader
         tournamentPartnersBody
         tournamentPartners {
-          tournamentPartner1 { logo { node { sourceUrl altText } } link }
-          tournamentPartner2 { logo { node { sourceUrl altText } } link }
-          tournamentPartner3 { logo { node { sourceUrl altText } } link }
-          tournamentPartner4 { logo { node { sourceUrl altText } } link }
+          tournamentPartner1 { logo { node { ${WP_MEDIA_IMAGE_FIELDS} } } link }
+          tournamentPartner2 { logo { node { ${WP_MEDIA_IMAGE_FIELDS} } } link }
+          tournamentPartner3 { logo { node { ${WP_MEDIA_IMAGE_FIELDS} } } link }
+          tournamentPartner4 { logo { node { ${WP_MEDIA_IMAGE_FIELDS} } } link }
         }
 
         featuredTournament {
@@ -37,7 +35,7 @@ const TOURNAMENTS_PAGE_QUERY = /* GraphQL */ `
               title
               uri
               featuredImage {
-                node { sourceUrl altText }
+                node { ${WP_MEDIA_IMAGE_FIELDS} }
               }
               campaignFields {
                 headline
@@ -59,15 +57,15 @@ const TOURNAMENTS_PAGE_QUERY = /* GraphQL */ `
         galleryHeader
         gallerySubheader
         gallery {
-          photo1 { node { sourceUrl altText } }
-          photo2 { node { sourceUrl altText } }
-          photo3 { node { sourceUrl altText } }
-          photo4 { node { sourceUrl altText } }
-          photo5 { node { sourceUrl altText } }
-          photo6 { node { sourceUrl altText } }
-          photo7 { node { sourceUrl altText } }
-          photo8 { node { sourceUrl altText } }
-          photo9 { node { sourceUrl altText } }
+          photo1 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo2 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo3 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo4 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo5 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo6 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo7 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo8 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo9 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         }
 
         contactHeader
@@ -85,10 +83,7 @@ const TOURNAMENTS_EVENTS_QUERY = /* GraphQL */ `
         slug
         title
         featuredImage {
-          node {
-            sourceUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         eventFields {
           summary
@@ -121,7 +116,12 @@ type TournamentEventWP = {
   id: string;
   slug: string;
   title?: string | null;
-  featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
+  featuredImage?: {
+    node?: ({
+      sourceUrl?: string | null;
+      altText?: string | null;
+    } & MediaFocalPointFields) | null;
+  } | null;
   eventFields?: {
     summary?: string | null;
     eventSchedule?: unknown;
@@ -141,6 +141,7 @@ type TournamentCard = {
   endDateTime: string | null;
   heroUrl: string | null;
   heroAlt: string;
+  objectPosition?: string;
   centers: { slug: string; title: string }[];
   audience: { slug: string; name: string }[];
   registrationLink: string;
@@ -150,6 +151,7 @@ type TournamentCard = {
 function mapTournamentEvent(wp: TournamentEventWP, now: Date): TournamentCard {
   const f = wp.eventFields ?? {};
   const hero = wp.featuredImage?.node;
+  const objectPosition = mediaFocalPositionCss(hero);
   const dateInfo = getEventDateInfo(f.eventSchedule, now);
   const isPast = dateInfo.hasSchedule ? dateInfo.isPast : false;
   return {
@@ -161,6 +163,7 @@ function mapTournamentEvent(wp: TournamentEventWP, now: Date): TournamentCard {
     endDateTime: dateInfo.end,
     heroUrl: hero?.sourceUrl ?? null,
     heroAlt: hero?.altText ?? "",
+    ...(objectPosition ? { objectPosition } : {}),
     centers:
       (f.center?.nodes ?? [])
         .filter((c) => c.slug && c.title)
@@ -347,7 +350,7 @@ export default async function TournamentsPage() {
       <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
-        imageUrl={hero.imageUrl}
+        imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}
         ctas={heroCtas.length ? heroCtas : undefined}
       />
 
@@ -428,6 +431,11 @@ export default async function TournamentsPage() {
                         src={tournament.heroUrl}
                         alt={tournament.heroAlt}
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                        style={
+                          tournament.objectPosition
+                            ? { objectPosition: tournament.objectPosition }
+                            : undefined
+                        }
                         loading="lazy"
                         decoding="async"
                       />
@@ -512,7 +520,7 @@ export default async function TournamentsPage() {
           <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.contactSubheader}</p>
         ) : null}
         <a
-          href={WEBTRAC_REGISTRATION_URL}
+          href={GENERAL_CONTACT_FORM_URL}
           className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
           >
           Contact Us

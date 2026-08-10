@@ -7,6 +7,7 @@ type CarouselImage = {
     sourceUrl: string;
     altText: string | null;
     label: string | null;
+    objectPosition?: string;
   } | null;
   cta: string | null;
   url: string | null;
@@ -45,6 +46,11 @@ export default function ImageCarousel({ images }: ImageCarouselProps) {
             src={currentImage.image.sourceUrl}
             alt={currentImage.image.altText ?? ""}
             className="h-60 w-full rounded-lg object-cover sm:h-96 lg:h-[24rem]"
+            style={
+              currentImage.image.objectPosition
+                ? { objectPosition: currentImage.image.objectPosition }
+                : undefined
+            }
           />
           {currentImage.image.label && (
             <span className="badge bg-[#DEF1F6] text-gmcc-teal-dark absolute left-4 top-4 z-10">

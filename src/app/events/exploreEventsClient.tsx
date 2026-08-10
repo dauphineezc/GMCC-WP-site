@@ -11,6 +11,7 @@ import {
   type EventOccurrence,
 } from "@/lib/events/eventSchedule";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
+import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 type EventWP = any;
 type PageInfo = {
@@ -26,6 +27,7 @@ type EventCard = {
     occurrences: EventOccurrence[];
     heroUrl: string | null;
     heroAlt: string;
+    objectPosition?: string;
     centers: { slug: string; title: string }[];
     audience: { slug: string; name: string }[];
     eventType: string[];
@@ -34,6 +36,7 @@ type EventCard = {
   function mapEventForExplorer(wp: EventWP): EventCard {
     const f = wp.eventFields ?? {};
     const hero = wp.featuredImage?.node;
+    const objectPosition = mediaFocalPositionCss(hero);
   
     return {
       id: wp.id,
@@ -43,6 +46,7 @@ type EventCard = {
       occurrences: parseEventSchedule(f.eventSchedule),
       heroUrl: hero?.sourceUrl ?? null,
       heroAlt: hero?.altText ?? "",
+      ...(objectPosition ? { objectPosition } : {}),
       centers:
         f.center?.nodes?.map((c: any) => ({
           slug: c.slug,
@@ -521,6 +525,11 @@ export default function ExploreEventsClient({
                         src={e.heroUrl}
                         alt={e.heroAlt}
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                        style={
+                          e.objectPosition
+                            ? { objectPosition: e.objectPosition }
+                            : undefined
+                        }
                         loading="lazy"
                         decoding="async"
                       />

@@ -81,6 +81,7 @@ export default async function CourtAvailabilityPage() {
         title={hero.title}
         subheader={hero.subheader}
         imageUrl={hero.imageUrl ?? "/images/CourtsPhoto.png"}
+        imagePosition={hero.imagePosition}
         ctas={hero.ctas}
       />
 

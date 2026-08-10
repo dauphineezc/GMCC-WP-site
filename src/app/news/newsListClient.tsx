@@ -13,6 +13,7 @@ export type NewsListItem = {
   body: string | null;
   imageUrl: string | null;
   imageAlt: string;
+  objectPosition?: string;
 
   authorName?: string | null;
   authorSlug?: string | null;
@@ -78,6 +79,11 @@ export default function NewsListClient({ items }: { items: NewsListItem[] }) {
                         src={n.imageUrl}
                         alt={n.imageAlt || n.title}
                         className="h-full w-full object-cover transition duration-300 hover:scale-[1.02]"
+                        style={
+                          n.objectPosition
+                            ? { objectPosition: n.objectPosition }
+                            : undefined
+                        }
                         loading="lazy"
                         decoding="async"
                       />

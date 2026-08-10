@@ -7,6 +7,7 @@ import {
   type WpPageWithHeroFields,
 } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
+import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 const INSURANCE_BASED_MEMBERSHIPS_QUERY = `
   query InsuranceBasedMembershipsPageFields($uri: ID!) {
@@ -22,8 +23,7 @@ const INSURANCE_BASED_MEMBERSHIPS_QUERY = `
           silversneakersApplication
           silversneakersImage {
             node {
-              sourceUrl
-              altText
+              ${WP_MEDIA_IMAGE_FIELDS}
               mediaDetails { width height }
             }
           }
@@ -35,8 +35,7 @@ const INSURANCE_BASED_MEMBERSHIPS_QUERY = `
           renewActiveOnePassApplication
           renewActiveOnePassImage {
             node {
-              sourceUrl
-              altText
+              ${WP_MEDIA_IMAGE_FIELDS}
               mediaDetails { width height }
             }
           }
@@ -61,6 +60,9 @@ type MediaNode = {
   sourceUrl?: string | null;
   altText?: string | null;
   mediaDetails?: { width?: number | null; height?: number | null } | null;
+  focalPointX?: number | string | null;
+  focalPointY?: number | string | null;
+  hasCustomFocalPoint?: boolean | null;
 };
 
 type InsuranceBasedMembershipsData = {
@@ -145,6 +147,7 @@ function InfoCard({
   badge?: string;
 }) {
   const src = image?.sourceUrl ?? null;
+  const objectPosition = mediaFocalPositionCss(image);
 
   return (
     <article className="card h-full overflow-hidden p-0">
@@ -156,6 +159,7 @@ function InfoCard({
               src={src}
               alt={image?.altText ?? ""}
               className="absolute inset-0 h-full w-full object-cover"
+              style={objectPosition ? { objectPosition } : undefined}
               loading="lazy"
               decoding="async"
             />
@@ -231,6 +235,7 @@ export default async function InsuranceBasedMembershipsPage() {
         title={heroProps.title}
         subheader={heroProps.subheader ?? null}
         imageUrl={heroProps.imageUrl ?? null}
+        imagePosition={heroProps.imagePosition}
         ctas={heroProps.ctas}
       />
 

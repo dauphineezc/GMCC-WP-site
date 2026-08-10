@@ -46,6 +46,11 @@ export default function AmenitiesCarousel({ amenities, title = "Amenities" }: Am
             src={currentAmenity.image.sourceUrl}
             alt={currentAmenity.image.altText ?? currentAmenity.name}
             className={`h-56 w-full object-cover sm:h-64 ${hasDescription ? "cursor-pointer" : ""}`}
+            style={
+              currentAmenity.image.objectPosition
+                ? { objectPosition: currentAmenity.image.objectPosition }
+                : undefined
+            }
             onClick={handleImageClick}
           />
         )}
@@ -165,6 +170,11 @@ export default function AmenitiesCarousel({ amenities, title = "Amenities" }: Am
                 src={currentAmenity.image.sourceUrl}
                 alt={currentAmenity.image.altText ?? currentAmenity.name}
                 className="w-full h-48 object-cover"
+                style={
+                  currentAmenity.image.objectPosition
+                    ? { objectPosition: currentAmenity.image.objectPosition }
+                    : undefined
+                }
               />
             )}
 

@@ -53,7 +53,7 @@
     /* Type scale */
     .h1 { @apply font-heading text-3xl font-bold text-gmcc-navy sm:text-4xl; }
     .h1-strong { @apply font-heading text-3xl font-extrabold text-gmcc-navy sm:text-4xl; }
-    .h2 { @apply font-heading font-semibold text-2xl text-gmcc-navy sm:text-3xl; }
+    .h2 { @apply font-heading font-semibold text-3xl text-gmcc-navy; }
     .h3 { @apply font-heading text-lg font-medium text-gmcc-navy sm:text-xl; }
   
     .eyebrow { @apply font-secondary text-xs font-semibold uppercase tracking-wide text-gmcc-grey-dark; }

@@ -2,10 +2,12 @@
 // page.tsx (server fetch) and planAnEventClient.tsx (rendering). Kept out of
 // page.tsx so the route file only exports what Next.js expects.
 
+import type { MediaFocalPointFields } from "@/lib/mediaFocalPoint";
+
 type WPImageNode = {
   sourceUrl?: string | null;
   altText?: string | null;
-};
+} & MediaFocalPointFields;
 
 export type MaybeImage = { node?: WPImageNode | null } | null;
 

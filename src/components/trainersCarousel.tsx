@@ -337,6 +337,11 @@ export default function TrainersCarousel({
                         src={trainer.photo.sourceUrl}
                         alt={trainer.photo.altText ?? trainer.name ?? "Trainer"}
                         className="h-full w-full object-cover"
+                        style={
+                          trainer.photo.objectPosition
+                            ? { objectPosition: trainer.photo.objectPosition }
+                            : undefined
+                        }
                         loading="lazy"
                         decoding="async"
                         draggable={false}

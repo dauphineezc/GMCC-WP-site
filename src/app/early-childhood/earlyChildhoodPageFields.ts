@@ -11,6 +11,7 @@ import {
 } from "@/lib/dropInCareFields";
 import { asString, collectGalleryFromFields, collectNumberedFaqs } from "@/lib/acf";
 import { acfAttachmentItems, resolveWpMediaUrl } from "@/lib/wp";
+import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 import type { GalleryPhoto } from "@/components/photoGallery";
 
 export type EceCenterSlug = "community-center" | "coleman-family-center" | "north-family-center";
@@ -41,6 +42,7 @@ export type SerializedEceProgram = {
   summary: string;
   heroUrl: string | null;
   heroAlt: string | null;
+  objectPosition?: string;
   priceFrom: number | null;
   centerSlugs: string[];
 };
@@ -52,11 +54,20 @@ function parseProgramNode(node: unknown): SerializedEceProgram | null {
   const title = asString(n.title);
   if (!slug || !title) return null;
 
-  const img = n.featuredImage as { node?: { sourceUrl?: string | null; altText?: string | null } } | undefined;
+  const img = n.featuredImage as {
+    node?: {
+      sourceUrl?: string | null;
+      altText?: string | null;
+      focalPointX?: number | string | null;
+      focalPointY?: number | string | null;
+      hasCustomFocalPoint?: boolean | null;
+    };
+  } | undefined;
   const heroRaw = img?.node?.sourceUrl ?? null;
   const heroUrl =
     (resolveWpMediaUrl(heroRaw) ?? (typeof heroRaw === "string" ? heroRaw.trim() : null)) || null;
   const heroAlt = typeof img?.node?.altText === "string" ? img.node.altText.trim() : null;
+  const objectPosition = mediaFocalPositionCss(img?.node);
 
   const pf = n.programFields as Record<string, unknown> | undefined;
   const summary = pf ? asString(pf.summary) : "";
@@ -75,7 +86,16 @@ function parseProgramNode(node: unknown): SerializedEceProgram | null {
     }
   }
 
-  return { slug, title, summary, heroUrl, heroAlt, priceFrom, centerSlugs };
+  return {
+    slug,
+    title,
+    summary,
+    heroUrl,
+    heroAlt,
+    ...(objectPosition ? { objectPosition } : {}),
+    priceFrom,
+    centerSlugs,
+  };
 }
 
 export type EarlyChildhoodPageViewModel = {

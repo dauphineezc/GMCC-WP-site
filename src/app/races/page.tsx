@@ -7,7 +7,9 @@ import {
   isExternalHref,
   type ImageField,
   type MediaFieldInput,
+  WP_MEDIA_IMAGE_FIELDS,
 } from "@/lib/acf";
+import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
@@ -20,10 +22,7 @@ const RACES_PAGE_QUERY = /* GraphQL */ `
     page(id: $uri, idType: URI) {
       title
       featuredImage {
-        node {
-          sourceUrl
-          altText
-        }
+        node { ${WP_MEDIA_IMAGE_FIELDS} }
       }
       ${PAGE_HERO_FIELDS_GRAPHQL}
       racesPageFields {
@@ -45,10 +44,7 @@ const RACES_PAGE_QUERY = /* GraphQL */ `
             }
           }
           cardIcon {
-            node {
-              sourceUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} }
           }
         }
         connectCard {
@@ -57,10 +53,7 @@ const RACES_PAGE_QUERY = /* GraphQL */ `
           linkLabel
           link
           cardIcon {
-            node {
-              sourceUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} }
           }
         }
 
@@ -68,10 +61,10 @@ const RACES_PAGE_QUERY = /* GraphQL */ `
           header
           body
           racesList
-          raceLogo1 { node { sourceUrl altText } }
-          raceLogo2 { node { sourceUrl altText } }
-          raceLogo3 { node { sourceUrl altText } }
-          primaryImage { node { sourceUrl altText } }
+          raceLogo1 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          raceLogo2 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          raceLogo3 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          primaryImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
           ctaLabel
           cta
         }
@@ -134,15 +127,15 @@ const RACES_PAGE_QUERY = /* GraphQL */ `
         previousRacesHeader
         previousRacesBody
         gallery {
-          photo1 { node { sourceUrl altText } }
-          photo2 { node { sourceUrl altText } }
-          photo3 { node { sourceUrl altText } }
-          photo4 { node { sourceUrl altText } }
-          photo5 { node { sourceUrl altText } }
-          photo6 { node { sourceUrl altText } }
-          photo7 { node { sourceUrl altText } }
-          photo8 { node { sourceUrl altText } }
-          photo9 { node { sourceUrl altText } }
+          photo1 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo2 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo3 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo4 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo5 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo6 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo7 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo8 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+          photo9 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         }
       
         runnersPromo {
@@ -150,7 +143,7 @@ const RACES_PAGE_QUERY = /* GraphQL */ `
           body
           ctaLabel
           cta
-          logo { node { sourceUrl altText } }
+          logo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         }
 
         contactHeader
@@ -182,10 +175,7 @@ const RACE_EVENTS_QUERY = /* GraphQL */ `
         slug
         title
         featuredImage {
-          node {
-            sourceUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         eventFields {
           summary
@@ -218,7 +208,12 @@ type RaceEventWP = {
   id: string;
   slug: string;
   title?: string | null;
-  featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
+  featuredImage?: {
+    node?: ({
+      sourceUrl?: string | null;
+      altText?: string | null;
+    } & MediaFocalPointFields) | null;
+  } | null;
   eventFields?: {
     summary?: string | null;
     eventSchedule?: unknown;
@@ -238,6 +233,7 @@ type RaceCard = {
   endDateTime: string | null;
   heroUrl: string | null;
   heroAlt: string;
+  objectPosition?: string;
   centers: { slug: string; title: string }[];
   audience: { slug: string; name: string }[];
   registrationLink: string;
@@ -247,6 +243,7 @@ type RaceCard = {
 function mapRaceEvent(wp: RaceEventWP, now: Date): RaceCard {
   const f = wp.eventFields ?? {};
   const hero = wp.featuredImage?.node;
+  const objectPosition = mediaFocalPositionCss(hero);
   const dateInfo = getEventDateInfo(f.eventSchedule, now);
   const isPast = dateInfo.hasSchedule ? dateInfo.isPast : false;
   return {
@@ -258,6 +255,7 @@ function mapRaceEvent(wp: RaceEventWP, now: Date): RaceCard {
     endDateTime: dateInfo.end,
     heroUrl: hero?.sourceUrl ?? null,
     heroAlt: hero?.altText ?? "",
+    ...(objectPosition ? { objectPosition } : {}),
     centers:
       (f.center?.nodes ?? [])
         .filter((c) => c.slug && c.title)
@@ -579,7 +577,7 @@ export default async function RacesPage() {
 
   return (
     <main className="overflow-x-clip">
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} ctas={heroCtas.length ? heroCtas : undefined} />
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition} ctas={heroCtas.length ? heroCtas : undefined} />
       <section className="py-4">
         <div className="mx-auto grid max-w-6xl gap-6 px-6 md:grid-cols-2">
           <article className="relative card card-hover bg-gmcc-blue-light/30 overflow-hidden p-8">
@@ -706,6 +704,12 @@ export default async function RacesPage() {
                         src={fields.tripleChallenge.primaryImage.node.sourceUrl}
                         alt={fields.tripleChallenge.primaryImage.node.altText || "Triple challenge race"}
                         className="h-[350px] w-full object-cover"
+                        style={(() => {
+                          const pos = mediaFocalPositionCss(
+                            fields.tripleChallenge.primaryImage.node,
+                          );
+                          return pos ? { objectPosition: pos } : undefined;
+                        })()}
                         loading="lazy"
                         decoding="async"
                       />
@@ -744,6 +748,11 @@ export default async function RacesPage() {
                         src={race.heroUrl}
                         alt={race.heroAlt}
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                        style={
+                          race.objectPosition
+                            ? { objectPosition: race.objectPosition }
+                            : undefined
+                        }
                         loading="lazy"
                         decoding="async"
                       />

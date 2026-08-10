@@ -8,6 +8,7 @@ import {
 import { wpFetch } from "@/lib/wp";
 import { EVENT_SCHEDULE_GRAPHQL } from "@/lib/events/eventSchedule";
 import ExploreEventsClient from "./exploreEventsClient";
+import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 const PAGE_SIZE = 24;
 
@@ -23,10 +24,7 @@ const EVENTS_LIST_QUERY = `
         slug
         title
         featuredImage {
-          node {
-            sourceUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         eventFields {
           summary
@@ -71,7 +69,7 @@ export default async function ExploreEventsPage() {
 
   return (
     <main>
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}/>
       <Suspense fallback={<EventsLoadingSkeleton />}>
         <ExploreEventsClient
           initialEvents={events}

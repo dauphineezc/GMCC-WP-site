@@ -1,5 +1,5 @@
 import { wpFetch } from "@/lib/wp";
-import { CENTER_TITLE_ORDER, WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
+import { CENTER_TITLE_ORDER } from "@/lib/constants";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import PhoneLink from "@/components/phoneLink";
 
@@ -77,11 +77,11 @@ export default async function ContactPage() {
     });
 
   return (
-    <main className="pb-16">
+    <main>
       <SolidNavyWaveHeader eyebrow={f?.subheading} title={f?.heading} />
 
       {centers.length ? (
-        <section className="relative z-30 mx-auto -mt-24 max-w-6xl px-6 md:-mt-24">
+        <section className="relative z-30 mx-auto -mt-16 max-w-6xl px-6 md:-mt-24">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {centers.map((center: any) => {
               const phone = center?.centersFields?.contactInfo?.contactPhone;
@@ -118,15 +118,15 @@ export default async function ContactPage() {
         </section>
       ) : null}
 
-      <section className="page-section stack-2">
-        <h2 className="mt-8 text-center text-xl font-extrabold text-gmcc-navy md:text-left md:text-2xl">
+      <section className="page-section">
+        <h2 className="mt-12 md:mt-8 text-center text-2xl font-extrabold text-gmcc-navy md:text-left md:text-2xl">
           {f?.contactFormHeading}
         </h2>
-        <p className="mb-4 text-center text-lg text-neutral-700 md:text-left">{f?.contactFormDescription}</p>
+        <p className="mt-4 mb-4 text-center text-lg text-neutral-700 md:text-left">{f?.contactFormDescription}</p>
       </section>
 
       {/* Placeholder contact form (visual only) */}
-      <div className="relative mt-8 overflow-hidden pb-8">
+      <div className="relative overflow-hidden pb-8">
           <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
             <img
               src="/GreaterLogoBG.png"
@@ -141,7 +141,7 @@ export default async function ContactPage() {
               draggable={false}
             />
           </div>
-
+          
         <div className="mx-auto max-w-6xl px-10">
           <div className="relative mx-auto w-full rounded-2xl border border-neutral-300 bg-neutral-100 p-10 shadow-sm lg:w-[calc((3*(100%-4rem))/5+2rem)]">
             <h3 className="h2 text-4xl text-gmcc-navy">Contact Form</h3>
@@ -197,8 +197,8 @@ export default async function ContactPage() {
       {/* </section> */}
 
       {f?.serveWithHeartStatement ? (
-        <section className="page-section stack-2">
-          <p className="text-center text-lg text-neutral-700">{f?.serveWithHeartStatement}</p>
+        <section className="page-section">
+          <p className="text-center text-lg text-neutral-700 mb-2">{f?.serveWithHeartStatement}</p>
           <div className="text-center">
             <a
               href={f?.serveWithHeartButtonLink ?? "#"}

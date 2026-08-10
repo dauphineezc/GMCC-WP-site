@@ -1,6 +1,7 @@
 // src/app/register/page.tsx
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import { splitLines } from "@/lib/acf";
+import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
 import { wpFetch } from "@/lib/wp";
 import type { Metadata } from "next";
 
@@ -177,15 +178,24 @@ export default async function RegisterPage() {
         </div>
        </section>
 
-       <section className="page-section stack-4 text-center">
+       <section className="page-section text-center">
         {fields?.helpHeader ? (
             <h2 className="h2">{fields.helpHeader}</h2>
         ) : null}
         {fields?.helpBody ? (
-            <p className="body whitespace-pre-line text-neutral-700">
+            <p className="body whitespace-pre-line text-neutral-700 mt-4">
             {fields.helpBody}
             </p>
         ) : null}
+
+        <div className="flex justify-center">
+            <a
+              href={GENERAL_CONTACT_FORM_URL}
+              className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
+              >
+              Contact Us
+          </a>
+          </div>
        </section>
    </main>
  );

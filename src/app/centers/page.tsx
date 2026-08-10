@@ -3,6 +3,7 @@ import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { fetchPageWithHeroFields, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
 import ExploreCentersClient from "./exploreCentersClient";
+import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ const EXPLORE_CENTERS_QUERY = `
         slug
         title
         featuredImage {
-          node { sourceUrl altText }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         centersFields {
           address
@@ -62,7 +63,7 @@ export default async function CentersPage() {
 
   return (
     <main>
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} ctas={hero.ctas} />
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition} ctas={hero.ctas} />
       <ExploreCentersClient centers={centers} programs={programs} />
     </main>
   );

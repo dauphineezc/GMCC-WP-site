@@ -11,12 +11,13 @@ import PhoneLink from "@/components/phoneLink";
 import CorporateAmenityTiles from "@/components/corporateAmenityTiles";
 import CorporateMembershipBenefits from "@/components/corporateMembershipBenefits";
 import NavyWaveSection from "@/components/navyWaveSection";
+import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
 
 type WpImageNode = {
   sourceUrl?: string | null;
   mediaItemUrl?: string | null;
   altText?: string | null;
-};
+} & MediaFocalPointFields;
 
 type CenterHours = {
   mondayHours?: string | null;
@@ -114,8 +115,8 @@ query CortevaFitnessCenterPage($uri: ID!) {
     
     cortevaPageFields {
       logos {
-        cortevaLogo { node { sourceUrl altText } }
-        corporateWellnessLogo { node { sourceUrl altText } }
+        cortevaLogo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
+        corporateWellnessLogo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
       }
 
       cortevaHeader
@@ -163,7 +164,7 @@ query CortevaFitnessCenterPage($uri: ID!) {
                 quote
                 personName
                 personContext
-                photo { node { sourceUrl altText } }
+                photo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
               }
             }
           }
@@ -191,10 +192,10 @@ query CortevaFitnessCenterPage($uri: ID!) {
             saturdayHours
             sundayHours
           }
-          logo { node { sourceUrl mediaItemUrl altText } }
+          logo { node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl } }
           gallery {
             photos {
-              node { sourceUrl mediaItemUrl altText }
+              node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
             }
           }
         }
@@ -336,6 +337,9 @@ export default async function CortevaFitnessCenterPage() {
     const memberStoryImageUrl = resolveWpMediaUrl(
       memberStoryTestimonial?.testimonialFields?.photo?.node?.sourceUrl,
     );
+    const memberStoryObjectPosition = mediaFocalPositionCss(
+      memberStoryTestimonial?.testimonialFields?.photo?.node,
+    );
     const memberStoryPersonName =
       memberStoryTestimonial?.testimonialFields?.personName?.trim() ||
       memberStoryTestimonial?.title?.trim() ||
@@ -350,6 +354,7 @@ export default async function CortevaFitnessCenterPage() {
                 title={heroProps.title}
                 subheader={heroProps.subheader ?? null}
                 imageUrl={heroProps.imageUrl ?? null}
+                imagePosition={heroProps.imagePosition}
                 ctas={heroProps.ctas}
                 flushBottom={true}
                 waveFillClassName="text-gmcc-navy"
@@ -487,6 +492,11 @@ export default async function CortevaFitnessCenterPage() {
                             src={memberStoryImageUrl}
                             alt={memberStoryPhotoAlt}
                             className="absolute inset-0 h-full w-full object-cover"
+                            style={
+                              memberStoryObjectPosition
+                                ? { objectPosition: memberStoryObjectPosition }
+                                : undefined
+                            }
                           />
                         ) : (
                           <div className="absolute inset-0 w-full bg-neutral-700" />

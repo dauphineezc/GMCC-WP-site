@@ -10,8 +10,8 @@ import {
 } from "@/lib/pageHeroFields";
 import { DropInCareSection } from "@/components/dropInCareSection";
 import { DROP_IN_CARE_FIELDS_GRAPHQL } from "@/lib/dropInCareFields";
-import { openLinkInNewTab } from "@/lib/acf";
-import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
+import { openLinkInNewTab, WP_MEDIA_IMAGE_FIELDS } from "@/lib/acf";
+import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
 import { wpFetch } from "@/lib/wp";
 import PhotoGallery from "@/components/photoGallery";
 import NavyWaveSection from "@/components/navyWaveSection";
@@ -39,10 +39,7 @@ const EARLY_CHILDHOOD_PAGE_QUERY = /* GraphQL */ `
               slug
               title
               featuredImage {
-                node {
-                  sourceUrl
-                  altText
-                }
+                node { ${WP_MEDIA_IMAGE_FIELDS} }
               }
               programFields {
                 summary
@@ -126,39 +123,39 @@ const EARLY_CHILDHOOD_PAGE_QUERY = /* GraphQL */ `
         galleryBody
         gallery {
           galleryItem1 {
-            photo { node { sourceUrl altText title } }
+            photo { node { ${WP_MEDIA_IMAGE_FIELDS} title } }
             photoLabel
           }
           galleryItem2 {
-            photo { node { sourceUrl altText title } }
+            photo { node { ${WP_MEDIA_IMAGE_FIELDS} title } }
             photoLabel
           }
           galleryItem3 {
-            photo { node { sourceUrl altText title } }
+            photo { node { ${WP_MEDIA_IMAGE_FIELDS} title } }
             photoLabel
           }
           galleryItem4 {
-            photo { node { sourceUrl altText title } }
+            photo { node { ${WP_MEDIA_IMAGE_FIELDS} title } }
             photoLabel
           }
           galleryItem5 {
-            photo { node { sourceUrl altText title } }
+            photo { node { ${WP_MEDIA_IMAGE_FIELDS} title } }
             photoLabel
           }
           galleryItem6 {
-            photo { node { sourceUrl altText title } }
+            photo { node { ${WP_MEDIA_IMAGE_FIELDS} title } }
             photoLabel
           }
           galleryItem7 {
-            photo { node { sourceUrl altText title } }
+            photo { node { ${WP_MEDIA_IMAGE_FIELDS} title } }
             photoLabel
           }
           galleryItem8 {
-            photo { node { sourceUrl altText title } }
+            photo { node { ${WP_MEDIA_IMAGE_FIELDS} title } }
             photoLabel
           }
           galleryItem9 {
-            photo { node { sourceUrl altText title } }
+            photo { node { ${WP_MEDIA_IMAGE_FIELDS} title } }
             photoLabel
           }
         }
@@ -230,7 +227,7 @@ export default async function EarlyChildhoodPage() {
       <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
-        imageUrl={hero.imageUrl}
+        imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}
         ctas={hero.ctas}
       />
 
@@ -330,7 +327,7 @@ export default async function EarlyChildhoodPage() {
             <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.contactSubheader}</p>
           ) : null}
           <a
-            href={WEBTRAC_REGISTRATION_URL}
+            href={GENERAL_CONTACT_FORM_URL}
             className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
             >
             Contact Us

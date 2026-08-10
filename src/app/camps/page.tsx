@@ -2,7 +2,7 @@ import Accordion from "@/components/accordion";
 import Link from "next/link";
 import { Suspense } from "react";
 import { acfCtaHref, acfFileHref, wpFetch } from "@/lib/wp";
-import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
+import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
 import {
   acfCtaTarget,
   acfCtaTitle,
@@ -16,6 +16,7 @@ import {
   type ImageField,
   type MediaFieldInput,
   type MediaRef,
+  WP_MEDIA_IMAGE_FIELDS,
 } from "@/lib/acf";
 import { CAMPS_PROGRAMS_FIRST, PROGRAMS_LIST_QUERY, PROGRAMS_PAGE_SIZE } from "@/lib/programsListQuery";
 import CampsProgramsExplorerClient from "./campsProgramsExplorerClient";
@@ -30,10 +31,7 @@ const CAMPS_PAGE_QUERY = /* GraphQL */ `
     page(id: $uri, idType: URI) {
       title
       featuredImage {
-        node {
-          sourceUrl
-          altText
-        }
+        node { ${WP_MEDIA_IMAGE_FIELDS} }
       }
       ${PAGE_HERO_FIELDS_GRAPHQL}
       campsDirectoryPageFields {
@@ -55,35 +53,19 @@ const CAMPS_PAGE_QUERY = /* GraphQL */ `
         browseByCenterSubheader
         ccCampsDescription
         ccCampsImage {
-          node {
-            sourceUrl
-            mediaItemUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
         }
         tcCampsDescription
         tcCampsImage {
-          node {
-            sourceUrl
-            mediaItemUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
         }
         cfcCampsDescription
         cfcCampsImage {
-          node {
-            sourceUrl
-            mediaItemUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
         }
         nfcCampsDescription
         nfcCampsImage {
-          node {
-            sourceUrl
-            mediaItemUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
         }
 
         formsAndLinksHeader
@@ -159,11 +141,7 @@ const CAMPS_CENTER_IMAGES_QUERY = /* GraphQL */ `
         slug
         title
         featuredImage {
-          node {
-            sourceUrl
-            mediaItemUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
         }
       }
     }
@@ -180,10 +158,7 @@ const CAMP_SPONSORS_QUERY = /* GraphQL */ `
           tier
           link
           logo {
-            node {
-              sourceUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} }
           }
         }
       }
@@ -357,7 +332,7 @@ function centerHeroImage(
   fields: Record<string, unknown> | null | undefined,
   imageField: string,
   fallbackAlt: string,
-): { url: string; alt: string } | null {
+): { url: string; alt: string; objectPosition?: string } | null {
   return acfImageFromField(fields?.[imageField], fallbackAlt);
 }
 
@@ -548,7 +523,7 @@ export default async function CampsPage() {
       <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
-        imageUrl={hero.imageUrl}
+        imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}
         ctas={hero.ctas}
         childrenBeforeCtas
       >
@@ -580,6 +555,11 @@ export default async function CampsPage() {
                       src={c.image.url}
                       alt={c.image.alt || c.title}
                       className="h-full w-full object-cover"
+                      style={
+                        c.image.objectPosition
+                          ? { objectPosition: c.image.objectPosition }
+                          : undefined
+                      }
                       loading="lazy"
                       decoding="async"
                     />
@@ -766,13 +746,13 @@ export default async function CampsPage() {
           {contactSubheader ? (
             <p className="body mt-4 whitespace-pre-line text-neutral-700">{contactSubheader}</p>
           ) : null}
-          <div className="mt-6 flex justify-center">
+          <div className="flex justify-center">
             <a
-              href={WEBTRAC_REGISTRATION_URL}
-              className="btn bg-gmcc-navy px-8 py-3 text-base text-white hover:bg-neutral-100"
-            >
+              href={GENERAL_CONTACT_FORM_URL}
+              className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
+              >
               Contact Us
-            </a>
+          </a>
           </div>
         </section>
       )}

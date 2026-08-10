@@ -2,7 +2,7 @@
 
 import { PROGRAMS_ALL_AT_ONCE } from "@/lib/programsListQuery";
 import { wpFetch } from "@/lib/wp";
-import { collectNumberedFaqs } from "@/lib/acf";
+import { collectNumberedFaqs, WP_MEDIA_IMAGE_FIELDS } from "@/lib/acf";
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import { normalizeTestimonials } from "@/components/testimonials";
 import LessonsDirectory from "@/components/programs/lessonsDirectory";
@@ -22,7 +22,7 @@ const PERSONAL_TRAINING_PAGE_QUERY = /* GraphQL */ `
   query PersonalTrainingPage($uri: ID!, $first: Int!) {
     page(id: $uri, idType: URI) {
       title
-      featuredImage { node { sourceUrl altText } }
+      featuredImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
       ${PAGE_HERO_FIELDS_GRAPHQL}
       personalTrainingDirectoryPageFields {
         bodyHeader

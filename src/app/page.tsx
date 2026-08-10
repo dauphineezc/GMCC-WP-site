@@ -1,6 +1,7 @@
 // src/app/page.tsx
 import { wpFetch } from "@/lib/wp";
-import { acfImageFromField } from "@/lib/acf";
+import { acfImageFromField, WP_MEDIA_IMAGE_FIELDS } from "@/lib/acf";
+import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 import HeroSection from "./(home)/sections/hero";
 import AboutSection from "./(home)/sections/about";
 import ProgramsSection from "./(home)/sections/programs";
@@ -21,7 +22,14 @@ export const revalidate = 86400;
 
 // ---- Types (match query) ----
 type GqlImage = {
-  node?: { sourceUrl?: string | null; mediaItemUrl?: string | null; altText?: string | null } | null;
+  node?: {
+    sourceUrl?: string | null;
+    mediaItemUrl?: string | null;
+    altText?: string | null;
+    focalPointX?: number | string | null;
+    focalPointY?: number | string | null;
+    hasCustomFocalPoint?: boolean | null;
+  } | null;
 };
 
 type HomeProgramSlot = {
@@ -150,6 +158,7 @@ type ProgramCard = {
   caption?: string;
   imageUrl: string | null;
   imageAlt: string;
+  objectPosition?: string;
 };
 
 
@@ -178,6 +187,9 @@ function normalizeProgramsCards(programs: HomeData["page"]["homepageFields"] ext
         caption: caption || undefined,
         imageUrl: resolvedImage?.url ?? null,
         imageAlt: resolvedImage?.alt ?? "",
+        ...(resolvedImage?.objectPosition
+          ? { objectPosition: resolvedImage.objectPosition }
+          : {}),
       } satisfies ProgramCard;
     })
     // Only keep cards with something meaningful to show
@@ -212,6 +224,9 @@ function normalizeTimelineItems(timelineItems?: Array<TimelineItemRow | null> | 
         body: row.body ?? "",
         imageUrl: resolvedImage?.url ?? null,
         imageAlt: resolvedImage?.alt ?? "",
+        ...(resolvedImage?.objectPosition
+          ? { objectPosition: resolvedImage.objectPosition }
+          : {}),
       };
     })
     .filter((it) => (it.date || "").trim() || (it.title || "").trim() || (it.body || "").trim());
@@ -272,7 +287,7 @@ const RECENT_NEWS_QUERY = /* GraphQL */ `
         title
         uri
         slug
-        featuredImage { node { sourceUrl altText } }
+        featuredImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         newsFields { body publishDate }
       }
     }
@@ -289,7 +304,7 @@ const UPCOMING_EVENTS_QUERY = /* GraphQL */ `
         id
         slug
         title
-        featuredImage { node { sourceUrl altText } }
+        featuredImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         eventFields {
           summary
           ${EVENT_SCHEDULE_GRAPHQL}
@@ -324,7 +339,7 @@ query HomePage($uri: ID!) {
         heroSubheadline
         heroMedia {
           node {
-            sourceUrl
+            ${WP_MEDIA_IMAGE_FIELDS}
             mediaItemUrl
             mimeType
           }
@@ -345,11 +360,7 @@ query HomePage($uri: ID!) {
           programLabel
           programCaption
           programImage {
-            node {
-              sourceUrl
-              mediaItemUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
           }
         }
         program2 {
@@ -357,11 +368,7 @@ query HomePage($uri: ID!) {
           programLabel
           programCaption
           programImage {
-            node {
-              sourceUrl
-              mediaItemUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
           }
         }
         program3 {
@@ -369,11 +376,7 @@ query HomePage($uri: ID!) {
           programLabel
           programCaption
           programImage {
-            node {
-              sourceUrl
-              mediaItemUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
           }
         }
         program4 {
@@ -381,11 +384,7 @@ query HomePage($uri: ID!) {
           programLabel
           programCaption
           programImage {
-            node {
-              sourceUrl
-              mediaItemUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
           }
         }
         program5 {
@@ -393,11 +392,7 @@ query HomePage($uri: ID!) {
           programLabel
           programCaption
           programImage {
-            node {
-              sourceUrl
-              mediaItemUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
           }
         }
         program6 {
@@ -405,11 +400,7 @@ query HomePage($uri: ID!) {
           programLabel
           programCaption
           programImage {
-            node {
-              sourceUrl
-              mediaItemUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
           }
         }
         program7 {
@@ -417,11 +408,7 @@ query HomePage($uri: ID!) {
           programLabel
           programCaption
           programImage {
-            node {
-              sourceUrl
-              mediaItemUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
           }
         }
         program8 {
@@ -429,11 +416,7 @@ query HomePage($uri: ID!) {
           programLabel
           programCaption
           programImage {
-            node {
-              sourceUrl
-              mediaItemUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
           }
         }
           program9 {
@@ -441,11 +424,7 @@ query HomePage($uri: ID!) {
           programLabel
           programCaption
           programImage {
-            node {
-              sourceUrl
-              mediaItemUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
           }
         }
         program10 {
@@ -453,11 +432,7 @@ query HomePage($uri: ID!) {
           programLabel
           programCaption
           programImage {
-            node {
-              sourceUrl
-              mediaItemUrl
-              altText
-            }
+            node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
           }
         }
       }
@@ -469,7 +444,7 @@ query HomePage($uri: ID!) {
             title
             uri
             featuredImage {
-              node { sourceUrl altText }
+              node { ${WP_MEDIA_IMAGE_FIELDS} }
             }
             campaignFields {
               headline
@@ -488,7 +463,7 @@ query HomePage($uri: ID!) {
       impact {
         impactHeader
         impactBody
-        impactImage { node { sourceUrl altText } }
+        impactImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         impactCta1
         impactCta2
 
@@ -506,7 +481,7 @@ query HomePage($uri: ID!) {
           date
           title
           body
-          image { node { sourceUrl mediaItemUrl altText } }
+          image { node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl } }
         }
       }
 
@@ -520,7 +495,7 @@ query HomePage($uri: ID!) {
               quote
               personName
               personContext
-              photo { node { sourceUrl altText } }
+              photo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
             }
           }
         }
@@ -532,7 +507,7 @@ query HomePage($uri: ID!) {
             id
             title
             uri
-            featuredImage { node { sourceUrl altText } }
+            featuredImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
             centersFields {
               address
               contactInfo {
@@ -544,7 +519,7 @@ query HomePage($uri: ID!) {
         }
       }
       corporateWellnessCentersCaption
-      corporateWellnessCentersImage { node { sourceUrl altText } }
+      corporateWellnessCentersImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
 
       newsletterSubscriptionHeader
       newsletterSubscriptionSubtext
@@ -612,6 +587,7 @@ export default async function HomePage() {
 
       <EventsSection events={upcomingEvents.map(({ event, dateInfo }) => {
         const badge = formatEventBadgeDate(dateInfo.start);
+        const objectPosition = mediaFocalPositionCss(event.featuredImage?.node);
         return {
           id: event.id,
           title: event.title ?? "",
@@ -621,6 +597,7 @@ export default async function HomePage() {
           badgeMonth: badge.month,
           imageUrl: event.featuredImage?.node?.sourceUrl ?? null,
           imageAlt: event.featuredImage?.node?.altText ?? "",
+          ...(objectPosition ? { objectPosition } : {}),
         };
       })} />
 
@@ -635,6 +612,7 @@ export default async function HomePage() {
         stats={impactStats}
         imageUrl={f?.impact?.impactImage?.node?.sourceUrl ?? null}
         imageAlt={f?.impact?.impactImage?.node?.altText ?? ""}
+        objectPosition={mediaFocalPositionCss(f?.impact?.impactImage?.node)}
         cta={f?.impact?.impactCta1 ? { title: "Get involved", url: f.impact.impactCta1 } : null}
       />
 

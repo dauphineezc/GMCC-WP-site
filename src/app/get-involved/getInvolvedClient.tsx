@@ -5,12 +5,13 @@ import Accordion from "@/components/accordion";
 import Tabs from "@/components/tabs";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
+import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
 
 type WPImageNode = {
   sourceUrl?: string | null;
   altText?: string | null;
   mediaDetails?: { width?: number | null; height?: number | null } | null;
-};
+} & MediaFocalPointFields;
 
 type MaybeImage = { node?: WPImageNode | null } | null;
 
@@ -64,12 +65,14 @@ function Img({
 }) {
   const src = image?.node?.sourceUrl ?? "";
   if (!src) return null;
+  const objectPosition = mediaFocalPositionCss(image?.node);
 
   return (
     <img
       src={src}
       alt={image?.node?.altText || fallbackAlt}
       className={className}
+      style={objectPosition ? { objectPosition } : undefined}
       loading="lazy"
       decoding="async"
     />
@@ -224,6 +227,10 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
               src={volunteer?.volunteerImage?.node?.sourceUrl}
               alt={volunteer?.volunteerImage?.node?.altText || ""}
               className="block h-full w-full object-cover"
+              style={(() => {
+                const pos = mediaFocalPositionCss(volunteer?.volunteerImage?.node);
+                return pos ? { objectPosition: pos } : undefined;
+              })()}
               loading="lazy"
               decoding="async"
             />
@@ -275,6 +282,10 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
                     src={sponsor?.sponsorImage?.node?.sourceUrl}
                     alt={sponsor?.sponsorImage?.node?.altText || ""}
                     className="block h-full w-full object-cover"
+                    style={(() => {
+                      const pos = mediaFocalPositionCss(sponsor?.sponsorImage?.node);
+                      return pos ? { objectPosition: pos } : undefined;
+                    })()}
                     loading="lazy"
                     decoding="async"
                   />

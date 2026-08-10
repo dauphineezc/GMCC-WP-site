@@ -17,6 +17,7 @@ import {
 } from "@/lib/pageHeroFields";
 import type { GroupFitnessDirectoryHeaderData } from "@/components/programs/directory-sections/groupFitnessDirectoryHeader";
 import { wpFetch } from "@/lib/wp";
+import { mediaFocalPositionCss, WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 import {
   PROGRAMS_LIST_QUERY,
   PROGRAMS_PAGE_SIZE,
@@ -111,7 +112,7 @@ const MIDDLE_SCHOOL_SPORTS_DIRECTORY_HEADER_QUERY = `
               sponsorFields {
                 tier
                 link
-                logo { node { sourceUrl altText } }
+                logo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
               }
             }
           }
@@ -144,8 +145,7 @@ const TENNIS_DIRECTORY_HEADER_QUERY = `
               title
               featuredImage {
                 node {
-                  sourceUrl
-                  altText
+                  ${WP_MEDIA_IMAGE_FIELDS}
                 }
               }
               staffProfilesFields {
@@ -221,17 +221,22 @@ function normalizeDirectoryHeaderData(
   const trainerNodes = field?.[trainerConnectionKey]?.nodes ?? [];
   const trainers =
     trainerNodes
-      .map((trainer: any) => ({
-        name: trainer?.title ?? null,
-        photo: trainer?.featuredImage?.node
-          ? {
-              sourceUrl: trainer.featuredImage.node.sourceUrl ?? null,
-              altText: trainer.featuredImage.node.altText ?? null,
-            }
-          : null,
-        jobTitle: trainer?.staffProfilesFields?.title ?? null,
-        bio: trainer?.staffProfilesFields?.bio ?? null,
-      }))
+      .map((trainer: any) => {
+        const photoNode = trainer?.featuredImage?.node;
+        const objectPosition = mediaFocalPositionCss(photoNode);
+        return {
+          name: trainer?.title ?? null,
+          photo: photoNode
+            ? {
+                sourceUrl: photoNode.sourceUrl ?? null,
+                altText: photoNode.altText ?? null,
+                ...(objectPosition ? { objectPosition } : {}),
+              }
+            : null,
+          jobTitle: trainer?.staffProfilesFields?.title ?? null,
+          bio: trainer?.staffProfilesFields?.bio ?? null,
+        };
+      })
       .filter(
         (trainer: DirectoryTrainer) =>
           !!trainer.name || !!trainer.jobTitle || !!trainer.photo?.sourceUrl || !!trainer.bio,
@@ -549,7 +554,7 @@ export default async function ExploreProgramsPage({
 
   return (
     <main>
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}/>
       <Suspense fallback={<ProgramsLoadingSkeleton />}>
         <ExploreProgramsClient
           initialPrograms={programs}

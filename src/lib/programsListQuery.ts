@@ -1,3 +1,4 @@
+import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 /** Shared GraphQL for program directory lists (explore + camps). */
 
 /**
@@ -28,19 +29,13 @@ export const PROGRAMS_LIST_QUERY = /* GraphQL */ `
         slug
         title
         featuredImage {
-          node {
-            sourceUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         programFields {
           summary
           gallery {
             photos {
-              node {
-                sourceUrl
-                altText
-              }
+              node { ${WP_MEDIA_IMAGE_FIELDS} }
             }
           }
           offeringType

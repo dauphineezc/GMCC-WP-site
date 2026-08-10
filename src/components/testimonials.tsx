@@ -1,4 +1,8 @@
-type GqlImage = { node?: { sourceUrl?: string | null; altText?: string | null } | null };
+import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
+
+type GqlImage = {
+  node?: ({ sourceUrl?: string | null; altText?: string | null } & MediaFocalPointFields) | null;
+};
 
 export type NormalizedTestimonial = {
     id: string;
@@ -7,6 +11,7 @@ export type NormalizedTestimonial = {
     personContext: string;
     photoUrl: string | null;
     photoAlt: string;
+    photoObjectPosition?: string;
 };
 
 type WpGraphqlTestimonialNode = {
@@ -27,6 +32,7 @@ type FlatTestimonialInput = {
     personContext?: string | null;
     photoUrl?: string | null;
     photoAlt?: string | null;
+    photoObjectPosition?: string | null;
 };
 
 export type TestimonialInput = FlatTestimonialInput | WpGraphqlTestimonialNode;
@@ -47,12 +53,16 @@ export function normalizeTestimonials(
                 ? t.testimonialFields?.personName ?? t.title ?? ""
                 : t.personName ?? "";
             const personContext = hasWpFields ? t.testimonialFields?.personContext ?? "" : t.personContext ?? "";
+            const photoNode = hasWpFields ? t.testimonialFields?.photo?.node : null;
             const photoUrl = hasWpFields
-                ? t.testimonialFields?.photo?.node?.sourceUrl ?? null
+                ? photoNode?.sourceUrl ?? null
                 : t.photoUrl ?? null;
             const photoAlt = hasWpFields
-                ? t.testimonialFields?.photo?.node?.altText ?? ""
+                ? photoNode?.altText ?? ""
                 : t.photoAlt ?? "";
+            const photoObjectPosition = hasWpFields
+                ? mediaFocalPositionCss(photoNode)
+                : t.photoObjectPosition ?? undefined;
 
             return {
                 id: t.id,
@@ -61,6 +71,7 @@ export function normalizeTestimonials(
                 personContext,
                 photoUrl,
                 photoAlt,
+                ...(photoObjectPosition ? { photoObjectPosition } : {}),
             };
         });
 }
@@ -72,7 +83,18 @@ export function TestimonialSection({ testimonials }: { testimonials: NormalizedT
                 <div key={t.id} className="card p-8">
                     <div className="text-sm leading-relaxed text-neutral-700">{t.quote}</div>
                     <div className="flex items-center justify-start gap-3 mt-4">
-                        {t.photoUrl ? <img src={t.photoUrl} alt={t.photoAlt} className="w-12 h-12 rounded-full" /> : null}
+                        {t.photoUrl ? (
+                            <img
+                                src={t.photoUrl}
+                                alt={t.photoAlt}
+                                className="w-12 h-12 rounded-full object-cover"
+                                style={
+                                    t.photoObjectPosition
+                                        ? { objectPosition: t.photoObjectPosition }
+                                        : undefined
+                                }
+                            />
+                        ) : null}
                         <div>
                             <div className="text-sm font-bold text-gmcc-navy">{t.personName}</div>
                             {t.personContext ? <div className="text-xs text-neutral-500">{t.personContext}</div> : null}

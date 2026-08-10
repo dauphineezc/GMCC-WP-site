@@ -8,7 +8,7 @@ export function getSiteBaseUrl(): string {
   const vercel = process.env.VERCEL_URL?.trim();
   if (vercel) return `https://${vercel.replace(/\/$/, "")}`;
 
-  return "http://localhost:3000";
+  return "http://greatermidland.org";
 }
 
 export function toAbsoluteUrl(path: string): string {

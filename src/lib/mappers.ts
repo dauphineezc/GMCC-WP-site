@@ -1,5 +1,6 @@
 import { acfAttachmentItems } from "@/lib/wp";
 import { splitLines } from "@/lib/acf";
+import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 // adjust typing however you want; keeping it loose for now
 export function mapProgram(wp: any) {
@@ -28,6 +29,7 @@ export function mapProgram(wp: any) {
       const relatedCenters = relatedCenterNodes
         .map((c: any) => c && c.title ? { title: c.title as string, slug: c.slug as string } : null)
         .filter(Boolean) as { title: string; slug: string }[];
+      const objectPosition = mediaFocalPositionCss(featuredImage);
       return {
         title: n.title as string,
         slug: n.slug as string,
@@ -36,6 +38,7 @@ export function mapProgram(wp: any) {
           ? {
               url: featuredImage.sourceUrl,
               alt: featuredImage.altText ?? "",
+              ...(objectPosition ? { objectPosition } : {}),
             }
           : null,
         centers: relatedCenters,
@@ -45,7 +48,7 @@ export function mapProgram(wp: any) {
       title: string;
       slug: string;
       summary: string;
-      heroImage: { url: string; alt: string } | null;
+      heroImage: { url: string; alt: string; objectPosition?: string } | null;
       centers: { title: string; slug: string }[];
     }[];
 
@@ -61,16 +64,20 @@ export function mapProgram(wp: any) {
 
   const attachments = acfAttachmentItems(f.attachments);
 
+  const heroNode = wp.featuredImage?.node;
+  const heroObjectPosition = mediaFocalPositionCss(heroNode);
+
   return {
 
 
 
     title: wp.title,
     slug: wp.slug,
-    heroImage: wp.featuredImage?.node
+    heroImage: heroNode
       ? {
-          url: wp.featuredImage.node.sourceUrl,
-          alt: wp.featuredImage.node.altText ?? "",
+          url: heroNode.sourceUrl,
+          alt: heroNode.altText ?? "",
+          ...(heroObjectPosition ? { objectPosition: heroObjectPosition } : {}),
         }
       : null,
     summary: f.summary ?? "",

@@ -5,6 +5,7 @@ import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import { specialAmenities } from "@/lib/amenities/specialAmenities";
 import Link from "next/link";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
+import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 const AMENITY_BY_SLUG_QUERY = `
   query AmenityBySlug($slug: ID!) {
@@ -13,28 +14,25 @@ const AMENITY_BY_SLUG_QUERY = `
       slug
       description
       amenitiesFields {
-        amenityImage1 { node { sourceUrl altText } }
+        amenityImage1 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         center1 { nodes { ... on Center { slug title } } }
 
-        amenityImage2 { node { sourceUrl altText } }
+        amenityImage2 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         center2 { nodes { ... on Center { slug title } } }
 
-        amenityImage3 { node { sourceUrl altText } }
+        amenityImage3 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         center3 { nodes { ... on Center { slug title } } }
 
-        amenityImage4 { node { sourceUrl altText } }
+        amenityImage4 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         center4 { nodes { ... on Center { slug title } } }
 
-        amenityImage5 { node { sourceUrl altText } }
+        amenityImage5 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         center5 { nodes { ... on Center { slug title } } }
 
         isService
         additionalInformation
         additionalImage {
-          node {
-            sourceUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         relevantLink
         linkLabel
@@ -64,10 +62,7 @@ const AMENITIES_PAGE_SPECIAL_FIELDS_QUERY = `
           }
           gallery {
             photos {
-              node {
-                sourceUrl
-                altText
-              }
+              node { ${WP_MEDIA_IMAGE_FIELDS} }
             }
           }
         }

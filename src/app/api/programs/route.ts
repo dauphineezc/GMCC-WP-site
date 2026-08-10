@@ -1,6 +1,7 @@
 // src/app/api/programs/route.ts
 import { NextResponse } from "next/server";
 import { wpFetch } from "@/lib/wp";
+import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 const QUERY = `
   query ExplorePrograms($first: Int!, $after: String) {
@@ -11,19 +12,13 @@ const QUERY = `
         slug
         title
         featuredImage {
-          node {
-            sourceUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         programFields {
           summary
           gallery {
             photos {
-              node {
-                sourceUrl
-                altText
-              }
+              node { ${WP_MEDIA_IMAGE_FIELDS} }
             }
           }
           offeringType

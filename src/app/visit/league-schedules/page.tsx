@@ -21,6 +21,7 @@ export default async function LeagueSchedulesPage() {
         title={hero.title}
         subheader={hero.subheader}
         imageUrl={hero.imageUrl ?? "/images/LeaguePhoto.png"}
+        imagePosition={hero.imagePosition}
         ctas={hero.ctas}
       />
 

@@ -5,6 +5,7 @@ import ImageCarousel from "@/components/imageCarousel";
 import type { Metadata } from "next";
 import PhoneLink from "@/components/phoneLink";
 import Image from "next/image";
+import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -36,10 +37,10 @@ const CORPORATE_WELLNESS_PAGE_EXTRA_FIELDS = /* GraphQL */ `
               saturdayHours
               sundayHours
             }
-            logo { node { sourceUrl mediaItemUrl altText } }
+            logo { node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl } }
             gallery {
               photos {
-                node { sourceUrl mediaItemUrl altText }
+                node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }
               }
             }
           }
@@ -48,7 +49,7 @@ const CORPORATE_WELLNESS_PAGE_EXTRA_FIELDS = /* GraphQL */ `
     }
 
     corporatePartners {
-      logo { node { sourceUrl mediaItemUrl altText } }
+      logo { node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl } }
       pageLink
     }
   }
@@ -147,7 +148,7 @@ export default async function CorporateWellnessCentersPage() {
 
   return (
     <main>
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}/>
 
       <section className="page-section stack-6">
         {centersHeader ? <h2 className="h2 text-center">{centersHeader}</h2> : null}

@@ -7,6 +7,8 @@ export type GalleryPhoto = {
   alt: string;
   /** Optional caption pill on the thumbnail (e.g. early childhood gallery). */
   label?: string | null;
+  /** WP media focal-point CSS value, e.g. `"69% 38%"`. */
+  objectPosition?: string;
 };
 
 type PhotoSpan = {
@@ -122,6 +124,7 @@ export default function PhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
                 src={photo.url}
                 alt={photo.alt || `Photo ${i + 1}`}
                 className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04] group-hover:brightness-90"
+                style={photo.objectPosition ? { objectPosition: photo.objectPosition } : undefined}
                 loading="lazy"
                 decoding="async"
               />
@@ -172,6 +175,11 @@ export default function PhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
               src={photos[lightboxIndex].url}
               alt={photos[lightboxIndex].alt || `Photo ${lightboxIndex + 1}`}
               className="max-h-[80vh] w-auto rounded-xl object-contain shadow-2xl"
+              style={
+                photos[lightboxIndex].objectPosition
+                  ? { objectPosition: photos[lightboxIndex].objectPosition }
+                  : undefined
+              }
             />
 
             {/* Caption */}

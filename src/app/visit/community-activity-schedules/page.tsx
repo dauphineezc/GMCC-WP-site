@@ -39,6 +39,7 @@ export default async function CommunityActivitySchedulesPage() {
         title={hero.title}
         subheader={hero.subheader}
         imageUrl={hero.imageUrl ?? "/images/CommunityActivityPhoto.png"}
+        imagePosition={hero.imagePosition}
         ctas={hero.ctas}
       />
 

@@ -4,10 +4,10 @@ import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
 } from "@/lib/pageHeroFields";
-import { ImageField } from "@/lib/acf";
+import { ImageField, WP_MEDIA_IMAGE_FIELDS } from "@/lib/acf";
 import { resolveWpMediaUrl } from "@/lib/wp";
 import Image from "next/image";
-import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
+import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
 
 const CAREERS_PAGE_FIELDS = `
   careersPageFields {
@@ -21,7 +21,7 @@ const CAREERS_PAGE_FIELDS = `
     internshipOpportunitiesBody
     stayConnectedHeader
     stayConnectedSubheader
-    linkedinLogo { node { sourceUrl altText } }
+    linkedinLogo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
     linkedinLink
     contactHeader
     contactSubheader
@@ -70,7 +70,7 @@ export default async function CareersPage() {
       <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
-        imageUrl={hero.imageUrl}
+        imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}
         ctas={hero.ctas}
       />
 
@@ -149,18 +149,18 @@ export default async function CareersPage() {
           ) : null}
       </section>
 
-      <section className="page-section stack-8 text-center">
+      <section className="page-section text-center">
         {fields?.contactHeader ? <h2 className="h2 text-gmcc-navy">{fields.contactHeader}</h2> : null}
           {fields?.contactSubheader ? (
             <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.contactSubheader}</p>
           ) : null}
-          <div className="mt-6 flex justify-center">
+          <div className="flex justify-center">
             <a
-              href={WEBTRAC_REGISTRATION_URL}
-              className="btn bg-gmcc-navy px-8 py-3 text-base text-white hover:bg-neutral-100"
-            >
+              href={GENERAL_CONTACT_FORM_URL}
+              className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
+              >
               Contact Us
-            </a>
+          </a>
           </div>
       </section>
     </main>

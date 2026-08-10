@@ -18,6 +18,9 @@ export const HERO_VIDEO_VIMEO_THUMBNAIL_URL =
 export const WEBTRAC_REGISTRATION_URL =
   "https://register.greatermidland.org/webtrac/web/search.html?Action=Start";
 
+/** Link to general contact form. */
+export const GENERAL_CONTACT_FORM_URL = "https://www.jotform.com/";
+
 /** Primary public contact email. */
 export const CONTACT_EMAIL = "info@greatermidland.org";
 

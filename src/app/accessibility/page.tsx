@@ -11,6 +11,7 @@ import {
 } from "@/lib/pageHeroFields";
 import type { Metadata } from "next";
 import type { SimpleCampaignData } from "@/components/simpleCampaign";
+import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -23,10 +24,7 @@ const CAMPAIGN_FRAGMENT = `
     title
     uri
     featuredImage {
-      node {
-        sourceUrl
-        altText
-      }
+      node { ${WP_MEDIA_IMAGE_FIELDS} }
     }
     campaignFields {
       headline
@@ -107,7 +105,7 @@ export default async function AccessibilityPage() {
 
   return (
     <main>
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} />
+      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}/>
 
       <section className="page-section stack-4 text-center">
         <h2 className="h2">{accessibilityStatementHeader}</h2>

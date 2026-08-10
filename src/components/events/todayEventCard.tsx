@@ -27,6 +27,11 @@ export default function TodayEventCard({ event, showCenter = false }: TodayEvent
             src={event.imageUrl ?? "/images/VisitPhoto.png"}
             alt={event.imageAlt}
             className="absolute inset-0 h-full w-full object-cover"
+            style={
+              event.objectPosition
+                ? { objectPosition: event.objectPosition }
+                : undefined
+            }
             loading="lazy"
             decoding="async"
           />

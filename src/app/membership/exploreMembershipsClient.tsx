@@ -25,7 +25,8 @@ import PhotoWaveHeader from "@/components/photoWaveHeader";
 import type { HeroCta } from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
 import { computeMembershipPricingSavings } from "@/lib/membershipPricingSavings";
-import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
+import { GENERAL_CONTACT_FORM_URL, WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
+import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 export type Audience = {
   name: string;
@@ -47,7 +48,7 @@ export type MembershipPayLink = {
 export type Membership = {
   slug: string;
   title: string;
-  hero: { url: string; alt: string } | null;
+  hero: { url: string; alt: string; objectPosition?: string } | null;
   summary: string | null;
   autoDraftLink: MembershipPayLink | null;
   manualPayLink: MembershipPayLink | null;
@@ -89,7 +90,15 @@ export type MembershipPageFields = {
   currentPromotion: {
     title?: string | null;
     uri?: string | null;
-    featuredImage?: { node?: { sourceUrl: string; altText?: string | null } | null } | null;
+    featuredImage?: {
+      node?: {
+        sourceUrl: string;
+        altText?: string | null;
+        focalPointX?: number | string | null;
+        focalPointY?: number | string | null;
+        hasCustomFocalPoint?: boolean | null;
+      } | null;
+    } | null;
     campaignFields?: {
       headline?: string | null;
       body?: string | null;
@@ -160,6 +169,7 @@ type Props = {
   heroTitle: string;
   heroSubheader?: string;
   heroImageUrl?: string;
+  heroImagePosition?: string;
   /** From WP heroFields primary + secondary CTAs */
   heroCtas?: HeroCta[] | null;
 };
@@ -174,6 +184,7 @@ export default function ExploreMembershipsClient({
   heroTitle,
   heroSubheader,
   heroImageUrl,
+  heroImagePosition,
   heroCtas,
 }: Props) {
   const searchParams = useSearchParams();
@@ -405,6 +416,7 @@ export default function ExploreMembershipsClient({
         title={heroTitle}
         subheader={heroSubheader}
         imageUrl={heroImageUrl}
+        imagePosition={heroImagePosition}
         ctas={headerCtas}
       >
         {fields.quizCta ? (
@@ -457,6 +469,12 @@ export default function ExploreMembershipsClient({
                 src={fields.currentPromotion.featuredImage?.node?.sourceUrl ?? ""}
                 alt={fields.currentPromotion.featuredImage?.node?.altText ?? ""}
                 className="absolute inset-0 h-full w-full object-cover object-center"
+                style={(() => {
+                  const pos = mediaFocalPositionCss(
+                    fields.currentPromotion.featuredImage?.node,
+                  );
+                  return pos ? { objectPosition: pos } : undefined;
+                })()}
               />
             </div>
           </div>
@@ -709,6 +727,12 @@ export default function ExploreMembershipsClient({
                     src={fields.healthy100Challenge.featuredImage?.node?.sourceUrl ?? ""}
                     alt={fields.healthy100Challenge.featuredImage?.node?.altText ?? ""}
                     className="absolute inset-0 h-full w-full object-cover object-center"
+                    style={(() => {
+                      const pos = mediaFocalPositionCss(
+                        fields.healthy100Challenge.featuredImage?.node,
+                      );
+                      return pos ? { objectPosition: pos } : undefined;
+                    })()}
                   />
                 </div>
               </div>
@@ -725,7 +749,7 @@ export default function ExploreMembershipsClient({
                 {fields.contactDescription}
               </p>
               <a
-                href={WEBTRAC_REGISTRATION_URL}
+                href={GENERAL_CONTACT_FORM_URL}
                 className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
               >
                 Contact Us
@@ -886,6 +910,11 @@ function TierCard({
             src={selected.hero.url}
             alt={selected.hero.alt}
             className="h-full w-full object-cover"
+            style={
+              selected.hero.objectPosition
+                ? { objectPosition: selected.hero.objectPosition }
+                : undefined
+            }
           />
         </div>
       )}

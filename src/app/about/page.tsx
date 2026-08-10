@@ -4,9 +4,18 @@ import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { TestimonialSection, normalizeTestimonials } from "@/components/testimonials";
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
+import { mediaFocalPositionCss, WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 // ---- Types ----
-type GqlImage = { node?: { sourceUrl: string; altText?: string | null } | null };
+type GqlImage = {
+  node?: {
+    sourceUrl: string;
+    altText?: string | null;
+    focalPointX?: number | string | null;
+    focalPointY?: number | string | null;
+    hasCustomFocalPoint?: boolean | null;
+  } | null;
+};
 
 type AboutPageFields = {
   page: {
@@ -139,13 +148,13 @@ const ABOUT_PAGE_QUERY = /* GraphQL */ `
 
         bodySubheading1
         body1
-        image1 { node { sourceUrl altText } }
+        image1 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
 
         bodySubheading2
         body2
-        image2 { node { sourceUrl altText } }
+        image2 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
 
-        annualReportBgImage { node { sourceUrl altText } }
+        annualReportBgImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         annualReportHeader
         annualReportSubtext
         annualReportButtonCta
@@ -161,11 +170,11 @@ const ABOUT_PAGE_QUERY = /* GraphQL */ `
         getInvolvedHeader
         getInvolvedBody
         volunteerCta
-        volunteerImage { node { sourceUrl altText } }
+        volunteerImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         donateCta
-        donateImage { node { sourceUrl altText } }
+        donateImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         sponsorCta
-        sponsorImage { node { sourceUrl altText } }
+        sponsorImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
 
         testimonialsHeader
         testimonials {
@@ -177,7 +186,7 @@ const ABOUT_PAGE_QUERY = /* GraphQL */ `
                 quote
                 personName
                 personContext
-                photo { node { sourceUrl altText } }
+                photo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
               }
             }
           }
@@ -192,15 +201,24 @@ function ImageOrPlaceholder({
   src,
   alt,
   className = "",
+  objectPosition,
 }: {
   src?: string | null;
   alt?: string | null;
   className?: string;
+  objectPosition?: string | null;
 }) {
   if (!src) {
     return <div className={"h-full w-full bg-neutral-200 " + className} aria-hidden />;
   }
-  return <img src={src} alt={alt ?? ""} className={"h-full w-full object-cover " + className} />;
+  return (
+    <img
+      src={src}
+      alt={alt ?? ""}
+      className={"h-full w-full object-cover " + className}
+      style={objectPosition ? { objectPosition } : undefined}
+    />
+  );
 }
 
 export default async function AboutPage() {
@@ -218,14 +236,17 @@ export default async function AboutPage() {
   const body1 = f?.body1 ?? "";
   const image1Url = f?.image1?.node?.sourceUrl ?? null;
   const image1Alt = f?.image1?.node?.altText ?? "";
+  const image1ObjectPosition = mediaFocalPositionCss(f?.image1?.node);
 
   const bodySubheading2 = f?.bodySubheading2 ?? "";
   const body2 = f?.body2 ?? "";
   const image2Url = f?.image2?.node?.sourceUrl ?? null;
   const image2Alt = f?.image2?.node?.altText ?? "";
+  const image2ObjectPosition = mediaFocalPositionCss(f?.image2?.node);
 
   const annualBgUrl = f?.annualReportBgImage?.node?.sourceUrl ?? null;
   const annualBgAlt = f?.annualReportBgImage?.node?.altText ?? "";
+  const annualBgPosition = mediaFocalPositionCss(f?.annualReportBgImage?.node) ?? "center";
   const annualHeader = f?.annualReportHeader ?? "See Impact in Action";
   const annualSubtext = f?.annualReportSubtext ?? "";
   const annualBtnLabel = f?.annualReportButtonCta ?? "Read the Annual Report";
@@ -239,12 +260,15 @@ export default async function AboutPage() {
   const volunteerCta = f?.volunteerCta ?? null;
   const volunteerImageUrl = f?.volunteerImage?.node?.sourceUrl ?? null;
   const volunteerImageAlt = f?.volunteerImage?.node?.altText ?? "";
+  const volunteerImageObjectPosition = mediaFocalPositionCss(f?.volunteerImage?.node);
   const donateCta = f?.donateCta ?? null;
   const donateImageUrl = f?.donateImage?.node?.sourceUrl ?? null;
   const donateImageAlt = f?.donateImage?.node?.altText ?? "";
+  const donateImageObjectPosition = mediaFocalPositionCss(f?.donateImage?.node);
   const sponsorCta = f?.sponsorCta ?? null;
   const sponsorImageUrl = f?.sponsorImage?.node?.sourceUrl ?? null;
   const sponsorImageAlt = f?.sponsorImage?.node?.altText ?? "";
+  const sponsorImageObjectPosition = mediaFocalPositionCss(f?.sponsorImage?.node);
 
   const testimonialsHeader = f?.testimonialsHeader ?? "";
   const testimonials = normalizeTestimonials(f?.testimonials?.nodes ?? []);
@@ -258,6 +282,7 @@ export default async function AboutPage() {
           title={heroProps.title ?? ""}
           subheader={heroProps.subheader ?? null}
           imageUrl={heroProps.imageUrl ?? null}
+          imagePosition={heroProps.imagePosition}
           ctas={heroProps.ctas}
           waveFillClassName="text-gmcc-navy"
           waveEdgeClassName="bg-gmcc-navy"
@@ -265,7 +290,7 @@ export default async function AboutPage() {
         />
 
       {/* IMPACT STATS */}
-      <section className="pt-16 bg-gmcc-navy">
+      <section className="pt-16 mb-8 bg-gmcc-navy">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="h2 text-center text-white z-20 relative">{impactHeader}</h2>
         </div>
@@ -292,11 +317,15 @@ export default async function AboutPage() {
 
       {/* BODY SECTION 1 (image left, text right) */}
       <section className="page-section">
-        <h2 className="h2 text-center mb-8">{mainContentHeader}</h2>
-        <div className="grid items-center gap-10 md:grid-cols-2">
+        <h2 className="h2 text-center mb-12">{mainContentHeader}</h2>
+        <div className="grid items-start gap-10 md:grid-cols-2">
           <div className="order-2 overflow-hidden bg-neutral-100 md:order-1">
             <div className="aspect-[16/9] w-full">
-              <ImageOrPlaceholder src={image1Url} alt={image1Alt} />
+              <ImageOrPlaceholder
+                src={image1Url}
+                alt={image1Alt}
+                objectPosition={image1ObjectPosition}
+              />
             </div>
           </div>
 
@@ -309,7 +338,7 @@ export default async function AboutPage() {
         </div>
 
         {/* BODY SECTION 2 (text left, image right) */}
-        <div className="grid items-center gap-10 mt-8 md:grid-cols-2">
+        <div className="grid items-start gap-10 mt-16 md:grid-cols-2">
           <div className="md:order-1">
             {bodySubheading2 ? (
               <h3 className="h3 font-semibold">{bodySubheading2}</h3>
@@ -319,31 +348,34 @@ export default async function AboutPage() {
 
           <div className="md:order-2 overflow-hidden bg-neutral-100">
             <div className="aspect-[16/9] w-full">
-              <ImageOrPlaceholder src={image2Url} alt={image2Alt} />
+              <ImageOrPlaceholder
+                src={image2Url}
+                alt={image2Alt}
+                objectPosition={image2ObjectPosition}
+              />
             </div>
           </div>
         </div>
       </section>
 
       {/* ANNUAL REPORT (BACKGROUND IMAGE SECTION + WAVE) */}
-      <section className="relative overflow-hidden">
-        {/* Background image from annualReportBgImage */}
-        <div
-          className="absolute inset-0 bg-neutral-900"
-          aria-hidden
-          style={
-            annualBgUrl
-              ? {
-                  backgroundImage: `url(${annualBgUrl})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }
-              : undefined
-          }
-        />
-        {/* Dark overlay for contrast */}
-        <div className="absolute inset-0 bg-gmcc-navy/75" aria-hidden />
-        {/* (Accessibility: keep alt available if needed elsewhere) */}
+      <section className="relative mt-12">
+        {/* Clip media only — wave must hang below to seal the white join */}
+        <div className="absolute inset-0 overflow-hidden" aria-hidden>
+          <div
+            className="absolute inset-0 bg-neutral-900"
+            style={
+              annualBgUrl
+                ? {
+                    backgroundImage: `url(${annualBgUrl})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: annualBgPosition,
+                  }
+                : undefined
+            }
+          />
+          <div className="absolute inset-0 bg-gmcc-navy/75" />
+        </div>
         <span className="sr-only">{annualBgAlt}</span>
 
         <div className="relative mx-auto max-w-6xl px-6 py-8 text-center text-white md:py-12">
@@ -365,41 +397,43 @@ export default async function AboutPage() {
 
         {/* Wave */}
         <div className="pointer-events-none absolute -bottom-[3px] left-0 z-20 w-full leading-none">
-        <svg
-          viewBox="0 0 390 120"
-          className="-ml-[2px] block h-14 w-[calc(100%+4px)] origin-center text-white [transform:scaleY(-1)] md:hidden"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path
-            d="
-              M0,98
-              C78,62 135,54 195,74
-              C255,96 322,88 390,60
-              L390,0 L0,0 Z
-            "
-            fill="currentColor"
-          />
-        </svg>
+          <div className="overflow-x-clip">
+            <svg
+              viewBox="0 0 390 120"
+              className="-ml-[2px] block h-14 w-[calc(100%+4px)] origin-center text-white [transform:scaleY(-1)] md:hidden"
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              <path
+                d="
+                  M0,98
+                  C78,62 135,54 195,74
+                  C255,96 322,88 390,60
+                  L390,0 L0,0 Z
+                "
+                fill="currentColor"
+              />
+            </svg>
 
-        <svg
-          viewBox="0 0 1440 120"
-          className="-ml-[2px] hidden h-16 w-[calc(100%+4px)] origin-center text-white [transform:scaleY(-1)] md:block"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path
-            d="
-              M0,110
-              C300,-50  500,120  800,100
-              S1000,0 1440,0
-              L1440,0 L0,0 Z
-            "
-            fill="currentColor"
-          />
-        </svg>
-        <div className="absolute bottom-0 left-0 h-[4px] w-full bg-white" aria-hidden />
-      </div>
+            <svg
+              viewBox="0 0 1440 120"
+              className="-ml-[2px] hidden h-16 w-[calc(100%+4px)] origin-center text-white [transform:scaleY(-1)] md:block"
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              <path
+                d="
+                  M0,110
+                  C300,-50  500,120  800,100
+                  S1000,0 1440,0
+                  L1440,0 L0,0 Z
+                "
+                fill="currentColor"
+              />
+            </svg>
+          </div>
+          <div className="absolute bottom-0 left-0 h-[4px] w-full bg-white" aria-hidden />
+        </div>
       </section>
 
       {/* GET INVOLVED */}
@@ -411,9 +445,13 @@ export default async function AboutPage() {
 
         <div className="mt-6 grid gap-8 md:grid-cols-3">
           {/* Volunteer */}
-          <a href={volunteerCta ?? "#"} className="card card-hover bg-gmcc-teal overflow-hidden">
-            <div className="aspect-[16/9] w-full object-cover">
-              <ImageOrPlaceholder src={volunteerImageUrl} alt={volunteerImageAlt} />
+          <a href={volunteerCta ?? "#"} className="card card-hover p-0 bg-gmcc-teal overflow-hidden">
+            <div className="aspect-[16/9] w-full rounded-2xl">
+              <ImageOrPlaceholder
+                src={volunteerImageUrl}
+                alt={volunteerImageAlt}
+                objectPosition={volunteerImageObjectPosition}
+              />
             </div>
             <div className="p-5">
               <div className="mt-2 inline-flex w-full items-center justify-center text-xl font-bold text-white group-hover:opacity-90">
@@ -423,9 +461,13 @@ export default async function AboutPage() {
           </a>
 
           {/* Donate */}
-          <a href={donateCta ?? "#"} className="card card-hover bg-gmcc-teal overflow-hidden">
-            <div className="aspect-[16/9] rounded-2xl">
-              <ImageOrPlaceholder src={donateImageUrl} alt={donateImageAlt} />
+          <a href={donateCta ?? "#"} className="card card-hover p-0 bg-gmcc-teal overflow-hidden">
+            <div className="aspect-[16/9] w-full rounded-2xl">
+              <ImageOrPlaceholder
+                src={donateImageUrl}
+                alt={donateImageAlt}
+                objectPosition={donateImageObjectPosition}
+              />
             </div>
             <div className="p-5">
               <div className="mt-2 inline-flex w-full items-center justify-center text-xl font-bold text-white group-hover:opacity-90">
@@ -435,9 +477,13 @@ export default async function AboutPage() {
           </a>
 
           {/* Sponsor */}
-          <a href={sponsorCta ?? "#"} className="card card-hover bg-gmcc-teal overflow-hidden">
-            <div className="aspect-[16/9] w-full">
-              <ImageOrPlaceholder src={sponsorImageUrl} alt={sponsorImageAlt} />
+          <a href={sponsorCta ?? "#"} className="card card-hover p-0 bg-gmcc-teal overflow-hidden">
+            <div className="aspect-[16/9] w-full rounded-2xl">
+              <ImageOrPlaceholder
+                src={sponsorImageUrl}
+                alt={sponsorImageAlt}
+                objectPosition={sponsorImageObjectPosition}
+              />
             </div>
             <div className="p-5">
               <div className="mt-2 inline-flex w-full items-center justify-center text-xl font-bold text-white group-hover:opacity-90">

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import PhoneLink from "@/components/phoneLink";
 import { CENTER_SLUG_ORDER } from "@/lib/constants";
+import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 type CenterNode = any;
 type ProgramNode = any;
@@ -46,11 +47,13 @@ function CenterCardMedia({
   title,
   featuredImageUrl,
   featuredImageAlt,
+  objectPosition,
 }: {
   slug: string;
   title: string;
   featuredImageUrl?: string | null;
   featuredImageAlt?: string | null;
+  objectPosition?: string | null;
 }) {
   const [mapFailed, setMapFailed] = useState(false);
   const iframeSrc = CENTER_MAP_IFRAME_SRC_BY_SLUG[slug];
@@ -80,6 +83,7 @@ function CenterCardMedia({
           alt={featuredImageAlt || `${title} featured image`}
           fill
           className="object-cover"
+          style={objectPosition ? { objectPosition } : undefined}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
       </div>
@@ -430,6 +434,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
                     title={c.title}
                     featuredImageUrl={c?.featuredImage?.node?.sourceUrl}
                     featuredImageAlt={c?.featuredImage?.node?.altText}
+                    objectPosition={mediaFocalPositionCss(c?.featuredImage?.node)}
                   />
 
                   <div className="pt-4 stack-2">

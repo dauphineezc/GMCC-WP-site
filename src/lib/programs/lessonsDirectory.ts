@@ -1,4 +1,5 @@
 import type { DirectoryTrainer } from "@/components/programs/directoryHeaderShared";
+import { mediaFocalPositionCss, WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 /**
  * Shared data layer for the near-identical "lessons / training" directory pages
@@ -14,6 +15,9 @@ export type WPProgram = {
     node?: {
       sourceUrl?: string | null;
       altText?: string | null;
+      focalPointX?: number | string | null;
+      focalPointY?: number | string | null;
+      hasCustomFocalPoint?: boolean | null;
     } | null;
   } | null;
   programFields?: {
@@ -38,10 +42,10 @@ export type LessonBenefit = {
 /** ACF benefits repeater (benefit1–benefit4) selection set. */
 export const LESSONS_BENEFITS_GQL = /* GraphQL */ `
   benefits {
-    benefit1 { benefit benefitIcon { node { sourceUrl altText } } }
-    benefit2 { benefit benefitIcon { node { sourceUrl altText } } }
-    benefit3 { benefit benefitIcon { node { sourceUrl altText } } }
-    benefit4 { benefit benefitIcon { node { sourceUrl altText } } }
+    benefit1 { benefit benefitIcon { node { ${WP_MEDIA_IMAGE_FIELDS} } } }
+    benefit2 { benefit benefitIcon { node { ${WP_MEDIA_IMAGE_FIELDS} } } }
+    benefit3 { benefit benefitIcon { node { ${WP_MEDIA_IMAGE_FIELDS} } } }
+    benefit4 { benefit benefitIcon { node { ${WP_MEDIA_IMAGE_FIELDS} } } }
   }
 `;
 
@@ -51,7 +55,7 @@ export const LESSONS_TRAINERS_GQL = /* GraphQL */ `
     nodes {
       ... on StaffProfile {
         title
-        featuredImage { node { sourceUrl altText } }
+        featuredImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         staffProfilesFields { title bio }
       }
     }
@@ -86,7 +90,7 @@ export const LESSONS_PROGRAMS_GQL = /* GraphQL */ `
     nodes {
       slug
       title
-      featuredImage { node { sourceUrl altText } }
+      featuredImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
       programFields {
         summary
         priceFrom
@@ -142,17 +146,22 @@ export function filterLessonsPrograms(
 export function normalizeLessonsTrainers(rawFieldGroup: any): DirectoryTrainer[] {
   const trainerNodes = rawFieldGroup?.trainers?.nodes ?? [];
   return trainerNodes
-    .map((trainer: any) => ({
-      name: trainer?.title ?? null,
-      photo: trainer?.featuredImage?.node
-        ? {
-            sourceUrl: trainer.featuredImage.node.sourceUrl ?? null,
-            altText: trainer.featuredImage.node.altText ?? null,
-          }
-        : null,
-      jobTitle: trainer?.staffProfilesFields?.title ?? null,
-      bio: trainer?.staffProfilesFields?.bio ?? null,
-    }))
+    .map((trainer: any) => {
+      const photoNode = trainer?.featuredImage?.node;
+      const objectPosition = mediaFocalPositionCss(photoNode);
+      return {
+        name: trainer?.title ?? null,
+        photo: photoNode
+          ? {
+              sourceUrl: photoNode.sourceUrl ?? null,
+              altText: photoNode.altText ?? null,
+              ...(objectPosition ? { objectPosition } : {}),
+            }
+          : null,
+        jobTitle: trainer?.staffProfilesFields?.title ?? null,
+        bio: trainer?.staffProfilesFields?.bio ?? null,
+      };
+    })
     .filter(
       (trainer: DirectoryTrainer) =>
         !!trainer.name || !!trainer.jobTitle || !!trainer.photo?.sourceUrl || !!trainer.bio,

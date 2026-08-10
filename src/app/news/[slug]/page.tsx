@@ -3,6 +3,7 @@ import { wpFetch } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
+import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 const NEWS_BY_SLUG_QUERY = /* GraphQL */ `
   query NewsBySlug($slug: ID!) {
@@ -11,10 +12,7 @@ const NEWS_BY_SLUG_QUERY = /* GraphQL */ `
       title
       slug
       featuredImage {
-        node {
-          sourceUrl
-          altText
-        }
+        node { ${WP_MEDIA_IMAGE_FIELDS} }
       }
       newsFields {
         publishDate
@@ -102,6 +100,10 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                 src={n.featuredImage.node.sourceUrl}
                 alt={n.featuredImage.node.altText || n.title}
                 className="w-full h-auto object-cover"
+                style={(() => {
+                  const pos = mediaFocalPositionCss(n.featuredImage.node);
+                  return pos ? { objectPosition: pos } : undefined;
+                })()}
                 loading="eager"
                 decoding="async"
               />

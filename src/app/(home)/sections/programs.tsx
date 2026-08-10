@@ -11,6 +11,7 @@ export type ProgramCard = {
   caption?: string;
   imageUrl: string | null;
   imageAlt: string;
+  objectPosition?: string;
 };
 
 type ProgramsSectionProps = {
@@ -491,6 +492,11 @@ function ProgramCardView({ program }: { program: ProgramCard }) {
             src={program.imageUrl}
             alt={program.imageAlt || ""}
             className="h-40 w-full object-cover group-hover:scale-105 transition-transform duration-200 ease-out"
+            style={
+              program.objectPosition
+                ? { objectPosition: program.objectPosition }
+                : undefined
+            }
             loading="lazy"
             decoding="async"
             draggable={false}

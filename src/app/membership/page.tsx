@@ -1,7 +1,8 @@
 // app/membership/page.tsx
 import { Suspense } from "react";
 import { acfFileHref, wpFetch } from "@/lib/wp";
-import { splitLines, type MediaFieldInput } from "@/lib/acf";
+import { splitLines, type MediaFieldInput, WP_MEDIA_IMAGE_FIELDS } from "@/lib/acf";
+import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 import ExploreMembershipsClient, {
   Membership,
   Audience,
@@ -38,10 +39,7 @@ const EXPLORE_MEMBERSHIPS_QUERY = `
         slug
         title
         featuredImage {
-          node {
-            sourceUrl
-            altText
-          }
+          node { ${WP_MEDIA_IMAGE_FIELDS} }
         }
         membershipFields {
           summary
@@ -126,7 +124,7 @@ const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
               title
               uri
               featuredImage {
-                node { sourceUrl altText }
+                node { ${WP_MEDIA_IMAGE_FIELDS} }
               }
               campaignFields {
                 headline
@@ -149,7 +147,7 @@ const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
               title
               uri
               featuredImage {
-                node { sourceUrl altText }
+                node { ${WP_MEDIA_IMAGE_FIELDS} }
               }
               campaignFields {
                 headline
@@ -172,7 +170,7 @@ const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
               title
               uri
               featuredImage {
-                node { sourceUrl altText }
+                node { ${WP_MEDIA_IMAGE_FIELDS} }
               }
               campaignFields {
                 headline
@@ -256,13 +254,17 @@ function mapMembershipNode(wp: any): Membership {
       slug: n?.slug as string,
     })).filter(Boolean) ?? [];
 
+  const heroNode = wp.featuredImage?.node;
+  const heroObjectPosition = mediaFocalPositionCss(heroNode);
+
   return {
     slug: wp.slug as string,
     title: wp.title as string,
-    hero: wp.featuredImage?.node
+    hero: heroNode
       ? {
-          url: wp.featuredImage.node.sourceUrl as string,
-          alt: (wp.featuredImage.node.altText as string) ?? "",
+          url: heroNode.sourceUrl as string,
+          alt: (heroNode.altText as string) ?? "",
+          ...(heroObjectPosition ? { objectPosition: heroObjectPosition } : {}),
         }
       : null,
     summary: (f.summary as string) ?? null,
@@ -428,6 +430,7 @@ export default async function ExploreMembershipsPage() {
         heroTitle={hero.title}
         heroSubheader={hero.subheader}
         heroImageUrl={hero.imageUrl}
+        heroImagePosition={hero.imagePosition}
         heroCtas={hero.ctas}
       />
     </Suspense>

@@ -1,5 +1,10 @@
 // src/lib/wp.ts
 
+import {
+  mediaFocalPositionCss,
+  type MediaFocalPointFields,
+} from "@/lib/mediaFocalPoint";
+
 /**
  * WordPress / WPGraphQL sometimes returns upload paths as site-relative strings
  * (e.g. `/wp-content/uploads/...`). Browsers resolve those against the Next.js
@@ -49,7 +54,7 @@ export type AcfGalleryPhotoNode = {
   sourceUrl?: string | null;
   altText?: string | null;
   mediaItemUrl?: string | null;
-};
+} & MediaFocalPointFields;
 
 type AcfGalleryRepeaterRow = {
   photos?: { node?: AcfGalleryPhotoNode | null } | null;
@@ -72,8 +77,14 @@ export function acfGalleryCarouselImages(gallery: unknown) {
     .map((node) => {
       const sourceUrl = resolveWpMediaUrl(node.sourceUrl ?? node.mediaItemUrl);
       if (!sourceUrl) return null;
+      const objectPosition = mediaFocalPositionCss(node);
       return {
-        image: { sourceUrl, altText: node.altText ?? null, label: null },
+        image: {
+          sourceUrl,
+          altText: node.altText ?? null,
+          label: null,
+          ...(objectPosition ? { objectPosition } : {}),
+        },
         cta: null,
         url: null,
       };
