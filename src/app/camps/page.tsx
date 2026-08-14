@@ -2,7 +2,7 @@ import Accordion from "@/components/accordion";
 import Link from "next/link";
 import { Suspense } from "react";
 import { acfCtaHref, acfFileHref, wpFetch } from "@/lib/wp";
-import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
+import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 import {
   acfCtaTarget,
   acfCtaTitle,
@@ -747,12 +747,7 @@ export default async function CampsPage() {
             <p className="body mt-4 whitespace-pre-line text-neutral-700">{contactSubheader}</p>
           ) : null}
           <div className="flex justify-center">
-            <a
-              href={GENERAL_CONTACT_FORM_URL}
-              className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
-              >
-              Contact Us
-          </a>
+            <JotFormLightboxButton />
           </div>
         </section>
       )}

@@ -2,6 +2,7 @@
 import UtilityMenu from "@/components/nav/utilityMenu";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { TestimonialSection, normalizeTestimonials } from "@/components/testimonials";
+import { WAVE_BLEED_CLIP_CLASS, WAVE_SVG_BLEED_CLASS } from "@/components/waveSeam";
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
 import { mediaFocalPositionCss, WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
@@ -397,10 +398,10 @@ export default async function AboutPage() {
 
         {/* Wave */}
         <div className="pointer-events-none absolute -bottom-[3px] left-0 z-20 w-full leading-none">
-          <div className="overflow-x-clip">
+          <div className={WAVE_BLEED_CLIP_CLASS}>
             <svg
               viewBox="0 0 390 120"
-              className="-ml-[2px] block h-14 w-[calc(100%+4px)] origin-center text-white [transform:scaleY(-1)] md:hidden"
+              className={`${WAVE_SVG_BLEED_CLASS} h-14 origin-center text-white [transform:scaleY(-1)] md:hidden`}
               preserveAspectRatio="none"
               aria-hidden
             >
@@ -417,7 +418,7 @@ export default async function AboutPage() {
 
             <svg
               viewBox="0 0 1440 120"
-              className="-ml-[2px] hidden h-16 w-[calc(100%+4px)] origin-center text-white [transform:scaleY(-1)] md:block"
+              className={`${WAVE_SVG_BLEED_CLASS} hidden h-16 origin-center text-white [transform:scaleY(-1)] md:block`}
               preserveAspectRatio="none"
               aria-hidden
             >

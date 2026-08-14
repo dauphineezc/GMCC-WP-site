@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { formatEventDate } from "@/lib/events/formatEventDate";
 import {
@@ -12,6 +11,11 @@ import {
 } from "@/lib/events/eventSchedule";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+import {
+  EventsDirectoryHeader,
+  getEventsDirectoryHeaderVariant,
+  type EventsDirectoryHeaderData,
+} from "@/components/events/eventsDirectoryHeader";
 
 type EventWP = any;
 type PageInfo = {
@@ -80,10 +84,12 @@ export default function ExploreEventsClient({
   initialEvents,
   initialPageInfo,
   pageSize,
+  directoryHeaders,
 }: {
   initialEvents: EventWP[];
   initialPageInfo: PageInfo;
   pageSize: number;
+  directoryHeaders: EventsDirectoryHeaderData;
 }) {
   // Infinite scroll state
   const [loadedEvents, setLoadedEvents] = useState<EventWP[]>(initialEvents);
@@ -299,13 +305,34 @@ export default function ExploreEventsClient({
     return [...list].sort((a, b) =>
       dateFilter === "past" ? startKey(b) - startKey(a) : startKey(a) - startKey(b)
     );
-  }, [all, search, audience, eventTypes, dateFilter]);  
-  
+  }, [all, search, audience, eventTypes, dateFilter]);
+
+  const hasSpecializedHeader = useMemo(
+    () => getEventsDirectoryHeaderVariant(eventTypes) !== null,
+    [eventTypes],
+  );
 
   return (
     <>
       {/* Page content - constrained width */}
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
+        <header className="stack-2">
+          {hasSpecializedHeader ? (
+            <EventsDirectoryHeader
+              eventTypes={eventTypes}
+              headers={directoryHeaders}
+            />
+          ) : (
+            <>
+              <h1 className="h1">Event directory</h1>
+              <p className="body">
+                Browse all events and filter by type and age group. View past
+                events to get a sense of what we offer year-round.
+              </p>
+            </>
+          )}
+        </header>
+
         <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
           {/* FILTER SIDEBAR */}
           <aside className="card h-fit">
@@ -503,7 +530,7 @@ export default function ExploreEventsClient({
           {/* RESULTS */}
           <section className="stack-4">
             <div className="flex items-center justify-between">
-              <h2 className="h2">What's Coming Up</h2>
+              <h2 className="h2">What&apos;s Coming Up</h2>
               <div className="body">
                 {filtered.length === 1
                   ? `${filtered.length} event`

@@ -1,4 +1,6 @@
 // src/app/(home)/sections/about.tsx
+import { WAVE_BLEED_CLIP_CLASS, WAVE_SVG_BLEED_CLASS } from "@/components/waveSeam";
+
 type Linkish = { title?: string | null; url?: string | null; target?: string | null };
 
 export default function AboutSection({
@@ -45,39 +47,41 @@ export default function AboutSection({
 
       {/* Bottom transition wave */}
       <div className="pointer-events-none absolute bottom-[-32px] left-0 z-10 w-full leading-none">
-        <svg
-          viewBox="0 -12 390 132"
-          className="-ml-[2px] block h-20 w-[calc(100%+4px)] text-white md:hidden [transform:scaleY(-1)]"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path
-            d="
-              M0,100
-              C70,100 130,100 190,100
-              C250,100 305,100 390,100
-              L390,0 L0,0 Z
-            "
-            fill="currentColor"
-          />
-        </svg>
+        <div className={WAVE_BLEED_CLIP_CLASS}>
+          <svg
+            viewBox="0 -12 390 132"
+            className={`${WAVE_SVG_BLEED_CLASS} h-20 text-white md:hidden [transform:scaleY(-1)]`}
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <path
+              d="
+                M0,100
+                C70,100 130,100 190,100
+                C250,100 305,100 390,100
+                L390,0 L0,0 Z
+              "
+              fill="currentColor"
+            />
+          </svg>
 
-        <svg
-          viewBox="0 -60 1440 180"
-          className="-ml-[2px] hidden h-24 w-[calc(100%+4px)] text-white md:block [transform:scaleY(-1)]"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path
-            d="
-              M0,110
-              C300,-20  620,150  850,110
-              S1200,20 1440,90
-              L1440,0 L0,0 Z
-            "
-            fill="currentColor"
-          />
-        </svg>
+          <svg
+            viewBox="0 -60 1440 180"
+            className={`${WAVE_SVG_BLEED_CLASS} hidden h-24 text-white md:block [transform:scaleY(-1)]`}
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <path
+              d="
+                M0,110
+                C300,-20  620,150  850,110
+                S1200,20 1440,90
+                L1440,0 L0,0 Z
+              "
+              fill="currentColor"
+            />
+          </svg>
+        </div>
         <div className="absolute bottom-0 left-0 h-[4px] w-full bg-white" aria-hidden />
       </div>
     </section>

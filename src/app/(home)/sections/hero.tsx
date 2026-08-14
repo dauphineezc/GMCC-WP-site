@@ -1,6 +1,7 @@
 // src/app/(home)/sections/hero.tsx
 "use client";
 
+import { WAVE_BLEED_CLIP_CLASS, WAVE_SVG_BLEED_CLASS } from "@/components/waveSeam";
 import {
   HERO_VIDEO_VIMEO_EMBED_URL,
   HERO_VIDEO_VIMEO_THUMBNAIL_URL,
@@ -169,8 +170,8 @@ export default function HeroSection({
             <div className="pointer-events-none absolute inset-0 z-10 bg-black/40" />
 
             {/* Copy — top-aligned on mobile so subhead/CTAs clear the bottom wave */}
-            <div className="absolute inset-0 z-20 flex items-end md:items-center">
-              <div className="w-full px-8 pb-48 md:px-12 md:py-10">
+            <div className="absolute inset-0 z-20 flex items-end">
+              <div className="w-full px-8 md:px-12 pb-[16rem]">
                 <div className="max-w-2xl text-white">
                   <h1 className="text-5xl font-semibold tracking-tight md:text-7xl">
                     {headline}
@@ -201,25 +202,27 @@ export default function HeroSection({
 
             {/* Wave — overlaps navy block + edge bar to hide mobile subpixel seam */}
             <div className="pointer-events-none absolute inset-x-0 bottom-[calc(15%-3px)] z-40 w-full leading-none md:bottom-[calc(8.5%-3px)]">
-              <svg
-                viewBox="0 0 1440 180"
-                className="-ml-[2px] block h-20 w-[calc(100%+4px)] md:h-28 lg:h-36"
-                preserveAspectRatio="none"
-                aria-hidden
-              >
-                <path
-                  d="
-                    M0,120
-                    C180,70 320,30 520,55
-                    C740,85 870,165 1080,145
-                    C1260,128 1370,70 1440,35
-                    L1440,180
-                    L0,180
-                    Z
-                  "
-                  fill="var(--gmcc-navy)"
-                />
-              </svg>
+              <div className={WAVE_BLEED_CLIP_CLASS}>
+                <svg
+                  viewBox="0 0 1440 180"
+                  className={`${WAVE_SVG_BLEED_CLASS} h-20 md:h-28 lg:h-36`}
+                  preserveAspectRatio="none"
+                  aria-hidden
+                >
+                  <path
+                    d="
+                      M0,120
+                      C180,70 320,30 520,55
+                      C740,85 870,165 1080,145
+                      C1260,128 1370,70 1440,35
+                      L1440,180
+                      L0,180
+                      Z
+                    "
+                    fill="var(--gmcc-navy)"
+                  />
+                </svg>
+              </div>
               <div className="absolute bottom-0 left-0 h-[4px] w-full bg-gmcc-navy" aria-hidden />
             </div>
           </div>

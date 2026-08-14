@@ -7,7 +7,7 @@ import NavyWaveSection from "@/components/navyWaveSection";
 import type { RoomData, PartyPackageData, PlanAnEventFields } from "./planAnEventFields";
 import { acfGalleryPhotoNodes } from "@/lib/wp";
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
-import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
+import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -899,12 +899,9 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
             <p className="body text-neutral-700 whitespace-pre-line">{fields.contactSubheader}</p>
           )}
           <div className="flex justify-center">
-            <a
-              href={GENERAL_CONTACT_FORM_URL}
-              className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
-              >
+            <JotFormLightboxButton>
               Contact Us About Your Event
-          </a>
+            </JotFormLightboxButton>
           </div>
         </div>
     </section>

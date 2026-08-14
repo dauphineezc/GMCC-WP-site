@@ -17,7 +17,8 @@ import {
 } from "@/lib/pageHeroFields";
 import AutoHeightScheduleIframe from "@/components/schedule/autoHeightScheduleIframe";
 import TodayEventsGrid from "@/components/events/todayEventsGrid";
-import { GENERAL_CONTACT_FORM_URL, TODAY_ALL_CENTERS_SCHEDULE_EMBED_URL } from "@/lib/constants";
+import { TODAY_ALL_CENTERS_SCHEDULE_EMBED_URL } from "@/lib/constants";
+import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 import { fetchTodaysEvents } from "@/lib/events/todayEvents";
 
 /** Regenerate at most once per day; cron can trigger sooner via `/api/revalidate`. */
@@ -795,12 +796,7 @@ export default async function VisitPage() {
         {contactSubheader ? (
           <p className="body mt-4 whitespace-pre-line text-neutral-700">{contactSubheader}</p>
         ) : null}
-        <a
-          href={GENERAL_CONTACT_FORM_URL}
-          className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
-          >
-          Contact Us
-        </a>
+        <JotFormLightboxButton />
       </section>
     </main>
   );

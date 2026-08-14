@@ -1,7 +1,7 @@
 // src/app/register/page.tsx
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import { splitLines } from "@/lib/acf";
-import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
+import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 import { wpFetch } from "@/lib/wp";
 import type { Metadata } from "next";
 
@@ -189,12 +189,7 @@ export default async function RegisterPage() {
         ) : null}
 
         <div className="flex justify-center">
-            <a
-              href={GENERAL_CONTACT_FORM_URL}
-              className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
-              >
-              Contact Us
-          </a>
+            <JotFormLightboxButton />
           </div>
        </section>
    </main>

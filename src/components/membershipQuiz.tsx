@@ -2,7 +2,8 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { computeMembershipPricingSavings } from "@/lib/membershipPricingSavings";
-import { WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
+import MembershipJoinButton from "@/components/membershipJoinButton";
+import type { MembershipPayLink } from "@/components/membershipJoinButton";
 
 export type Audience = {
   name: string;
@@ -16,6 +17,8 @@ export type Membership = {
   title: string;
   hero: { url: string; alt: string } | null;
   summary: string | null;
+  autoDraftLink?: MembershipPayLink | null;
+  manualPayLink?: MembershipPayLink | null;
   pricing: {
     tier: string | null;
     monthly: number | null;
@@ -387,12 +390,12 @@ export default function MembershipQuiz({
                             {comparedSlugs.includes(m.slug) ? "Remove from Compare" : "Compare Benefits"}
                           </button>
                         )}
-                        <a
-                          href={WEBTRAC_REGISTRATION_URL}
-                          className="btn btn-secondary w-full text-xs"
-                        >
-                          Join or Renew
-                        </a>
+                        <MembershipJoinButton
+                          membership={m}
+                          planName={m.title}
+                          label="Join or Renew"
+                          buttonClassName="btn btn-secondary w-full text-xs"
+                        />
                       </div>
                     </article>
                     );
@@ -434,12 +437,13 @@ export default function MembershipQuiz({
                               </li>
                             ))}
                           </ul>
-                          <a
-                            href={WEBTRAC_REGISTRATION_URL}
-                            className="btn btn-primary w-full text-xs mt-3"
-                          >
-                            Join or Renew
-                          </a>
+                          <MembershipJoinButton
+                            membership={m}
+                            planName={m.title}
+                            label="Join or Renew"
+                            buttonClassName="btn btn-primary w-full text-xs"
+                            wrapperClassName="mt-3"
+                          />
                         </div>
                       ))}
                     </div>

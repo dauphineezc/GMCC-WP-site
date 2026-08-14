@@ -7,7 +7,7 @@ import {
 import { ImageField, WP_MEDIA_IMAGE_FIELDS } from "@/lib/acf";
 import { resolveWpMediaUrl } from "@/lib/wp";
 import Image from "next/image";
-import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
+import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 
 const CAREERS_PAGE_FIELDS = `
   careersPageFields {
@@ -76,23 +76,23 @@ export default async function CareersPage() {
 
       <section className="page-section">
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-12 md:grid-cols-3">
-          <div className="space-y-8 md:col-span-2">
+          <div className="md:col-span-2">
             {fields?.introductionHeader ? (
               <h2 className="h2">{fields.introductionHeader}</h2>
             ) : null}
             {fields?.introductionBody ? (
-              <p className="body whitespace-pre-line text-neutral-700">
+              <p className="body mt-4 whitespace-pre-line text-neutral-700">
                 {fields.introductionBody}
               </p>
             ) : null}
           </div>
-          <div className="w-full md:col-span-1 md:flex md:justify-end">
+          <div className="w-full md:col-span-1 flex justify-center md:justify-end">
             {fields?.linkedinLink ? (
               <a
                 href={fields.linkedinLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group card card-hover card-link flex h-fit w-full flex-col items-center justify-end gap-2 overflow-hidden bg-gmcc-blue-light/30 p-8 text-center no-underline md:w-fit"
+                className="group card card-hover card-link flex -mt-4 md:mt-0 h-fit w-fit flex-col items-center gap-2 overflow-hidden bg-gmcc-blue-light/30 p-8 text-center no-underline"
               >
                 {fields?.stayConnectedHeader ? (
                   <h2 className="h3 transition-colors group-hover:text-gmcc-teal">
@@ -119,18 +119,18 @@ export default async function CareersPage() {
         </div>
       </section>
 
-      <section className="page-section stack-8">
+      <section className="page-section">
         {fields?.currentOpeningsHeader ? (
           <h2 className="h2">{fields.currentOpeningsHeader}</h2>
         ) : null}
         {fields?.howToApplyHeader && fields?.howToApplyBody ? (
-          <p className="body whitespace-pre-line text-neutral-700">
+          <p className="body mt-4 whitespace-pre-line text-neutral-700">
             <span className="h3 mr-4">{fields.howToApplyHeader}:</span>{" "}
             {fields.howToApplyBody}
           </p>
         ) : null}
         {fields?.currentOpeningsSubheader ? (
-          <p className="body whitespace-pre-line text-neutral-700">
+          <p className="body mt-4 whitespace-pre-line text-neutral-700">
             {fields.currentOpeningsSubheader}
           </p>
         ) : null}
@@ -138,12 +138,12 @@ export default async function CareersPage() {
         <AdpRecruitmentWidget />
       </section>
 
-      <section className="page-section stack-8">
+      <section className="page-section">
           {fields?.internshipOpportunitiesHeader ? (
             <h2 className="h2">{fields.internshipOpportunitiesHeader}</h2>
           ) : null}
           {fields?.internshipOpportunitiesBody ? (
-            <p className="body whitespace-pre-line">
+            <p className="body mt-4 whitespace-pre-line">
               {fields.internshipOpportunitiesBody}
             </p>
           ) : null}
@@ -155,12 +155,7 @@ export default async function CareersPage() {
             <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.contactSubheader}</p>
           ) : null}
           <div className="flex justify-center">
-            <a
-              href={GENERAL_CONTACT_FORM_URL}
-              className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
-              >
-              Contact Us
-          </a>
+            <JotFormLightboxButton />
           </div>
       </section>
     </main>

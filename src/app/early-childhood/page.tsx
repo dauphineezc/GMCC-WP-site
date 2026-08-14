@@ -11,7 +11,7 @@ import {
 import { DropInCareSection } from "@/components/dropInCareSection";
 import { DROP_IN_CARE_FIELDS_GRAPHQL } from "@/lib/dropInCareFields";
 import { openLinkInNewTab, WP_MEDIA_IMAGE_FIELDS } from "@/lib/acf";
-import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
+import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 import { wpFetch } from "@/lib/wp";
 import PhotoGallery from "@/components/photoGallery";
 import NavyWaveSection from "@/components/navyWaveSection";
@@ -326,12 +326,7 @@ export default async function EarlyChildhoodPage() {
           {fields.contactSubheader ? (
             <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.contactSubheader}</p>
           ) : null}
-          <a
-            href={GENERAL_CONTACT_FORM_URL}
-            className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
-            >
-            Contact Us
-          </a>
+          <JotFormLightboxButton />
         </section>
       ) : null}
     </main>

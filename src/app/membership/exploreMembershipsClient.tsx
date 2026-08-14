@@ -25,7 +25,9 @@ import PhotoWaveHeader from "@/components/photoWaveHeader";
 import type { HeroCta } from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
 import { computeMembershipPricingSavings } from "@/lib/membershipPricingSavings";
-import { GENERAL_CONTACT_FORM_URL, WEBTRAC_REGISTRATION_URL } from "@/lib/constants";
+import MembershipJoinButton from "@/components/membershipJoinButton";
+import type { MembershipPayLink } from "@/components/membershipJoinButton";
+import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 export type Audience = {
@@ -39,11 +41,7 @@ export type Audience = {
 };
 export type ProgramArea = { name: string; slug: string };
 
-export type MembershipPayLink = {
-  url: string;
-  label: string;
-  target: string | null;
-};
+export type { MembershipPayLink };
 
 export type Membership = {
   slug: string;
@@ -748,12 +746,7 @@ export default function ExploreMembershipsClient({
               <p className="mt-3 text-neutral-700 max-w-xl mx-auto">
                 {fields.contactDescription}
               </p>
-              <a
-                href={GENERAL_CONTACT_FORM_URL}
-                className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
-              >
-                Contact Us
-              </a>
+              <JotFormLightboxButton />
             </div>
           </section>
         </div>
@@ -795,22 +788,6 @@ export default function ExploreMembershipsClient({
 }
 
 const VISIBLE_BENEFITS = 5;
-const DEFAULT_JOIN_URL = WEBTRAC_REGISTRATION_URL;
-
-function resolveJoinAction(membership: Membership): "modal" | "direct" {
-  const hasAuto = Boolean(membership.autoDraftLink?.url);
-  const hasManual = Boolean(membership.manualPayLink?.url);
-  if (hasAuto && hasManual) return "modal";
-  return "direct";
-}
-
-function resolveDirectJoinUrl(membership: Membership): string {
-  return (
-    membership.autoDraftLink?.url ??
-    membership.manualPayLink?.url ??
-    DEFAULT_JOIN_URL
-  );
-}
 
 function isAllAccessTier(tierName: string): boolean {
   return tierName.toLowerCase().includes("all access");
@@ -875,8 +852,6 @@ function TierCard({
   const selected = variants[selectedIdx] ?? variants[0];
   if (!selected) return null;
 
-  const joinAction = resolveJoinAction(selected);
-  const directJoinUrl = resolveDirectJoinUrl(selected);
   const joinButtonClass = secondary
     ? "btn btn-secondary w-full"
     : "btn btn-primary w-full";
@@ -1027,93 +1002,14 @@ function TierCard({
           </div>
         )}
 
-        <div className="relative mt-auto pt-4">
-          {joinChoiceOpen && joinAction === "modal" && (
-            <>
-              <div
-                className="fixed inset-0 z-40 bg-black/15"
-                onClick={() => setJoinChoiceOpen(false)}
-                aria-hidden
-              />
-              <div
-                className="absolute bottom-full left-0 right-0 z-50 mb-2 rounded-xl border border-neutral-200 bg-white p-4 shadow-lg"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={`join-choice-title-${selected.slug}`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h3
-                    id={`join-choice-title-${selected.slug}`}
-                    className="text-base font-semibold text-gmcc-navy"
-                  >
-                    Choose how to pay
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setJoinChoiceOpen(false)}
-                    className="shrink-0 rounded-full bg-neutral-100 p-1 text-neutral-600 transition hover:bg-neutral-200"
-                    aria-label="Close"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2}
-                      stroke="currentColor"
-                      className="h-4 w-4"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                <p className="mt-1 text-xs text-neutral-600">
-                  Continue registration for{" "}
-                  <span className="font-semibold text-gmcc-navy">{tierName}</span>
-                </p>
-                <div className="mt-3 flex flex-col gap-2">
-                  {selected.autoDraftLink ? (
-                    <a
-                      href={selected.autoDraftLink.url}
-                      target={selected.autoDraftLink.target ?? "_blank"}
-                      rel="noopener noreferrer"
-                      className="btn btn-primary w-full text-sm"
-                    >
-                      {selected.autoDraftLink.label}
-                    </a>
-                  ) : null}
-                  {selected.manualPayLink ? (
-                    <a
-                      href={selected.manualPayLink.url}
-                      target={selected.manualPayLink.target ?? "_blank"}
-                      rel="noopener noreferrer"
-                      className="btn btn-secondary w-full text-sm"
-                    >
-                      {selected.manualPayLink.label}
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            </>
-          )}
-          {joinAction === "modal" ? (
-            <button
-              type="button"
-              onClick={() => setJoinChoiceOpen(true)}
-              className={joinButtonClass}
-            >
-              Join Now
-            </button>
-          ) : (
-            <a
-              href={directJoinUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={joinButtonClass}
-            >
-              Join Now
-            </a>
-          )}
-        </div>
+        <MembershipJoinButton
+          key={selected.slug}
+          membership={selected}
+          planName={selected.title}
+          buttonClassName={joinButtonClass}
+          wrapperClassName="mt-auto pt-4"
+          onOpenChange={setJoinChoiceOpen}
+        />
       </div>
     </article>
   );

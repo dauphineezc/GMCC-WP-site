@@ -2,7 +2,7 @@ import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps, WpPageWithHeroFi
 import { wpFetch } from "@/lib/wp";
 import { asImageField, asString, collectGalleryPhotos, type ImageField, WP_MEDIA_IMAGE_FIELDS } from "@/lib/acf";
 import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
-import { GENERAL_CONTACT_FORM_URL } from "@/lib/constants";
+import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
@@ -519,12 +519,7 @@ export default async function TournamentsPage() {
         {fields.contactSubheader ? (
           <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.contactSubheader}</p>
         ) : null}
-        <a
-          href={GENERAL_CONTACT_FORM_URL}
-          className="btn bg-gmcc-navy text-white hover:bg-gmcc-navy/80 mt-6 text-base px-8 py-3"
-          >
-          Contact Us
-        </a>
+        <JotFormLightboxButton />
       </section>
       ) : null}
     </main>

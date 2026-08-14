@@ -3,7 +3,6 @@
 
 import { useEffect, useMemo, useRef, useState, type HTMLAttributes } from "react";
 import Link from "next/link";
-import { getScrollerContentWidth } from "@/lib/scrollerContentWidth";
 
 export type ProgramCard = {
   href: string;
@@ -20,11 +19,80 @@ type ProgramsSectionProps = {
 };
 
 // Layout constants
-const DESKTOP_COLS = 4;
+const MAX_COLS = 4;
 const COL_GAP_PX = 24; // gap-6
-const EDGE_PAD_PX = 6; // scroller px-[6px]; scroll-padding only
+/** Permanent side inset outside the scroller (does not scroll away). */
+const EDGE_PAD_PX = 16;
+const CARD_MIN_PX = 220;
+const CARD_MAX_PX = 280;
 /** Triple the track so we can jump between identical copies without a visible reset. */
 const LOOP_COPIES = 3;
+
+type CarouselLayout = {
+  cols: number;
+  cardW: number;
+  /**
+   * Side inset when the column track is narrower than the scroller.
+   * Used as scroll-padding; with center snap, peeks appear on both sides.
+   */
+  peekGutter: number;
+  /** True when gutters are large enough for intentional adjacent-card peeks. */
+  peek: boolean;
+};
+
+/**
+ * Prefer flush even columns within [CARD_MIN, CARD_MAX].
+ * Never exceed CARD_MAX — leftover space centers the track (and peeks only when
+ * there is at least half a card of room total, ~¼ visible each side).
+ *
+ * `scrollerWidth` is the width inside the permanent EDGE_PAD wrapper.
+ */
+function computeCarouselLayout(scrollerWidth: number): CarouselLayout {
+  const w = Math.max(0, Math.floor(scrollerWidth));
+
+  const centered = (cols: number, cardW: number, peek: boolean): CarouselLayout => {
+    const gaps = COL_GAP_PX * (cols - 1);
+    const track = cols * cardW + gaps;
+    const peekGutter = Math.max(0, Math.floor((w - track) / 2));
+    return { cols, cardW, peekGutter, peek };
+  };
+
+  for (let cols = MAX_COLS; cols >= 1; cols--) {
+    const gaps = COL_GAP_PX * (cols - 1);
+    const flushW = Math.floor((w - gaps) / cols);
+
+    if (flushW < CARD_MIN_PX) continue;
+
+    if (flushW <= CARD_MAX_PX) {
+      // Exact even columns — fill the scroller, no side peeks.
+      return { cols, cardW: flushW, peekGutter: 0, peek: false };
+    }
+
+    // Flush would exceed max — pin to max and center any leftover.
+    const leftover = w - (cols * CARD_MAX_PX + gaps);
+
+    if (leftover >= Math.floor(CARD_MAX_PX / 2)) {
+      // Half-card total peek budget → ~¼ card each side.
+      // w = cols*cardW + gaps + 0.5*cardW
+      let cardW = Math.floor((w - gaps) / (cols + 0.5));
+      cardW = Math.min(CARD_MAX_PX, Math.max(CARD_MIN_PX, cardW));
+      return centered(cols, cardW, true);
+    }
+
+    // Not enough room for real peeks — still honor max and center the track.
+    return centered(cols, CARD_MAX_PX, false);
+  }
+
+  // Narrow viewport: one column, capped at max, centered when narrower than scroller.
+  const cardW = Math.min(CARD_MAX_PX, Math.max(0, w));
+  const peekGutter = Math.max(0, Math.floor((w - cardW) / 2));
+  return {
+    cols: 1,
+    cardW,
+    peekGutter,
+    peek: peekGutter >= Math.floor(cardW / 4),
+  };
+}
 
 export default function ProgramsSection({
   programs,
@@ -46,8 +114,12 @@ export default function ProgramsSection({
   const cellRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const [isMd, setIsMd] = useState(false);
-  const [desktopColW, setDesktopColW] = useState<number>(260);
-  const [mobileColW, setMobileColW] = useState<number>(0);
+  const [layout, setLayout] = useState<CarouselLayout>({
+    cols: MAX_COLS,
+    cardW: 260,
+    peekGutter: 0,
+    peek: false,
+  });
 
   const isProgrammaticScroll = useRef(false);
   const isDraggingRef = useRef(false);
@@ -56,8 +128,11 @@ export default function ProgramsSection({
   const didDragRef = useRef(false);
 
   const n = items.length;
+  // Single-card (or single-col) inset layouts center-snap so peeks split left/right.
+  // Multi-col peeks keep start-snap with equal scroll-padding so a full column group stays in view.
+  const useCenterSnap = layout.peekGutter > 0 && layout.cols === 1;
   // Loop whenever there is more than one full viewport of cards to scroll through.
-  const loopEnabled = n > (isMd ? DESKTOP_COLS : 1);
+  const loopEnabled = n > layout.cols;
 
   const trackItems = useMemo(() => {
     if (!n) return [] as Array<{ program: ProgramCard; logical: number; copy: number; key: string }>;
@@ -85,48 +160,41 @@ export default function ProgramsSection({
     return () => mq.removeEventListener?.("change", update);
   }, []);
 
-  // Column widths from scroller viewport (avoids 100% + max-content circular sizing on mobile)
+  // Column widths from scroller viewport (avoids 100% + max-content circular sizing)
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
     const calc = () => {
-      const md = window.matchMedia("(min-width: 768px)").matches;
-      const viewport = getScrollerContentWidth(scroller);
-
-      if (md) {
-        const w = Math.floor(
-          (viewport - COL_GAP_PX * (DESKTOP_COLS - 1)) / DESKTOP_COLS
-        );
-        setDesktopColW(Math.max(220, w));
-        return;
-      }
-
-      setMobileColW(Math.max(260, viewport));
+      const next = computeCarouselLayout(scroller.clientWidth);
+      setLayout((prev) =>
+        prev.cols === next.cols &&
+        prev.cardW === next.cardW &&
+        prev.peekGutter === next.peekGutter &&
+        prev.peek === next.peek
+          ? prev
+          : next
+      );
     };
 
     calc();
     const ro = new ResizeObserver(calc);
     ro.observe(scroller);
 
-    const mq = window.matchMedia("(min-width: 768px)");
-    mq.addEventListener?.("change", calc);
     window.addEventListener("resize", calc);
 
     return () => {
       ro.disconnect();
-      mq.removeEventListener?.("change", calc);
       window.removeEventListener("resize", calc);
     };
   }, []);
 
   const getSnapLeftForCell = (el: HTMLDivElement, scroller: HTMLDivElement) => {
-    return (
-      el.getBoundingClientRect().left -
-      scroller.getBoundingClientRect().left +
-      scroller.scrollLeft -
-      EDGE_PAD_PX
-    );
+    if (useCenterSnap) {
+      return el.offsetLeft + el.clientWidth / 2 - scroller.clientWidth / 2;
+    }
+    // Start-align into the snapport (inset by scroll-padding when peekGutter > 0).
+    return Math.max(0, el.offsetLeft - layout.peekGutter);
   };
 
   const getSnapPositions = () => {
@@ -164,12 +232,11 @@ export default function ProgramsSection({
 
     if (Math.abs(left - scroller.scrollLeft) < 0.5) return;
 
-    const prevSnap = scroller.style.scrollSnapType;
     scroller.style.scrollSnapType = "none";
     scroller.scrollLeft = left;
-    // Restore snap after the jump so the next gesture still snaps.
+    // Clear inline override so Tailwind snap-x/snap-mandatory apply again.
     requestAnimationFrame(() => {
-      scroller.style.scrollSnapType = prevSnap || "x mandatory";
+      scroller.style.scrollSnapType = "";
     });
   };
 
@@ -250,7 +317,7 @@ export default function ProgramsSection({
 
     return () => cancelAnimationFrame(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [n, loopEnabled, isMd, desktopColW, mobileColW]);
+  }, [n, loopEnabled, layout.cols, layout.cardW, layout.peekGutter, layout.peek]);
 
   // Normalize when the user crosses a copy boundary.
   useEffect(() => {
@@ -273,7 +340,7 @@ export default function ProgramsSection({
       window.clearTimeout(timeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackItems.length, isMd, desktopColW, mobileColW, loopEnabled]);
+  }, [trackItems.length, loopEnabled, layout.cols, layout.cardW, layout.peekGutter, layout.peek]);
 
   // Mouse drag-to-scroll (history-style). We disable snap while dragging and
   // suppress click-through when the gesture was actually a drag.
@@ -311,11 +378,18 @@ export default function ProgramsSection({
     const endDrag = () => {
       if (!isDraggingRef.current) return;
       isDraggingRef.current = false;
-      scroller.style.scrollSnapType = "x mandatory";
+      scroller.style.scrollSnapType = "";
       scroller.style.cursor = "grab";
       scroller.classList.remove("select-none");
-      normalizeLoopScroll();
-      syncActiveIndex();
+
+      // Re-enabling snap alone does not settle mid-card after a free drag.
+      if (didDragRef.current) {
+        scrollToAbsIndex(findNearestAbsIndex(), "smooth");
+      } else {
+        normalizeLoopScroll();
+        syncActiveIndex();
+      }
+
       // Clear after click-capture phase has a chance to run.
       window.setTimeout(() => {
         didDragRef.current = false;
@@ -342,12 +416,12 @@ export default function ProgramsSection({
       scroller.removeEventListener("click", onClickCapture, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackItems.length, isMd, loopEnabled]);
+  }, [trackItems.length, loopEnabled, layout.cols, layout.cardW, layout.peekGutter, layout.peek]);
 
   if (!items.length) return null;
 
   const arrowBtn =
-    "inline-flex h-10 w-10 items-center justify-center rounded-full bg-gmcc-navy text-white border border-gmcc-navy body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gmcc-navy/80";
+    "h-10 w-10 items-center justify-center rounded-full bg-gmcc-navy text-white border border-gmcc-navy body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gmcc-navy/80";
 
   return (
     <section className="page-section relative overflow-x-clip">
@@ -392,56 +466,52 @@ export default function ProgramsSection({
               ←
             </button>
 
-            {/* Scroller: must be width-constrained so its overflow stays internal */}
+            {/* Permanent edge pad outside the scroller so inset never scrolls away. */}
             <div
-              ref={scrollerRef}
-              className="min-w-0 flex-1 overflow-x-auto pb-4 pt-1 px-[6px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              style={{
-                scrollSnapType: "x mandatory",
-                WebkitOverflowScrolling: "touch",
-                cursor: "grab",
-                scrollPaddingLeft: EDGE_PAD_PX,
-                scrollPaddingRight: EDGE_PAD_PX,
-              }}
+              className="min-w-0 flex-1"
+              style={{ paddingLeft: EDGE_PAD_PX, paddingRight: EDGE_PAD_PX }}
             >
-              {/* Use block-level grid (not inline-grid) to avoid shrinkwrap overflow.
-                  Width strategy:
-                  - width: max-content => grid grows horizontally inside scroller only
-                  - minWidth: 100% => first frame still fills viewport
-              */}
               <div
-                className="grid gap-6"
+                ref={scrollerRef}
+                className="w-full min-w-0 snap-x snap-mandatory overflow-x-auto pb-4 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                 style={{
-                  gridAutoFlow: "column",
-                  gridAutoColumns: isMd
-                    ? `${desktopColW}px`
-                    : mobileColW > 0
-                      ? `${mobileColW}px`
-                      : "min(100%, 420px)",
-                  width: "max-content",
-                  minWidth: "100%",
+                  WebkitOverflowScrolling: "touch",
+                  cursor: "grab",
+                  scrollPaddingLeft: layout.peekGutter,
+                  scrollPaddingRight: layout.peekGutter,
                 }}
               >
-                {trackItems.map((entry, idx) => (
-                  <div
-                    key={entry.key}
-                    ref={(el) => {
-                      cellRefs.current[idx] = el;
-                    }}
-                    className="min-w-0"
-                    style={{
-                      scrollSnapAlign: "start",
-                      scrollSnapStop: "always",
-                    }}
-                    {...(loopEnabled && entry.copy !== 1
-                      ? ({ "aria-hidden": true, inert: true } satisfies HTMLAttributes<HTMLDivElement>)
-                      : {})}
-                  >
-                    <div className="min-w-0 w-full max-w-full">
-                      <ProgramCardView program={entry.program} />
+                {/* Use block-level grid (not inline-grid) to avoid shrinkwrap overflow.
+                    Width strategy:
+                    - width: max-content => grid grows horizontally inside scroller only
+                    - minWidth: 100% => first frame still fills viewport
+                */}
+                <div
+                  className="grid gap-6"
+                  style={{
+                    gridAutoFlow: "column",
+                    gridAutoColumns: `${layout.cardW}px`,
+                    width: "max-content",
+                    minWidth: "100%",
+                  }}
+                >
+                  {trackItems.map((entry, idx) => (
+                    <div
+                      key={entry.key}
+                      ref={(el) => {
+                        cellRefs.current[idx] = el;
+                      }}
+                      className={`min-w-0 snap-always ${useCenterSnap ? "snap-center" : "snap-start"}`}
+                      {...(loopEnabled && entry.copy !== 1
+                        ? ({ "aria-hidden": true, inert: true } satisfies HTMLAttributes<HTMLDivElement>)
+                        : {})}
+                    >
+                      <div className="min-w-0 w-full max-w-full">
+                        <ProgramCardView program={entry.program} />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -463,7 +533,7 @@ export default function ProgramsSection({
               onClick={goPrev}
               disabled={!canNavigate}
               aria-label="Previous programs"
-              className={arrowBtn}
+              className={`${arrowBtn} inline-flex`}
             >
               ←
             </button>
@@ -472,7 +542,7 @@ export default function ProgramsSection({
               onClick={goNext}
               disabled={!canNavigate}
               aria-label="Next programs"
-              className={arrowBtn}
+              className={`${arrowBtn} inline-flex`}
             >
               →
             </button>
