@@ -11,7 +11,7 @@ const JOTFORM_EMBED_HANDLER =
   "https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js";
 
 type JotFormEmbedProps = {
-  title?: string;
+  formId?: string;
   className?: string;
   /** Override iframe id when multiple embeds can appear on one page. */
   iframeId?: string;
@@ -35,8 +35,6 @@ declare global {
   }
 }
 
-const EMBED_SRC = `${GENERAL_CONTACT_FORM_URL}?isIframeEmbed=1`;
-
 function initEmbedHandler(iframeId: string) {
   window.jotformEmbedHandler?.(
     `iframe[id='${iframeId}']`,
@@ -44,25 +42,30 @@ function initEmbedHandler(iframeId: string) {
   );
 }
 
-export default function JotFormEmbed({
-  title = "General Contact Form",
+export default function JotFormEmbed( {
+  formId = GENERAL_CONTACT_FORM_ID,
   className = "",
-  iframeId = `JotFormIFrame-${GENERAL_CONTACT_FORM_ID}`,
+  iframeId,
   height = 539,
   autoResize = true,
   resizeKey,
 }: JotFormEmbedProps) {
+  const resolvedIframeId = iframeId ?? `JotFormIFrame-${formId}`;
+  const formUrl =
+    formId === GENERAL_CONTACT_FORM_ID
+      ? GENERAL_CONTACT_FORM_URL
+      : `https://form.jotform.com/${formId}`;
+
   useEffect(() => {
     if (!autoResize) return;
-    initEmbedHandler(iframeId);
-  }, [autoResize, iframeId, resizeKey]);
+    initEmbedHandler(resolvedIframeId);
+  }, [autoResize, resolvedIframeId, resizeKey]);
 
   return (
     <div className={className}>
       <iframe
-        id={iframeId}
-        title={title}
-        src={EMBED_SRC}
+        id={resolvedIframeId}
+        src={`${formUrl}?isIframeEmbed=1`}
         allow="geolocation; microphone; camera; fullscreen; payment"
         allowFullScreen
         className="block w-full border-0 bg-transparent"
@@ -80,7 +83,7 @@ export default function JotFormEmbed({
         <Script
           src={JOTFORM_EMBED_HANDLER}
           strategy="afterInteractive"
-          onLoad={() => initEmbedHandler(iframeId)}
+          onLoad={() => initEmbedHandler(resolvedIframeId)}
         />
       ) : null}
     </div>

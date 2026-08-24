@@ -94,7 +94,7 @@
         @apply -mx-4 -mb-4 overflow-hidden;
     }
 
-    /* Schedule iframe embeds — height is set per-iframe (see AutoHeightScheduleIframe). */
+    /* Schedule iframe embeds — height is set per-iframe (see AutoHeightScheduleIframe / ScheduleEmbedIframe). */
     .gmcc-schedule-embed {
         @apply w-full;
     }

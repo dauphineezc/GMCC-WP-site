@@ -44,8 +44,7 @@ const EXPLORE_MEMBERSHIPS_QUERY = `
         membershipFields {
           summary
           benefits
-          autoDraftLink
-          manualPayLink
+          joinRenewLink
           pricingTable {
             tier
             monthly
@@ -268,8 +267,7 @@ function mapMembershipNode(wp: any): Membership {
         }
       : null,
     summary: (f.summary as string) ?? null,
-    autoDraftLink: mapMembershipPayUrl(f.autoDraftLink, "Auto Draft"),
-    manualPayLink: mapMembershipPayUrl(f.manualPayLink, "Manual Pay"),
+    joinRenewLink: mapMembershipPayUrl(f.joinRenewLink, "Join or Renew"),
     pricing: {
       tier: (pricing.tier as string) ?? null,
       monthly:

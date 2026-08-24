@@ -1,4 +1,5 @@
 import PhotoWaveHeader from "@/components/photoWaveHeader";
+import ScheduleEmbedIframe from "@/components/schedule/scheduleEmbedIframe";
 import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
@@ -33,11 +34,9 @@ export default async function PoolAvailabilityPage() {
         <p className="text-neutral-700 text-xl mt-0 mb-8">Click on an activity for more information.</p>
 
         <div className="gmcc-schedule-embed mt-4">
-          <iframe
+          <ScheduleEmbedIframe
             src={scheduleEmbedUrl({ type: "dropin", sub: "aquatics" })}
-            style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
+            title="Community Center pool availability"
           />
         </div>
 

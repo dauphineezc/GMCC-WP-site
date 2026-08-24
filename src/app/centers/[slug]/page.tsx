@@ -33,6 +33,9 @@ import {
   resolveCenterSocialLinks,
 } from "@/lib/centerDetailPageFields";
 import CurlingHistoryTimeline from "@/components/curlingHistoryTimeline";
+import MailchimpSubscribeForm, {
+  audienceForCenterSlug,
+} from "@/components/mailchimpSubscribeForm";
 
 
 
@@ -789,7 +792,7 @@ export default async function CenterPage(props: CenterPageProps) {
       ) : null}
 
       <section className="page-section stack-4">
-        <h2 className="h2 mb-4">What you'll find here</h2>
+        <h2 className="h2 mb-4">What You'll Find Here</h2>
         <p className="body mb-8">{centerFields.longDescription}</p>
         {/* Amenities Grid */}
         {amenitiesForThisCenter.length > 0 && (
@@ -853,26 +856,13 @@ export default async function CenterPage(props: CenterPageProps) {
               {newsletterHeader ? <h3 className="h3 mb-2 text-white">{newsletterHeader}</h3> : null}
               {newsletterSubheader ? <p className="text-sm mb-4 mx-8 text-neutral-200">{newsletterSubheader}</p> : null}
             </div>
-            <div className="col-span-1 flex justify-center">
-              <form
-                aria-label="Newsletter signup (placeholder)"
-              >
-                <div className="flex-1 sm:max-w-md min-w-sm">
-                  <input
-                    id={`center-newsletter-email-${slug}`}
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="Enter your email address"
-                    className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                  />
-                </div>
-                <div className="mt-4 flex justify-center">
-                  <button type="button" className="btn btn-secondary shrink-0">
-                    Subscribe
-                  </button>
-                </div>
-              </form>
+            <div className="relative col-span-1 mx-auto w-full sm:max-w-md">
+              <MailchimpSubscribeForm
+                idPrefix={`center-newsletter-${slug}`}
+                audience={audienceForCenterSlug(slug)}
+                inputClassName="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
+                buttonClassName="btn btn-secondary shrink-0"
+              />
             </div>
           </div>
         </section>

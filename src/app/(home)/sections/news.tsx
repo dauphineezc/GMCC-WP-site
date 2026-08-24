@@ -1,5 +1,6 @@
 // src/app/(home)/sections/NewsSection.tsx
 
+import MailchimpSubscribeForm from "@/components/mailchimpSubscribeForm";
 import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
 
 type Linkish = { title?: string | null; url?: string | null };
@@ -142,18 +143,11 @@ export default function NewsSection({
                   "Get updates about programs, events, and community news."}
               </p>
 
-              <div className="mt-auto space-y-3">
-                <span className="sr-only">Enter your email address</span>
-                <input
-                  type="email"
-                  placeholder="Enter your email address"
-                  className="w-full rounded-md border border-white bg-white px-3 py-2 text-sm text-neutral-700"
+              <div className="relative mt-auto">
+                <MailchimpSubscribeForm
+                  idPrefix="home-newsletter"
+                  inputClassName="w-full rounded-md border border-white bg-white px-3 py-2 text-sm text-neutral-700"
                 />
-                <div className="flex justify-center">
-                  <a href={cta?.url ?? "#"} className="btn btn-secondary">
-                    Subscribe
-                  </a>
-                </div>
               </div>
             </div>
           </div>

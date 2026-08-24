@@ -25,8 +25,6 @@ import PhotoWaveHeader from "@/components/photoWaveHeader";
 import type { HeroCta } from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
 import { computeMembershipPricingSavings } from "@/lib/membershipPricingSavings";
-import MembershipJoinButton from "@/components/membershipJoinButton";
-import type { MembershipPayLink } from "@/components/membershipJoinButton";
 import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
@@ -41,15 +39,12 @@ export type Audience = {
 };
 export type ProgramArea = { name: string; slug: string };
 
-export type { MembershipPayLink };
-
 export type Membership = {
   slug: string;
   title: string;
   hero: { url: string; alt: string; objectPosition?: string } | null;
   summary: string | null;
-  autoDraftLink: MembershipPayLink | null;
-  manualPayLink: MembershipPayLink | null;
+  joinRenewLink: { url: string; label: string; target: string | null } | null;
   pricing: {
     tier: string | null;
     monthly: number | null;
@@ -848,7 +843,6 @@ function TierCard({
   );
   const [selectedIdx, setSelectedIdx] = useState(defaultIdx >= 0 ? defaultIdx : 0);
   const [benefitsExpanded, setBenefitsExpanded] = useState(false);
-  const [joinChoiceOpen, setJoinChoiceOpen] = useState(false);
   const selected = variants[selectedIdx] ?? variants[0];
   if (!selected) return null;
 
@@ -875,9 +869,7 @@ function TierCard({
       : "";
 
   return (
-    <article
-      className={`${articleClass}${joinChoiceOpen ? " z-50 overflow-visible" : ""}`}
-    >
+    <article className={articleClass}>
       {selected.hero && (
         <div className={`relative bg-neutral-100 ${secondary ? "h-32 opacity-90" : "h-40"}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -946,7 +938,6 @@ function TierCard({
                   onClick={() => {
                     setSelectedIdx(i);
                     setBenefitsExpanded(false);
-                    setJoinChoiceOpen(false);
                   }}
                   className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
                     selectedIdx === i ? "bg-gmcc-navy text-white shadow-sm"
@@ -1002,14 +993,18 @@ function TierCard({
           </div>
         )}
 
-        <MembershipJoinButton
-          key={selected.slug}
-          membership={selected}
-          planName={selected.title}
-          buttonClassName={joinButtonClass}
-          wrapperClassName="mt-auto pt-4"
-          onOpenChange={setJoinChoiceOpen}
-        />
+        {selected.joinRenewLink ? (
+          <div className="mt-auto pt-4">
+            <a
+              href={selected.joinRenewLink.url}
+              target={selected.joinRenewLink.target ?? "_blank"}
+              rel="noopener noreferrer"
+              className={joinButtonClass}
+            >
+              {selected.joinRenewLink.label}
+            </a>
+          </div>
+        ) : null}
       </div>
     </article>
   );

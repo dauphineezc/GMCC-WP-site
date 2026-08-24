@@ -8,6 +8,7 @@ import {
 } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
 import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 
 const INSURANCE_BASED_MEMBERSHIPS_QUERY = `
   query InsuranceBasedMembershipsPageFields($uri: ID!) {
@@ -43,11 +44,8 @@ const INSURANCE_BASED_MEMBERSHIPS_QUERY = `
 
         insuranceBasedMembershipBenefits
 
-        contact {
-          contactName
-          personContext
-          phoneNumber
-        }
+        contactHeader
+        contactSubheader
 
         ssClasses
         renewClasses
@@ -87,11 +85,8 @@ type InsuranceBasedMembershipsData = {
 
       insuranceBasedMembershipBenefits?: string | null;
 
-      contact?: {
-        contactName?: string | null;
-        personContext?: string | null;
-        phoneNumber?: string | null;
-      } | null;
+      contactHeader?: string | null;
+      contactSubheader?: string | null;
 
       ssClasses?: string | null;
       renewClasses?: string | null;
@@ -224,8 +219,6 @@ export default async function InsuranceBasedMembershipsPage() {
   const insuranceIntro = insuranceLines[0] ?? "";
   const insuranceItems = insuranceLines.slice(1);
 
-  const contact = fields?.contact ?? null;
-  const contactPhone = ensureString(contact?.phoneNumber);
   const ssClassesUrl = fields?.ssClasses ?? null;
   const renewClassesUrl = fields?.renewClasses ?? null;
 
@@ -273,7 +266,7 @@ export default async function InsuranceBasedMembershipsPage() {
         {/* Insurance benefits */}
         {insurance ? (
           <>
-            <h2 className="h2 mb-2">Insurance-based membership benefits</h2>
+            <h2 className="h2 mb-2">Insurance-Based Membership Benefits</h2>
             {insuranceIntro ? <p className="mt-3 text-base text-neutral-700">{insuranceIntro}</p> : null}
             {insuranceItems.length > 0 ? (
               <ul className="space-y-2 pl-6 mt-4">
@@ -294,9 +287,9 @@ export default async function InsuranceBasedMembershipsPage() {
 
         {/* SilverSneakers classes link */}
         {ssClassesUrl && renewClassesUrl ? (
-          <section className="page-section stack-8">
-            <div className="flex flex-col grid-cols-2 gap-3 sm:flex-row sm:items-center sm:justify-between text-center">
-              <div className="col-span-1">
+          <section className="page-section">
+            <div className="flex flex-col grid-cols-2 gap-6 sm:flex-row sm:items-center sm:justify-between text-center">
+              <div className="col-span-1 card bg-gmcc-blue-light/30 p-8 text-center">
                 <h2 className="h3">SilverSneakers Classes</h2>
                 <p className="small mt-1">
                   Explore class options and schedules for SilverSneakers participants.
@@ -305,7 +298,7 @@ export default async function InsuranceBasedMembershipsPage() {
                 View classes
               </ExternalLink>
             </div>
-            <div className="col-span-1">
+            <div className="col-span-1 card bg-gmcc-blue-light/30 p-8 text-center">
                 <h2 className="h3">Renew Active/One Pass Classes</h2>
                 <p className="small mt-1">
                   Explore class options and schedules for Renew Active/One Pass participants.
@@ -319,36 +312,18 @@ export default async function InsuranceBasedMembershipsPage() {
         ) : null}
 
         {/* Contact */}
-        {(contact?.contactName || contact?.personContext || contactPhone) ? (
-          <section className="page-section stack-8">
-            <h2 className="h2 mb-4 text-center">Have Questions?</h2>
-            <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-start text-center">
-              <div>
-                {contact?.contactName ? (
-                  <div className="font-secondary text-base font-semibold text-neutral-700">
-                    Contact {contact.contactName}
-                  </div>
-                ) : null}
-
-                {contact?.personContext ? (
-                  <div className="small mt-2 text-neutral-700">
-                    {contact.personContext}
-                  </div>
-                ) : null}
-
-                {contactPhone ? (
-                  <div className="mt-3 text-base text-neutral-700">
-                    <span className="text-neutral-700">Phone: </span>
-                    <a className="link text-gmcc-teal" href={`tel:${toTel(contactPhone)}`}>
-                      {contactPhone}
-                    </a>
-                  </div>
-                ) : null}
-              </div>
+          <section>
+            <div className="mx-auto max-w-6xl px-4 mt-18 mb-8 text-center">
+              <h2 className="h2">
+                {fields?.contactHeader}
+              </h2>
+              <p className="mt-3 text-neutral-700 max-w-xl mx-auto">
+                {fields?.contactSubheader}
+              </p>
+              <JotFormLightboxButton formId="262285373322052" />
             </div>
           </section>
-        ) : null}
-      </div>
+        </div>
     </main>
   );
 }

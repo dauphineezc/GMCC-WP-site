@@ -85,13 +85,15 @@ function AccordionItem({
         <ChevronIcon isOpen={isOpen} variant={variant} />
       </button>
 
-      {/* Content */}
+      {/* Content — 0fr/1fr so tall embeds (mobile calendars) are not clipped by a max-height cap. */}
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
       >
-        <div className={`px-1 pb-4 ${bodyText}`}>{children}</div>
+        <div className="min-h-0 overflow-hidden">
+          <div className={`px-1 pb-4 ${bodyText}`}>{children}</div>
+        </div>
       </div>
     </div>
   );

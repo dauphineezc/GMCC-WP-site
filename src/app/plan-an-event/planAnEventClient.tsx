@@ -81,7 +81,7 @@ function SectionCard({ card, href }: { card: SectionCardData | null; href?: stri
   const imgObjectPosition = card.sectionImage?.node ? mediaFocalPositionCss(card.sectionImage?.node) : undefined;
 
   return (
-    <div className="card card-hover stack-4 flex flex-col overflow-hidden h-[410px] w-[340px]">
+    <div className="card card-hover stack-4 flex h-full min-h-[410px] w-full flex-col overflow-hidden">
       {imgSrc && (
         <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
           <img
@@ -97,12 +97,12 @@ function SectionCard({ card, href }: { card: SectionCardData | null; href?: stri
       {card.sectionDescription && (
         <p className="body text-sm flex-grow">{card.sectionDescription}</p>
       )}
-      <div className="flex flex-wrap justify-center items-center">
-      {card.buttonLabel && (
-        <a href={href ?? "#"} className="btn btn-primary">
-          {card.buttonLabel}
-        </a>
-      )}
+      <div className="flex flex-wrap items-center justify-center">
+        {card.buttonLabel && (
+          <a href={href ?? "#"} className="btn btn-primary">
+            {card.buttonLabel}
+          </a>
+        )}
       </div>
     </div>
   );
@@ -304,7 +304,7 @@ function CenterPartyPackageCard({
 
   if (packages.length === 0) {
     return (
-      <article className="card flex flex-col gap-4 bg-white">
+      <article className="card flex flex-col gap-4 border-0 bg-white">
         <h3 className="h2 text-2xl">{centerLabel}</h3>
         <p className="body text-gmcc-grey-dark">No party package details available for this center yet.</p>
         <a href="#contact" className="btn btn-primary self-start mt-auto">
@@ -322,7 +322,7 @@ function CenterPartyPackageCard({
   const selectedImageObjectPosition = selectedImage ? mediaFocalPositionCss(selectedImage) : undefined;
 
   return (
-    <article className="card flex h-full flex-col overflow-hidden bg-white">
+    <article className="card flex h-full flex-col overflow-hidden border-0 bg-white">
       {selectedImage?.sourceUrl && (
         <div className="card-bleed relative aspect-[16/9] overflow-hidden rounded-t-2xl bg-neutral-100">
           <img
@@ -779,7 +779,7 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
 
       {/* ── 3-CARD OVERVIEW ── */}
       <section className="page-section">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <SectionCard card={fields?.section1Card ?? null} href="#rent-a-space" />
           <SectionCard card={fields?.section2Card ?? null} href="#birthday-packages" />
           <SectionCard card={fields?.section3Card ?? null} href="#sports-events" />
@@ -789,7 +789,7 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
       {/* ── FIND YOUR PERFECT RENTAL SPACE ── */}
       <section id="rent-a-space" className="page-section">
         <div>
-          <div className="mb-8 max-w-6xl">
+          <div className="mb-8">
             <h2 className="h2 mb-3">
               {fields?.roomRentalResultsHeader ?? "Find Your Perfect Rental Space"}
             </h2>
@@ -807,7 +807,7 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
 
       {/* ── BIRTHDAY PARTY PACKAGES ── */}
       <NavyWaveSection id="birthday-packages" splitTopWave bandClassName="" contentClassName="mx-auto max-w-6xl px-6 py-12">
-        <div className="mb-4 max-w-6xl">
+        <div className="mb-4">
           <h2 className="h2 text-white">Birthday Party Packages</h2>
           {fields?.birthdayPackagesBody && (
             <p className="body whitespace-pre-line text-neutral-200 mt-4">{fields.birthdayPackagesBody}</p>
@@ -830,39 +830,35 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
 
       {/* ── SPORTS EVENTS ── */}
       <section id="sports-events" className="page-section">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-8 max-w-6xl">
-            <h2 className="h2 mb-3 text-gmcc-navy">Sports Events</h2>
-            {fields?.sportsPackagesBody && (
-              <p className="body whitespace-pre-line text-neutral-700">{fields.sportsPackagesBody}</p>
-            )}
-          </div>
-          {sportsPackages.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sportsPackages.map((pkg, i) => (
-                <SportsPartyPackageCard key={pkg.slug ?? i} pkg={pkg} />
-              ))}
-            </div>
-          ) : (
-            <p className="body text-gmcc-navy">Sports event packages coming soon.</p>
+        <div className="mb-8">
+          <h2 className="h2 mb-3 text-gmcc-navy">Sports Events</h2>
+          {fields?.sportsPackagesBody && (
+            <p className="body whitespace-pre-line text-neutral-700">{fields.sportsPackagesBody}</p>
           )}
         </div>
+        {sportsPackages.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {sportsPackages.map((pkg, i) => (
+              <SportsPartyPackageCard key={pkg.slug ?? i} pkg={pkg} />
+            ))}
+          </div>
+        ) : (
+          <p className="body text-gmcc-navy">Sports event packages coming soon.</p>
+        )}
       </section>
 
       {/* ── LOCATION OFFERINGS ── */}
       {(fields?.locationOfferingsHeader || fields?.offeringsByCenter) && (
         <section className="page-section">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="mb-8 max-w-6xl">
-              <h2 className="h2 mb-3">
-                {fields?.locationOfferingsHeader ?? "See What Each Location has to Offer"}
-              </h2>
-              {fields?.locationOfferingsBody && (
-                <p className="body whitespace-pre-line">{fields.locationOfferingsBody}</p>
-              )}
-            </div>
-            <CenterOfferingsSection data={fields?.offeringsByCenter} centerLogos={fields?.centerLogos} />
+          <div className="mb-8">
+            <h2 className="h2 mb-3">
+              {fields?.locationOfferingsHeader ?? "See What Each Location has to Offer"}
+            </h2>
+            {fields?.locationOfferingsBody && (
+              <p className="body whitespace-pre-line">{fields.locationOfferingsBody}</p>
+            )}
           </div>
+          <CenterOfferingsSection data={fields?.offeringsByCenter} centerLogos={fields?.centerLogos} />
         </section>
       )}
 
@@ -875,7 +871,7 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
         contentClassName="mx-auto max-w-6xl px-6 py-12"
       >
         {faqItems.length > 0 && (
-          <div className="mx-auto max-w-3xl px-6">
+          <div>
             <h2 className="h2 mb-8 text-center text-white">FAQs</h2>
             <Accordion
               variant="onDark"
@@ -890,8 +886,8 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
         )}
       </NavyWaveSection>
 
-      <section className="page-section max-w-3xl text-center">
-      <div>
+      <section className="page-section text-center">
+        <div>
           <h2 className="h2 mb-4 text-gmcc-navy">
             {fields?.contactHeader ?? "Start Planning Your Event"}
           </h2>
@@ -900,11 +896,11 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
           )}
           <div className="flex justify-center">
             <JotFormLightboxButton>
-              Contact Us About Your Event
+              Contact Us
             </JotFormLightboxButton>
           </div>
         </div>
-    </section>
+      </section>
 </div>
   );
 }

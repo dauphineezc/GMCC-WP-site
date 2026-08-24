@@ -165,6 +165,7 @@ export default async function CorporateWellnessCentersPage() {
             <a href="/centers" className="text-gmcc-teal text-sm hover:underline">click here</a>{" "}
           </p>
         ) : null}
+        
         {partnerLogoNodes.length > 0 ? (
           <div className="mx-auto mt-2 mb-8 grid w-full max-w-6xl grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
             {partnerLogoNodes.map((logo, index) => {

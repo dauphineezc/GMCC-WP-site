@@ -12,6 +12,8 @@ import {
 import type { Metadata } from "next";
 import type { SimpleCampaignData } from "@/components/simpleCampaign";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
+import JotFormLightboxButton from "@/components/jotFormLightboxButton";
+import JotFormEmbed from "@/components/jotFormEmbed";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -142,61 +144,36 @@ export default async function AccessibilityPage() {
         <p className="body text-center">{conclusionContent}</p>
       </section>
 
-      <div className="mx-auto max-w-6xl px-10">
-        {contactHeader ? (
-          <h3 className="h2 mt-8 text-center">{contactHeader}</h3>
-        ) : null}
-        {contactSubheader ? (
-          <p className="body mt-2 text-center">{contactSubheader}</p>
-        ) : null}
-          <div className="relative mx-auto mt-8 mb-12 w-full rounded-2xl border border-neutral-300 bg-neutral-100 p-10 shadow-sm lg:w-[calc((3*(100%-4rem))/5+2rem)]">
-            <form className="mt-4 space-y-4" aria-label="Placeholder contact form">
-              <div>
-                <label htmlFor="contact-name" className="block text-sm text-neutral-700">
-                  Name
-                </label>
-                <input
-                  id="contact-name"
-                  name="name"
-                  type="text"
-                  placeholder=""
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="contact-email" className="block text-sm text-neutral-700">
-                  Email address
-                </label>
-                <input
-                  id="contact-email"
-                  name="email"
-                  type="email"
-                  placeholder=""
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="contact-message" className="block text-sm text-neutral-700">
-                  Message
-                </label>
-                <textarea
-                  id="contact-message"
-                  name="message"
-                  rows={5}
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                />
-              </div>
-
-              <div className="pt-1 text-center">
-                <button type="button" className="btn btn-primary min-w-28">
-                  Submit
-                </button>
-              </div>
-            </form>
+      {/* CONTACT CTA */}
+      <section>
+        <div className="mx-auto max-w-6xl px-4 mt-18 mb-8 text-center">
+          <h2 className="h2">
+            {contactHeader}
+          </h2>
+          <p className="mt-3 text-neutral-700 max-w-xl mx-auto">
+            {contactSubheader}
+          </p>
           </div>
+          <div className="relative overflow-hidden -mt-0 pb-8">
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
+          <img
+            src="/GreaterLogoBG.png"
+            alt=""
+            className="absolute left-15 bottom-30 w-0 select-none lg:w-100"
+            draggable={false}
+          />
+          <img
+            src="/GreaterLogoBG.png"
+            alt=""
+            className="absolute right-15 top-30 w-0 select-none lg:w-100"
+            draggable={false}
+          />
         </div>
+        <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 lg:-mt-16 lg:-mb-16">
+          <JotFormEmbed/>
+        </div>
+      </div>
+      </section>
     </main>
   );
 }

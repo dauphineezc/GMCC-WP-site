@@ -2,8 +2,6 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { computeMembershipPricingSavings } from "@/lib/membershipPricingSavings";
-import MembershipJoinButton from "@/components/membershipJoinButton";
-import type { MembershipPayLink } from "@/components/membershipJoinButton";
 
 export type Audience = {
   name: string;
@@ -17,8 +15,7 @@ export type Membership = {
   title: string;
   hero: { url: string; alt: string } | null;
   summary: string | null;
-  autoDraftLink?: MembershipPayLink | null;
-  manualPayLink?: MembershipPayLink | null;
+  joinRenewLink?: { url: string; label: string; target?: string | null } | null;
   pricing: {
     tier: string | null;
     monthly: number | null;
@@ -390,12 +387,16 @@ export default function MembershipQuiz({
                             {comparedSlugs.includes(m.slug) ? "Remove from Compare" : "Compare Benefits"}
                           </button>
                         )}
-                        <MembershipJoinButton
-                          membership={m}
-                          planName={m.title}
-                          label="Join or Renew"
-                          buttonClassName="btn btn-secondary w-full text-xs"
-                        />
+                        {m.joinRenewLink ? (
+                          <a
+                            href={m.joinRenewLink.url}
+                            target={m.joinRenewLink.target ?? "_blank"}
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary w-full text-xs"
+                          >
+                            {m.joinRenewLink.label}
+                          </a>
+                        ) : null}
                       </div>
                     </article>
                     );
@@ -437,13 +438,16 @@ export default function MembershipQuiz({
                               </li>
                             ))}
                           </ul>
-                          <MembershipJoinButton
-                            membership={m}
-                            planName={m.title}
-                            label="Join or Renew"
-                            buttonClassName="btn btn-primary w-full text-xs"
-                            wrapperClassName="mt-3"
-                          />
+                          {m.joinRenewLink ? (
+                            <a
+                              href={m.joinRenewLink.url}
+                              target={m.joinRenewLink.target ?? "_blank"}
+                              rel="noopener noreferrer"
+                              className="btn btn-primary w-full text-xs mt-3"
+                            >
+                              {m.joinRenewLink.label}
+                            </a>
+                          ) : null}
                         </div>
                       ))}
                     </div>

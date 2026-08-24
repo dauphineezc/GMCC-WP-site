@@ -10,6 +10,7 @@ import {
   type WpMediaRef,
 } from "@/lib/wp";
 import JotFormLightboxButton from "@/components/jotFormLightboxButton";
+import JotFormEmbed from "@/components/jotFormEmbed";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -143,11 +144,29 @@ export default async function PoliciesPage() {
           {fields?.contactSubheader ? (
             <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.contactSubheader}</p>
           ) : null}
-          <div className="flex justify-center">
-            <JotFormLightboxButton />
-          </div>
         </section>
       )}
+
+      <div className="relative overflow-hidden -mt-0 pb-8">
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
+          <img
+            src="/GreaterLogoBG.png"
+            alt=""
+            className="absolute left-15 bottom-30 w-0 select-none lg:w-100"
+            draggable={false}
+          />
+          <img
+            src="/GreaterLogoBG.png"
+            alt=""
+            className="absolute right-15 top-30 w-0 select-none lg:w-100"
+            draggable={false}
+          />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 lg:-mt-16 lg:-mb-16">
+            <JotFormEmbed formId="262285543716058"/>
+        </div>
+      </div>
     </main>
   );
 }

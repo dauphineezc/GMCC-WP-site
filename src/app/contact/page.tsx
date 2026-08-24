@@ -131,18 +131,18 @@ export default async function ContactPage() {
           <img
             src="/GreaterLogoBG.png"
             alt=""
-            className="absolute left-15 bottom-70 w-0 select-none lg:w-100"
+            className="absolute left-15 bottom-30 w-0 select-none lg:w-100"
             draggable={false}
           />
           <img
             src="/GreaterLogoBG.png"
             alt=""
-            className="absolute right-15 top-20 w-0 select-none lg:w-100"
+            className="absolute right-15 top-30 w-0 select-none lg:w-100"
             draggable={false}
           />
         </div>
 
-        <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 lg:-mt-16">
+        <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 lg:-mt-16 lg:-mb-16">
           <JotFormEmbed />
         </div>
       </div>

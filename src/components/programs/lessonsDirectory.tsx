@@ -177,9 +177,10 @@ export default function LessonsDirectory({
           </div>
         </div>
 
+        {faqs.length > 0 ? (
         <div className="mx-auto mt-16 max-w-3xl px-0">
           <h2 className="h2 mb-8 text-center text-white">FAQs</h2>
-          <Accordion
+            <Accordion
             variant="onDark"
             items={faqs.map((item) => ({
               id: item.question,
@@ -189,6 +190,7 @@ export default function LessonsDirectory({
             allowMultiple
           />
         </div>
+        ) : null}
       </NavyWaveSection>
 
       {testimonials.length > 0 ? (

@@ -1,5 +1,6 @@
 import Accordion from "@/components/accordion";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
+import ScheduleEmbedIframe from "@/components/schedule/scheduleEmbedIframe";
 import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
@@ -18,11 +19,9 @@ const faqItems = [
     title: "Community Center",
     content: (
       <div className="gmcc-schedule-embed mt-4">
-        <iframe
+        <ScheduleEmbedIframe
           src={scheduleEmbedUrl({ type: "dropin", sub: "community" })}
-          style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
+          title="Community Center activity schedule"
         />
       </div>
     ),
@@ -49,7 +48,7 @@ export default async function CommunityActivitySchedulesPage() {
           Free for members; $7 per non-member participant. View the schedules for all community
           activities at the Community Center below.
         </h3>
-        <p className="text-neutral-700 text-xl mt-0 mb-8">Click on an activity for more information.</p>
+        <p className="text-neutral-700 text-sm mt-8 mb-4">Click on an activity for more information.</p>
 
         <Accordion items={faqItems} allowMultiple={false} defaultOpenIds={["1"]} />
       </div>

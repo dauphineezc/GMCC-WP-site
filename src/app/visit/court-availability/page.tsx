@@ -1,5 +1,6 @@
 import Accordion from "@/components/accordion";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
+import ScheduleEmbedIframe from "@/components/schedule/scheduleEmbedIframe";
 import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
@@ -18,11 +19,9 @@ const faqItems = [
     title: "Community Center",
     content: (
       <div className="gmcc-schedule-embed mt-4">
-        <iframe
+        <ScheduleEmbedIframe
           src={scheduleEmbedUrl({ type: "dropin", sub: "courtSports" })}
-          style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
+          title="Community Center court availability"
         />
       </div>
     ),
@@ -32,11 +31,9 @@ const faqItems = [
     title: "Tennis Center",
     content: (
       <div className="gmcc-schedule-embed mt-4">
-        <iframe
+        <ScheduleEmbedIframe
           src={scheduleEmbedUrl({ type: "dropin", sub: "courtSports" })}
-          style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
+          title="Tennis Center court availability"
         />
       </div>
     ),
@@ -46,11 +43,9 @@ const faqItems = [
     title: "Coleman Family Center",
     content: (
       <div className="gmcc-schedule-embed mt-4">
-        <iframe
+        <ScheduleEmbedIframe
           src={scheduleEmbedUrl({ type: "fitness", sub: "aquatics" })}
-          style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
+          title="Coleman Family Center court availability"
         />
       </div>
     ),
@@ -60,11 +55,9 @@ const faqItems = [
     title: "North Family Center",
     content: (
       <div className="gmcc-schedule-embed mt-4">
-        <iframe
+        <ScheduleEmbedIframe
           src={scheduleEmbedUrl({ type: "fitness", sub: "aquatics" })}
-          style={{ width: "100%", height: "1000px", border: "0", overflow: "visible" }}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
+          title="North Family Center court availability"
         />
       </div>
     ),
