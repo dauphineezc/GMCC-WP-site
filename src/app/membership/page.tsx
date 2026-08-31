@@ -9,7 +9,7 @@ import ExploreMembershipsClient, {
   ProgramArea,
 } from "./exploreMembershipsClient";
 import type { MembershipPageFields, SerializedAmenity } from "./exploreMembershipsClient";
-import { fetchAmenitiesWithImages } from "@/lib/amenities";
+import { AMENITIES_FIELDS_BLOCK, mapAmenityNodesWithImages } from "@/lib/amenities";
 import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
@@ -91,6 +91,12 @@ const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
                   nodes {
                     name
                     slug
+                    description
+                    ... on Amenity {
+                      amenitiesFields {
+${AMENITIES_FIELDS_BLOCK}
+                      }
+                    }
                   }
                 }
               }
@@ -396,10 +402,11 @@ export default async function ExploreMembershipsPage() {
 
   const centerLinks = [...orderedCenters, ...remainingCenters];
 
-  const allAmenitySlugs = [
-    ...new Set(fields.centers.flatMap((c) => c.amenitySlugs)),
-  ];
-  const amenitiesWithImages = await fetchAmenitiesWithImages(allAmenitySlugs);
+  const allAmenityNodes =
+    pageData?.page?.membershipPageFields?.centers?.nodes?.flatMap(
+      (n: any) => n?.centersFields?.amenities?.nodes ?? []
+    ) ?? [];
+  const amenitiesWithImages = mapAmenityNodesWithImages(allAmenityNodes);
 
   const serializedAmenities: SerializedAmenity[] = amenitiesWithImages.map((a) => ({
     name: a.name,

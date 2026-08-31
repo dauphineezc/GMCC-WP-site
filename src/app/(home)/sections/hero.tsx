@@ -10,6 +10,14 @@ import { useReduceMotionPreference } from "@/lib/useReduceMotionPreference";
 import Player from "@vimeo/player";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
+import { resolveWpMediaUrl } from "@/lib/wp";
+
+type WPImageNode = {
+  sourceUrl?: string | null;
+  altText?: string | null;
+  mediaDetails?: { width?: number | null; height?: number | null } | null;
+} & MediaFocalPointFields;
 
 type Linkish = { title?: string | null; url?: string | null };
 
@@ -21,11 +29,13 @@ export default function HeroSection({
   subheadline,
   primaryCta,
   secondaryCta,
+  heroFallbackImage,
 }: {
   headline: string;
   subheadline: string;
   primaryCta: Linkish;
   secondaryCta?: Linkish | null;
+  heroFallbackImage?: WPImageNode | null;
 }) {
   const reduceMotion = useReduceMotionPreference();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -34,8 +44,14 @@ export default function HeroSection({
   const [inView, setInView] = useState(false);
   const [videoPaused, setVideoPaused] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
 
-  const showVideo = !reduceMotion && inView;
+  const fallbackSrc =
+    resolveWpMediaUrl(heroFallbackImage?.sourceUrl) ?? HERO_VIDEO_VIMEO_THUMBNAIL_URL;
+  const fallbackAlt = heroFallbackImage?.altText?.trim() || "";
+  const fallbackObjectPosition = mediaFocalPositionCss(heroFallbackImage);
+
+  const showVideo = !reduceMotion && inView && !videoFailed;
 
   useEffect(() => {
     const el = containerRef.current;
@@ -43,7 +59,7 @@ export default function HeroSection({
 
     const io = new IntersectionObserver(
       ([entry]) => setInView(entry.isIntersecting),
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     io.observe(el);
@@ -70,25 +86,32 @@ export default function HeroSection({
     playerRef.current = player;
     let cancelled = false;
 
+    const markFailed = () => {
+      if (cancelled) return;
+      setPlayerReady(false);
+      setVideoFailed(true);
+    };
+
     player
       .ready()
       .then(() => {
         if (!cancelled) setPlayerReady(true);
       })
-      .catch(() => {
-        if (!cancelled) setPlayerReady(false);
-      });
+      .catch(markFailed);
 
     const onPlay = () => setVideoPaused(false);
     const onPause = () => setVideoPaused(true);
+    const onError = () => markFailed();
 
     player.on("play", onPlay);
     player.on("pause", onPause);
+    player.on("error", onError);
 
     return () => {
       cancelled = true;
       player.off("play", onPlay);
       player.off("pause", onPause);
+      player.off("error", onError);
       player.destroy().catch(() => {});
       playerRef.current = null;
       setPlayerReady(false);
@@ -126,18 +149,18 @@ export default function HeroSection({
               className="absolute inset-x-0 -top-24 bottom-0 z-0 overflow-hidden md:top-0"
               aria-hidden="true"
             >
-              {reduceMotion || !showVideo ? (
-                <div className={`${coverMediaClassName} relative`}>
-                  <Image
-                    src={HERO_VIDEO_VIMEO_THUMBNAIL_URL}
-                    alt=""
-                    fill
-                    priority
-                    sizes="100vw"
-                    className="pointer-events-none object-cover"
-                  />
-                </div>
-              ) : null}
+              {/* Always-on poster: CMS fallback, else Vimeo thumbnail */}
+              <div className={`${coverMediaClassName} relative`}>
+                <Image
+                  src={fallbackSrc}
+                  alt={fallbackAlt}
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="pointer-events-none object-cover"
+                  style={fallbackObjectPosition ? { objectPosition: fallbackObjectPosition } : undefined}
+                />
+              </div>
 
               {showVideo ? (
                 <div className={coverMediaClassName}>
@@ -153,7 +176,7 @@ export default function HeroSection({
               ) : null}
             </div>
 
-            {!reduceMotion ? (
+            {!reduceMotion && !videoFailed ? (
               <button
                 type="button"
                 className="absolute right-4 top-4 z-50 rounded-full border border-white/40 bg-black/40 px-3 py-2 text-xs font-sm text-white backdrop-blur-sm transition hover:bg-black/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60 md:right-8 md:top-8"
@@ -189,7 +212,7 @@ export default function HeroSection({
 
                     {secondaryCta?.url ? (
                       <a href={secondaryCta.url} className="btn btn-secondary">
-                        {secondaryCta.title || "Explore"}
+                        {secondaryCta.title}
                       </a>
                     ) : null}
                   </div>

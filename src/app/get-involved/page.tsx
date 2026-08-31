@@ -65,6 +65,7 @@ query GetInvolvedPage($uri: ID!) {
         sponsorApplication {
           node {
             ${WP_MEDIA_IMAGE_FIELDS}
+            mediaItemUrl
             mediaDetails { width height }
           }
         }
@@ -117,7 +118,7 @@ type GetInvolvedFields = {
     sponsorCardIcon?: MaybeImage;
     sponsorLongDescription?: string | null;
     sponsorImage?: MaybeImage;
-    sponsorApplication?: string | null;
+    sponsorApplication?: MaybeImage;
     viewSponsorsPageCta?: {
       ctaLabel?: string | null;
       cta?: string | null;

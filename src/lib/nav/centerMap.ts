@@ -1,4 +1,5 @@
 // lib/nav/centerMap.ts
+import { cache } from "react";
 import { wpFetch } from "@/lib/wp";
 
 type CenterNode = { slug: string; uri: string };
@@ -19,7 +20,7 @@ function normalizePath(p: string) {
   return path.replace(/\/$/, "") || "/";
 }
 
-export async function getCenterWpToNextMap() {
+export const getCenterWpToNextMap = cache(async () => {
   const data = await wpFetch<{
     centers: { nodes: CenterNode[] };
   }>(CENTERS_QUERY);
@@ -42,4 +43,4 @@ export async function getCenterWpToNextMap() {
   }
 
   return map;
-}
+});

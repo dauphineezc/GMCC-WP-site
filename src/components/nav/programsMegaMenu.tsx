@@ -13,9 +13,10 @@ function ProgramsMegaMenu({ item, onClose }: ProgramsMegaMenuProps) {
     <div className="flex gap-12">
       {item.children.map((category) => (
         <div key={category.id} className="min-w-[150px]">
-          {/* Category header (icon + title) */}
-          <Link 
+          {/* Category header — no prefetch: each /programs?... is GraphQL-heavy */}
+          <Link
             href={category.href}
+            prefetch={false}
             onClick={onClose}
             className="group flex flex-col items-center text-center"
           >
@@ -40,6 +41,7 @@ function ProgramsMegaMenu({ item, onClose }: ProgramsMegaMenuProps) {
                 <li key={leaf.id}>
                   <Link
                     href={leaf.href}
+                    prefetch={false}
                     onClick={onClose}
                     className="inline-block text-sm text-gray-600 transition-all duration-200 ease-out hover:text-gmcc-teal hover:-translate-y-0.5"
                   >

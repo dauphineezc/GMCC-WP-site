@@ -2,6 +2,7 @@ import { wpFetch } from "@/lib/wp";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import Tabs from "@/components/tabs";
 import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+import JotFormEmbed from "@/components/jotFormEmbed";
 
 
 const VIRTUAL_FITNESS_PAGE_QUERY = /* GraphQL */ `
@@ -211,87 +212,26 @@ export default async function VirtualFitnessPage() {
         {f?.howSectionFormText ? <p className="mt-4 leading-relaxed text-neutral-700">{f?.howSectionFormText}</p> : null}
       </section>
 
-        {/* Placeholder contact form (visual only) */}
-        <div className="relative overflow-hidden mt-8 pb-8">
-          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
-            <img
-              src="/GreaterLogoBG.png"
-              alt=""
-              className="absolute left-10 bottom-0 w-58 select-none md:w-80"
-              draggable={false}
-            />
-            <img
-              src="/GreaterLogoBG.png"
-              alt=""
-              className="absolute right-10 top-0 w-58 select-none md:w-80"
-              draggable={false}
-            />
-          </div>
-
-          <div className="relative mx-auto max-w-xl rounded-2xl border border-neutral-300 bg-neutral-100 p-6 shadow-sm">
-            <form className="mt-4 space-y-4" aria-label="Placeholder contact form">
-              <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="firstName" className="block text-sm text-neutral-700">
-                  First Name
-                </label>
-                <input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  placeholder=""
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                />
-              </div>
-              <div>
-                <label htmlFor="lastName" className="block text-sm text-neutral-700">
-                  Last Name
-                </label>
-                <input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  placeholder=""
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                />
-              </div>
-              </div>
-              <div>
-                <label htmlFor="email" className="block text-sm text-neutral-700">
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder=""
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="membershipType" className="block text-sm text-neutral-700">
-                  Membership Type
-                </label>
-                <select
-                  id="membershipType"
-                  name="membershipType"
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                >
-                  <option value="centerPlus">Center Plus</option>
-                  <option value="allAccess">All Access</option>
-                  <option value="corporateWellness">Corporate Wellness</option>
-                </select>
-              </div>
-
-              <div className="pt-1 text-center">
-                <button type="button" className="btn btn-primary min-w-28">
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
+      <div className="relative overflow-hidden -mt-0 pb-8">
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
+          <img
+            src="/GreaterLogoBG.png"
+            alt=""
+            className="absolute left-15 bottom-30 w-0 select-none lg:w-100"
+            draggable={false}
+          />
+          <img
+            src="/GreaterLogoBG.png"
+            alt=""
+            className="absolute right-15 top-30 w-0 select-none lg:w-100"
+            draggable={false}
+          />
         </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 lg:-mt-8 lg:-mb-8">
+          <JotFormEmbed formId="262396102037149" />
+        </div>
+      </div>
 
         <section className="mt-8 mx-auto max-w-6xl px-6">
           {f?.scheduleHeader ? (

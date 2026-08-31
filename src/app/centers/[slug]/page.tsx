@@ -4,8 +4,11 @@ import CenterCampaignModule from "@/components/centerCampaignModule";
 import FeaturedTestimonialsCarousel from "@/components/featuredTestimonialsCarousel";
 import PhoneLink from "@/components/phoneLink";
 import { normalizeTestimonials } from "@/components/testimonials";
-import { extractAmenitySlugs, toAmenityDisplayForCenter } from "@/lib/amenities";
-import { fetchAmenitiesWithImages } from "@/lib/amenities";
+import {
+  AMENITIES_FIELDS_BLOCK,
+  mapAmenityNodesWithImages,
+  toAmenityDisplayForCenter,
+} from "@/lib/amenities";
 import { acfGalleryPhotoNodes, wpFetch } from "@/lib/wp";
 import { resolveHeroCta } from "@/lib/pageHeroFields";
 import type { HeroCta } from "@/components/photoWaveHeader";
@@ -92,70 +95,10 @@ const CENTER_BY_SLUG_QUERY = `
           nodes {
             name
             slug
+            description
             ... on Amenity {
               amenitiesFields {
-                amenityImage1 {
-                  node { ${WP_MEDIA_IMAGE_FIELDS} }
-                }
-                center1 {
-                  nodes {
-                    ... on Center {
-                      title
-                      slug
-                    }
-                  }
-                }
-                amenityImage2 {
-                  node { ${WP_MEDIA_IMAGE_FIELDS} }
-                }
-                center2 {
-                  nodes {
-                    ... on Center {
-                      title
-                      slug
-                    }
-                  }
-                }
-                amenityImage3 {
-                  node { ${WP_MEDIA_IMAGE_FIELDS} }
-                }
-                center3 {
-                  nodes {
-                    ... on Center {
-                      title
-                      slug
-                    }
-                  }
-                }
-                amenityImage4 {
-                  node { ${WP_MEDIA_IMAGE_FIELDS} }
-                }
-                center4 {
-                  nodes {
-                    ... on Center {
-                      title
-                      slug
-                    }
-                  }
-                }
-                amenityImage5 {
-                  node { ${WP_MEDIA_IMAGE_FIELDS} }
-                }
-                center5 {
-                  nodes {
-                    ... on Center {
-                      title
-                      slug
-                    }
-                  }
-                }
-                relevantLink
-                linkLabel
-                isService
-                additionalInformation
-                additionalImage {
-                  node { ${WP_MEDIA_IMAGE_FIELDS} }
-                }
+${AMENITIES_FIELDS_BLOCK}
               }
             }
           }
@@ -352,10 +295,8 @@ export default async function CenterPage(props: CenterPageProps) {
   }
 
   const amenityNodes = center.centersFields?.amenities?.nodes ?? [];
-
-  // Fetch amenities for this center
-  const amenitySlugs = extractAmenitySlugs(amenityNodes);
-  const amenitiesWithImages = await fetchAmenitiesWithImages(amenitySlugs);
+  // Amenity ACF is already on CenterBySlug — map in-process (no AmenityBySlug N+1).
+  const amenitiesWithImages = mapAmenityNodesWithImages(amenityNodes);
   const amenitiesForThisCenter = toAmenityDisplayForCenter(amenitiesWithImages, slug);
 
 

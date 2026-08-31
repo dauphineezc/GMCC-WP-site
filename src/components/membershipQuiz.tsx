@@ -51,6 +51,62 @@ function filterProgramAreasForQuiz(
   return matched.length > 0 ? matched : all;
 }
 
+function getMembershipTierName(title: string): string {
+  let separatorIndex = title.indexOf(" – ");
+  if (separatorIndex < 0) separatorIndex = title.indexOf(" - ");
+  if (separatorIndex > 0) return title.substring(0, separatorIndex).trim();
+  if (title.includes("Membership")) return title.replace("Membership", "").trim();
+  return title.trim();
+}
+
+function getAudienceFromTitle(title: string): string {
+  let separatorIndex = title.indexOf(" – ");
+  if (separatorIndex < 0) separatorIndex = title.indexOf(" - ");
+  if (separatorIndex > 0) return title.substring(separatorIndex + 3).trim();
+  return "";
+}
+
+function labelLooksSenior(label: string): boolean {
+  return label.toLowerCase().includes("senior");
+}
+
+function labelLooksAdult(label: string): boolean {
+  const aud = label.toLowerCase();
+  if (
+    aud.includes("youth") ||
+    aud.includes("junior") ||
+    aud.includes("young") ||
+    aud.includes("family") ||
+    aud.includes("senior")
+  ) {
+    return false;
+  }
+  return (
+    (aud.includes("adult") && !aud.includes("young")) ||
+    aud.includes("individual") ||
+    (aud.includes("25") && aud.includes("over"))
+  );
+}
+
+function membershipMatchesAudienceLabels(
+  m: Membership,
+  predicate: (label: string) => boolean
+): boolean {
+  if (m.audience.some((a) => predicate(a.slug) || predicate(a.name))) return true;
+  const fromTitle = getAudienceFromTitle(m.title);
+  return fromTitle ? predicate(fromTitle) : false;
+}
+
+function isSeniorAudienceSelection(
+  audienceFilter: string,
+  audiences: Audience[]
+): boolean {
+  if (!audienceFilter) return false;
+  if (labelLooksSenior(audienceFilter)) return true;
+  const selected = audiences.find((a) => a.slug === audienceFilter);
+  return selected ? labelLooksSenior(selected.name) : false;
+}
+
 export default function MembershipQuiz({
   audiences,
   programAreas,
@@ -97,18 +153,50 @@ export default function MembershipQuiz({
   }, []);
 
   const filteredMemberships = useMemo(() => {
-    return memberships.filter((m) => {
-      const matchesAudience = audienceFilter
-        ? m.audience.some((a) => a.slug === audienceFilter)
-        : true;
-      const matchesProgramArea = programAreaFilters.length
+    const matchesProgramArea = (m: Membership) =>
+      programAreaFilters.length
         ? programAreaFilters.every((sel) =>
             m.programArea.some((p) => p.slug === sel)
           )
         : true;
-      return matchesAudience && matchesProgramArea;
-    });
-  }, [memberships, audienceFilter, programAreaFilters]);
+
+    if (!audienceFilter) {
+      return memberships.filter(matchesProgramArea);
+    }
+
+    // Senior: prefer senior-specific variants per membership tier/center;
+    // fall back to adult when that tier has no senior option.
+    if (isSeniorAudienceSelection(audienceFilter, audiences)) {
+      const byTier = new Map<string, Membership[]>();
+      for (const m of memberships) {
+        const tier = getMembershipTierName(m.title);
+        const list = byTier.get(tier) ?? [];
+        list.push(m);
+        byTier.set(tier, list);
+      }
+
+      const chosen: Membership[] = [];
+      for (const variants of byTier.values()) {
+        const seniors = variants.filter((m) =>
+          membershipMatchesAudienceLabels(m, labelLooksSenior)
+        );
+        const adults = variants.filter((m) =>
+          membershipMatchesAudienceLabels(m, labelLooksAdult)
+        );
+        const pick = seniors.length > 0 ? seniors : adults;
+        for (const m of pick) {
+          if (matchesProgramArea(m)) chosen.push(m);
+        }
+      }
+      return chosen;
+    }
+
+    return memberships.filter(
+      (m) =>
+        m.audience.some((a) => a.slug === audienceFilter) &&
+        matchesProgramArea(m)
+    );
+  }, [memberships, audienceFilter, programAreaFilters, audiences]);
 
   const comparedMemberships = useMemo(
     () => memberships.filter((m) => comparedSlugs.includes(m.slug)),

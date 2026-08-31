@@ -1,7 +1,5 @@
-import { buildEventHref } from "@/lib/events/buildEventHref";
-import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
+import { cache } from "react";
 import { wpFetch, WpMediaFieldInput } from "@/lib/wp";
-import { pageUriCandidatesForSlug } from "@/lib/pageHeroFields";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 /** WordPress page slug that holds `centerPageFields` (ACF on center template page). */
@@ -24,8 +22,8 @@ export function coerceWpRichText(input: unknown): string {
   return "";
 }
 
-/** Core layout: avoids heavy / fragile fragments so hours + ready-to-join still load. */
-const CENTER_DETAIL_PAGE_FIELDS_CORE = `
+/** Single page body: core layout + curling CTA copy (one GraphQL POST). */
+const CENTER_DETAIL_PAGE_FIELDS_BODY = `
       centerPageFields {
         testimonialHeader
         readyToJoinSection {
@@ -51,14 +49,6 @@ const CENTER_DETAIL_PAGE_FIELDS_CORE = `
             }
             icon { node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }}
           }
-        }
-      }
-`;
-
-/** Curling CTA copy only — must not share a query with `featuredProgramEvent` or a schema error there drops all copy. */
-const CURLING_MEMBERSHIP_CTA_COPY = `
-      centerPageFields {
-        curlingCenterPageFields {
           membershipReplacementCta {
             header
             subheader
@@ -172,133 +162,36 @@ export type CenterDetailPageFields = {
   curlingCenterPageFields?: CenterPageCurlingFields | null;
 };
 
-function mergeCenterDetailParts(
-  core: CenterDetailPageFields | null | undefined,
-  curlingCtaCopy: CenterDetailPageFields | null | undefined,
-): CenterDetailPageFields | null {
-  if (!core && !curlingCtaCopy) return null;
-
-  const baseCurl = core?.curlingCenterPageFields;
-  const copyCurl = curlingCtaCopy?.curlingCenterPageFields;
-
-  const textMrc = copyCurl?.membershipReplacementCta;
-  const membershipReplacementCta =
-    textMrc || baseCurl?.membershipReplacementCta
-      ? {
-          header: textMrc?.header ?? baseCurl?.membershipReplacementCta?.header,
-          subheader: textMrc?.subheader ?? baseCurl?.membershipReplacementCta?.subheader,
-          cardText: textMrc?.cardText ?? baseCurl?.membershipReplacementCta?.cardText,
-          ctaLabel: textMrc?.ctaLabel ?? baseCurl?.membershipReplacementCta?.ctaLabel,
-          ctaUrl: textMrc?.ctaUrl ?? baseCurl?.membershipReplacementCta?.ctaUrl,
-        }
-      : null;
-
-  const historySection =
-    baseCurl?.historySection ?? copyCurl?.historySection ?? null;
-
-  const hasCurlingBlock =
-    baseCurl?.hoursReplacementStatement != null ||
-    copyCurl?.hoursReplacementStatement != null ||
-    membershipReplacementCta != null ||
-    baseCurl?.midlandCurlingClubLogo != null ||
-    copyCurl?.midlandCurlingClubLogo != null ||
-    historySection != null;
-
-  return {
-    testimonialHeader:
-      core?.testimonialHeader ?? curlingCtaCopy?.testimonialHeader,
-    readyToJoinSection:
-      core?.readyToJoinSection ?? curlingCtaCopy?.readyToJoinSection,
-    socialIcons: core?.socialIcons ?? curlingCtaCopy?.socialIcons,
-    curlingCenterPageFields: hasCurlingBlock
-      ? {
-          hoursReplacementStatement:
-            baseCurl?.hoursReplacementStatement ??
-            copyCurl?.hoursReplacementStatement ??
-            null,
-          midlandCurlingClubLogo: baseCurl?.midlandCurlingClubLogo ?? copyCurl?.midlandCurlingClubLogo ?? null,
-          membershipReplacementCta: membershipReplacementCta ?? null,
-          historySection,
-        }
-      : null,
-  };
-}
-
-async function loadCenterDetailCenterPageFieldsBody(pageInnerBody: string): Promise<CenterDetailPageFields | null> {
-  const uriQuery = /* GraphQL */ `
-    query CenterDetailPageByUri($pageUri: ID!) {
-      page(id: $pageUri, idType: URI) {
-        ${pageInnerBody}
-      }
-    }
-  `;
-
-  for (const uri of pageUriCandidatesForSlug(CENTER_DETAIL_WP_PAGE_SLUG)) {
-    try {
-      const data = await wpFetch<{ page?: { centerPageFields?: CenterDetailPageFields | null } | null }>(
-        uriQuery,
-        { pageUri: uri },
-        { suppressGraphQLErrorLogging: true },
-      );
-      if (data?.page) {
-        return data.page.centerPageFields ?? null;
-      }
-    } catch {
-      // try next URI form
-    }
-  }
-
-  try {
-    const lookup = await wpFetch<{
-      pages?: { nodes?: Array<{ databaseId: number }> } | null;
-    }>(
-      /* GraphQL */ `
-        query LookupCenterDetailPageId($slug: String!) {
-          pages(where: { name: $slug }, first: 1) {
-            nodes { databaseId }
-          }
-        }
-      `,
-      { slug: CENTER_DETAIL_WP_PAGE_SLUG },
-      { suppressGraphQLErrorLogging: true },
-    );
-    const dbId = lookup?.pages?.nodes?.[0]?.databaseId;
-    if (dbId) {
-      const dbIdQuery = /* GraphQL */ `
-        query CenterDetailPageByDbId($dbId: ID!) {
-          page(id: $dbId, idType: DATABASE_ID) {
-            ${pageInnerBody}
-          }
-        }
-      `;
-      const data = await wpFetch<{ page?: { centerPageFields?: CenterDetailPageFields | null } | null }>(
-        dbIdQuery,
-        { dbId: String(dbId) },
-        { suppressGraphQLErrorLogging: true },
-      );
-      return data?.page?.centerPageFields ?? null;
-    }
-  } catch {
-    // exhausted
-  }
-
-  return null;
-}
-
 /**
- * Load ACF `centerPageFields` from the WordPress page assigned as center detail template
- * (same strategy as `fetchPageWithHeroFields`: URI attempts then databaseId).
- *
- * Curling membership CTA is split further: copy vs `featuredProgramEvent` so link/schema issues
- * cannot hide header, subheader, card text, or button label.
+ * Load ACF `centerPageFields` from the WordPress page assigned as center detail template.
+ * Uses `pages(where: { name })` (one POST) and React `cache()` per request.
  */
-export async function fetchCenterDetailPageFields(): Promise<CenterDetailPageFields | null> {
-  const [core, curlingCtaCopy] = await Promise.all([
-    loadCenterDetailCenterPageFieldsBody(CENTER_DETAIL_PAGE_FIELDS_CORE),
-    loadCenterDetailCenterPageFieldsBody(CURLING_MEMBERSHIP_CTA_COPY),
-  ]);
-  return mergeCenterDetailParts(core, curlingCtaCopy);
-}
+export const fetchCenterDetailPageFields = cache(
+  async (): Promise<CenterDetailPageFields | null> => {
+    try {
+      const data = await wpFetch<{
+        pages?: {
+          nodes?: Array<{ centerPageFields?: CenterDetailPageFields | null }>;
+        } | null;
+      }>(
+        /* GraphQL */ `
+          query CenterDetailPageFields($slug: String!) {
+            pages(where: { name: $slug }, first: 1) {
+              nodes {
+                ${CENTER_DETAIL_PAGE_FIELDS_BODY}
+              }
+            }
+          }
+        `,
+        { slug: CENTER_DETAIL_WP_PAGE_SLUG },
+        { suppressGraphQLErrorLogging: true },
+      );
+      return data?.pages?.nodes?.[0]?.centerPageFields ?? null;
+    } catch {
+      return null;
+    }
+  },
+);
 
 /** True if this center should use curling-specific ACF (URL slug or WP Center slug). */
 export function isCurlingCenterSlug(routeSlug: string, centerSlug?: string | null): boolean {

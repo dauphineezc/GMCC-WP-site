@@ -6,12 +6,15 @@ import {
   GENERAL_CONTACT_FORM_ID,
   GENERAL_CONTACT_FORM_URL,
 } from "@/lib/constants";
+import { getJotFormEmbedSrc, getJotFormIdFromUrl } from "@/lib/jotform";
 
 const JOTFORM_EMBED_HANDLER =
   "https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js";
 
 type JotFormEmbedProps = {
   formId?: string;
+  /** Full JotForm URL (preserves prefill query params). Takes precedence over formId. */
+  formUrl?: string;
   className?: string;
   /** Override iframe id when multiple embeds can appear on one page. */
   iframeId?: string;
@@ -44,17 +47,23 @@ function initEmbedHandler(iframeId: string) {
 
 export default function JotFormEmbed( {
   formId = GENERAL_CONTACT_FORM_ID,
+  formUrl,
   className = "",
   iframeId,
   height = 539,
   autoResize = true,
   resizeKey,
 }: JotFormEmbedProps) {
-  const resolvedIframeId = iframeId ?? `JotFormIFrame-${formId}`;
-  const formUrl =
-    formId === GENERAL_CONTACT_FORM_ID
-      ? GENERAL_CONTACT_FORM_URL
-      : `https://form.jotform.com/${formId}`;
+  const resolvedFormId =
+    formId === GENERAL_CONTACT_FORM_ID && formUrl
+      ? (getJotFormIdFromUrl(formUrl) ?? formId)
+      : formId;
+  const resolvedIframeId = iframeId ?? `JotFormIFrame-${resolvedFormId}`;
+  const embedSrc = formUrl
+    ? getJotFormEmbedSrc(formUrl)
+    : resolvedFormId === GENERAL_CONTACT_FORM_ID
+      ? `${GENERAL_CONTACT_FORM_URL}?isIframeEmbed=1`
+      : `https://form.jotform.com/${resolvedFormId}?isIframeEmbed=1`;
 
   useEffect(() => {
     if (!autoResize) return;
@@ -65,7 +74,7 @@ export default function JotFormEmbed( {
     <div className={className}>
       <iframe
         id={resolvedIframeId}
-        src={`${formUrl}?isIframeEmbed=1`}
+        src={embedSrc ?? undefined}
         allow="geolocation; microphone; camera; fullscreen; payment"
         allowFullScreen
         className="block w-full border-0 bg-transparent"

@@ -1,4 +1,5 @@
 // lib/nav/getFooterNav.ts
+import { cache } from "react";
 import { wpFetch } from "../wp";
 
 export type FooterNavItem = {
@@ -37,7 +38,7 @@ function normalizeWpUrlToPath(url: string): string {
   }
 }
 
-export async function getFooterNav(): Promise<FooterNavItem[]> {
+export const getFooterNav = cache(async (): Promise<FooterNavItem[]> => {
   const data = await wpFetch<{
     menu: { menuItems: { nodes: WPMenuItem[] } } | null;
   }>(FOOTER_NAV_QUERY);
@@ -49,5 +50,5 @@ export async function getFooterNav(): Promise<FooterNavItem[]> {
     label: item.label,
     href: normalizeWpUrlToPath(item.url),
   }));
-}
+});
 

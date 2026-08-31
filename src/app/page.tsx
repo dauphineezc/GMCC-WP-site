@@ -15,7 +15,6 @@ import { EVENT_SCHEDULE_GRAPHQL, selectNextUpcomingEvents } from "@/lib/events/e
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { formatEventBadgeDate } from "@/lib/events/formatEventDate";
 import NewsSection from "./(home)/sections/news";
-import UtilityMenu from "@/components/nav/utilityMenu";
 
 /** Regenerate at most once per day; cron can trigger sooner via `/api/revalidate`. */
 export const revalidate = 86400;
@@ -58,6 +57,7 @@ type HomeData = {
         heroPrimaryCtaUrl?: string | null;
         heroSecondaryCtaLabel?: string | null;
         heroSecondaryCtaUrl?: string | null;
+        heroFallbackImage?: GqlImage | null;
       } | null;
 
       aboutHeader?: string | null;
@@ -337,17 +337,11 @@ query HomePage($uri: ID!) {
       hero {
         heroHeadline
         heroSubheadline
-        heroMedia {
-          node {
-            ${WP_MEDIA_IMAGE_FIELDS}
-            mediaItemUrl
-            mimeType
-          }
-        }
         heroPrimaryCtaLabel
         heroPrimaryCtaUrl
         heroSecondaryCtaLabel
         heroSecondaryCtaUrl
+        heroFallbackImage { node { ${WP_MEDIA_IMAGE_FIELDS} } }
       }
 
       aboutHeader
@@ -553,14 +547,7 @@ export default async function HomePage() {
   const timeline = normalizeTimelineItems(f?.historyTimeline?.timelineItems);
 
   return (
-    <main className="bg-white">
-
-      <header>
-        <div className="flex items-center justify-end">
-          <UtilityMenu />
-        </div>
-      </header>
-      
+    <div className="bg-white">
       <HeroSection
         headline={hero?.heroHeadline ?? "Serving Greater Midland for Over a Century"}
         subheadline={hero?.heroSubheadline ?? "Building healthier people, stronger families, and a more connected community."}
@@ -573,6 +560,7 @@ export default async function HomePage() {
             ? { title: hero?.heroSecondaryCtaLabel ?? "Learn more", url: hero?.heroSecondaryCtaUrl }
             : null
         }
+        heroFallbackImage={hero?.heroFallbackImage?.node}
       />
 
       <AboutSection
@@ -632,7 +620,7 @@ export default async function HomePage() {
        newsletterSubscriptionHeader={f?.newsletterSubscriptionHeader ?? null}
        newsletterSubscriptionSubtext={f?.newsletterSubscriptionSubtext ?? null}
        />
-    </main>
+    </div>
   );
 }
 

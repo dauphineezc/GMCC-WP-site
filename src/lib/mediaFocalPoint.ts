@@ -3,6 +3,10 @@
  *
  * GraphQL fields: focalPointX, focalPointY, hasCustomFocalPoint (percentages 0–100).
  * Unset defaults from the plugin are typically 50 / 50.
+ * *
+ * Set WP_FOCAL_POINT_GRAPHQL=false when the focal-point plugin is deactivated on
+ * WordPress — otherwise every query using WP_MEDIA_IMAGE_FIELDS will fail with
+ * "Cannot query field focalPointX on type MediaItem".
  */
 
 export type MediaFocalPointFields = {
@@ -11,13 +15,21 @@ export type MediaFocalPointFields = {
   hasCustomFocalPoint?: boolean | null;
 };
 
+/** When false, omit plugin-only fields so GraphQL still works without the plugin. */
+const INCLUDE_FOCAL_POINT_GRAPHQL =
+  process.env.WP_FOCAL_POINT_GRAPHQL !== "false";
+const WP_MEDIA_FOCAL_POINT_FIELDS = INCLUDE_FOCAL_POINT_GRAPHQL
+  ? `
+  focalPointX
+  focalPointY
+  hasCustomFocalPoint`
+  : "";
+
 /** GraphQL selection for image media nodes (interpolate inside `node { ... }`). */
 export const WP_MEDIA_IMAGE_FIELDS = `
   sourceUrl
   altText
-  focalPointX
-  focalPointY
-  hasCustomFocalPoint
+  ${WP_MEDIA_FOCAL_POINT_FIELDS}
 `;
 
 function asFiniteNumber(v: unknown): number | undefined {

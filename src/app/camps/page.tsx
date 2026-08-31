@@ -388,7 +388,7 @@ function TextCardBlock({
     ? true
     : openLinkInNewTab(href, acfCtaTarget(item.cta));
   const ctaLinkText =
-    item.ctaLabel?.trim() || acfCtaTitle(item.cta) || (href ? "Open link" : "");
+    item.ctaLabel?.trim() || acfCtaTitle(item.cta) || (href);
 
   const shell =
     variant === "navy"
@@ -709,11 +709,11 @@ export default async function CampsPage() {
                 <TextCardBlock
                   key={`benefit-${index}`}
                   item={item}
-                  ctaHrefOverride={
-                    isFinancialAssistanceBenefit(item)
-                      ? acfFileHref(f.financialAssistanceApplication)
-                      : undefined
-                  }
+                  // ctaHrefOverride={
+                  //   isFinancialAssistanceBenefit(item)
+                  //     ? acfFileHref(f.financialAssistanceApplication)
+                  //     : undefined
+                  // }
                 />
               ))}
             </div>

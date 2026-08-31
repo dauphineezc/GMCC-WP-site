@@ -105,6 +105,7 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
                 node { ${WP_MEDIA_IMAGE_FIELDS} }
               }
             }
+            interestFormLink
           }
         }
       }
@@ -131,6 +132,7 @@ const PLAN_AN_EVENT_PAGE_QUERY = /* GraphQL */ `
               }
             }
             partyType
+            interestFormLink
           }
         }
       }

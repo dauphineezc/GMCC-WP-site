@@ -1,4 +1,5 @@
 // src/lib/nav/getUtilityMenu.ts
+import { cache } from "react";
 import { wpFetch } from "@/lib/wp";
 import type { NavItem } from "@/lib/nav/tree";
 
@@ -58,7 +59,7 @@ function normalizeHref(urlOrPath: string): string {
   }
 }
 
-export async function getUtilityNav(): Promise<NavItem[]> {
+export const getUtilityNav = cache(async (): Promise<NavItem[]> => {
   try {
     const data = await wpFetch<UtilityMenuQuery>(UTILITY_MENU_QUERY, {
       id: UTILITY_MENU_DATABASE_ID,
@@ -83,4 +84,4 @@ export async function getUtilityNav(): Promise<NavItem[]> {
     console.error("getUtilityNav failed:", err);
     return [];
   }
-}
+});

@@ -48,9 +48,9 @@ export function pageUriCandidatesForSlug(slug: string): string[] {
 /**
  * Fetch hero fields for a WP page by slug.
  *
- * Strategy: try `idType: URI` first (fast, works for most pages), then fall back
- * to resolving `databaseId` via `pages(where: { name: $slug })` and re-querying
- * with `idType: DATABASE_ID` (handles CPT-slug conflicts like "programs"/"events").
+ * Prefer `pages(where: { name })` (one GraphQL POST). URI lookup often fails when the
+ * page slug collides with a CPT archive (e.g. "programs", "events"); name lookup does not.
+ * Optional URI fallback remains for unusual permalink setups.
  *
  * @param slug          The WP page slug (e.g. "programs")
  * @param extraFields   Additional GraphQL fields to select inside `page { ... }`, e.g. ACF group queries.
@@ -73,7 +73,30 @@ export async function fetchPageWithHeroFields<
 
   let lastError: unknown = null;
 
-  // --- Attempt 1: idType URI ---
+  // --- Prefer post_name lookup (1 POST; avoids CPT/URI collisions) ---
+  try {
+    const byName = await wpFetch<{
+      pages?: { nodes?: Array<WpPageWithHeroFields & TExtra> } | null;
+    }>(
+      /* GraphQL */ `
+        query PageBySlug($slug: String!) {
+          pages(where: { name: $slug }, first: 1) {
+            nodes {
+              ${pageBody}
+            }
+          }
+        }
+      `,
+      { slug },
+      { suppressGraphQLErrorLogging: true },
+    );
+    const node = byName?.pages?.nodes?.[0];
+    if (node) return node;
+  } catch (error) {
+    lastError = error;
+  }
+
+  // --- Fallback: idType URI (unusual permalink cases) ---
   const uriQuery = /* GraphQL */ `
     query PageByUri($pageUri: ID!) {
       page(id: $pageUri, idType: URI) {
@@ -91,44 +114,7 @@ export async function fetchPageWithHeroFields<
       if (data?.page) return data.page;
     } catch (error) {
       lastError = error;
-      // URI form not recognised — try next
     }
-  }
-
-  // --- Attempt 2: resolve databaseId, then query with DATABASE_ID ---
-  try {
-    const lookup = await wpFetch<{
-      pages?: { nodes?: Array<{ databaseId: number }> } | null;
-    }>(
-      /* GraphQL */ `
-        query LookupPageId($slug: String!) {
-          pages(where: { name: $slug }, first: 1) {
-            nodes { databaseId }
-          }
-        }
-      `,
-      { slug },
-      { suppressGraphQLErrorLogging: true },
-    );
-    const dbId = lookup?.pages?.nodes?.[0]?.databaseId;
-    if (dbId) {
-      const dbIdQuery = /* GraphQL */ `
-        query PageByDbId($dbId: ID!) {
-          page(id: $dbId, idType: DATABASE_ID) {
-            ${pageBody}
-          }
-        }
-      `;
-      const data = await wpFetch<{ page?: (WpPageWithHeroFields & TExtra) | null }>(
-        dbIdQuery,
-        { dbId: String(dbId) },
-        { suppressGraphQLErrorLogging: true },
-      );
-      if (data?.page) return data.page;
-    }
-  } catch (error) {
-    lastError = error;
-    // exhausted options
   }
 
   if (process.env.NODE_ENV === "development" && lastError) {

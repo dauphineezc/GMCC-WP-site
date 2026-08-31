@@ -31,6 +31,7 @@ export type RoomData = {
     price?: string | null;
     roomAmenities?: string[] | string | null;
     gallery?: unknown;
+    interestFormLink?: string | null;
   } | null;
 };
 
@@ -45,6 +46,7 @@ export type PartyPackageData = {
     price?: string | null;
     center?: { nodes?: CenterRef[] | null } | null;
     partyType?: string | string[] | null;
+    interestFormLink?: string | null;
   } | null;
 };
 

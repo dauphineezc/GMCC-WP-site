@@ -29,7 +29,8 @@ function mapAmenityMediaNode(node: unknown): AmenityMediaImage | null {
   };
 }
 
-const AMENITIES_FIELDS_BLOCK = `
+/** Shared amenity ACF selection — embed on Center relationships to avoid AmenityBySlug N+1. */
+export const AMENITIES_FIELDS_BLOCK = `
         amenityImage1 { node { ${WP_MEDIA_IMAGE_FIELDS} } }
         center1 { nodes { ... on Center { slug title } } }
 
@@ -324,8 +325,40 @@ export function toAmenityImagesForCenter(
 
 
 /**
+ * Map amenity nodes already embedded on a Center (or similar) GraphQL response.
+ * Prefer this over {@link fetchAmenitiesWithImages} to avoid N+1 AmenityBySlug calls.
+ */
+export function mapAmenityNodesWithImages(
+  nodes: any[] | null | undefined,
+  options?: MapAmenityFieldsOptions
+): AmenityWithImage[] {
+  if (!nodes?.length) return [];
+
+  const amenities: AmenityWithImage[] = [];
+  const seen = new Set<string>();
+
+  for (const node of nodes) {
+    if (!node || typeof node !== "object") continue;
+    const slug = typeof node.slug === "string" ? node.slug : "";
+    if (slug && seen.has(slug)) continue;
+    if (slug) seen.add(slug);
+
+    const amenity = {
+      name: node.name,
+      slug: node.slug,
+      description: node.description ?? null,
+    };
+    const mapped = mapAmenityFieldsToWithImage(amenity, node.amenitiesFields, options);
+    if (mapped) amenities.push(mapped);
+  }
+
+  return amenities;
+}
+
+/**
  * Fetches amenity details including images for a list of amenity slugs.
  * Only returns amenities that have images.
+ * Prefer embedding amenity fields on the parent query + {@link mapAmenityNodesWithImages}.
  */
 export async function fetchAmenitiesWithImages(
   amenitySlugs: string[]

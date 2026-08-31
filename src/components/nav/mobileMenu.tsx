@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { NavItem } from "@/lib/nav/tree";
+import { shouldPrefetchHref } from "@/lib/nav/shouldPrefetchHref";
 import {
   applyGoogleTranslate,
   getGoogleTranslateLang,
@@ -408,6 +409,7 @@ export default function MobileMenu({
                         {/* Clickable label - navigates to page */}
                         <Link
                           href={item.href}
+                          prefetch={shouldPrefetchHref(item.href)}
                           onClick={onClose}
                           className="flex-1 px-6 py-4 text-gmcc-navy font-medium hover:bg-gmcc-blue-light/30 transition-colors"
                         >
@@ -457,6 +459,7 @@ export default function MobileMenu({
                                 ) : (
                                   <Link
                                     href={child.href}
+                                    prefetch={shouldPrefetchHref(child.href)}
                                     onClick={onClose}
                                     className="block px-10 py-3 text-gray-700 hover:text-gmcc-navy hover:bg-gmcc-blue-light/20 transition-colors"
                                   >
@@ -472,6 +475,7 @@ export default function MobileMenu({
                   ) : (
                     <Link
                       href={item.href}
+                      prefetch={shouldPrefetchHref(item.href)}
                       onClick={onClose}
                       className="block px-6 py-4 text-gmcc-navy font-medium hover:bg-gmcc-blue-light/30 transition-colors"
                     >
@@ -653,6 +657,7 @@ function NestedSubmenu({
         {/* Clickable label - navigates to category page */}
         <Link
           href={item.href}
+          prefetch={shouldPrefetchHref(item.href)}
           onClick={onClose}
           className="flex-1 px-10 py-3 text-gray-700 font-medium hover:text-gmcc-navy hover:bg-gmcc-blue-light/20 transition-colors"
         >
@@ -699,6 +704,7 @@ function NestedSubmenu({
               <li key={leaf.id}>
                 <Link
                   href={leaf.href}
+                  prefetch={shouldPrefetchHref(leaf.href)}
                   onClick={onClose}
                   className="block px-14 py-2 text-sm text-gray-600 hover:text-gmcc-navy transition-colors"
                 >

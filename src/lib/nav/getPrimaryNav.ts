@@ -1,4 +1,5 @@
 // lib/nav/getPrimaryNav.ts
+import { cache } from "react";
 import { wpFetch } from "@/lib/wp";
 import { buildMenuTree, type WPMenuItem } from "./tree";
 import { getCenterWpToNextMap } from "./centerMap";
@@ -20,7 +21,7 @@ const PRIMARY_NAV_QUERY = /* GraphQL */ `
   }
 `;
 
-export async function getPrimaryNav() {
+export const getPrimaryNav = cache(async () => {
   const [navData, centerMap] = await Promise.all([
     wpFetch<{ menu: { menuItems: { nodes: WPMenuItem[] } } | null }>(PRIMARY_NAV_QUERY),
     getCenterWpToNextMap(),
@@ -31,4 +32,4 @@ export async function getPrimaryNav() {
   return buildMenuTree(nodes, (item) =>
     resolveHref({ wpUrl: item.url, label: item.label, centerMap })
   );
-}
+});

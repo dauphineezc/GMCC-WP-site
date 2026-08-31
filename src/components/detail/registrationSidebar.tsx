@@ -1,4 +1,6 @@
 import PhoneLink from "@/components/phoneLink";
+import JotFormLightboxButton from "@/components/jotFormLightboxButton";
+import { getJotFormIdFromUrl } from "@/lib/jotform";
 
 type RegistrationInformation = {
   instructionalSubheader?: string | null;
@@ -74,13 +76,26 @@ export default function RegistrationSidebar({
         <div className="mt-4">
           <h2 className="h3">Need more information?</h2>
           <ul className="text-sm mt-2">
-            {links.map((link, i) => (
-              <li key={i}>
-                <a href={link.link} className="link body block text-sm">
-                  ➜ {link.linkLabel}
-                </a>
-              </li>
-            ))}
+            {links.map((link, i) => {
+              const jotFormId = getJotFormIdFromUrl(link.link);
+              return (
+                <li key={i}>
+                  {jotFormId ? (
+                    <JotFormLightboxButton
+                      formId={jotFormId}
+                      formUrl={link.link}
+                      className="link body block text-sm text-left"
+                    >
+                      ➜ {link.linkLabel}
+                    </JotFormLightboxButton>
+                  ) : (
+                    <a href={link.link} className="link body block text-sm">
+                      ➜ {link.linkLabel}
+                    </a>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

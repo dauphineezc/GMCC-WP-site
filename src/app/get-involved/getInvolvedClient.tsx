@@ -6,6 +6,7 @@ import Tabs from "@/components/tabs";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
 import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
+import { acfFileHref } from "@/lib/wp";
 
 type WPImageNode = {
   sourceUrl?: string | null;
@@ -46,7 +47,7 @@ type GetInvolvedFields = {
     sponsorCardIcon?: MaybeImage;
     sponsorLongDescription?: string | null;
     sponsorImage?: MaybeImage;
-    sponsorApplication?: string | null;
+    sponsorApplication?: MaybeImage;
     viewSponsorsPageCta?: {
       ctaLabel?: string | null;
       cta?: string | null;
@@ -88,6 +89,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
   const volunteer = fields?.volunteerGroup ?? null;
   const donate = fields?.donateGroup ?? null;
   const sponsor = fields?.sponsorGroup ?? null;
+  const sponsorApplicationHref = acfFileHref(sponsor?.sponsorApplication);
 
   return (
     <div className="overflow-x-clip">
@@ -249,10 +251,10 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
                     <TextBlock text={sponsor?.sponsorLongDescription} />
 
                     <div className="flex justify-center gap-4 mt-4">
-                      {sponsor?.sponsorApplication ? (
+                      {sponsorApplicationHref ? (
                       <div>
                           <a
-                          href={sponsor.sponsorApplication}
+                          href={sponsorApplicationHref}
                           className="btn btn-primary"
                           target="_blank"
                           rel="noopener noreferrer"

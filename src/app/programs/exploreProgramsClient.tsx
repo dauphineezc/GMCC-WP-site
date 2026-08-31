@@ -10,6 +10,7 @@ import {
   type ProgramsPageACF,
 } from "@/components/programs/programsDirectoryHeader";
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+
 type ProgramWP = any;
 
 type PageInfo = {
@@ -288,20 +289,41 @@ export default function ExploreProgramsClient({
   }, []);
 
   // Capture headerVariant from the URL (nav links set it) and immediately strip
-  // it from the address bar so it never stays visible. Re-run when the search
-  // params change so soft navigation between nav items updates the header.
+  // it from the address bar so it never stays visible. Lock the variant to the
+  // filter query at capture time; clear it when filters change or the user
+  // returns to plain /programs (otherwise the specialty header sticks).
   const [forcedVariant, setForcedVariant] = useState<string | null>(() => {
     const hv = initialSearchParams["headerVariant"];
     return typeof hv === "string" ? hv : Array.isArray(hv) ? hv[0] ?? null : null;
   });
+  const forcedVariantFiltersRef = useRef<string | null>((() => {
+    const hv = initialSearchParams["headerVariant"];
+    if (hv == null || hv === "") return null;
+    const next = searchParamsFromRecord(initialSearchParams);
+    next.delete("headerVariant");
+    return next.toString();
+  })());
+
   useEffect(() => {
     if (!hasHydrated) return;
     const hv = clientSearchParams.get("headerVariant");
-    if (!hv) return;
-    setForcedVariant(hv);
-    const next = new URLSearchParams(clientSearchParams.toString());
-    next.delete("headerVariant");
-    router.replace(next.toString() ? `${pathname}?${next}` : pathname, { scroll: false });
+    if (hv) {
+      const next = new URLSearchParams(clientSearchParams.toString());
+      next.delete("headerVariant");
+      forcedVariantFiltersRef.current = next.toString();
+      setForcedVariant(hv);
+      router.replace(next.toString() ? `${pathname}?${next}` : pathname, { scroll: false });
+      return;
+    }
+
+    const currentFilters = clientSearchParams.toString();
+    if (
+      forcedVariantFiltersRef.current != null &&
+      currentFilters !== forcedVariantFiltersRef.current
+    ) {
+      forcedVariantFiltersRef.current = null;
+      setForcedVariant(null);
+    }
   }, [hasHydrated, clientSearchParams, pathname, router]);
 
   const serverSearchParams = useMemo(
@@ -326,6 +348,41 @@ export default function ExploreProgramsClient({
     () => getProgramsDirectoryHeaderVariant(headerSearchParams) !== null,
     [headerSearchParams]
   );
+
+  const [directoryAcf, setDirectoryAcf] = useState<ProgramsPageACF>(directoryHeaderData);
+  const directoryHeadersLoadedRef = useRef(
+    Object.values(directoryHeaderData ?? {}).some((v) => v != null),
+  );
+
+  useEffect(() => {
+    setDirectoryAcf(directoryHeaderData);
+    if (Object.values(directoryHeaderData ?? {}).some((v) => v != null)) {
+      directoryHeadersLoadedRef.current = true;
+    }
+  }, [directoryHeaderData]);
+
+  useEffect(() => {
+    const variant = getProgramsDirectoryHeaderVariant(headerSearchParams);
+    if (!variant || directoryHeadersLoadedRef.current) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/programs/directory-headers");
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as ProgramsPageACF;
+        if (cancelled) return;
+        directoryHeadersLoadedRef.current = true;
+        setDirectoryAcf((prev) => ({ ...prev, ...data }));
+      } catch {
+        // Specialty header stays empty; directory list still works.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [headerSearchParams]);
 
   // Helper to find slug by name (case-insensitive)
   const findSlugByName = (options: { slug: string; name: string }[], name: string) => {
@@ -629,7 +686,7 @@ export default function ExploreProgramsClient({
           {hasSpecializedHeader ? (
             <ProgramsDirectoryHeader
               searchParams={headerSearchParams}
-              acf={directoryHeaderData}
+              acf={directoryAcf}
             />
           ) : (
             <>

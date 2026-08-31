@@ -7,6 +7,7 @@ import NavyWaveSection from "@/components/navyWaveSection";
 import type { RoomData, PartyPackageData, PlanAnEventFields } from "./planAnEventFields";
 import { acfGalleryPhotoNodes } from "@/lib/wp";
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+import JotFormLink from "@/components/jotFormLink";
 import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -115,6 +116,7 @@ function RoomCard({ room }: { room: RoomData }) {
   const centers = getCenterNames(f?.center?.nodes);
   const amenities = normalizeAmenities(f?.roomAmenities);
   const name = f?.name ?? room.title ?? "Room";
+  const interestFormLink = f?.interestFormLink;
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
   const hasCarousel = galleryPhotos.length > 0;
@@ -213,24 +215,24 @@ function RoomCard({ room }: { room: RoomData }) {
         <div className="grid grid-cols-2 gap-2">
           <div>
           {centers.length > 0 && (
-            <p className="small text-gmcc-grey-dark">
+            <p className="small text-gmcc-grey-dark mb-2">
               <span className="font-semibold">Location:</span> {centers.join(", ")}
             </p>
           )}
           {f?.capacity && (
-            <p className="small text-gmcc-grey-dark mt-2">
+            <p className="small text-gmcc-grey-dark">
               <span className="font-semibold">Capacity:</span> {f.capacity}
             </p>
           )}
           </div>
           <div>
           {f?.price && (
-            <p className="small text-gmcc-grey-dark">
+            <p className="small text-gmcc-grey-dark mb-2">
               <span className="font-semibold">Price:</span> {f.price}
             </p>
           )}
           {amenities.length > 0 && (
-            <p className="small text-gmcc-grey-dark mt-2">
+            <p className="small text-gmcc-grey-dark">
             <span className="font-semibold">Amenities:</span> {amenities.join(", ")}
           </p>
           )}
@@ -241,9 +243,9 @@ function RoomCard({ room }: { room: RoomData }) {
         )}
       </div>
       <div className="flex flex-wrap justify-center items-center">
-        <a href="#contact" className="btn btn-primary text-sm">
+        <JotFormLink href={interestFormLink} className="btn btn-primary text-sm">
           Contact us about this space
-        </a>
+        </JotFormLink>
       </div>
     </div>
   );
@@ -274,6 +276,7 @@ function getPartyPillLabel(pkg: PartyPackageData): string {
   const name = (pkg.partyPackageFields?.name ?? pkg.title ?? "").trim();
   if (name) return name.replace(/\s*party$/i, "").trim() || name;
   const firstType = getPartyTypeValues(pkg)[0] ?? "";
+
   return firstType ? firstType.charAt(0).toUpperCase() + firstType.slice(1) : "Package";
 }
 
@@ -365,9 +368,11 @@ function CenterPartyPackageCard({
         {selectedFields?.description && (
           <p className="body whitespace-pre-line flex-grow">{selectedFields.description}</p>
         )}
-        <a href="#contact" className="btn btn-primary self-center mt-auto">
-          Book this party
-        </a>
+        <div className="flex flex-wrap justify-center items-center">
+          <JotFormLink href={selectedFields?.interestFormLink} className="btn btn-primary text-sm">
+            Book this party
+          </JotFormLink>
+        </div>
       </div>
     </article>
   );
@@ -438,9 +443,11 @@ function SportsPartyPackageCard({ pkg }: { pkg: PartyPackageData }) {
         {f?.description && (
           <p className="body whitespace-pre-line flex-grow">{f.description}</p>
         )}
-        <a href="#contact" className="btn btn-primary self-center mt-auto">
-          Book this event
-        </a>
+        <div className="flex flex-wrap justify-center items-center">
+          <JotFormLink href={f?.interestFormLink} className="btn btn-primary text-sm">
+            Book this event
+          </JotFormLink>
+        </div>
       </div>
     </article>
   );
@@ -765,6 +772,9 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
       }));
   }, [fields?.faqs]);
 
+  const heroSecondaryCtas = heroProps.ctas?.filter((cta) => cta.variant === "secondary");
+  const heroPrimaryCtaLabel = heroProps.primaryCta?.label ?? "Contact Us";
+
   return (
     <div className="overflow-x-clip">
 
@@ -774,8 +784,13 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
         subheader={heroProps.subheader}
         imageUrl={heroProps.imageUrl}
         imagePosition={heroProps.imagePosition}
-        ctas={heroProps.ctas}
-      />
+        ctas={heroSecondaryCtas?.length ? heroSecondaryCtas : undefined}
+        childrenBeforeCtas
+      >
+        <JotFormLightboxButton className="btn btn-tertiary">
+          {heroPrimaryCtaLabel}
+        </JotFormLightboxButton>
+      </PhotoWaveHeader>
 
       {/* ── 3-CARD OVERVIEW ── */}
       <section className="page-section">
@@ -868,7 +883,7 @@ export default function PlanAnEventClient({ heroProps, fields, rooms, partyPacka
         splitTopWave
         bottomWave={false}
         bandClassName=""
-        contentClassName="mx-auto max-w-6xl px-6 py-12"
+        contentClassName="mx-auto max-w-3xl px-6 py-12"
       >
         {faqItems.length > 0 && (
           <div>

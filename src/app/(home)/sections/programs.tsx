@@ -20,11 +20,11 @@ type ProgramsSectionProps = {
 
 // Layout constants
 const MAX_COLS = 4;
-const COL_GAP_PX = 24; // gap-6
+const COL_GAP_PX = 16; // gap-4
 /** Permanent side inset outside the scroller (does not scroll away). */
 const EDGE_PAD_PX = 16;
-const CARD_MIN_PX = 220;
-const CARD_MAX_PX = 280;
+const CARD_MIN_PX = 200;
+const CARD_MAX_PX = 240;
 /** Triple the track so we can jump between identical copies without a visible reset. */
 const LOOP_COPIES = 3;
 
