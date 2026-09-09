@@ -17,7 +17,7 @@ export type MediaFocalPointFields = {
 
 /** When false, omit plugin-only fields so GraphQL still works without the plugin. */
 const INCLUDE_FOCAL_POINT_GRAPHQL =
-  process.env.WP_FOCAL_POINT_GRAPHQL !== "false";
+  process.env.WP_FOCAL_POINT_GRAPHQL == "false";
 const WP_MEDIA_FOCAL_POINT_FIELDS = INCLUDE_FOCAL_POINT_GRAPHQL
   ? `
   focalPointX
