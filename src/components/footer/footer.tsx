@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { FooterNavItem } from "@/lib/nav/getFooterNav";
 import { CONTACT_EMAIL, CONTACT_EMAIL_HREF } from "@/lib/constants";
 import { WAVE_BLEED_CLIP_CLASS, WAVE_SVG_BLEED_CLASS } from "@/components/waveSeam";
+import { openLinkInNewTab } from "@/lib/acf";
 
 type FooterProps = {
   items: FooterNavItem[];
@@ -47,16 +48,22 @@ export default function Footer({ items }: FooterProps) {
         <div className="mx-auto max-w-7xl px-6 py-8 md:py-10">
           <nav aria-label="Footer" className="mb-6 md:mb-8">
             <ul className="flex flex-wrap justify-center gap-x-6 md:gap-x-10 gap-y-3">
-              {items.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    href={item.href}
-                    className="eyebrow text-white/90 hover:text-white transition-colors"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+              {items.map((item) => {
+                const newTab = openLinkInNewTab(item.href);
+                return (
+                  <li key={item.id}>
+                    <Link
+                      href={item.href}
+                      className="eyebrow text-white/90 hover:text-white transition-colors"
+                      {...(newTab
+                        ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
+                        : {})}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
 

@@ -18,13 +18,17 @@ export default function TodayEventsGrid({
   return (
     <div className={className}>
       {events.length > 1 ? (
-        <h3 className="h3 mb-6">Don't Miss These Fun Events Happening Today!</h3>
+        <h3 className="h3 mb-6">Don&rsquo;t Miss These Fun Events Happening This Week!</h3>
       ) : (events.length === 1 ? (
-        <h3 className="h3 mb-6">Don't Miss This Fun Event Happening Today!</h3>
+        <h3 className="h3 mb-6">Don&rsquo;t Miss This Fun Event Happening This Week!</h3>
       ) : null)}
       <div className="grid gap-5 sm:grid-cols-2">
         {events.map((event) => (
-          <TodayEventCard key={event.id} event={event} showCenter={showCenter} />
+          <TodayEventCard
+            key={`${event.id}-${event.startDatetime}`}
+            event={event}
+            showCenter={showCenter}
+          />
         ))}
       </div>
     </div>

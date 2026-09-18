@@ -1,6 +1,7 @@
 // lib/nav/centerMap.ts
 import { cache } from "react";
 import { wpFetch } from "@/lib/wp";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
 
 type CenterNode = { slug: string; uri: string };
 
@@ -23,7 +24,9 @@ function normalizePath(p: string) {
 export const getCenterWpToNextMap = cache(async () => {
   const data = await wpFetch<{
     centers: { nodes: CenterNode[] };
-  }>(CENTERS_QUERY);
+  }>(CENTERS_QUERY, undefined, {
+    tags: [WP_CACHE_TAGS.nav, WP_CACHE_TAGS.centers],
+  });
 
   const map = new Map<string, string>();
 

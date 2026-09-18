@@ -39,6 +39,10 @@ export const CURLING_WEEKLY_SCHEDULE_EMBED_URL = `${SCHEDULE_EMBED_BASE_URL}/wee
 export const LEAGUE_SCHEDULE_EMBED_URL =
   "https://gmcc-league-management-system.vercel.app";
 
+/** ADP Workforce Now careers / recruitment landing page. */
+export const ADP_LANDING_PAGE_URL =
+  "https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=606be4f4-ba50-47f5-948f-eceb47f16218&ccId=19000101_000001&lang=en_US";
+
 /**
  * Build a drop-in / fitness schedule embed URL.
  *

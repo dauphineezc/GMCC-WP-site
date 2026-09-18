@@ -4,6 +4,12 @@ import { notFound } from "next/navigation";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
 import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
+import { asWysiwyg } from "@/lib/acf";
+import WysiwygText from "@/components/wysiwygText";
+
+
+export const revalidate = 900;
 
 const NEWS_BY_SLUG_QUERY = /* GraphQL */ `
   query NewsBySlug($slug: ID!) {
@@ -74,7 +80,9 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
     // guard: if slug is missing for any reason
     if (!slug) return notFound();
   
-    const data = await wpFetch<{ news: any }>(NEWS_BY_SLUG_QUERY, { slug });
+    const data = await wpFetch<{ news: any }>(NEWS_BY_SLUG_QUERY, { slug }, {
+      tags: [WP_CACHE_TAGS.news],
+    });
   
     if (!data?.news) return notFound();
 
@@ -111,8 +119,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
           ) : null}
 
           {n.newsFields?.body ? (
-            /* If body is plain text area, keep newlines: */
-            <div className="whitespace-pre-line">{n.newsFields.body}</div>
+              <WysiwygText html={n.newsFields.body} />
           ) : null}
 
           <div className="clear-both" />

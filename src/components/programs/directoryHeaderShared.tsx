@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
+import WysiwygText from "@/components/wysiwygText";
+import { asWysiwyg } from "@/lib/acf";
 
 type Maybe<T> = T | null | undefined;
 
@@ -77,8 +79,8 @@ export function DirectoryHeaderShell({
   className?: string;
 }) {
   const safeData = data ?? {};
-  const header = (safeData.header ?? "").trim();
-  const body = (safeData.body ?? "").trim();
+  const header = (safeData.header ?? "").toString().trim();
+  const body = asWysiwyg(safeData.body);
   const attachments = normalizeAttachments(safeData.attachments);
   const redirectLabel = safeData.redirectLabel ?? "";
   const redirectUrl = safeData.redirectUrl ?? "";
@@ -90,7 +92,7 @@ export function DirectoryHeaderShell({
     >
       <div className="bg-white stack-4">
         {header ? <h1 className="h1">{header}</h1> : null}
-        {body ? <div className="body whitespace-pre-line">{body}</div> : null}
+        {body ? <WysiwygText html={body} className="body" /> : null}
         {redirectLabel && redirectUrl ? <a href={redirectUrl} className="text-sm font-semibold text-gmcc-teal hover:text-gmcc-navy block pb-2">{redirectLabel}</a> : null}
 
         {attachments.length ? (

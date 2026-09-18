@@ -1,26 +1,16 @@
 import { cache } from "react";
+import { coerceWpRichText } from "@/lib/acf";
 import { wpFetch, WpMediaFieldInput } from "@/lib/wp";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
+
+export { coerceWpRichText };
 
 /** WordPress page slug that holds `centerPageFields` (ACF on center template page). */
 export const CENTER_DETAIL_WP_PAGE_SLUG = "center-detail";
 
 /** Centers `[slug]` route that uses curling-specific overrides from `centerPageFields`. */
 export const CURLING_CENTER_SLUG = "curling-center";
-
-/** ACF / WPGraphQL often returns WYSIWYG and text fields as strings or wrapper objects. */
-export function coerceWpRichText(input: unknown): string {
-  if (input == null) return "";
-  if (typeof input === "string") return input;
-  if (typeof input === "object") {
-    const o = input as Record<string, unknown>;
-    for (const key of ["rendered", "html", "source", "text", "value", "content"]) {
-      const v = o[key];
-      if (typeof v === "string" && v.trim()) return v;
-    }
-  }
-  return "";
-}
 
 /** Single page body: core layout + curling CTA copy (one GraphQL POST). */
 const CENTER_DETAIL_PAGE_FIELDS_BODY = `
@@ -184,7 +174,10 @@ export const fetchCenterDetailPageFields = cache(
           }
         `,
         { slug: CENTER_DETAIL_WP_PAGE_SLUG },
-        { suppressGraphQLErrorLogging: true },
+        {
+          suppressGraphQLErrorLogging: true,
+          tags: [WP_CACHE_TAGS.centers, WP_CACHE_TAGS.pages],
+        },
       );
       return data?.pages?.nodes?.[0]?.centerPageFields ?? null;
     } catch {

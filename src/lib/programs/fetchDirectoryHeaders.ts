@@ -8,8 +8,10 @@ import {
   normalizeDropInCareFields,
   type DropInCareFields,
 } from "@/lib/dropInCareFields";
+import { asWysiwyg } from "@/lib/acf";
 import { mediaFocalPositionCss, WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 import { LESSONS_TRAINERS_GQL } from "@/lib/programs/lessonsDirectory";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
 import { wpFetch } from "@/lib/wp";
 
 /**
@@ -21,6 +23,7 @@ export const PROGRAMS_DIRECTORY_PAGE_SLUGS = {
   aquatics: "aquatics",
   camps: "camps",
   earlyChildhood: "early-childhood",
+  fitness: "fitness",
   groupFitnessPrimary: "group-fitness-classes",
   groupFitnessAlt: "group-fitness",
   middleSchoolPrimary: "youth-sports-leagues",
@@ -34,7 +37,9 @@ export const PROGRAMS_DIRECTORY_PAGE_SLUGS = {
   renewActivePrimary: "renew-active-one-pass",
   renewActiveAlt: "renew-active",
   community: "community",
-  sportsAndRecreation: "sports-and-recreation",
+  sportsAndRecreationPrimary: "sports-and-recreation",
+  /** Staging WP page permalink uses sports-recreation (no "and"). */
+  sportsAndRecreationAlt: "sports-recreation",
 } as const;
 
 const DIRECTORY_HEADER_FIELDS = `
@@ -203,7 +208,13 @@ const PROGRAMS_DIRECTORY_HEADERS_QUERY = /* GraphQL */ `
     community: pages(where: { name: "${PROGRAMS_DIRECTORY_PAGE_SLUGS.community}" }, first: 1) {
       nodes { communityDirectoryPageFields { ${DIRECTORY_HEADER_FIELDS} } }
     }
-    sportsAndRecreation: pages(where: { name: "${PROGRAMS_DIRECTORY_PAGE_SLUGS.sportsAndRecreation}" }, first: 1) {
+    fitness: pages(where: { name: "${PROGRAMS_DIRECTORY_PAGE_SLUGS.fitness}" }, first: 1) {
+      nodes { fitnessDirectoryPageFields { ${DIRECTORY_HEADER_FIELDS} } }
+    }
+    sportsAndRecreationPrimary: pages(where: { name: "${PROGRAMS_DIRECTORY_PAGE_SLUGS.sportsAndRecreationPrimary}" }, first: 1) {
+      nodes { sportsAndRecreationDirectoryPageFields { ${DIRECTORY_HEADER_FIELDS} } }
+    }
+    sportsAndRecreationAlt: pages(where: { name: "${PROGRAMS_DIRECTORY_PAGE_SLUGS.sportsAndRecreationAlt}" }, first: 1) {
       nodes { sportsAndRecreationDirectoryPageFields { ${DIRECTORY_HEADER_FIELDS} } }
     }
   }
@@ -227,8 +238,8 @@ function pickFirstContentField<T>(
 
 function hasDirectoryHeaderContent(field?: any) {
   if (!field) return false;
-  const header = (field?.header ?? "").trim();
-  const body = (field?.body ?? "").trim();
+  const header = (field?.header ?? field?.bodyHeader ?? "").toString().trim();
+  const body = asWysiwyg(field?.body);
 
   const atts = field?.attachments;
   const hasAttachment = [atts?.attachment1, atts?.attachment2, atts?.attachment3, atts?.attachment4].some(
@@ -248,13 +259,11 @@ function hasDirectoryHeaderContent(field?: any) {
     field?.ecePageLinkLabel ??
     field?.ecePageLink ??
     ""
-  ).trim();
+  )
+    .toString()
+    .trim();
 
-  const bodyHeader = (field?.bodyHeader ?? "").trim();
-
-  return Boolean(
-    header || bodyHeader || body || hasAttachment || hasSponsors || hasTrainers || hasRedirect,
-  );
+  return Boolean(header || body || hasAttachment || hasSponsors || hasTrainers || hasRedirect);
 }
 
 function mapProgramDirectoryPageHeader(
@@ -324,10 +333,11 @@ function normalizeDirectoryHeaderData(
 
   // Lessons ACF groups use bodyHeader; generic directory groups use header.
   const header = (field.header ?? field.bodyHeader ?? null) as string | null;
+  const body = asWysiwyg(field.body) || null;
 
   return {
     header,
-    body: field.body ?? null,
+    body,
     attachments: field.attachments
       ? {
           attachment1: normalizeAttachment(field.attachments.attachment1),
@@ -377,8 +387,12 @@ export async function fetchProgramsDirectoryHeaders(): Promise<ProgramsPageACF> 
     renewActivePrimary?: PagesNodes<{ renewActiveDirectoryPageFields?: any }>;
     renewActiveAlt?: PagesNodes<{ renewActiveDirectoryPageFields?: any }>;
     community?: PagesNodes<{ communityDirectoryPageFields?: any }>;
-    sportsAndRecreation?: PagesNodes<{ sportsAndRecreationDirectoryPageFields?: any }>;
-  }>(PROGRAMS_DIRECTORY_HEADERS_QUERY);
+    fitness?: PagesNodes<{ fitnessDirectoryPageFields?: any }>;
+    sportsAndRecreationPrimary?: PagesNodes<{ sportsAndRecreationDirectoryPageFields?: any }>;
+    sportsAndRecreationAlt?: PagesNodes<{ sportsAndRecreationDirectoryPageFields?: any }>;
+  }>(PROGRAMS_DIRECTORY_HEADERS_QUERY, undefined, {
+    tags: [WP_CACHE_TAGS.programs, WP_CACHE_TAGS.pages],
+  });
 
   const aquaticsRaw = firstNode(data?.aquatics)?.aquaticsDirectoryPageFields;
   const campsMapped = mapProgramDirectoryPageHeader(
@@ -424,6 +438,14 @@ export async function fetchProgramsDirectoryHeaders(): Promise<ProgramsPageACF> 
     hasDirectoryHeaderContent,
   );
 
+  const sportsAndRecreationRaw = pickFirstContentField(
+    [
+      firstNode(data?.sportsAndRecreationPrimary)?.sportsAndRecreationDirectoryPageFields,
+      firstNode(data?.sportsAndRecreationAlt)?.sportsAndRecreationDirectoryPageFields,
+    ],
+    hasDirectoryHeaderContent,
+  );
+
   return {
     aquaticsDirectoryPageFields: normalizeDirectoryHeaderData(aquaticsRaw),
     campsDirectoryPageFields: normalizeDirectoryHeaderData(campsMapped),
@@ -443,8 +465,9 @@ export async function fetchProgramsDirectoryHeaders(): Promise<ProgramsPageACF> 
     ),
     silversneakersDirectoryPageFields: normalizeDirectoryHeaderData(silversneakersRaw),
     renewActiveDirectoryPageFields: normalizeDirectoryHeaderData(renewActiveRaw),
-    sportsAndRecreationDirectoryPageFields: normalizeDirectoryHeaderData(
-      firstNode(data?.sportsAndRecreation)?.sportsAndRecreationDirectoryPageFields,
+    sportsAndRecreationDirectoryPageFields: normalizeDirectoryHeaderData(sportsAndRecreationRaw),
+    fitnessDirectoryPageFields: normalizeDirectoryHeaderData(
+      firstNode(data?.fitness)?.fitnessDirectoryPageFields,
     ),
     communityDirectoryPageFields: normalizeDirectoryHeaderData(
       firstNode(data?.community)?.communityDirectoryPageFields,

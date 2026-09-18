@@ -1,5 +1,6 @@
 import type { PhotoWaveHeaderFields, HeroCta, HeroFieldsCtaRaw } from "@/components/photoWaveHeader";
 import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
 import { resolveWpMediaUrl, wpFetch } from "@/lib/wp";
 
 /**
@@ -88,7 +89,7 @@ export async function fetchPageWithHeroFields<
         }
       `,
       { slug },
-      { suppressGraphQLErrorLogging: true },
+      { suppressGraphQLErrorLogging: true, tags: [WP_CACHE_TAGS.pages] },
     );
     const node = byName?.pages?.nodes?.[0];
     if (node) return node;
@@ -109,7 +110,7 @@ export async function fetchPageWithHeroFields<
       const data = await wpFetch<{ page?: (WpPageWithHeroFields & TExtra) | null }>(
         uriQuery,
         { pageUri: uri },
-        { suppressGraphQLErrorLogging: true },
+        { suppressGraphQLErrorLogging: true, tags: [WP_CACHE_TAGS.pages] },
       );
       if (data?.page) return data.page;
     } catch (error) {

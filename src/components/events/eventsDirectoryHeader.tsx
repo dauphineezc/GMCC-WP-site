@@ -26,8 +26,18 @@ const EVENT_TYPE_VARIANTS: Record<string, EventDirectoryHeaderVariant> = {
   socials: "socials",
   race: "races",
   races: "races",
+  // normalizeEventType turns hyphens into spaces before lookup
   "food distribution": "food-distributions",
   "food distributions": "food-distributions",
+};
+
+const VARIANT_TITLES: Record<EventDirectoryHeaderVariant, string> = {
+  bonspiels: "Bonspiels",
+  trips: "Trips",
+  tournaments: "Tournaments",
+  socials: "Socials",
+  races: "Races",
+  "food-distributions": "Food Distributions",
 };
 
 function normalizeEventType(value: string) {
@@ -55,5 +65,14 @@ export function EventsDirectoryHeader({
   const variant = getEventsDirectoryHeaderVariant(eventTypes);
   if (!variant) return null;
 
-  return <DirectoryHeaderShell data={headers[variant]} />;
+  const fromWp = headers[variant] ?? {};
+  return (
+    <DirectoryHeaderShell
+      data={{
+        ...fromWp,
+        // Prefer WP title when editors set one; otherwise keep the fallback.
+        header: (fromWp.header ?? "").trim() || VARIANT_TITLES[variant],
+      }}
+    />
+  );
 }

@@ -1,7 +1,6 @@
 // src/app/programs/page.tsx
 import { Suspense } from "react";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
-import { getProgramsDirectoryHeaderVariant } from "@/components/programs/programsDirectoryHeader";
 import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
@@ -13,35 +12,35 @@ import {
   PROGRAMS_ALL_AT_ONCE,
   LAZY_LOAD_PROGRAMS,
 } from "@/lib/programsListQuery";
-import { fetchProgramsDirectoryHeaders } from "@/lib/programs/fetchDirectoryHeaders";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
 import ExploreProgramsClient from "./exploreProgramsClient";
+import type { ProgramsPageACF } from "@/components/programs/programsDirectoryHeader";
 
-export default async function ExploreProgramsPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const resolvedSearchParams = await searchParams;
+/** Shared ISR shell — filters/headerVariant are client-only (useSearchParams). */
+export const revalidate = 900;
 
-  // Skip the heavy directory-headers GraphQL on plain /programs — only fetch
-  // when the URL already implies a specialty header (nav filter links).
-  const needsDirectoryHeaders =
-    getProgramsDirectoryHeaderVariant(resolvedSearchParams) != null;
+/** Stable empty prop so soft navigations don't remount-wipe client-fetched headers. */
+const EMPTY_DIRECTORY_HEADER_DATA: ProgramsPageACF = {};
 
-  const [heroPage, programsData, directoryHeaderData] = await Promise.all([
+export default async function ExploreProgramsPage() {
+  // Intentionally ignore URL searchParams on the server so this route can be
+  // statically cached. Specialty directory headers load on demand via
+  // /api/programs/directory-headers when the client detects a variant.
+  const [heroPage, programsData] = await Promise.all([
     fetchPageWithHeroFields("programs"),
     wpFetch<{
       programs?: {
         pageInfo?: { hasNextPage: boolean; endCursor: string | null };
         nodes?: any[];
       } | null;
-    }>(PROGRAMS_LIST_QUERY, {
-      first: LAZY_LOAD_PROGRAMS ? PROGRAMS_PAGE_SIZE : PROGRAMS_ALL_AT_ONCE,
-      after: null,
-    }),
-    needsDirectoryHeaders
-      ? fetchProgramsDirectoryHeaders()
-      : Promise.resolve({}),
+    }>(
+      PROGRAMS_LIST_QUERY,
+      {
+        first: LAZY_LOAD_PROGRAMS ? PROGRAMS_PAGE_SIZE : PROGRAMS_ALL_AT_ONCE,
+        after: null,
+      },
+      { tags: [WP_CACHE_TAGS.programs] },
+    ),
   ]);
 
   const hero = resolvePhotoWaveHeaderProps(heroPage, "Explore our programs");
@@ -61,9 +60,8 @@ export default async function ExploreProgramsPage({
         <ExploreProgramsClient
           initialPrograms={programs}
           initialPageInfo={pageInfo}
-          initialSearchParams={resolvedSearchParams}
           pageSize={PROGRAMS_PAGE_SIZE}
-          directoryHeaderData={directoryHeaderData}
+          directoryHeaderData={EMPTY_DIRECTORY_HEADER_DATA}
         />
       </Suspense>
     </main>

@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { wpFetch } from "@/lib/wp";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
 
 const QUERY = `
   query ExplorePrograms($first: Int!, $after: String) {
@@ -46,7 +47,11 @@ export async function GET(req: Request) {
   const first = Number(searchParams.get("first") ?? "24");
   const after = searchParams.get("after");
 
-  const data = await wpFetch<any>(QUERY, { first, after });
+  const data = await wpFetch<any>(
+    QUERY,
+    { first, after },
+    { tags: [WP_CACHE_TAGS.programs] },
+  );
 
   return NextResponse.json({
     programs: data?.programs?.nodes ?? [],

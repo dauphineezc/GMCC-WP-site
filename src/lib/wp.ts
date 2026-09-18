@@ -4,6 +4,10 @@ import {
   mediaFocalPositionCss,
   type MediaFocalPointFields,
 } from "@/lib/mediaFocalPoint";
+import {
+  REVALIDATE_DEFAULT_SECONDS,
+  withWpCacheTags,
+} from "@/lib/revalidate";
 
 /**
  * WordPress / WPGraphQL sometimes returns upload paths as site-relative strings
@@ -228,7 +232,7 @@ type WpFetchOptions = {
   suppressGraphQLErrorLogging?: boolean;
   /** Next.js Data Cache tags for on-demand revalidation via `/api/revalidate`. */
   tags?: string[];
-  /** Override default ISR window (seconds). Defaults to 60. */
+  /** Override default Data Cache TTL (seconds). Defaults to 24h. */
   revalidate?: number | false;
 };
 
@@ -243,8 +247,8 @@ async function wpFetchInternal<T>(
   }
 
   const body = JSON.stringify(variables ? { query, variables } : { query });
-  const revalidate = options?.revalidate ?? 60;
-  const tags = options?.tags;
+  const revalidate = options?.revalidate ?? REVALIDATE_DEFAULT_SECONDS;
+  const tags = withWpCacheTags(...(options?.tags ?? []));
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
     const res = await fetch(endpoint, {
@@ -253,7 +257,7 @@ async function wpFetchInternal<T>(
       body,
       next: {
         revalidate,
-        ...(tags?.length ? { tags } : {}),
+        tags,
       },
     });
 

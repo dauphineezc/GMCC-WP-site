@@ -3,6 +3,7 @@
 
 import { wpFetch } from "@/lib/wp";
 import { mediaFocalPositionCss, WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
 import type { AmenityDisplay } from "@/types/amenities";
 
 type AmenityMediaImage = {
@@ -366,7 +367,9 @@ export async function fetchAmenitiesWithImages(
   if (!amenitySlugs.length) return [];
 
   const amenityResults = await Promise.all(
-    amenitySlugs.map((slug) => wpFetch<any>(AMENITY_BY_SLUG_QUERY, { slug }))
+    amenitySlugs.map((slug) =>
+      wpFetch<any>(AMENITY_BY_SLUG_QUERY, { slug }, { tags: [WP_CACHE_TAGS.amenities] }),
+    ),
   );
 
   const amenities: AmenityWithImage[] = [];
@@ -392,7 +395,11 @@ export async function fetchAccessibilityAmenitiesWithImages(
   if (!amenitySlugs.length) return [];
 
   const amenityResults = await Promise.all(
-    amenitySlugs.map((slug) => wpFetch<any>(ACCESSIBILITY_AMENITY_BY_SLUG_QUERY, { slug }))
+    amenitySlugs.map((slug) =>
+      wpFetch<any>(ACCESSIBILITY_AMENITY_BY_SLUG_QUERY, { slug }, {
+        tags: [WP_CACHE_TAGS.amenities],
+      }),
+    ),
   );
 
   const amenitiesWithImages: AmenityWithImage[] = [];
@@ -421,7 +428,9 @@ export type AmenityLink = {
  * Loads all published amenities from WordPress (name + slug for navigation/sitemap).
  */
 export async function fetchAllAmenityLinks(): Promise<AmenityLink[]> {
-  const data = await wpFetch<any>(ALL_AMENITIES_QUERY, { first: MAX_AMENITIES });
+  const data = await wpFetch<any>(ALL_AMENITIES_QUERY, { first: MAX_AMENITIES }, {
+    tags: [WP_CACHE_TAGS.amenities],
+  });
   const nodes = data?.amenities?.nodes ?? [];
 
   return nodes
@@ -436,9 +445,11 @@ export async function fetchAllAmenityLinks(): Promise<AmenityLink[]> {
  * Loads all accessibility amenities (accessibility taxonomy / CPT in WordPress) with images and center links.
  */
 export async function fetchAllAccessibilityAmenitiesWithImages(): Promise<AmenityWithImage[]> {
-  const data = await wpFetch<any>(ALL_ACCESSIBILITY_AMENITIES_QUERY, {
-    first: MAX_ACCESSIBILITY_AMENITIES,
-  });
+  const data = await wpFetch<any>(
+    ALL_ACCESSIBILITY_AMENITIES_QUERY,
+    { first: MAX_ACCESSIBILITY_AMENITIES },
+    { tags: [WP_CACHE_TAGS.amenities] },
+  );
   const nodes = data?.accessibilityAmenities?.nodes ?? [];
   const out: AmenityWithImage[] = [];
 

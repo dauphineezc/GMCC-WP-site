@@ -1,5 +1,6 @@
 // lib/nav/resolveHref.ts
 import { mapWpPathToNextPath } from "./routeMap";
+import { ADP_LANDING_PAGE_URL } from "@/lib/constants";
 
 function normalizeWpUrlToPath(url: string) {
     try {
@@ -15,12 +16,16 @@ function normalizeWpUrlToPath(url: string) {
     return sp.toString();
   }
 
+  const CAREERS_PAGE: Record<string, string> = {
+    "Careers": ADP_LANDING_PAGE_URL,
+  };
+
   const OUR_PURPOSE_PAGE: Record<string, string> = {
     "Our Purpose": "/about",
   };
 
   const JOIN_OUR_TEAM_PAGE: Record<string, string> = {
-    "Join Our Team": "/careers",
+    "Join Our Team": ADP_LANDING_PAGE_URL,
   };
 
   const MEMBERSHIP_PAGES: Record<string, string> = {
@@ -85,10 +90,9 @@ function normalizeWpUrlToPath(url: string) {
     "Before/After School Care" : "/early-childhood",
     "Preschool" : "/early-childhood",
 
-    "Driver's Training": "/programs/drivers-training",
-    "Tax Aide Program": "/programs/tax-aide",
-    "Food Distributions": "/programs/food-distributions",
-    "Food, Clothes, & Hygiene Pantries": "/amenities/pantries",
+    "Driver's Training": "https://gmcc-stage-1.greatermidland.org/programs/drivers-education",
+    "Tax Aide Program": "https://gmcc-stage-1.greatermidland.org/programs/tax-aid-program",
+    "Food, Clothes, & Hygiene Pantries": "https://gmcc-stage-1.greatermidland.org/amenities/food-resources",
   };
 
   // Event filter rules (label-based for navbar items)
@@ -127,6 +131,9 @@ function normalizeWpUrlToPath(url: string) {
   }) {
     // Soft-match WP menu labels that differ slightly (apostrophes, & vs and, etc.)
     const resolvedLabel = canonicalLabelFromText(label) ?? label;
+
+    const careersPage = CAREERS_PAGE[resolvedLabel];
+    if (careersPage) return careersPage;
 
     const ourPurposePage = OUR_PURPOSE_PAGE[resolvedLabel];
     if (ourPurposePage) return ourPurposePage;
@@ -171,6 +178,7 @@ function normalizeWpUrlToPath(url: string) {
   }
 
 const ALL_LABEL_OVERRIDES: Record<string, string> = {
+  ...CAREERS_PAGE,
   ...OUR_PURPOSE_PAGE,
   ...JOIN_OUR_TEAM_PAGE,
   ...MEMBERSHIP_PAGES,

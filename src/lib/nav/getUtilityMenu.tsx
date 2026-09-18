@@ -2,6 +2,8 @@
 import { cache } from "react";
 import { wpFetch } from "@/lib/wp";
 import type { NavItem } from "@/lib/nav/tree";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
+import { ADP_LANDING_PAGE_URL } from "@/lib/constants";
 
 const UTILITY_MENU_DATABASE_ID = "103";
 
@@ -61,9 +63,11 @@ function normalizeHref(urlOrPath: string): string {
 
 export const getUtilityNav = cache(async (): Promise<NavItem[]> => {
   try {
-    const data = await wpFetch<UtilityMenuQuery>(UTILITY_MENU_QUERY, {
-      id: UTILITY_MENU_DATABASE_ID,
-    });
+    const data = await wpFetch<UtilityMenuQuery>(
+      UTILITY_MENU_QUERY,
+      { id: UTILITY_MENU_DATABASE_ID },
+      { tags: [WP_CACHE_TAGS.nav] },
+    );
 
     const nodes = data?.menu?.menuItems?.nodes ?? [];
 
@@ -73,10 +77,11 @@ export const getUtilityNav = cache(async (): Promise<NavItem[]> => {
       .map((n) => {
         // Prefer path for internal links, but use url for external links
         const hrefRaw = n.path?.startsWith("/") ? n.path : n.url || "/";
+        const isCareers = n.label.trim().toLowerCase() === "careers";
         return {
           id: n.id,
           label: n.label,
-          href: normalizeHref(hrefRaw),
+          href: isCareers ? ADP_LANDING_PAGE_URL : normalizeHref(hrefRaw),
           children: [],
         };
       });

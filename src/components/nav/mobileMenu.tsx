@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { NavItem } from "@/lib/nav/tree";
 import { shouldPrefetchHref } from "@/lib/nav/shouldPrefetchHref";
+import { openLinkInNewTab } from "@/lib/acf";
 import {
   applyGoogleTranslate,
   getGoogleTranslateLang,
@@ -384,6 +385,9 @@ export default function MobileMenu({
                           href={u.href}
                           onClick={onClose}
                           className="block py-2 text-sm font-medium text-neutral-700 hover:text-gmcc-navy transition-colors"
+                          {...(openLinkInNewTab(u.href)
+                            ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
+                            : {})}
                         >
                           {u.label}
                         </Link>

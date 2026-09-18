@@ -85,6 +85,26 @@ body {
 /* Make embeds and iframes responsive-ish */
 .prose :where(iframe, embed, object) { width: 100%; aspect-ratio: 16 / 9; }
 
+/* Limited ACF WYSIWYG — bold / italic / underline / lists / links only */
+.wysiwyg :where(p + p) {
+  margin-top: 0.75em;
+}
+.wysiwyg :where(ul, ol) {
+  margin: 0.5em 0;
+  padding-left: 1.25em;
+}
+.wysiwyg :where(ul) {
+  list-style: disc;
+}
+.wysiwyg :where(ol) {
+  list-style: decimal;
+}
+.wysiwyg :where(li + li) {
+  margin-top: 0.25em;
+}
+.wysiwyg :where(a) {
+  text-decoration: none;
+}
 mark {
   background-color: var(--gmcc-blue-light);
   color: black;

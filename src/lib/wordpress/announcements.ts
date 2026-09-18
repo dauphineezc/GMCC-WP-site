@@ -1,8 +1,9 @@
 import { cache } from "react";
 import { acfCtaHref, wpFetch } from "@/lib/wp";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
 
 /** Cache tag for announcement GraphQL fetches — purge via `/api/revalidate?tag=announcements`. */
-export const ANNOUNCEMENTS_CACHE_TAG = "announcements";
+export const ANNOUNCEMENTS_CACHE_TAG = WP_CACHE_TAGS.announcements;
 
 export type Announcement = {
   id: string;

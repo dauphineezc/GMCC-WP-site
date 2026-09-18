@@ -12,6 +12,7 @@ import StandardDropdown from "@/components/nav/standardDropdown";
 import MobileMenu from "@/components/nav/mobileMenu";
 import AccessibilityPopover from "@/components/nav/accessibilityPopover";
 import LanguagePopover from "@/components/nav/languagePopover";
+import { openLinkInNewTab } from "@/lib/acf";
 
 export default function Navbar({
   items,
@@ -250,6 +251,9 @@ export default function Navbar({
                                 : "text-neutral-700 hover:text-gmcc-navy hover:bg-neutral-200/80",
                             ].join(" ")}
                             onClick={() => setOpenId(null)}
+                            {...(openLinkInNewTab(u.href)
+                              ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
+                              : {})}
                           >
                             {u.label}
                           </Link>

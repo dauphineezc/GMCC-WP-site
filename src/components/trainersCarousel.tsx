@@ -30,10 +30,11 @@ export default function TrainersCarousel({
   const cellRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const [isMd, setIsMd] = useState(false);
-  const [desktopColW, setDesktopColW] = useState<number>(260);
+  const [colW, setColW] = useState<number>(260);
   const [activeIndex, setActiveIndex] = useState(0);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
+  const [canScroll, setCanScroll] = useState(false);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const isProgrammaticScroll = useRef(false);
   const isDraggingRef = useRef(false);
@@ -54,20 +55,25 @@ export default function TrainersCarousel({
     setActiveIndex(0);
     setAtStart(true);
     setAtEnd(false);
+    setCanScroll(false);
     setExpanded({});
   }, [normalized.length]);
 
-  // Compute desktop column width so exactly 4 cards fit in frame
+  // Measure column width from the scroller viewport.
+  // Desktop: fit exactly 4 cards. Mobile: one full card (avoid % tracks on max-content grids).
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
     const calc = () => {
       const md = window.matchMedia("(min-width: 768px)").matches;
-      if (!md) return;
-      const viewport = scroller.clientWidth - EDGE_PAD_PX * 2;
-      const width = Math.floor((viewport - COL_GAP_PX * (DESKTOP_COLS - 1)) / DESKTOP_COLS);
-      setDesktopColW(Math.max(220, width));
+      const viewport = Math.max(0, scroller.clientWidth - EDGE_PAD_PX * 2);
+      if (md) {
+        const width = Math.floor((viewport - COL_GAP_PX * (DESKTOP_COLS - 1)) / DESKTOP_COLS);
+        setColW(Math.max(220, width));
+      } else {
+        setColW(Math.max(200, viewport));
+      }
     };
 
     calc();
@@ -113,11 +119,14 @@ export default function TrainersCarousel({
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
+    const maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    const hasOverflow = maxScrollLeft > 1;
+    setCanScroll(hasOverflow);
+
     const positions = getSnapPositions();
     if (!positions.length) {
-      const maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
       setAtStart(true);
-      setAtEnd(maxScrollLeft <= 1);
+      setAtEnd(!hasOverflow);
       setActiveIndex(0);
       return;
     }
@@ -139,7 +148,7 @@ export default function TrainersCarousel({
     const clampedIdx = Math.max(0, Math.min(bestIdx, maxIdx));
     setActiveIndex(clampedIdx);
     setAtStart(clampedIdx === 0);
-    setAtEnd(maxIdx === 0 || Math.abs(current - positions[maxIdx]) <= epsilon || clampedIdx === maxIdx);
+    setAtEnd(!hasOverflow || Math.abs(current - positions[maxIdx]) <= epsilon || clampedIdx === maxIdx);
   };
 
   const scrollToIndex = (idx: number) => {
@@ -184,7 +193,7 @@ export default function TrainersCarousel({
       cancelAnimationFrame(raf);
       window.clearTimeout(timeout);
     };
-  }, [normalized.length, isMd, desktopColW]);
+  }, [normalized.length, isMd, colW]);
 
   // Mouse drag-to-scroll (same interaction as programs carousel).
   useEffect(() => {
@@ -256,26 +265,9 @@ export default function TrainersCarousel({
     "inline-flex h-8 w-8 items-center justify-center rounded-full border border-gmcc-navy bg-white text-gmcc-navy body disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/80";
 
   return (
-    <section className={`w-full ${className}`}>
-      <div className="mb-3 flex items-center justify-between">
-        {normalized.length > 1 ? (
-          <div className="flex gap-2 md:hidden">
-            <button type="button" onClick={goPrev} disabled={atStart} aria-label="Previous trainers" className={arrowBtn}>
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 19.5L8.25 12l7.5-7.5" />
-              </svg>
-            </button>
-            <button type="button" onClick={goNext} disabled={atEnd} aria-label="Next trainers" className={arrowBtn}>
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
-            </button>
-          </div>
-        ) : null}
-      </div>
-
+    <section className={`w-full min-w-0 ${className}`}>
       <div className="relative mx-auto mt-2 w-full min-w-0 max-w-6xl">
-        {normalized.length > 1 ? (
+        {canScroll ? (
           <div className="pointer-events-none absolute inset-y-0 left-0 right-0 z-30 hidden md:block">
             <button
               type="button"
@@ -300,7 +292,7 @@ export default function TrainersCarousel({
 
         <div
           ref={scrollerRef}
-          className="w-full min-w-0 max-w-full overflow-x-auto pb-2 pt-1 px-[6px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          className="w-full min-w-0 max-w-full overflow-x-auto pb-2 pt-3 md:pt-1 px-[6px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           style={{
             scrollSnapType: "x mandatory",
             WebkitOverflowScrolling: "touch",
@@ -313,7 +305,7 @@ export default function TrainersCarousel({
             className="grid gap-4"
             style={{
               gridAutoFlow: "column",
-              gridAutoColumns: isMd ? `${desktopColW}px` : "100%",
+              gridAutoColumns: `${colW}px`,
               width: "max-content",
               minWidth: "100%",
             }}
@@ -359,12 +351,12 @@ export default function TrainersCarousel({
                         <div
                           className={`absolute bottom-0 left-1/2 w-full -translate-x-1/2 overflow-hidden rounded-[22px] bg-white text-neutral-700 shadow-lg transition-all duration-300 ease-out ${
                             isExpanded
-                              ? "pointer-events-auto max-h-[320px] opacity-100"
+                              ? "pointer-events-auto opacity-100 max-h-[320px]"
                               : "pointer-events-none max-h-[52px] opacity-0"
                           }`}
                         >
                           <div className="px-4 pb-4 pt-3 text-left">
-                            <div className="max-h-[245px] overflow-y-auto pr-1">
+                            <div className="max-h-[225px] overflow-y-auto pr-1 md:max-h-[245px]">
                               {trainer.jobTitle ? (
                                 <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
                                   About {trainer.name?.split(" ")[0] ?? "Trainer"}
@@ -414,7 +406,7 @@ export default function TrainersCarousel({
         </div>
       </div>
 
-      {normalized.length > 1 ? (
+      {canScroll ? (
         <div className="mt-3 flex items-center justify-center gap-3 md:hidden">
           <button type="button" onClick={goPrev} disabled={atStart} aria-label="Previous trainers" className={arrowBtn}>
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

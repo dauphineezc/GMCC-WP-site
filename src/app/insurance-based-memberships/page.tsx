@@ -9,6 +9,7 @@ import {
 import { wpFetch } from "@/lib/wp";
 import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 import JotFormLightboxButton from "@/components/jotFormLightboxButton";
+import WysiwygText from "@/components/wysiwygText";
 
 const INSURANCE_BASED_MEMBERSHIPS_QUERY = `
   query InsuranceBasedMembershipsPageFields($uri: ID!) {
@@ -210,14 +211,6 @@ export default async function InsuranceBasedMembershipsPage() {
   const renewImg = renew?.renewActiveOnePassImage?.node ?? null;
 
   const insurance = fields?.insuranceBasedMembershipBenefits ?? null;
-  const insuranceLines = insurance
-    ? insurance
-        .split("\n")
-        .map((line: string) => line.trim())
-        .filter(Boolean)
-    : [];
-  const insuranceIntro = insuranceLines[0] ?? "";
-  const insuranceItems = insuranceLines.slice(1);
 
   const ssClassesUrl = fields?.ssClasses ?? null;
   const renewClassesUrl = fields?.renewClasses ?? null;
@@ -262,28 +255,13 @@ export default async function InsuranceBasedMembershipsPage() {
           </div>
         </section>
 
-          <section className="page-section text-white">
         {/* Insurance benefits */}
         {insurance ? (
-          <>
+          <section className="page-section">
             <h2 className="h2 mb-2">Insurance-Based Membership Benefits</h2>
-            {insuranceIntro ? <p className="mt-3 text-base text-neutral-700">{insuranceIntro}</p> : null}
-            {insuranceItems.length > 0 ? (
-              <ul className="space-y-2 pl-6 mt-4">
-                {insuranceItems.map((item: string, i: number) => (
-                  <li key={i} className="flex items-center gap-2 text-base text-neutral-700">
-                    <svg className="h-4 w-4 shrink-0 text-gmcc-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <p className="mt-3 pl-6 text-sm text-neutral-700">*Must reserve your spot within 48 hours of class time.</p>
-          </>
+            <WysiwygText html={insurance} className="mt-3 text-neutral-700" />
+          </section>
         ) : null}
-        </section>
 
         {/* SilverSneakers classes link */}
         {ssClassesUrl && renewClassesUrl ? (

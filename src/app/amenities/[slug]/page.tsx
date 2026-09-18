@@ -6,6 +6,9 @@ import { specialAmenities } from "@/lib/amenities/specialAmenities";
 import Link from "next/link";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
+
+export const revalidate = 900;
 
 const AMENITY_BY_SLUG_QUERY = `
   query AmenityBySlug($slug: ID!) {
@@ -83,7 +86,9 @@ export async function generateMetadata({ params }: AmenityPageProps) {
 export default async function AmenityPage(props: AmenityPageProps) {
   const { slug } = await props.params;
 
-  const amenityData = await wpFetch<any>(AMENITY_BY_SLUG_QUERY, { slug });
+  const amenityData = await wpFetch<any>(AMENITY_BY_SLUG_QUERY, { slug }, {
+    tags: [WP_CACHE_TAGS.amenities],
+  });
   const amenity = amenityData?.amenity;
 
   if (!amenity) {
@@ -99,6 +104,7 @@ export default async function AmenityPage(props: AmenityPageProps) {
   try {
     const pageData = await wpFetch<any>(AMENITIES_PAGE_SPECIAL_FIELDS_QUERY, undefined, {
       suppressGraphQLErrorLogging: true,
+      tags: [WP_CACHE_TAGS.amenities, WP_CACHE_TAGS.pages],
     });
     amenityPageFields = pageData?.page?.amenityPageFields ?? null;
   } catch {

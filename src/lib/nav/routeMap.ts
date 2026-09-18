@@ -45,10 +45,14 @@ export function mapWpPathToNextPath(path: string) {
       "preschool",
       "drivers-training",
       "tax-aide",
-      "food-distributions",
     ]);
     if (programSlugs.has(slug)) {
       return `/programs/${slug}`;
+    }
+
+    // Food Distributions is an events specialty directory (WP Page ACF), not a Program CPT.
+    if (slug === "food-distributions") {
+      return `/events?eventType=${encodeURIComponent("Food Distribution")}`;
     }
 
     const amenityPathByWpSlug: Record<string, string> = {

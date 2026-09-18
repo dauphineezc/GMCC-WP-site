@@ -4,8 +4,9 @@ import { fetchPageWithHeroFields, resolvePhotoWaveHeaderProps } from "@/lib/page
 import { wpFetch } from "@/lib/wp";
 import ExploreCentersClient from "./exploreCentersClient";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 900;
 
 const EXPLORE_CENTERS_QUERY = `
   query ExploreCenters {
@@ -55,7 +56,9 @@ const EXPLORE_CENTERS_QUERY = `
 export default async function CentersPage() {
   const [heroPage, data] = await Promise.all([
     fetchPageWithHeroFields("centers"),
-    wpFetch<any>(EXPLORE_CENTERS_QUERY),
+    wpFetch<any>(EXPLORE_CENTERS_QUERY, undefined, {
+      tags: [WP_CACHE_TAGS.centers, WP_CACHE_TAGS.programs],
+    }),
   ]);
   const centers = data?.centers?.nodes ?? [];
   const programs = data?.programs?.nodes ?? [];

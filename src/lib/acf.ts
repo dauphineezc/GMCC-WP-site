@@ -31,6 +31,32 @@ export function splitLines(v: unknown): string[] {
     : [];
 }
 
+/**
+ * Coerce ACF / WPGraphQL WYSIWYG (and plain text) field values to a string.
+ * GraphQL usually returns HTML strings; some resolvers wrap them in objects.
+ */
+export function coerceWpRichText(input: unknown): string {
+  if (input == null) return "";
+  if (typeof input === "string") return input;
+  if (typeof input === "object") {
+    const o = input as Record<string, unknown>;
+    for (const key of ["rendered", "html", "source", "text", "value", "content"]) {
+      const v = o[key];
+      if (typeof v === "string" && v.trim()) return v;
+    }
+  }
+  return "";
+}
+
+/**
+ * ACF WYSIWYG Editor field → trimmed HTML string.
+ * Render with `<WysiwygText />`, which allowlists bold/italic/underline/lists/links
+ * and silently drops other formatting (alignment, blockquotes, media, etc.).
+ */
+export function asWysiwyg(v: unknown): string {
+  return coerceWpRichText(v).trim();
+}
+
 /** ACF image field from WPGraphQL: `{ node: { sourceUrl, altText, focal… } }`. */
 export type ImageField = {
   node?: ({

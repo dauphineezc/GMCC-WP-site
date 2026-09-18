@@ -7,6 +7,9 @@ import { wpFetch } from "@/lib/wp";
 import NewsListClient, { NewsListItem } from "./newsListClient";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
+
+export const revalidate = 900;
 
 const NEWS_LIST_QUERY = /* GraphQL */ `
   query NewsList($first: Int!) {
@@ -57,7 +60,7 @@ function toDateValue(d?: string | null) {
 export default async function NewsPage() {
   const [heroPage, newsData] = await Promise.all([
     fetchPageWithHeroFields("news"),
-    wpFetch<NewsListData>(NEWS_LIST_QUERY, { first: 250 }),
+    wpFetch<NewsListData>(NEWS_LIST_QUERY, { first: 250 }, { tags: [WP_CACHE_TAGS.news] }),
   ]);
 
   const raw = newsData?.allNews?.nodes ?? [];

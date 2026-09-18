@@ -7,8 +7,12 @@ import { TestimonialSection, normalizeTestimonials } from "@/components/testimon
 import AttachmentsCard from "@/components/detail/attachmentsCard";
 import DetailGalleryCarousel from "@/components/detail/detailGalleryCarousel";
 import RegistrationSidebar from "@/components/detail/registrationSidebar";
+import WysiwygText from "@/components/wysiwygText";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
+
+export const revalidate = 900;
 
 /** Map age range to audience slug(s) for filtering */
 type AgeRangeValue = string | number | null | undefined;
@@ -226,7 +230,9 @@ export async function generateMetadata({ params }: ProgramPageProps) {
 export default async function ProgramPage({ params }: ProgramPageProps) {
   const { slug } = await params;
 
-  const data = await wpFetch<any>(PROGRAM_BY_SLUG_QUERY, { slug });
+  const data = await wpFetch<any>(PROGRAM_BY_SLUG_QUERY, { slug }, {
+    tags: [WP_CACHE_TAGS.programs],
+  });
   const wp = data?.program;
   if (!wp) {
     return (
@@ -334,8 +340,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
           {/* Long description */}
           {p.longDescription && (
             <article className="prose prose-sm max-w-none sm:prose-base">
-              {/* If you switch to WYSIWYG later, swap this for dangerouslySetInnerHTML */}
-              <p className="whitespace-pre-line">{p.longDescription}</p>
+              <WysiwygText html={p.longDescription} />
             </article>
           )}
 

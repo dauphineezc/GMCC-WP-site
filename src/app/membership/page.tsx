@@ -14,6 +14,9 @@ import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
 } from "@/lib/pageHeroFields";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
+
+export const revalidate = 900;
 
 const EXPLORE_MEMBERSHIPS_QUERY = `
   query ExploreMemberships {
@@ -347,8 +350,12 @@ function mapPageFields(wp: any): MembershipPageFields {
 export default async function ExploreMembershipsPage() {
   const [heroPage, data, pageData] = await Promise.all([
     fetchPageWithHeroFields("membership"),
-    wpFetch<any>(EXPLORE_MEMBERSHIPS_QUERY),
-    wpFetch<any>(MEMBERSHIP_PAGE_QUERY),
+    wpFetch<any>(EXPLORE_MEMBERSHIPS_QUERY, undefined, {
+      tags: [WP_CACHE_TAGS.membership],
+    }),
+    wpFetch<any>(MEMBERSHIP_PAGE_QUERY, undefined, {
+      tags: [WP_CACHE_TAGS.membership, WP_CACHE_TAGS.amenities, WP_CACHE_TAGS.pages],
+    }),
   ]);
 
   const hero = resolvePhotoWaveHeaderProps(heroPage, "Membership");

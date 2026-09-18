@@ -166,6 +166,9 @@ export default function ExploreProgramsClient({
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const isApplyingUrlStateRef = useRef(false);
   const shouldSyncUrlFromUserActionRef = useRef(false);
+  // Sidebar filter tweaks rewrite the URL; don't wipe the search box on that
+  // round-trip. External nav (navbar / deep links) leaves this false so search clears.
+  const preserveSearchOnUrlSyncRef = useRef(false);
 
   const loadMore = useCallback(async () => {
     if (isLoadingMore) return;
@@ -330,7 +333,12 @@ export default function ExploreProgramsClient({
     () => searchParamsFromRecord(initialSearchParams),
     [initialSearchParams],
   );
-  const filterSearchParams = hasHydrated ? clientSearchParams : serverSearchParams;
+  // Prefer client URL immediately when the server didn't pass searchParams
+  // (static /programs shell) so filter deep-links apply on first client paint.
+  const filterSearchParams =
+    hasHydrated || Object.keys(initialSearchParams).length === 0
+      ? clientSearchParams
+      : serverSearchParams;
 
   const searchParamsObj = useMemo(
     () => Object.fromEntries(filterSearchParams.entries()),
@@ -344,26 +352,29 @@ export default function ExploreProgramsClient({
     [searchParamsObj, forcedVariant]
   );
 
-  const hasSpecializedHeader = useMemo(
-    () => getProgramsDirectoryHeaderVariant(headerSearchParams) !== null,
+  const directoryHeaderVariant = useMemo(
+    () => getProgramsDirectoryHeaderVariant(headerSearchParams),
     [headerSearchParams]
   );
+  const hasSpecializedHeader = directoryHeaderVariant !== null;
 
   const [directoryAcf, setDirectoryAcf] = useState<ProgramsPageACF>(directoryHeaderData);
   const directoryHeadersLoadedRef = useRef(
     Object.values(directoryHeaderData ?? {}).some((v) => v != null),
   );
 
+  // Server often passes a fresh `{}` on soft navigations (inline prop). Never
+  // clobber client-fetched headers with that empty shell — that left the
+  // hardcoded title visible while body/attachments stayed missing.
   useEffect(() => {
+    const hasServerData = Object.values(directoryHeaderData ?? {}).some((v) => v != null);
+    if (!hasServerData) return;
     setDirectoryAcf(directoryHeaderData);
-    if (Object.values(directoryHeaderData ?? {}).some((v) => v != null)) {
-      directoryHeadersLoadedRef.current = true;
-    }
+    directoryHeadersLoadedRef.current = true;
   }, [directoryHeaderData]);
 
   useEffect(() => {
-    const variant = getProgramsDirectoryHeaderVariant(headerSearchParams);
-    if (!variant || directoryHeadersLoadedRef.current) return;
+    if (!directoryHeaderVariant || directoryHeadersLoadedRef.current) return;
 
     let cancelled = false;
     (async () => {
@@ -382,7 +393,9 @@ export default function ExploreProgramsClient({
     return () => {
       cancelled = true;
     };
-  }, [headerSearchParams]);
+    // Depend on the resolved variant string, not headerSearchParams identity —
+    // stripping headerVariant from the URL used to cancel in-flight fetches.
+  }, [directoryHeaderVariant]);
 
   // Helper to find slug by name (case-insensitive)
   const findSlugByName = (options: { slug: string; name: string }[], name: string) => {
@@ -524,6 +537,7 @@ export default function ExploreProgramsClient({
     const current = clientSearchParams.toString();
     const next = nextParams.toString();
     if (next !== current) {
+      preserveSearchOnUrlSyncRef.current = true;
       const href = next ? `${pathname}?${next}` : pathname;
       router.replace(href, { scroll: false });
     }
@@ -549,6 +563,11 @@ export default function ExploreProgramsClient({
     setSkillLevels(initialFilters.skillLevels);
     setAudience(initialFilters.audience);
     setCampTypes(initialFilters.campTypes);
+
+    if (!preserveSearchOnUrlSyncRef.current) {
+      setSearch("");
+    }
+    preserveSearchOnUrlSyncRef.current = false;
     
     // Auto-open dropdowns that have active filters
     const toOpen = new Set<string>();
@@ -625,11 +644,12 @@ export default function ExploreProgramsClient({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
 
+    // Text runs against the full program set so directory-page filters
+    // (e.g. Sports & Recreation) don't hide matches from other areas.
     const results = all.filter(p => {
-      // text search
       if (q) {
         const hay = `${p.title} ${p.summary}`.toLowerCase();
-        if (!hay.includes(q)) return false;
+        return hay.includes(q);
       }
 
       // offering type
@@ -1030,7 +1050,9 @@ export default function ExploreProgramsClient({
 
           {!filtered.length && (
             <div className="rounded-xl border border-dashed p-8 text-center body">
-              No programs match these filters.
+              {search.trim()
+                ? "No programs match this search."
+                : "No programs match these filters."}
             </div>
           )}
 

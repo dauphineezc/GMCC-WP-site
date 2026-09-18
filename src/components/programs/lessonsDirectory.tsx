@@ -132,7 +132,7 @@ export default function LessonsDirectory({
         <p className="body mt-4 max-w-6xl whitespace-pre-line">{introBody}</p>
 
         {benefits.length ? (
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 flex grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {benefits.map((item) => (
               <div key={`${item.label}-${item.iconUrl}`} className="text-center">
                 {item.iconUrl ? (
@@ -172,7 +172,7 @@ export default function LessonsDirectory({
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="h2 text-white">{trainersHeader}</h2>
           <p className="mt-2 text-white/90">{trainersSubheader}</p>
-          <div className="mt-6 rounded-2xl bg-gmcc-navy p-4 text-neutral-900 md:p-6">
+          <div className="mt-6 min-w-0 rounded-2xl bg-gmcc-navy p-4 text-neutral-900 md:p-6">
             <PersonalTrainingDirectoryHeader data={{ trainers }} className="w-full" />
           </div>
         </div>

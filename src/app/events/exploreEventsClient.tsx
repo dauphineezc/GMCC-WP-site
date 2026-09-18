@@ -162,7 +162,9 @@ export default function ExploreEventsClient({
 
   const all = useMemo(() => loadedEvents.map(mapEventForExplorer), [loadedEvents]);
 
-  // --- simple filters (for now) ---
+  // --- Read URL search params ---
+  const searchParams = useSearchParams();
+
   const audienceOptions = useMemo(() => {
     const map = new Map<string, string>();
     all.forEach(e => e.audience.forEach(a => map.set(a.slug, a.name)));
@@ -174,11 +176,19 @@ export default function ExploreEventsClient({
   const eventTypeOptions = useMemo(() => {
     const s = new Set<string>();
     all.forEach(e => e.eventType.forEach(t => s.add(t)));
+    // Keep deep-linked specialty types visible in the filter even when no
+    // matching events are in the current loaded page.
+    const fromUrl = searchParams.get("eventType");
+    if (fromUrl) {
+      fromUrl.split(",").forEach((val) => {
+        const trimmed = val.trim();
+        if (!trimmed) return;
+        const existing = Array.from(s).find((o) => o.toLowerCase() === trimmed.toLowerCase());
+        if (!existing) s.add(trimmed);
+      });
+    }
     return Array.from(s).sort((a, b) => a.localeCompare(b));
-  }, [all]);
-
-  // --- Read URL search params ---
-  const searchParams = useSearchParams();
+  }, [all, searchParams]);
 
   // Parse initial values from URL
   const initialFilters = useMemo(() => {
@@ -198,13 +208,15 @@ export default function ExploreEventsClient({
       });
     }
 
-    // eventType param - case-insensitive match
+    // eventType param - case-insensitive match. Keep the URL value even when
+    // it isn't in the loaded events yet so specialty headers still resolve.
     const eventTypeValues: string[] = [];
     if (eventTypeParam) {
       eventTypeParam.split(",").forEach(val => {
         const trimmed = val.trim();
+        if (!trimmed) return;
         const match = eventTypeOptions.find(o => o.toLowerCase() === trimmed.toLowerCase());
-        if (match) eventTypeValues.push(match);
+        eventTypeValues.push(match ?? trimmed);
       });
     }
 
@@ -307,10 +319,60 @@ export default function ExploreEventsClient({
     );
   }, [all, search, audience, eventTypes, dateFilter]);
 
-  const hasSpecializedHeader = useMemo(
-    () => getEventsDirectoryHeaderVariant(eventTypes) !== null,
+  const directoryHeaderVariant = useMemo(
+    () => getEventsDirectoryHeaderVariant(eventTypes),
     [eventTypes],
   );
+  const hasSpecializedHeader = directoryHeaderVariant !== null;
+
+  const [headerAcf, setHeaderAcf] = useState<EventsDirectoryHeaderData>(directoryHeaders);
+  const headerFetchAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    const hasServerData = Object.values(directoryHeaders ?? {}).some(
+      (v) =>
+        v &&
+        ((v.header ?? "").toString().trim() ||
+          (typeof v.body === "string" ? v.body.trim() : Boolean(v.body))),
+    );
+    if (!hasServerData) return;
+    setHeaderAcf(directoryHeaders);
+  }, [directoryHeaders]);
+
+  useEffect(() => {
+    if (!directoryHeaderVariant || headerFetchAttemptedRef.current) return;
+
+    const existing = headerAcf[directoryHeaderVariant];
+    const existingHasContent =
+      existing &&
+      ((existing.header ?? "").toString().trim() ||
+        (typeof existing.body === "string"
+          ? existing.body.trim()
+          : Boolean(existing.body)));
+    if (existingHasContent) {
+      return;
+    }
+
+    headerFetchAttemptedRef.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/events/directory-headers");
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as EventsDirectoryHeaderData;
+        if (cancelled) return;
+        setHeaderAcf((prev) => ({ ...prev, ...data }));
+      } catch {
+        // Specialty header stays on fallback title only.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // headerAcf read only for the initial emptiness check; fetch is one-shot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
+  }, [directoryHeaderVariant]);
 
   return (
     <>
@@ -320,7 +382,7 @@ export default function ExploreEventsClient({
           {hasSpecializedHeader ? (
             <EventsDirectoryHeader
               eventTypes={eventTypes}
-              headers={directoryHeaders}
+              headers={headerAcf}
             />
           ) : (
             <>

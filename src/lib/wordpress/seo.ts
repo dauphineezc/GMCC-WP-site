@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { wpFetch } from "@/lib/wp";
 import { toAbsoluteUrl } from "@/lib/sitemap/siteUrl";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
 
 type YoastSeo = {
   title?: string | null;
@@ -48,9 +49,11 @@ export async function getYoastMetadata(
   );
 
   try {
-    const data = await wpFetch<{ nodeByUri?: SeoNode }>(SEO_BY_URI_QUERY, {
-      uri: normalizeUri(pathname),
-    });
+    const data = await wpFetch<{ nodeByUri?: SeoNode }>(
+      SEO_BY_URI_QUERY,
+      { uri: normalizeUri(pathname) },
+      { tags: [WP_CACHE_TAGS.seo] },
+    );
     const node = data?.nodeByUri;
     const title = nonEmptyString(node?.seo?.title);
     const description = nonEmptyString(node?.seo?.metaDesc);

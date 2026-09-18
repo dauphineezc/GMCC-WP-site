@@ -1,6 +1,9 @@
 // lib/nav/getFooterNav.ts
 import { cache } from "react";
 import { wpFetch } from "../wp";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
+import { ADP_LANDING_PAGE_URL } from "@/lib/constants";
+import { isExternalHref } from "@/lib/acf";
 
 export type FooterNavItem = {
   id: string;
@@ -29,7 +32,8 @@ const FOOTER_NAV_QUERY = /* GraphQL */ `
   }
 `;
 
-function normalizeWpUrlToPath(url: string): string {
+function normalizeFooterHref(url: string): string {
+  if (isExternalHref(url)) return url.trim();
   try {
     const u = new URL(url);
     return u.pathname;
@@ -41,14 +45,16 @@ function normalizeWpUrlToPath(url: string): string {
 export const getFooterNav = cache(async (): Promise<FooterNavItem[]> => {
   const data = await wpFetch<{
     menu: { menuItems: { nodes: WPMenuItem[] } } | null;
-  }>(FOOTER_NAV_QUERY);
+  }>(FOOTER_NAV_QUERY, undefined, { tags: [WP_CACHE_TAGS.nav] });
 
   const nodes = data.menu?.menuItems?.nodes ?? [];
-  
-  return nodes.map((item) => ({
-    id: item.id,
-    label: item.label,
-    href: normalizeWpUrlToPath(item.url),
-  }));
-});
 
+  return nodes.map((item) => {
+    const isJoinOurTeam = item.label.trim().toLowerCase() === "join our team";
+    return {
+      id: item.id,
+      label: item.label,
+      href: isJoinOurTeam ? ADP_LANDING_PAGE_URL : normalizeFooterHref(item.url),
+    };
+  });
+});

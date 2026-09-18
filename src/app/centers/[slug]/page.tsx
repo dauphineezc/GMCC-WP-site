@@ -39,6 +39,9 @@ import CurlingHistoryTimeline from "@/components/curlingHistoryTimeline";
 import MailchimpSubscribeForm, {
   audienceForCenterSlug,
 } from "@/components/mailchimpSubscribeForm";
+import { WP_CACHE_TAGS } from "@/lib/revalidate";
+
+export const revalidate = 900;
 
 
 
@@ -278,7 +281,9 @@ export async function generateMetadata({ params }: CenterPageProps) {
 export default async function CenterPage(props: CenterPageProps) {
   const { slug } = await props.params;
   const [data, centerDetailFields, centerAnnouncement, todaysEvents] = await Promise.all([
-    wpFetch<any>(CENTER_BY_SLUG_QUERY, { slug }),
+    wpFetch<any>(CENTER_BY_SLUG_QUERY, { slug }, {
+      tags: [WP_CACHE_TAGS.centers, WP_CACHE_TAGS.amenities],
+    }),
     fetchCenterDetailPageFields(),
     getCenterAnnouncement(slug),
     fetchTodaysEvents({ centerSlug: slug, fallbackImageUrl: "/images/VisitPhoto.png" }),
@@ -675,14 +680,19 @@ export default async function CenterPage(props: CenterPageProps) {
           </div>
         ) : null}
 
-      {/* ── Section 2: What's Happening Today? ───────────────────────────── */}
+      {/* ── Section 2: What's Happening This Week? ───────────────────────── */}
       {showTodaySection ? (
-      <section className="page-section" id="today">
+      <section
+        className={
+          todaysEvents.length > 0
+            ? "page-section"
+            : "page-section !pb-2 md:!pb-2"
+        }
+        id="today"
+      >
         <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-10">
-            <h2 className="h2 text-center">
-              {isCurlingCenter ? <>What&rsquo;s Happening This Week?</> : <>What&rsquo;s Happening Today?</>}
-            </h2>
+          <div className={todaysEvents.length > 0 ? "mb-10" : "mb-6"}>
+            <h2 className="h2 text-center">What&rsquo;s Happening This Week?</h2>
           </div>
 
           {isCurlingCenter ? (
@@ -706,7 +716,10 @@ export default async function CenterPage(props: CenterPageProps) {
 
                 <div className="col-span-1 grid gap-5">
                   {todaysEvents.map((event) => (
-                    <TodayEventCard key={event.id} event={event} />
+                    <TodayEventCard
+                      key={`${event.id}-${event.startDatetime}`}
+                      event={event}
+                    />
                   ))}
                 </div>
               </div>
@@ -723,7 +736,10 @@ export default async function CenterPage(props: CenterPageProps) {
           ) : todaysEvents.length > 0 ? (
             <div className="mx-auto max-w-2xl grid gap-5">
               {todaysEvents.map((event) => (
-                <TodayEventCard key={event.id} event={event} />
+                <TodayEventCard
+                  key={`${event.id}-${event.startDatetime}`}
+                  event={event}
+                />
               ))}
             </div>
           ) : null}
@@ -732,7 +748,13 @@ export default async function CenterPage(props: CenterPageProps) {
       </section>
       ) : null}
 
-      <section className="page-section stack-4">
+      <section
+        className={
+          showTodaySection && todaysEvents.length === 0
+            ? "page-section stack-4 !pt-2 md:!pt-4"
+            : "page-section stack-4"
+        }
+      >
         <h2 className="h2 mb-4">What You'll Find Here</h2>
         <p className="body mb-8">{centerFields.longDescription}</p>
         {/* Amenities Grid */}

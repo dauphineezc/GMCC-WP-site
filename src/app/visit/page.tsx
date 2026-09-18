@@ -20,9 +20,7 @@ import TodayEventsGrid from "@/components/events/todayEventsGrid";
 import { TODAY_ALL_CENTERS_SCHEDULE_EMBED_URL } from "@/lib/constants";
 import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 import { fetchTodaysEvents } from "@/lib/events/todayEvents";
-
-/** Regenerate at most once per day; cron can trigger sooner via `/api/revalidate`. */
-export const revalidate = 86400;
+export const revalidate = 900;
 
 // ─── GraphQL fields ───────────────────────────────────────────────────────────
 

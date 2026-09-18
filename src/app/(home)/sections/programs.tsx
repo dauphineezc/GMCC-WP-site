@@ -1,7 +1,7 @@
 // src/app/(home)/sections/programs.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type HTMLAttributes } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 export type ProgramCard = {
@@ -23,6 +23,11 @@ const MAX_COLS = 4;
 const COL_GAP_PX = 16; // gap-4
 /** Permanent side inset outside the scroller (does not scroll away). */
 const EDGE_PAD_PX = 16;
+/**
+ * Minimum inset inside the scroller so card borders/shadows are never clipped
+ * by overflow. Layout always sizes the column track against (width - 2*this).
+ */
+const MIN_SIDE_GUTTER_PX = 2;
 const CARD_MIN_PX = 200;
 const CARD_MAX_PX = 240;
 /** Triple the track so we can jump between identical copies without a visible reset. */
@@ -32,66 +37,43 @@ type CarouselLayout = {
   cols: number;
   cardW: number;
   /**
-   * Side inset when the column track is narrower than the scroller.
-   * Used as scroll-padding; with center snap, peeks appear on both sides.
+   * Equal left/right inset for the visible column group.
+   * Always >= MIN_SIDE_GUTTER_PX so borders stay fully visible.
    */
   peekGutter: number;
-  /** True when gutters are large enough for intentional adjacent-card peeks. */
-  peek: boolean;
 };
 
 /**
- * Prefer flush even columns within [CARD_MIN, CARD_MAX].
- * Never exceed CARD_MAX — leftover space centers the track (and peeks only when
- * there is at least half a card of room total, ~¼ visible each side).
- *
- * `scrollerWidth` is the width inside the permanent EDGE_PAD wrapper.
+ * Fit as many full cards as possible within [CARD_MIN, CARD_MAX].
+ * If 4 cannot fit entirely (including side gutters for borders), drop to 3, etc.
+ * Leftover width is split equally so the visible group stays centered.
  */
 function computeCarouselLayout(scrollerWidth: number): CarouselLayout {
   const w = Math.max(0, Math.floor(scrollerWidth));
-
-  const centered = (cols: number, cardW: number, peek: boolean): CarouselLayout => {
-    const gaps = COL_GAP_PX * (cols - 1);
-    const track = cols * cardW + gaps;
-    const peekGutter = Math.max(0, Math.floor((w - track) / 2));
-    return { cols, cardW, peekGutter, peek };
-  };
+  // Room for the card track after reserving border-safe side gutters.
+  const avail = Math.max(0, w - 2 * MIN_SIDE_GUTTER_PX);
 
   for (let cols = MAX_COLS; cols >= 1; cols--) {
-    const gaps = COL_GAP_PX * (cols - 1);
-    const flushW = Math.floor((w - gaps) / cols);
+    const gaps = COL_GAP_PX * Math.max(0, cols - 1);
+    if (avail < cols * CARD_MIN_PX + gaps) continue;
 
-    if (flushW < CARD_MIN_PX) continue;
+    let cardW = Math.min(CARD_MAX_PX, Math.floor((avail - gaps) / cols));
+    if (cardW < CARD_MIN_PX) continue;
 
-    if (flushW <= CARD_MAX_PX) {
-      // Exact even columns — fill the scroller, no side peeks.
-      return { cols, cardW: flushW, peekGutter: 0, peek: false };
-    }
+    // Keep the track strictly inside avail (floor can still overshoot by a px).
+    while (cols * cardW + gaps > avail && cardW > CARD_MIN_PX) cardW -= 1;
+    if (cols * cardW + gaps > avail) continue;
 
-    // Flush would exceed max — pin to max and center any leftover.
-    const leftover = w - (cols * CARD_MAX_PX + gaps);
+    const track = cols * cardW + gaps;
+    const peekGutter = Math.max(MIN_SIDE_GUTTER_PX, Math.floor((w - track) / 2));
 
-    if (leftover >= Math.floor(CARD_MAX_PX / 2)) {
-      // Half-card total peek budget → ~¼ card each side.
-      // w = cols*cardW + gaps + 0.5*cardW
-      let cardW = Math.floor((w - gaps) / (cols + 0.5));
-      cardW = Math.min(CARD_MAX_PX, Math.max(CARD_MIN_PX, cardW));
-      return centered(cols, cardW, true);
-    }
-
-    // Not enough room for real peeks — still honor max and center the track.
-    return centered(cols, CARD_MAX_PX, false);
+    return { cols, cardW, peekGutter };
   }
 
-  // Narrow viewport: one column, capped at max, centered when narrower than scroller.
-  const cardW = Math.min(CARD_MAX_PX, Math.max(0, w));
+  // Narrow viewport: one column, centered, still border-safe when possible.
+  const cardW = Math.min(CARD_MAX_PX, Math.max(0, avail));
   const peekGutter = Math.max(0, Math.floor((w - cardW) / 2));
-  return {
-    cols: 1,
-    cardW,
-    peekGutter,
-    peek: peekGutter >= Math.floor(cardW / 4),
-  };
+  return { cols: 1, cardW: Math.max(cardW, 0), peekGutter };
 }
 
 export default function ProgramsSection({
@@ -113,12 +95,10 @@ export default function ProgramsSection({
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const cellRefs = useRef<Array<HTMLDivElement | null>>([]);
 
-  const [isMd, setIsMd] = useState(false);
   const [layout, setLayout] = useState<CarouselLayout>({
     cols: MAX_COLS,
-    cardW: 260,
-    peekGutter: 0,
-    peek: false,
+    cardW: CARD_MAX_PX,
+    peekGutter: MIN_SIDE_GUTTER_PX,
   });
 
   const isProgrammaticScroll = useRef(false);
@@ -126,11 +106,16 @@ export default function ProgramsSection({
   const dragStartX = useRef(0);
   const dragScrollLeft = useRef(0);
   const didDragRef = useRef(false);
+  /** Absolute track index we are scrolling toward (survives rapid clicks mid-animation). */
+  const pendingAbsIndexRef = useRef<number | null>(null);
+  const settleTimeoutRef = useRef<number | null>(null);
+  const scrollGenRef = useRef(0);
 
   const n = items.length;
-  // Single-card (or single-col) inset layouts center-snap so peeks split left/right.
-  // Multi-col peeks keep start-snap with equal scroll-padding so a full column group stays in view.
-  const useCenterSnap = layout.peekGutter > 0 && layout.cols === 1;
+  // Always center the visible column group:
+  // - 1 col: snap each card to the scroller center
+  // - multi-col: start-snap with equal scroll-padding gutters so the group is centered
+  const useCenterSnap = layout.cols === 1;
   // Loop whenever there is more than one full viewport of cards to scroll through.
   const loopEnabled = n > layout.cols;
 
@@ -151,15 +136,6 @@ export default function ProgramsSection({
     return out;
   }, [items, n, loopEnabled]);
 
-  // Breakpoint tracking
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    const update = () => setIsMd(mq.matches);
-    update();
-    mq.addEventListener?.("change", update);
-    return () => mq.removeEventListener?.("change", update);
-  }, []);
-
   // Column widths from scroller viewport (avoids 100% + max-content circular sizing)
   useEffect(() => {
     const scroller = scrollerRef.current;
@@ -170,8 +146,7 @@ export default function ProgramsSection({
       setLayout((prev) =>
         prev.cols === next.cols &&
         prev.cardW === next.cardW &&
-        prev.peekGutter === next.peekGutter &&
-        prev.peek === next.peek
+        prev.peekGutter === next.peekGutter
           ? prev
           : next
       );
@@ -190,11 +165,20 @@ export default function ProgramsSection({
   }, []);
 
   const getSnapLeftForCell = (el: HTMLDivElement, scroller: HTMLDivElement) => {
+    // Position relative to the scroller's scroll origin (offsetLeft can be
+    // relative to a positioned ancestor outside the scroller).
+    const fromScroller =
+      el.getBoundingClientRect().left -
+      scroller.getBoundingClientRect().left +
+      scroller.scrollLeft;
+
     if (useCenterSnap) {
-      return el.offsetLeft + el.clientWidth / 2 - scroller.clientWidth / 2;
+      return Math.round(
+        fromScroller + el.clientWidth / 2 - scroller.clientWidth / 2
+      );
     }
-    // Start-align into the snapport (inset by scroll-padding when peekGutter > 0).
-    return Math.max(0, el.offsetLeft - layout.peekGutter);
+    // Multi-col: place the card's left edge at peekGutter so the border is never clipped.
+    return Math.round(fromScroller - layout.peekGutter);
   };
 
   const getSnapPositions = () => {
@@ -216,25 +200,31 @@ export default function ProgramsSection({
     return getSnapLeftForCell(second, scroller) - getSnapLeftForCell(first, scroller);
   };
 
-  /** Keep scrollLeft inside the middle copy so prev/next never hit a hard edge. */
+  /**
+   * Keep scrollLeft inside the middle copy's snap range.
+   * Use the middle copy's first snap position as the band start (not raw setWidth)
+   * so peek/center gutters don't push us into a clone set on load.
+   */
   const normalizeLoopScroll = () => {
     if (!loopEnabled) return;
     const scroller = scrollerRef.current;
     const setWidth = getSetWidth();
-    if (!scroller || setWidth <= 0) return;
+    const positions = getSnapPositions();
+    if (!scroller || setWidth <= 0 || positions.length < n * 2) return;
+
+    const bandStart = positions[n];
+    const bandEnd = bandStart + setWidth;
 
     let left = scroller.scrollLeft;
-    // Middle copy occupies [setWidth, 2*setWidth)
-    if (left >= setWidth && left < setWidth * 2) return;
+    if (left >= bandStart && left < bandEnd) return;
 
-    while (left < setWidth) left += setWidth;
-    while (left >= setWidth * 2) left -= setWidth;
+    while (left < bandStart) left += setWidth;
+    while (left >= bandEnd) left -= setWidth;
 
     if (Math.abs(left - scroller.scrollLeft) < 0.5) return;
 
     scroller.style.scrollSnapType = "none";
     scroller.scrollLeft = left;
-    // Clear inline override so Tailwind snap-x/snap-mandatory apply again.
     requestAnimationFrame(() => {
       scroller.style.scrollSnapType = "";
     });
@@ -262,6 +252,29 @@ export default function ProgramsSection({
     if (!isProgrammaticScroll.current) normalizeLoopScroll();
   };
 
+  const clearSettleTimeout = () => {
+    if (settleTimeoutRef.current != null) {
+      window.clearTimeout(settleTimeoutRef.current);
+      settleTimeoutRef.current = null;
+    }
+  };
+
+  /** Index to step from: in-flight target if any, otherwise nearest settled snap. */
+  const getStepAbsIndex = () => {
+    if (pendingAbsIndexRef.current != null) return pendingAbsIndexRef.current;
+    return findNearestAbsIndex();
+  };
+
+  /**
+   * Map any absolute index into the middle copy [n, 2n) so the next step has
+   * runway in both directions after a loop normalize.
+   */
+  const toMiddleAbsIndex = (absIdx: number) => {
+    if (!loopEnabled || n <= 0) return absIdx;
+    const logical = ((absIdx % n) + n) % n;
+    return n + logical;
+  };
+
   const scrollToAbsIndex = (absIdx: number, behavior: ScrollBehavior = "smooth") => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
@@ -271,15 +284,34 @@ export default function ProgramsSection({
 
     const clamped = Math.max(0, Math.min(absIdx, positions.length - 1));
     const targetLeft = Math.max(0, positions[clamped]);
+    const gen = ++scrollGenRef.current;
 
+    clearSettleTimeout();
+    pendingAbsIndexRef.current = clamped;
     isProgrammaticScroll.current = true;
+    // Disable snap while we animate so native snap can't settle 1px off and clip a border.
+    scroller.style.scrollSnapType = "none";
     scroller.scrollTo({ left: targetLeft, behavior });
 
     const settleMs = behavior === "smooth" ? 450 : 0;
-    window.setTimeout(() => {
+    settleTimeoutRef.current = window.setTimeout(() => {
+      settleTimeoutRef.current = null;
+      // A newer click superseded this animation.
+      if (gen !== scrollGenRef.current) return;
+
+      // Pin to the exact snap target, then normalize the loop band.
+      scroller.scrollLeft = targetLeft;
       normalizeLoopScroll();
+
+      const middleIdx = toMiddleAbsIndex(clamped);
+      pendingAbsIndexRef.current = middleIdx;
+      const settled = getSnapPositions();
+      if (settled[middleIdx] != null) {
+        scroller.scrollLeft = Math.max(0, settled[middleIdx]);
+      }
+
+      scroller.style.scrollSnapType = "";
       isProgrammaticScroll.current = false;
-      syncActiveIndex();
     }, settleMs);
   };
 
@@ -287,11 +319,11 @@ export default function ProgramsSection({
 
   const goPrev = () => {
     if (!canNavigate) return;
-    scrollToAbsIndex(findNearestAbsIndex() - 1);
+    scrollToAbsIndex(getStepAbsIndex() - 1);
   };
   const goNext = () => {
     if (!canNavigate) return;
-    scrollToAbsIndex(findNearestAbsIndex() + 1);
+    scrollToAbsIndex(getStepAbsIndex() + 1);
   };
 
   // Start on the middle copy so both directions have runway.
@@ -299,8 +331,13 @@ export default function ProgramsSection({
     const scroller = scrollerRef.current;
     if (!scroller || !n) return;
 
+    clearSettleTimeout();
+    scrollGenRef.current += 1;
+
     if (!loopEnabled) {
       scroller.scrollLeft = 0;
+      pendingAbsIndexRef.current = 0;
+      isProgrammaticScroll.current = false;
       return;
     }
 
@@ -309,15 +346,21 @@ export default function ProgramsSection({
       const middleStart = cellRefs.current[n];
       if (!middleStart) return;
       isProgrammaticScroll.current = true;
+      scroller.style.scrollSnapType = "none";
       scroller.scrollLeft = getSnapLeftForCell(middleStart, scroller);
+      pendingAbsIndexRef.current = n;
       requestAnimationFrame(() => {
+        scroller.style.scrollSnapType = "";
         isProgrammaticScroll.current = false;
       });
     });
 
-    return () => cancelAnimationFrame(id);
+    return () => {
+      cancelAnimationFrame(id);
+      clearSettleTimeout();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [n, loopEnabled, layout.cols, layout.cardW, layout.peekGutter, layout.peek]);
+  }, [n, loopEnabled, layout.cols, layout.cardW, layout.peekGutter]);
 
   // Normalize when the user crosses a copy boundary.
   useEffect(() => {
@@ -340,7 +383,7 @@ export default function ProgramsSection({
       window.clearTimeout(timeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackItems.length, loopEnabled, layout.cols, layout.cardW, layout.peekGutter, layout.peek]);
+  }, [trackItems.length, loopEnabled, layout.cols, layout.cardW, layout.peekGutter]);
 
   // Mouse drag-to-scroll (history-style). We disable snap while dragging and
   // suppress click-through when the gesture was actually a drag.
@@ -378,7 +421,6 @@ export default function ProgramsSection({
     const endDrag = () => {
       if (!isDraggingRef.current) return;
       isDraggingRef.current = false;
-      scroller.style.scrollSnapType = "";
       scroller.style.cursor = "grab";
       scroller.classList.remove("select-none");
 
@@ -387,6 +429,7 @@ export default function ProgramsSection({
         scrollToAbsIndex(findNearestAbsIndex(), "smooth");
       } else {
         normalizeLoopScroll();
+        scroller.style.scrollSnapType = "";
         syncActiveIndex();
       }
 
@@ -416,7 +459,7 @@ export default function ProgramsSection({
       scroller.removeEventListener("click", onClickCapture, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackItems.length, loopEnabled, layout.cols, layout.cardW, layout.peekGutter, layout.peek]);
+  }, [trackItems.length, loopEnabled, layout.cols, layout.cardW, layout.peekGutter]);
 
   if (!items.length) return null;
 
@@ -477,22 +520,25 @@ export default function ProgramsSection({
                 style={{
                   WebkitOverflowScrolling: "touch",
                   cursor: "grab",
-                  scrollPaddingLeft: layout.peekGutter,
-                  scrollPaddingRight: layout.peekGutter,
+                  // Equal gutters keep every visible card's border inside the clip edge.
+                  scrollPaddingLeft: useCenterSnap ? undefined : layout.peekGutter,
+                  scrollPaddingRight: useCenterSnap ? undefined : layout.peekGutter,
                 }}
               >
-                {/* Use block-level grid (not inline-grid) to avoid shrinkwrap overflow.
-                    Width strategy:
-                    - width: max-content => grid grows horizontally inside scroller only
-                    - minWidth: 100% => first frame still fills viewport
-                */}
+                {/* Track width is exact: cols*cardW + gaps. Side space is scroll-padding only. */}
                 <div
-                  className="grid gap-6"
+                  className="grid"
                   style={{
                     gridAutoFlow: "column",
                     gridAutoColumns: `${layout.cardW}px`,
+                    columnGap: COL_GAP_PX,
                     width: "max-content",
-                    minWidth: "100%",
+                    ...(loopEnabled
+                      ? {}
+                      : {
+                          minWidth: "100%",
+                          justifyContent: "center",
+                        }),
                   }}
                 >
                   {trackItems.map((entry, idx) => (
@@ -502,9 +548,6 @@ export default function ProgramsSection({
                         cellRefs.current[idx] = el;
                       }}
                       className={`min-w-0 snap-always ${useCenterSnap ? "snap-center" : "snap-start"}`}
-                      {...(loopEnabled && entry.copy !== 1
-                        ? ({ "aria-hidden": true, inert: true } satisfies HTMLAttributes<HTMLDivElement>)
-                        : {})}
                     >
                       <div className="min-w-0 w-full max-w-full">
                         <ProgramCardView program={entry.program} />

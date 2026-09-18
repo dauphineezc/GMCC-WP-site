@@ -15,9 +15,10 @@ import { EVENT_SCHEDULE_GRAPHQL, selectNextUpcomingEvents } from "@/lib/events/e
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { formatEventBadgeDate } from "@/lib/events/formatEventDate";
 import NewsSection from "./(home)/sections/news";
+import { REVALIDATE_EVENTS_SECONDS, WP_CACHE_TAGS } from "@/lib/revalidate";
 
-/** Regenerate at most once per day; cron can trigger sooner via `/api/revalidate`. */
-export const revalidate = 86400;
+/** Regenerate at most once per day; `/api/revalidate` can trigger sooner. */
+export const revalidate = 900;
 
 // ---- Types (match query) ----
 type GqlImage = {
@@ -524,9 +525,13 @@ query HomePage($uri: ID!) {
 
 export default async function HomePage() {
   const [data, recentNewsData, upcomingEventsData] = await Promise.all([
-    wpFetch<HomeData>(HOME_QUERY, { uri: "/" }),
-    wpFetch<RecentNewsData>(RECENT_NEWS_QUERY, { first: 50 }),
-    wpFetch<UpcomingEventsData>(UPCOMING_EVENTS_QUERY, { first: UPCOMING_EVENTS_FETCH_SIZE }),
+    wpFetch<HomeData>(HOME_QUERY, { uri: "/" }, { tags: [WP_CACHE_TAGS.pages] }),
+    wpFetch<RecentNewsData>(RECENT_NEWS_QUERY, { first: 50 }, { tags: [WP_CACHE_TAGS.news] }),
+    wpFetch<UpcomingEventsData>(
+      UPCOMING_EVENTS_QUERY,
+      { first: UPCOMING_EVENTS_FETCH_SIZE },
+      { revalidate: REVALIDATE_EVENTS_SECONDS, tags: [WP_CACHE_TAGS.events] },
+    ),
   ]);
   const f = data?.page?.homepageFields;
 

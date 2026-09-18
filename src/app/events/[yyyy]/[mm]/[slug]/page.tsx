@@ -9,8 +9,12 @@ import SponsorsGrid, { normalizeSponsors } from "@/components/sponsorsGrid";
 import AttachmentsCard from "@/components/detail/attachmentsCard";
 import DetailGalleryCarousel from "@/components/detail/detailGalleryCarousel";
 import RegistrationSidebar from "@/components/detail/registrationSidebar";
+import WysiwygText from "@/components/wysiwygText";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
 import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+import { REVALIDATE_EVENTS_SECONDS, WP_CACHE_TAGS } from "@/lib/revalidate";
+
+export const revalidate = 900;
 
 const EVENT_BY_SLUG_QUERY = `
   query EventBySlug($slug: ID!) {
@@ -160,7 +164,10 @@ export async function generateMetadata({ params }: EventPageProps) {
 export default async function EventPage(props: EventPageProps) {
   const { slug } = await props.params;
 
-  const data = await wpFetch<any>(EVENT_BY_SLUG_QUERY, { slug });
+  const data = await wpFetch<any>(EVENT_BY_SLUG_QUERY, { slug }, {
+    revalidate: REVALIDATE_EVENTS_SECONDS,
+    tags: [WP_CACHE_TAGS.events],
+  });
   const event = data?.event;
 
   if (!event) {
@@ -257,8 +264,7 @@ export default async function EventPage(props: EventPageProps) {
           {/* Description */}
           {f.longDescription && (
             <article className="prose prose-sm max-w-none sm:prose-base">
-              {/* If you stored HTML, use dangerouslySetInnerHTML instead */}
-              <p className="whitespace-pre-line">{f.longDescription}</p>
+              <WysiwygText html={f.longDescription} />
             </article>
           )}
 
