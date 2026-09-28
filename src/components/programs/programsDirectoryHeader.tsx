@@ -20,7 +20,7 @@ function normalizeParam(value?: string) {
   return (value ?? "")
     .trim()
     .toLowerCase()
-    .replace(/[-_]+/g, " ")
+    .replace(/[-_/]+/g, " ")
     .replace(/\s+/g, " ");
 }
 
@@ -45,7 +45,7 @@ export function getProgramsDirectoryHeaderVariant(
   if (rawHeaderVariant === "community") return "community";
   if (rawHeaderVariant === "fitness") return "fitness";
   if (rawHeaderVariant === "group-fitness" || rawHeaderVariant === "groupfitness") return "group-fitness";
-  if (rawHeaderVariant === "middle-school-sports" || rawHeaderVariant === "middleschoolsports") return "middle-school-sports";
+  if (rawHeaderVariant === "middle-school-athletics" || rawHeaderVariant === "middleschoolathletics") return "middle-school-athletics";
   if (rawHeaderVariant === "personal-training" || rawHeaderVariant === "personaltraining") return "personal-training";
   if (rawHeaderVariant === "aquatics") return "aquatics";
   if (rawHeaderVariant === "childcare") return "childcare";
@@ -72,8 +72,8 @@ export function getProgramsDirectoryHeaderVariant(
   }
 
   // Exact / exclusive filter matches (sidebar). More specific first.
-  if (hasAny(programAreaValues, ["middle school sports"]) && programAreaValues.length === 1) {
-    return "middle-school-sports";
+  if (hasAny(programAreaValues, ["middle school athletics"]) && programAreaValues.length === 1) {
+    return "middle-school-athletics";
   }
   if (hasAny(programAreaValues, ["silversneakers"]) && !hasAny(programAreaValues, ["group fitness"])) {
     return "silversneakers";
@@ -82,10 +82,10 @@ export function getProgramsDirectoryHeaderVariant(
   if (hasAny(programAreaValues, ["silversneakers"])) return "silversneakers";
   if (hasAny(programAreaValues, ["community", "community partners"])) return "community";
   if (hasAny(programAreaValues, ["aquatics"]) && programAreaValues.length === 1) return "aquatics";
-  if (hasAny(programAreaValues, ["before after school", "onsite care"])) return "childcare";
+  if (hasAny(programAreaValues, ["before after school", "onsite care", "preschool"])) return "childcare";
   if (hasAny(programAreaValues, ["group fitness"]) && programAreaValues.length === 1) return "group-fitness";
   if (hasAny(programAreaValues, ["personal training"]) && programAreaValues.length === 1) return "personal-training";
-  if (hasAny(programAreaValues, ["basketball", "cheer and pom", "curling", "misc other sports", "racquet sports", "middle school sports"])) {
+  if (hasAny(programAreaValues, ["basketball", "cheer and pom", "curling", "misc other sports", "racquet sports", "middle school athletics"])) {
     return "sports-and-recreation";
   }
 

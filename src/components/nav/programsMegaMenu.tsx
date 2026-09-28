@@ -29,7 +29,7 @@ function ProgramsMegaMenu({ item, onClose }: ProgramsMegaMenuProps) {
                 className="w-16 h-16 object-contain"
               />
             </div>
-            <div className="text-[18px] font-bold text-gmcc-navy transition-all duration-200 ease-out group-hover:-translate-y-0.75 group-hover:text-gmcc-teal">
+            <div className="whitespace-nowrap text-[18px] font-bold text-gmcc-navy transition-all duration-200 ease-out group-hover:-translate-y-0.75 group-hover:text-gmcc-teal">
               {category.label}
             </div>
           </Link>

@@ -50,13 +50,18 @@ export default function TrainersCarousel({
     return () => mq.removeEventListener?.("change", update);
   }, []);
 
-  useEffect(() => {
-    cellRefs.current = cellRefs.current.slice(0, normalized.length);
+  const [prevCount, setPrevCount] = useState(normalized.length);
+  if (normalized.length !== prevCount) {
+    setPrevCount(normalized.length);
     setActiveIndex(0);
     setAtStart(true);
     setAtEnd(false);
     setCanScroll(false);
     setExpanded({});
+  }
+
+  useEffect(() => {
+    cellRefs.current = cellRefs.current.slice(0, normalized.length);
   }, [normalized.length]);
 
   // Measure column width from the scroller viewport.

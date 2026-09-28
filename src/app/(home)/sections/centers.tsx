@@ -2,6 +2,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import PhoneLink from "@/components/phoneLink";
 import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
 
@@ -161,9 +162,10 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
     return orderedCenters;
   }, [centers, corporateWellnessCentersImage]);
 
+  const [selectedId, setSelectedId] = useState(items[0]?.id ?? "");
+
   if (!items.length) return null;
 
-  const [selectedId, setSelectedId] = useState(items[0].id);
   const selected = items.find((c) => c.id === selectedId) ?? items[0];
   const selectedIsCorporateWellness = getSlug(selected) === "corporate-wellness-centers";
   const bgNode = selectedIsCorporateWellness
@@ -200,9 +202,9 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
               </ul>
 
               <div className="mt-6">
-                <a href="/centers" className="btn btn-secondary">
+                <Link href="/centers" className="btn btn-secondary">
                   View all centers
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -364,9 +366,9 @@ export default function CentersSection({ heading, centers, corporateWellnessCent
                   </ul>
 
                   <div className="mt-6 flex justify-center">
-                    <a href="/centers" className="btn btn-secondary">
+                    <Link href="/centers" className="btn btn-secondary">
                       View all centers
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>

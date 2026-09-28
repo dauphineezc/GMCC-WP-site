@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const dynamic = "force-dynamic";
 
 export default function NotFound() {
@@ -7,9 +9,9 @@ export default function NotFound() {
       <p className="body mt-3">
         Sorry — we couldn’t find that page.
       </p>
-      <a href="/" className="btn btn-primary mt-6 inline-flex">
+      <Link href="/" className="btn btn-primary mt-6 inline-flex">
         Go home
-      </a>
+      </Link>
     </main>
   );
 }

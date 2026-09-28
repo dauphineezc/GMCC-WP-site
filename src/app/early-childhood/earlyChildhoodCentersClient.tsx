@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useAppSearchParams } from "@/lib/appNavigation";
 import type { EceCenterSlug, SerializedEceProgram } from "./earlyChildhoodPageFields";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 
@@ -38,20 +39,21 @@ export default function EarlyChildhoodCentersClient({
   documentsByCenter,
   programsByCenter,
 }: EarlyChildhoodCentersClientProps) {
-  const searchParams = useSearchParams();
+  const searchParams = useAppSearchParams();
   const sectionRef = useRef<HTMLElement>(null);
   const [activeSlug, setActiveSlug] = useState<EceCenterSlug>(centers[0]?.slug ?? "community-center");
 
   /** Deep link: /early-childhood?center=coleman-family-center#programs-by-center */
-  useLayoutEffect(() => {
-    const raw = searchParams.get("center");
-    if (!raw) return;
-    const normalized = raw.trim().toLowerCase();
-    const match = centers.find(
-      (c) => c.slug === raw || c.slug.toLowerCase() === normalized
-    );
+  const centerParam = searchParams.get("center");
+  const [appliedCenterParam, setAppliedCenterParam] = useState<string | null>(null);
+  if (centerParam !== appliedCenterParam) {
+    setAppliedCenterParam(centerParam);
+    const normalized = centerParam?.trim().toLowerCase();
+    const match = normalized
+      ? centers.find((c) => c.slug === centerParam || c.slug.toLowerCase() === normalized)
+      : undefined;
     if (match) setActiveSlug(match.slug);
-  }, [searchParams, centers]);
+  }
 
   /**
    * App Router often does not scroll to hash targets on client navigations.
@@ -172,9 +174,9 @@ export default function EarlyChildhoodCentersClient({
           <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-8 text-center">
             <p className="body text-neutral-600">
               No early childhood programs are assigned to this center yet. Browse all{" "}
-              <a href="/programs" className="link">
+              <Link href="/programs" className="link">
                 programs
-              </a>
+              </Link>
               .
             </p>
           </div>

@@ -146,14 +146,16 @@ export default async function VirtualFitnessPage() {
 
   return (
     <main className="pb-16">
-      <SolidNavyWaveHeader title={f?.header} description={f?.subheader} children={<div className="mt-8 flex gap-2">
-        <a href={f?.memberPortalCta?.link?.url} target={f?.memberPortalCta?.link?.target ?? undefined} className="btn btn-tertiary">
-          {f?.memberPortalCta?.label}
-        </a>
-        <a href={f?.scheduleCta?.link?.url} target={f?.scheduleCta?.link?.target ?? undefined} className="btn btn-secondary">
-          {f?.scheduleCta?.label}
-        </a>
-      </div>} />
+      <SolidNavyWaveHeader title={f?.header} description={f?.subheader}>
+        <div className="mt-8 flex gap-2">
+          <a href={f?.memberPortalCta?.link?.url} target={f?.memberPortalCta?.link?.target ?? undefined} className="btn btn-tertiary">
+            {f?.memberPortalCta?.label}
+          </a>
+          <a href={f?.scheduleCta?.link?.url} target={f?.scheduleCta?.link?.target ?? undefined} className="btn btn-secondary">
+            {f?.scheduleCta?.label}
+          </a>
+        </div>
+      </SolidNavyWaveHeader>
 
       <section className="mx-auto max-w-6xl px-6 mt-4">
         <div className="grid items-center gap-10 md:grid-cols-2 md:items-start">

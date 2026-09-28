@@ -692,7 +692,11 @@ export default async function CenterPage(props: CenterPageProps) {
       >
         <div className="mx-auto max-w-6xl px-4">
           <div className={todaysEvents.length > 0 ? "mb-10" : "mb-6"}>
-            <h2 className="h2 text-center">What&rsquo;s Happening This Week?</h2>
+            {isCurlingCenter ? (
+              <h2 className="h2 text-center">What&rsquo;s Happening This Week?</h2>
+            ) : (
+              <h2 className="h2 text-center">What&apos;s Happening Today?</h2>
+            )}
           </div>
 
           {isCurlingCenter ? (
@@ -749,13 +753,9 @@ export default async function CenterPage(props: CenterPageProps) {
       ) : null}
 
       <section
-        className={
-          showTodaySection && todaysEvents.length === 0
-            ? "page-section stack-4 !pt-2 md:!pt-4"
-            : "page-section stack-4"
-        }
+        className={"page-section stack-4"}
       >
-        <h2 className="h2 mb-4">What You'll Find Here</h2>
+        <h2 className="h2 mb-4">What You&apos;ll Find Here</h2>
         <p className="body mb-8">{centerFields.longDescription}</p>
         {/* Amenities Grid */}
         {amenitiesForThisCenter.length > 0 && (

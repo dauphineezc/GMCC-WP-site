@@ -132,7 +132,7 @@ export default function LessonsDirectory({
         <p className="body mt-4 max-w-6xl whitespace-pre-line">{introBody}</p>
 
         {benefits.length ? (
-          <div className="mt-8 flex grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {benefits.map((item) => (
               <div key={`${item.label}-${item.iconUrl}`} className="text-center">
                 {item.iconUrl ? (

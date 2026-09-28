@@ -77,6 +77,12 @@ export default function CenterCampaignModule({
   const trackRef = useRef<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const [prevImageSetKey, setPrevImageSetKey] = useState(imageSetKey);
+  if (imageSetKey !== prevImageSetKey) {
+    setPrevImageSetKey(imageSetKey);
+    setActiveIndex(0);
+  }
+
   const canScroll = images.length > 1;
   const hasPrev = activeIndex > 0;
   const hasNext = activeIndex < images.length - 1;
@@ -112,7 +118,6 @@ export default function CenterCampaignModule({
   };
 
   useEffect(() => {
-    setActiveIndex(0);
     const track = trackRef.current;
     if (track) track.scrollLeft = 0;
   }, [imageSetKey]);

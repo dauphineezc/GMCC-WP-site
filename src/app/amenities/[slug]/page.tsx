@@ -7,6 +7,7 @@ import Link from "next/link";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 import { WP_CACHE_TAGS } from "@/lib/revalidate";
+import WysiwygText from "@/components/wysiwygText";
 
 export const revalidate = 900;
 
@@ -178,9 +179,6 @@ export default async function AmenityPage(props: AmenityPageProps) {
   };
 
   const cleanDescription = description ? stripHtml(description) : null;
-  const cleanAdditionalInformation = af.additionalInformation
-    ? stripHtml(af.additionalInformation)
-    : null;
   const cleanLinkLabel = af.linkLabel ? stripHtml(af.linkLabel) : null;
 
   return (
@@ -213,28 +211,16 @@ export default async function AmenityPage(props: AmenityPageProps) {
         <div className="grid gap-12 lg:grid-cols-[minmax(0,2fr)_minmax(0,2fr)]">
           {/* LEFT COLUMN: Description */}
           <div className="stack-4">
-            {cleanDescription && (
+            {cleanDescription ? (
               <article className="prose prose-sm max-w-none sm:prose-base">
-                <p className="whitespace-pre-line">{cleanDescription}</p>
+                <WysiwygText html={cleanDescription} />
               </article>
-            )}
-            {cleanAdditionalInformation && (
+            ) : null}
+            {af.additionalInformation ? (
               <article className="prose prose-sm max-w-none sm:prose-base">
-                <p className="whitespace-pre-line">{cleanAdditionalInformation}</p>
+                <WysiwygText html={af.additionalInformation} />
               </article>
-            )}
-            {af.relevantLink && cleanLinkLabel && (
-              <div>
-                <Link
-                  href={af.relevantLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gmcc-teal font-semibold hover:opacity-90 hover:underline underline-offset-2"
-                >
-                  {cleanLinkLabel}
-                </Link>
-              </div>
-            )}
+            ) : null}
           </div>
           {/* RIGHT COLUMN: Image Carousel */}
             {carouselImages.length > 0 && (

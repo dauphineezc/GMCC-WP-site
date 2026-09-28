@@ -3,33 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useOutsideClick } from "./useOutsideClick";
-
-type TextSize = "normal" | "large" | "xlarge";
-
-type A11yState = {
-  textSize: TextSize;
-  highContrast: boolean;
-  reduceMotion: boolean;
-};
-
-const STORAGE_KEY = "gmcc_a11y";
-
-const DEFAULT_STATE: A11yState = {
-  textSize: "normal",
-  highContrast: false,
-  reduceMotion: false,
-};
-
-function applyA11yToDom(state: A11yState) {
-  const root = document.documentElement;
-
-  // text size via data attr
-  root.dataset.textSize = state.textSize;
-
-  // contrast + motion via classes
-  root.classList.toggle("a11y-contrast", state.highContrast);
-  root.classList.toggle("reduce-motion", state.reduceMotion);
-}
+import {
+  DEFAULT_A11Y_STATE,
+  setA11yPreferences,
+  useA11yPreferences,
+  type TextSize,
+} from "@/lib/a11yPreferences";
 
 export default function AccessibilityPopover({
   className = "",
@@ -37,7 +16,7 @@ export default function AccessibilityPopover({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [state, setState] = useState<A11yState>(DEFAULT_STATE);
+  const state = useA11yPreferences();
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({});
 
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -59,35 +38,6 @@ export default function AccessibilityPopover({
   }, [open, updatePanelPosition]);
 
   useOutsideClick([buttonRef as React.RefObject<HTMLElement>, panelRef as React.RefObject<HTMLElement>], () => setOpen(false), open);
-
-  // hydrate from localStorage
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<A11yState>;
-        const next: A11yState = {
-          textSize: parsed.textSize ?? DEFAULT_STATE.textSize,
-          highContrast: !!parsed.highContrast,
-          reduceMotion: !!parsed.reduceMotion,
-        };
-        setState(next);
-        applyA11yToDom(next);
-      } else {
-        applyA11yToDom(DEFAULT_STATE);
-      }
-    } catch {
-      applyA11yToDom(DEFAULT_STATE);
-    }
-  }, []);
-
-  // persist + apply
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {}
-    applyA11yToDom(state);
-  }, [state]);
 
   // escape to close
   useEffect(() => {
@@ -158,7 +108,7 @@ export default function AccessibilityPopover({
             <TextSizeSlider
               value={state.textSize}
               options={textSizeOptions}
-              onChange={(value) => setState((s) => ({ ...s, textSize: value }))}
+              onChange={(value) => setA11yPreferences((s) => ({ ...s, textSize: value }))}
             />
 
             {/* Toggles */}
@@ -166,19 +116,19 @@ export default function AccessibilityPopover({
               label="High contrast"
               description="Increase contrast for readability."
               checked={state.highContrast}
-              onChange={(v) => setState((s) => ({ ...s, highContrast: v }))}
+              onChange={(v) => setA11yPreferences((s) => ({ ...s, highContrast: v }))}
             />
             <ToggleRow
               label="Reduce motion"
               description="Minimize animations and transitions."
               checked={state.reduceMotion}
-              onChange={(v) => setState((s) => ({ ...s, reduceMotion: v }))}
+              onChange={(v) => setA11yPreferences((s) => ({ ...s, reduceMotion: v }))}
             />
 
             <div className="pt-2 border-t border-neutral-200 flex justify-end">
               <button
                 type="button"
-                onClick={() => setState(DEFAULT_STATE)}
+                onClick={() => setA11yPreferences(DEFAULT_A11Y_STATE)}
                 className="text-xs font-medium text-neutral-600 hover:text-gmcc-navy"
               >
                 Reset

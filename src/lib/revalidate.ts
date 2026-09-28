@@ -1,13 +1,13 @@
 /**
- * Page-level ISR windows and GraphQL Data Cache tags.
- * On-demand purge: `/api/revalidate?secret=…&tag=programs` (etc.).
+ * Page-level ISR windows and GraphQL / edge cache tags.
+ * On-demand: Pages Router `POST /api/revalidate` → `res.revalidate(path)` then edge `purgeTags`.
  *
  * Note: `export const revalidate` in page/route segments must be a numeric
  * literal (e.g. `900`). Next.js cannot statically analyze imported constants.
  * Use these constants for `fetch` / `wpFetch` options only.
  */
 
-export const REVALIDATE_DEFAULT_SECONDS = 900; // 15m — interim until Atlas App Router on-demand ISR
+export const REVALIDATE_DEFAULT_SECONDS = 900; // 15m — interim until Atlas on-demand ISR is proven
 export const REVALIDATE_EVENTS_SECONDS = 900; // 15m — same window for event-facing content
 
 /** Always attached to every `wpFetch` so a single webhook can bust all GraphQL data. */
@@ -50,10 +50,12 @@ export const WP_CACHE_TAG_PATHS: Partial<Record<string, string[]>> = {
 };
 
 /**
- * Section roots purged as layouts so nested detail pages
- * (e.g. `/centers/[slug]`, `/programs/[slug]`) also regenerate.
+ * High-traffic section roots revalidated when layout-wide content changes
+ * (nav, announcements, nuclear `wp`). `res.revalidate` has no layout mode;
+ * rarely visited dynamic slugs may wait for the timed TTL until touched.
  */
-export const WP_CACHE_TAG_LAYOUT_PATHS = new Set<string>([
+export const WP_LAYOUT_ROOT_PATHS: readonly string[] = [
+  "/",
   "/programs",
   "/centers",
   "/events",
@@ -61,10 +63,19 @@ export const WP_CACHE_TAG_LAYOUT_PATHS = new Set<string>([
   "/visit",
   "/membership",
   "/camps",
-]);
+  "/personal-training",
+  "/private-lessons",
+  "/accessibility",
+];
+
+/** @deprecated Prefer WP_LAYOUT_ROOT_PATHS — kept for any remaining callers. */
+export const WP_CACHE_TAG_LAYOUT_PATHS = new Set<string>(WP_LAYOUT_ROOT_PATHS.filter((p) => p !== "/"));
 
 export const WP_CACHE_TAGS_THAT_REFRESH_LAYOUT = new Set<string>([
   WP_CACHE_TAGS.announcements,
   WP_CACHE_TAGS.nav,
   WP_CACHE_TAGS.all,
 ]);
+
+/** Max tags per `@wpengine/edge-cache` purgeTags call. */
+export const EDGE_PURGE_TAGS_BATCH_SIZE = 30;

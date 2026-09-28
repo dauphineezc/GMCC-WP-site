@@ -3,27 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useOutsideClick } from "./useOutsideClick";
-import {
-  applyGoogleTranslate,
-  getGoogleTranslateLang,
-  isLocalhost,
-  setPreferredLangCookie,
-  type TranslateLang,
-} from "@/lib/googleTranslate";
-
-function getCurrentLang(): TranslateLang {
-  return getGoogleTranslateLang();
-}
+import type { TranslateLang } from "@/lib/googleTranslate";
+import { changePreferredLang, useIsLocalhost, usePreferredLang } from "@/lib/usePreferredLang";
 
 export default function LanguagePopover({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
-  const [lang, setLang] = useState<TranslateLang>("en");
+  const lang = usePreferredLang();
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({});
-  const [onLocalhost, setOnLocalhost] = useState(false);
-
-  useEffect(() => {
-    setOnLocalhost(isLocalhost());
-  }, []);
+  const onLocalhost = useIsLocalhost();
 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -52,19 +39,13 @@ export default function LanguagePopover({ className = "" }: { className?: string
     open
   );
 
-  useEffect(() => {
-    setLang(getCurrentLang());
-  }, []);
-
   const handleLanguageChange = (newLang: TranslateLang) => {
     if (newLang === lang) {
       setOpen(false);
       return;
     }
 
-    setPreferredLangCookie(newLang);
-    setLang(newLang);
-    applyGoogleTranslate(newLang);
+    changePreferredLang(newLang);
     setOpen(false);
   };
 

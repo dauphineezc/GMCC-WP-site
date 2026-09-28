@@ -11,7 +11,7 @@ import { RenewActiveDirectoryHeader } from "./directory-sections/renewActiveDire
 import { SilversneakersDirectoryHeader } from "./directory-sections/silversneakersDirectoryHeader";
 import { TennisLessonsDirectoryHeader } from "./directory-sections/tennisLessonsDirectoryHeader";
 import type { DirectoryHeaderData } from "./directoryHeaderShared";
-import { MiddleSchoolSportsDirectoryHeader } from "./directory-sections/middleSchoolSportsDirectoryHeader";
+import { MiddleSchoolAthleticsDirectoryHeader } from "./directory-sections/middleSchoolAthleticsDirectoryHeader";
 import { CommunityDirectoryHeader } from "./directory-sections/communityDirectoryHeader";
 import { SportsAndRecreationDirectoryHeader } from "./directory-sections/sportsAndRecreationDirectoryHeader";
 import { FitnessDirectoryHeader } from "./directory-sections/fitnessDirectoryHeader";
@@ -25,7 +25,7 @@ export type ProgramsPageACF = {
   campsDirectoryPageFields?: DirectoryHeaderData | null;
   childcareDirectoryPageFields?: DirectoryHeaderData | null;
   groupFitnessDirectoryPageFields?: GroupFitnessDirectoryHeaderData | null;
-  middleSchoolSportsDirectoryPageFields?: DirectoryHeaderData | null;
+  middleSchoolAthleticsDirectoryPageFields?: DirectoryHeaderData | null;
   personalTrainingDirectoryPageFields?: DirectoryHeaderData | null;
   renewActiveDirectoryPageFields?: DirectoryHeaderData | null;
   silversneakersDirectoryPageFields?: DirectoryHeaderData | null;
@@ -40,7 +40,7 @@ export type DirectoryHeaderVariant =
   | "fitness"
   | "childcare"
   | "group-fitness"
-  | "middle-school-sports"
+  | "middle-school-athletics"
   | "personal-training"
   | "renew-active"
   | "silversneakers"
@@ -99,10 +99,10 @@ export function DirectoryHeaderSection({
           className={className}
         />
       );
-    case "middle-school-sports":
+    case "middle-school-athletics":
       return (
-        <MiddleSchoolSportsDirectoryHeader
-          data={{ header: "Middle School Sports", ...(acf.middleSchoolSportsDirectoryPageFields ?? {}) }}
+        <MiddleSchoolAthleticsDirectoryHeader
+          data={{ header: "Middle School Athletics", ...(acf.middleSchoolAthleticsDirectoryPageFields ?? {}) }}
           className={className}
         />
       );

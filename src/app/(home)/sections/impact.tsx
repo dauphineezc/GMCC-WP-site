@@ -80,7 +80,6 @@ function AnimatedStat({ value, isInView }: { value: string; isInView: boolean })
     if (!isInView || hasAnimated.current || number === 0) return;
 
     hasAnimated.current = true;
-    setDisplayNum(0);
 
     const durationMs = 1500;
     const steps = 60;

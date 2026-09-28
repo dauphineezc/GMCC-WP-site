@@ -301,9 +301,11 @@ function CenterPartyPackageCard({
 }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
 
-  useEffect(() => {
+  const [prevPackages, setPrevPackages] = useState(packages);
+  if (packages !== prevPackages) {
+    setPrevPackages(packages);
     setSelectedIdx(0);
-  }, [packages]);
+  }
 
   if (packages.length === 0) {
     return (
@@ -495,8 +497,12 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
   const [centerFilter, setCenterFilter] = useState("");
   const [capacityFilter, setCapacityFilter] = useState("");
   const [amenityFilter, setAmenityFilter] = useState<string[]>([]);
-  const [showAllRooms, setShowAllRooms] = useState(false);
   const [resultColumns, setResultColumns] = useState(1);
+
+  // "Show more" applies to one filter combination; changing any filter collapses it.
+  const filterKey = `${centerFilter}|${capacityFilter}|${amenityFilter.join(",")}`;
+  const [expandedFilterKey, setExpandedFilterKey] = useState<string | null>(null);
+  const showAllRooms = expandedFilterKey === filterKey;
 
   const allCenters = useMemo(() => {
     const names = new Set<string>();
@@ -564,10 +570,6 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
     window.addEventListener("resize", updateColumns);
     return () => window.removeEventListener("resize", updateColumns);
   }, []);
-
-  useEffect(() => {
-    setShowAllRooms(false);
-  }, [centerFilter, capacityFilter, amenityFilter]);
 
   return (
     <div>
@@ -669,7 +671,7 @@ function RoomFilterSection({ rooms }: { rooms: RoomData[] }) {
             <div className="pt-4 flex justify-center items-center">
               <button
                 type="button"
-                onClick={() => setShowAllRooms((prev) => !prev)}
+                onClick={() => setExpandedFilterKey(showAllRooms ? null : filterKey)}
                 className="text-gmcc-navy hover:underline text-sm font-semibold"
               >
                 {showAllRooms ? "Show less" : `Show more (${filtered.length - maxVisibleRooms} more)`}

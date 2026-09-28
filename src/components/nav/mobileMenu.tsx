@@ -7,45 +7,14 @@ import Link from "next/link";
 import type { NavItem } from "@/lib/nav/tree";
 import { shouldPrefetchHref } from "@/lib/nav/shouldPrefetchHref";
 import { openLinkInNewTab } from "@/lib/acf";
+import type { TranslateLang } from "@/lib/googleTranslate";
 import {
-  applyGoogleTranslate,
-  getGoogleTranslateLang,
-  LANG_COOKIE,
-  setPreferredLangCookie,
-  type TranslateLang,
-} from "@/lib/googleTranslate";
-
-// Accessibility types and helpers
-type TextSize = "normal" | "large" | "xlarge";
-type A11yState = {
-  textSize: TextSize;
-  highContrast: boolean;
-  reduceMotion: boolean;
-};
-
-const A11Y_STORAGE_KEY = "gmcc_a11y";
-const DEFAULT_A11Y_STATE: A11yState = {
-  textSize: "normal",
-  highContrast: false,
-  reduceMotion: false,
-};
-
-function applyA11yToDom(state: A11yState) {
-  const root = document.documentElement;
-  root.dataset.textSize = state.textSize;
-  root.classList.toggle("a11y-contrast", state.highContrast);
-  root.classList.toggle("reduce-motion", state.reduceMotion);
-}
-
-function getLangCookie(): string {
-  if (typeof document === "undefined") return "en";
-  const cookies = document.cookie.split(";");
-  for (const c of cookies) {
-    const [name, value] = c.trim().split("=");
-    if (name === LANG_COOKIE && value === "es") return "es";
-  }
-  return "en";
-}
+  DEFAULT_A11Y_STATE,
+  setA11yPreferences,
+  useA11yPreferences,
+  type TextSize,
+} from "@/lib/a11yPreferences";
+import { changePreferredLang, usePreferredLang } from "@/lib/usePreferredLang";
 
 type MobileMenuProps = {
   items: NavItem[];
@@ -65,59 +34,27 @@ export default function MobileMenu({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  // Accessibility state
-  const [a11yState, setA11yState] = useState<A11yState>(DEFAULT_A11Y_STATE);
+  const a11yState = useA11yPreferences();
   const [a11yExpanded, setA11yExpanded] = useState(false);
 
-  // Language state
-  const [lang, setLang] = useState<TranslateLang>("en");
+  const lang = usePreferredLang();
   const [langExpanded, setLangExpanded] = useState(false);
-
-  // Load accessibility settings
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(A11Y_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<A11yState>;
-        const next: A11yState = {
-          textSize: parsed.textSize ?? DEFAULT_A11Y_STATE.textSize,
-          highContrast: !!parsed.highContrast,
-          reduceMotion: !!parsed.reduceMotion,
-        };
-        setA11yState(next);
-      }
-    } catch {}
-  }, []);
-
-  // Save and apply accessibility settings
-  useEffect(() => {
-    try {
-      localStorage.setItem(A11Y_STORAGE_KEY, JSON.stringify(a11yState));
-    } catch {}
-    applyA11yToDom(a11yState);
-  }, [a11yState]);
-
-  // Load language preference
-  useEffect(() => {
-    // Reflect actual page language first; fallback to cookie.
-    setLang(getGoogleTranslateLang() || (getLangCookie() as TranslateLang));
-  }, []);
 
   const handleLanguageChange = (newLang: TranslateLang) => {
     if (newLang === lang) return;
-    setPreferredLangCookie(newLang);
-    setLang(newLang);
-    applyGoogleTranslate(newLang);
+    changePreferredLang(newLang);
   };
 
-  // Clear search when menu closes
-  useEffect(() => {
+  // Clear search and collapse sections when the menu closes
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
     if (!isOpen) {
       setSearchQuery("");
       setA11yExpanded(false);
       setLangExpanded(false);
     }
-  }, [isOpen]);
+  }
 
   // Prevent background page scroll while mobile menu is open.
   useEffect(() => {
@@ -277,26 +214,26 @@ export default function MobileMenu({
                 {/* Text Size */}
                 <MobileTextSizeSlider
                   value={a11yState.textSize}
-                  onChange={(v) => setA11yState((s) => ({ ...s, textSize: v }))}
+                  onChange={(v) => setA11yPreferences((s) => ({ ...s, textSize: v }))}
                 />
                 
                 {/* High Contrast Toggle */}
                 <MobileToggle
                   label="High contrast"
                   checked={a11yState.highContrast}
-                  onChange={(v) => setA11yState((s) => ({ ...s, highContrast: v }))}
+                  onChange={(v) => setA11yPreferences((s) => ({ ...s, highContrast: v }))}
                 />
                 
                 {/* Reduce Motion Toggle */}
                 <MobileToggle
                   label="Reduce motion"
                   checked={a11yState.reduceMotion}
-                  onChange={(v) => setA11yState((s) => ({ ...s, reduceMotion: v }))}
+                  onChange={(v) => setA11yPreferences((s) => ({ ...s, reduceMotion: v }))}
                 />
                 
                 {/* Reset Button */}
                 <button
-                  onClick={() => setA11yState(DEFAULT_A11Y_STATE)}
+                  onClick={() => setA11yPreferences(DEFAULT_A11Y_STATE)}
                   className="text-xs font-medium text-neutral-500 hover:text-gmcc-navy"
                 >
                   Reset to defaults

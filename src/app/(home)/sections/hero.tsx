@@ -67,20 +67,9 @@ export default function HeroSection({
   }, []);
 
   useEffect(() => {
-    if (reduceMotion) {
-      setVideoPaused(false);
-      setPlayerReady(false);
-    }
-  }, [reduceMotion]);
-
-  useEffect(() => {
     const iframe = iframeRef.current;
-    if (!showVideo || !iframe) {
-      playerRef.current?.destroy().catch(() => {});
-      playerRef.current = null;
-      setPlayerReady(false);
-      return;
-    }
+    // Turning the video off is handled by the previous run's cleanup (destroy + not ready).
+    if (!showVideo || !iframe) return;
 
     const player = new Player(iframe);
     playerRef.current = player;
@@ -95,7 +84,9 @@ export default function HeroSection({
     player
       .ready()
       .then(() => {
-        if (!cancelled) setPlayerReady(true);
+        if (cancelled) return;
+        setVideoPaused(false);
+        setPlayerReady(true);
       })
       .catch(markFailed);
 

@@ -19,7 +19,7 @@ function toSponsorGridItems(sponsors: DirectoryHeaderData["sponsors"]): Sponsor[
   });
 }
 
-export function MiddleSchoolSportsDirectoryHeader({
+export function MiddleSchoolAthleticsDirectoryHeader({
   data,
   className,
 }: {

@@ -27,17 +27,13 @@ export default function JotFormLightboxButton({
   const reactId = useId().replace(/:/g, "");
   const [open, setOpen] = useState(false);
   // Keep the iframe mounted after first open so partial form progress survives close/reopen.
+  // Only set from a click, so the portal never renders during SSR.
   const [mounted, setMounted] = useState(false);
-  const [portalReady, setPortalReady] = useState(false);
 
   function openModal() {
     setMounted(true);
     setOpen(true);
   }
-
-  useEffect(() => {
-    setPortalReady(true);
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -57,7 +53,7 @@ export default function JotFormLightboxButton({
   }, [open]);
 
   const overlay =
-    mounted && portalReady
+    mounted
       ? createPortal(
           <div
             className={`fixed inset-0 ${OVERLAY_Z_CLASS} flex items-center justify-center bg-black/50 p-4 ${

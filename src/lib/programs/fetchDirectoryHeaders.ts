@@ -25,10 +25,8 @@ export const PROGRAMS_DIRECTORY_PAGE_SLUGS = {
   earlyChildhood: "early-childhood",
   fitness: "fitness",
   groupFitnessPrimary: "group-fitness-classes",
-  groupFitnessAlt: "group-fitness",
-  middleSchoolPrimary: "youth-sports-leagues",
-  middleSchoolAlt1: "youth-sports-league",
-  middleSchoolAlt2: "middle-school-sports",
+  groupFitnessAlt: "group-fitness", 
+  middleSchoolAthletics: "middle-school-athletics",
   personalTraining: "personal-training",
   /** Tennis/pickleball private lessons page (WP field group is privateLessons…). */
   privateLessons: "private-lessons",
@@ -98,47 +96,9 @@ const PROGRAMS_DIRECTORY_HEADERS_QUERY = /* GraphQL */ `
     groupFitnessAlt: pages(where: { name: "${PROGRAMS_DIRECTORY_PAGE_SLUGS.groupFitnessAlt}" }, first: 1) {
       nodes { groupFitnessDirectoryPageFields { ${DIRECTORY_HEADER_FIELDS} } }
     }
-    middleSchoolPrimary: pages(where: { name: "${PROGRAMS_DIRECTORY_PAGE_SLUGS.middleSchoolPrimary}" }, first: 1) {
+    middleSchoolAthletics: pages(where: { name: "${PROGRAMS_DIRECTORY_PAGE_SLUGS.middleSchoolAthletics}" }, first: 1) {
       nodes {
-        middleSchoolSportsDirectoryPageFields {
-          ${DIRECTORY_HEADER_FIELDS}
-          sponsors {
-            nodes {
-              ... on Sponsor {
-                name
-                sponsorFields {
-                  tier
-                  link
-                  logo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    middleSchoolAlt1: pages(where: { name: "${PROGRAMS_DIRECTORY_PAGE_SLUGS.middleSchoolAlt1}" }, first: 1) {
-      nodes {
-        middleSchoolSportsDirectoryPageFields {
-          ${DIRECTORY_HEADER_FIELDS}
-          sponsors {
-            nodes {
-              ... on Sponsor {
-                name
-                sponsorFields {
-                  tier
-                  link
-                  logo { node { ${WP_MEDIA_IMAGE_FIELDS} } }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    middleSchoolAlt2: pages(where: { name: "${PROGRAMS_DIRECTORY_PAGE_SLUGS.middleSchoolAlt2}" }, first: 1) {
-      nodes {
-        middleSchoolSportsDirectoryPageFields {
+        middleSchoolAthleticsDirectoryPageFields {
           ${DIRECTORY_HEADER_FIELDS}
           sponsors {
             nodes {
@@ -377,9 +337,7 @@ export async function fetchProgramsDirectoryHeaders(): Promise<ProgramsPageACF> 
     earlyChildhood?: PagesNodes<{ earlyChildhoodPageFields?: any }>;
     groupFitnessPrimary?: PagesNodes<{ groupFitnessDirectoryPageFields?: any }>;
     groupFitnessAlt?: PagesNodes<{ groupFitnessDirectoryPageFields?: any }>;
-    middleSchoolPrimary?: PagesNodes<{ middleSchoolSportsDirectoryPageFields?: any }>;
-    middleSchoolAlt1?: PagesNodes<{ middleSchoolSportsDirectoryPageFields?: any }>;
-    middleSchoolAlt2?: PagesNodes<{ middleSchoolSportsDirectoryPageFields?: any }>;
+    middleSchoolAthletics?: PagesNodes<{ middleSchoolAthleticsDirectoryPageFields?: any }>;
     personalTraining?: PagesNodes<{ personalTrainingDirectoryPageFields?: any }>;
     privateLessons?: PagesNodes<{ privateLessonsDirectoryPageFields?: any }>;
     silversneakersPrimary?: PagesNodes<{ silversneakersDirectoryPageFields?: any }>;
@@ -409,15 +367,6 @@ export async function fetchProgramsDirectoryHeaders(): Promise<ProgramsPageACF> 
     [
       firstNode(data?.groupFitnessPrimary)?.groupFitnessDirectoryPageFields,
       firstNode(data?.groupFitnessAlt)?.groupFitnessDirectoryPageFields,
-    ],
-    hasDirectoryHeaderContent,
-  );
-
-  const middleSchoolRaw = pickFirstContentField(
-    [
-      firstNode(data?.middleSchoolPrimary)?.middleSchoolSportsDirectoryPageFields,
-      firstNode(data?.middleSchoolAlt1)?.middleSchoolSportsDirectoryPageFields,
-      firstNode(data?.middleSchoolAlt2)?.middleSchoolSportsDirectoryPageFields,
     ],
     hasDirectoryHeaderContent,
   );
@@ -454,7 +403,9 @@ export async function fetchProgramsDirectoryHeaders(): Promise<ProgramsPageACF> 
       groupFitnessRaw,
       eceNode ?? null,
     ),
-    middleSchoolSportsDirectoryPageFields: normalizeDirectoryHeaderData(middleSchoolRaw),
+    middleSchoolAthleticsDirectoryPageFields: normalizeDirectoryHeaderData(
+      firstNode(data?.middleSchoolAthletics)?.middleSchoolAthleticsDirectoryPageFields,
+    ),
     personalTrainingDirectoryPageFields: normalizeDirectoryHeaderData(
       firstNode(data?.personalTraining)?.personalTrainingDirectoryPageFields,
       "trainers",

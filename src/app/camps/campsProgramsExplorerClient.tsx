@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useAppPathname, useAppSearchParams } from "@/lib/appNavigation";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import { mapProgramForExplorer } from "@/app/programs/exploreProgramsClient";
 import { PROGRAMS_PAGE_SIZE } from "@/lib/programsListQuery";
@@ -161,8 +162,8 @@ export default function CampsProgramsExplorerClient({
   }, [all]);
 
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = useAppPathname();
+  const searchParams = useAppSearchParams();
 
   const initialFilters = useMemo(() => {
     const centerParam = searchParams.get("center");

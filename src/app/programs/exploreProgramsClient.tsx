@@ -2,7 +2,8 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { LAZY_LOAD_PROGRAMS } from "@/lib/programsListQuery";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useAppPathname, useAppSearchParams } from "@/lib/appNavigation";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import {
   ProgramsDirectoryHeader,
@@ -284,8 +285,8 @@ export default function ExploreProgramsClient({
 
   // --- Read URL search params ---
   const router = useRouter();
-  const pathname = usePathname();
-  const clientSearchParams = useSearchParams();
+  const pathname = useAppPathname();
+  const clientSearchParams = useAppSearchParams();
   const [hasHydrated, setHasHydrated] = useState(false);
   useEffect(() => {
     setHasHydrated(true);

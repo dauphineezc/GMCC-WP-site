@@ -5,6 +5,7 @@ import ImageCarousel from "@/components/imageCarousel";
 import type { Metadata } from "next";
 import PhoneLink from "@/components/phoneLink";
 import Image from "next/image";
+import Link from "next/link";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -162,7 +163,7 @@ export default async function CorporateWellnessCentersPage() {
           <p className="body mx-auto max-w-6xl text-center text-sm mt-4 italic mb-8">
             <span className="font-semibold uppercase text-gmcc-navy text-sm">Please note:</span>{" "}
             {employeeRequirementDisclaimer}
-            <a href="/centers" className="text-gmcc-teal text-sm hover:underline">click here</a>{" "}
+            <Link href="/centers" className="text-gmcc-teal text-sm hover:underline">click here</Link>{" "}
           </p>
         ) : null}
         

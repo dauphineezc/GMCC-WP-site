@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export type HomeEventCard = {
   id: string;
   title: string;
@@ -18,12 +20,12 @@ export default function EventsSection({ events }: { events?: HomeEventCard[] | n
       <div className="mx-auto min-w-0 max-w-6xl px-4">
         <h2 className="h2 text-center">Upcoming Events</h2>
 
-        <a
+        <Link
           href="/events"
           className="block text-center mt-2 md:text-right md:mt-0 text-sm text-gmcc-navy font-semibold underline hover:translate-y-[-2px] hover:text-gmcc-teal"
         >
           View all events
-        </a>
+        </Link>
 
         <div className="mt-10 grid min-w-0 gap-12 sm:grid-cols-2 lg:grid-cols-4">
           {events.map((event) => (

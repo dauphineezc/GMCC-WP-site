@@ -53,10 +53,11 @@ function normalizeWpUrlToPath(url: string) {
     "Renew Active/One Pass": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness", headerVariant: "renew-active" }),
 
     // Sports and Recreation
-    "Sports and Recreation": "/programs?" + buildQuery({ programArea: "Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", headerVariant: "sports-and-recreation" }),
-    "Youth Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", audience: "youth" }),
-    "Youth Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Middle School Sports,Misc/Other Sports,Racquet Sports", audience: "youth", headerVariant: "middle-school-sports" }),
-    "Adult Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "teen,adult,senior" }),
+    "Sports and Recreation": "/programs?" + buildQuery({ programArea: "Basketball,Cheer and Pom,Curling,Middle School Athletics,Misc/Other Sports,Racquet Sports", headerVariant: "sports-and-recreation" }),
+    "Youth Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Basketball,Cheer and Pom,Curling,Middle School Athletics,Misc/Other Sports,Racquet Sports", audience: "youth" }),
+    "Youth Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Middle School Athletics,Misc/Other Sports,Racquet Sports", audience: "youth", headerVariant: "sports-and-recreation" }),
+    "Middle School Athletics": "/programs?" + buildQuery({ programArea: "middle-school-athletics", headerVariant: "middle-school-athletics" }),
+    "Adult Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic", programArea: "Aquatics,Basketball,Curling,Gymnastics,Misc/Other Sports,Racquet Sports,Pickleball,Tennis,Specialty Fitness,Volleyball", audience: "adult" }),   
     "Adult Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "teen,adult,senior" }),
 
     // Camps
@@ -66,6 +67,11 @@ function normalizeWpUrlToPath(url: string) {
     "Mini Day Camps": "/camps?" + buildQuery({ campType: "mini-day" }),
     "Specialty/Art Camps": "/camps?" + buildQuery({ campType: "specialty-art" }),
     "Sport/Aquatics Camps": "/camps?" + buildQuery({ campType: "sport-aquatics" }),
+
+    // Early Childhood
+    "On-Site Care" : "/programs?" + buildQuery({ programArea: "Onsite Care"}),
+    "Before/After School Care" : "/programs?" + buildQuery({ programArea: "Before/After School"}),
+    "Preschool" : "/programs?" + buildQuery({ programArea: "Preschool"}),
 
     // Community
     "Community": "/programs?" + buildQuery({ programArea: "Community Partners", headerVariant: "community" }),
@@ -81,14 +87,12 @@ function normalizeWpUrlToPath(url: string) {
     "Virtual Fitness": "/virtual-fitness",
 
     "Private Tennis/Pickleball Lessons": "/private-lessons",
+    "Tennis/Pickleball Lessons": "/private-lessons",
 
     "Residence Camp Neyati": "/programs/camp-neyati",
 
     "Early Childhood" : "/early-childhood",
     "Drop-In Child Watch" : "/amenities/childwatch",
-    "On-Site Care" : "/early-childhood",
-    "Before/After School Care" : "/early-childhood",
-    "Preschool" : "/early-childhood",
 
     "Driver's Training": "https://gmcc-stage-1.greatermidland.org/programs/drivers-education",
     "Tax Aide Program": "https://gmcc-stage-1.greatermidland.org/programs/tax-aid-program",

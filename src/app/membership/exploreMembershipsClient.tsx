@@ -8,9 +8,8 @@ import {
   useRef,
   useCallback,
   useEffect,
-  useLayoutEffect,
 } from "react";
-import { useSearchParams } from "next/navigation";
+import { useAppSearchParams } from "@/lib/appNavigation";
 import FinancialAidEstimator from "@/components/financialAidEstimator";
 import MembershipQuiz from "@/components/membershipQuiz";
 import AmenitiesGrid from "@/components/amenitiesGrid";
@@ -180,12 +179,13 @@ export default function ExploreMembershipsClient({
   heroImagePosition,
   heroCtas,
 }: Props) {
-  const searchParams = useSearchParams();
+  const searchParams = useAppSearchParams();
 
   const [activeTab, setActiveTab] = useState<"compare" | "quiz" | "estimator">("compare");
   const [activeCenter, setActiveCenter] = useState(centerLinks[0]?.slug ?? "");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [showAllTierCards, setShowAllTierCards] = useState(false);
+  const [expandedTierCenter, setExpandedTierCenter] = useState<string | null>(null);
+  const showAllTierCards = expandedTierCenter === activeCenter;
 
   const quizRef = useRef<HTMLDivElement>(null);
   const membershipsRef = useRef<HTMLDivElement>(null);
@@ -193,15 +193,16 @@ export default function ExploreMembershipsClient({
   const estimatorRef = useRef<HTMLDivElement>(null);
 
   /** Deep link: /membership?center=tennis-center#plans */
-  useLayoutEffect(() => {
-    const raw = searchParams.get("center");
-    if (!raw) return;
-    const normalized = raw.trim().toLowerCase();
-    const match = centerLinks.find(
-      (c) => c.slug === raw || c.slug.toLowerCase() === normalized
-    );
+  const centerParam = searchParams.get("center");
+  const [appliedCenterParam, setAppliedCenterParam] = useState<string | null>(null);
+  if (centerParam !== appliedCenterParam) {
+    setAppliedCenterParam(centerParam);
+    const normalized = centerParam?.trim().toLowerCase();
+    const match = normalized
+      ? centerLinks.find((c) => c.slug === centerParam || c.slug.toLowerCase() === normalized)
+      : undefined;
     if (match) setActiveCenter(match.slug);
-  }, [searchParams, centerLinks]);
+  }
 
   /**
    * App Router often does not scroll to `#plans` on client navigations.
@@ -382,10 +383,6 @@ export default function ExploreMembershipsClient({
       : tierGroups.slice(0, maxVisibleTierCards)),
     ...(activityPassTier ? [activityPassTier] : []),
   ];
-
-  useEffect(() => {
-    setShowAllTierCards(false);
-  }, [activeCenter]);
 
   const scrollToQuiz = () => {
     setActiveTab("quiz");
@@ -570,7 +567,7 @@ export default function ExploreMembershipsClient({
                     <div className="pt-4 flex justify-center items-center">
                       <button
                         type="button"
-                        onClick={() => setShowAllTierCards(true)}
+                        onClick={() => setExpandedTierCenter(activeCenter)}
                         className="text-gmcc-navy hover:underline text-sm font-semibold"
                       >
                         {`Show more (${hiddenTierCount} more)`}
@@ -581,7 +578,7 @@ export default function ExploreMembershipsClient({
                     <div className="pt-4 flex justify-center items-center">
                       <button
                         type="button"
-                        onClick={() => setShowAllTierCards(false)}
+                        onClick={() => setExpandedTierCenter(null)}
                         className="text-gmcc-navy hover:underline text-sm font-semibold"
                       >
                         Show less

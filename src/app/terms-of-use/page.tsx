@@ -16,14 +16,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return getYoastMetadata("/terms-and-conditions");
 }
 
-const TERMS_AND_CONDITIONS_PAGE_QUERY = /* GraphQL */ `
-  query TermsAndConditionsPage($uri: ID!) {
+const WEBSITE_AND_APP_TERMS_OF_USE_PAGE_QUERY = /* GraphQL */ `
+  query WebsiteAndAppTermsOfUsePage($uri: ID!) {
     page(id: $uri, idType: URI) {
       id
       title
       slug
 
-      termsAndConditionsPageFields {
+      websiteAndAppTermsOfUsePageFields {
         heroHeader
         heroSubheader
         introductionHeader
@@ -44,7 +44,7 @@ type TermAndConditionItem = {
   body?: string | null;
 };
 
-type TermsAndConditionsPageFields = {
+type WebsiteAndAppTermsOfUsePageFields = {
   heroHeader?: string | null;
   heroSubheader?: string | null;
   introductionHeader?: string | null;
@@ -79,9 +79,9 @@ function renderTermAndConditionContent(termAndCondition: TermAndConditionItem) {
   );
 }
 
-export default async function TermsAndConditionsPage() {
-  const data = await wpFetch<any>(TERMS_AND_CONDITIONS_PAGE_QUERY, { uri: "/terms-and-conditions" });
-  const fields = data?.page?.termsAndConditionsPageFields;
+export default async function WebsiteAndAppTermsOfUsePage() {
+  const data = await wpFetch<any>(WEBSITE_AND_APP_TERMS_OF_USE_PAGE_QUERY, { uri: "/terms-of-use" });
+  const fields = data?.page?.websiteAndAppTermsOfUsePageFields;
 
   return (
     <main>

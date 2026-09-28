@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import NavyWaveSection from "./navyWaveSection";
 import type { CenterPageHistoryItem } from "@/lib/centerDetailPageFields";
 
@@ -62,7 +62,6 @@ export default function CurlingHistoryTimeline({
   const [mobileColW, setMobileColW] = useState(0);
 
   const fractionRef = useRef(0);
-  fractionRef.current = fraction;
 
   const stoneSrc = (stoneUrl ?? "").trim() || FALLBACK_STONE_SRC;
   const stoneLabel = (stoneAlt ?? "").trim() || "Curling stone";
@@ -112,8 +111,13 @@ export default function CurlingHistoryTimeline({
 
   const isMdRef = useRef(isMd);
   const mobileGutterRef = useRef(mobileGutter);
-  isMdRef.current = isMd;
-  mobileGutterRef.current = mobileGutter;
+
+  // Latest values for scroll/drag handlers; layout effect so they are current before passive effects run.
+  useLayoutEffect(() => {
+    fractionRef.current = fraction;
+    isMdRef.current = isMd;
+    mobileGutterRef.current = mobileGutter;
+  }, [fraction, isMd, mobileGutter]);
 
   const getSnapLeftForCell = useCallback((el: HTMLDivElement, scroller: HTMLDivElement) => {
     const leftInScroller = mobileGutterRef.current + el.offsetLeft;
@@ -285,10 +289,12 @@ export default function CurlingHistoryTimeline({
     };
   }, [isMd, mobileGutter, mobileColW, count]);
 
-  useEffect(() => {
+  const [prevCount, setPrevCount] = useState(count);
+  if (count !== prevCount) {
+    setPrevCount(count);
     setActiveIndex(0);
     setFraction(0);
-  }, [count]);
+  }
 
   if (!count) return null;
 

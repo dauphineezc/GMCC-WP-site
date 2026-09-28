@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useAppSearchParams } from "@/lib/appNavigation";
 import { buildEventHref } from "@/lib/events/buildEventHref";
 import { formatEventDate } from "@/lib/events/formatEventDate";
 import {
@@ -163,7 +163,7 @@ export default function ExploreEventsClient({
   const all = useMemo(() => loadedEvents.map(mapEventForExplorer), [loadedEvents]);
 
   // --- Read URL search params ---
-  const searchParams = useSearchParams();
+  const searchParams = useAppSearchParams();
 
   const audienceOptions = useMemo(() => {
     const map = new Map<string, string>();

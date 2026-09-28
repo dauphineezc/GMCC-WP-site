@@ -39,7 +39,7 @@ export default function AutoHeightScheduleIframe({
   title,
   className = "",
   id,
-  minHeight = 320,
+  minHeight = 100,
   defaultHeight = 400,
   maxHeight = 1400,
 }: AutoHeightScheduleIframeProps) {

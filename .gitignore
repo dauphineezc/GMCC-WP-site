@@ -20,6 +20,9 @@
 # production
 /build
 
+# built WordPress plugin zips
+/wordpress/dist/
+
 # misc
 .DS_Store
 *.pem
