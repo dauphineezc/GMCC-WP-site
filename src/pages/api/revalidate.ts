@@ -11,8 +11,29 @@ import {
   mapWpRevalidatePayload,
   type WpRevalidateWebhookBody,
 } from "@/lib/wordpress/mapWpRevalidatePayload";
+import { wpFetch } from "@/lib/wp";
 
 type RevalidateBody = WpRevalidateWebhookBody;
+
+const CENTER_SLUGS_QUERY = /* GraphQL */ `
+  query RevalidateCenterSlugs {
+    centers(first: 100) {
+      nodes {
+        slug
+      }
+    }
+  }
+`;
+
+async function fetchCenterDetailPaths(): Promise<string[]> {
+  const data = await wpFetch<{
+    centers?: { nodes?: Array<{ slug?: string | null } | null> | null } | null;
+  }>(CENTER_SLUGS_QUERY);
+  return (data?.centers?.nodes ?? [])
+    .map((node) => (node?.slug ?? "").trim())
+    .filter(Boolean)
+    .map((slug) => `/centers/${slug}`);
+}
 
 function getExpectedSecret(): string | undefined {
   return process.env.REVALIDATE_SECRET || process.env.FAUSTWP_SECRET_KEY;
@@ -180,6 +201,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const revalidatedPaths: string[] = [];
   const errors: string[] = [];
+
+  if (mapped?.allCenterDetails) {
+    try {
+      for (const path of await fetchCenterDetailPaths()) {
+        paths.add(path);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      errors.push(`center slugs: ${message}`);
+    }
+  }
 
   for (const path of paths) {
     try {

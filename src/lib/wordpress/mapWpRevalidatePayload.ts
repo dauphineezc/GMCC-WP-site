@@ -33,6 +33,8 @@ export type MappedRevalidate = {
   tags: string[];
   paths: string[];
   layout: boolean;
+  /** Also refresh every /centers/[slug] page (slugs are looked up at request time). */
+  allCenterDetails?: boolean;
 };
 
 type PageRevalidateTarget = { tags: string[]; paths: string[]; layout?: boolean };
@@ -168,6 +170,7 @@ export function mapWpRevalidatePayload(
   const tags = new Set<string>();
   const paths = new Set<string>();
   let layout = false;
+  let allCenterDetails = false;
 
   switch (postType) {
     case "program":
@@ -206,6 +209,8 @@ export function mapWpRevalidatePayload(
       paths.add("/centers");
       paths.add("/");
       if (slug) paths.add(buildEventPath(slug, eventStart));
+      // Center pages list today's events; an edit may also move an event between centers.
+      allCenterDetails = true;
       break;
 
     case "news":
@@ -286,5 +291,6 @@ export function mapWpRevalidatePayload(
     tags: [...tags],
     paths: [...paths],
     layout,
+    allCenterDetails,
   };
 }
