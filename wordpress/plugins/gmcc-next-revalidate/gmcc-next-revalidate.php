@@ -2,7 +2,7 @@
 /**
  * Plugin Name: GMCC Next.js On-Demand Revalidate
  * Description: Notifies the Next.js front end when content changes.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Requires PHP: 7.4
  * Author: Greater Midland
  *
@@ -12,6 +12,7 @@
  * Optional:
  * define('GMCC_NEXT_REVALIDATE_TIMEOUT', 15); // seconds to wait for Next per request
  * define('GMCC_NEXT_REVALIDATE_DEBUG', true); // also log successes and skips
+ * define('GMCC_NEXT_REVALIDATE_SITE_PASSWORD', '…'); // front end behind Headless Platform password protection
  *
  * Failures are always written to the PHP error log (WP Engine: User Portal → Logs).
  */
@@ -30,6 +31,9 @@ define('GMCC_NEXT_REVALIDATE_LOADED', true);
 
 final class GMCC_Next_Revalidate {
     const DEFAULT_TIMEOUT = 15;
+    const ACCESS_COOKIE_TRANSIENT = 'gmcc_next_revalidate_access_cookie';
+    // The platform's access cookie lasts 24 hours; refresh a little early.
+    const ACCESS_COOKIE_TTL = 20 * HOUR_IN_SECONDS;
 
     // Menus are covered once by wp_update_nav_menu; each item save would otherwise trigger a full layout refresh.
     const IGNORED_POST_TYPES = array('nav_menu_item', 'attachment', 'revision', 'customize_changeset', 'oembed_cache', 'user_request');
@@ -128,20 +132,89 @@ final class GMCC_Next_Revalidate {
         }
     }
 
-    private static function send(array $payload): void {
-        $label = self::describe($payload);
-        $response = wp_remote_post(
+    private static function site_password(): string {
+        return defined('GMCC_NEXT_REVALIDATE_SITE_PASSWORD') && is_string(GMCC_NEXT_REVALIDATE_SITE_PASSWORD)
+            ? GMCC_NEXT_REVALIDATE_SITE_PASSWORD
+            : '';
+    }
+
+    /**
+     * Cookie header that gets past the Headless Platform password gate, or '' when not configured.
+     * The gate has no documented API: it accepts a form POST of `password` on any path and sets a cookie.
+     */
+    private static function access_cookie(bool $refresh = false): string {
+        $password = self::site_password();
+        if ($password === '') {
+            return '';
+        }
+        if (!$refresh) {
+            $cached = get_transient(self::ACCESS_COOKIE_TRANSIENT);
+            if (is_string($cached) && $cached !== '') {
+                return $cached;
+            }
+        }
+
+        $parts = wp_parse_url(GMCC_NEXT_REVALIDATE_URL);
+        if (empty($parts['scheme']) || empty($parts['host'])) {
+            return '';
+        }
+        $origin = $parts['scheme'] . '://' . $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '') . '/';
+
+        $response = wp_remote_post($origin, array(
+            'timeout' => self::timeout(),
+            'redirection' => 0,
+            'body' => array('password' => $password),
+        ));
+        if (is_wp_error($response)) {
+            self::log_error('Site password login failed: ' . $response->get_error_message());
+            return '';
+        }
+
+        $status = (int) wp_remote_retrieve_response_code($response);
+        if ($status === 401 || $status === 403) {
+            self::log_error('Site password rejected (HTTP ' . $status . '). Check GMCC_NEXT_REVALIDATE_SITE_PASSWORD.');
+            return '';
+        }
+
+        $pairs = array();
+        foreach (wp_remote_retrieve_cookies($response) as $cookie) {
+            if ($cookie instanceof WP_Http_Cookie && $cookie->name !== '') {
+                $pairs[] = $cookie->name . '=' . $cookie->value;
+            }
+        }
+        if (empty($pairs)) {
+            self::log_error('Site password login returned no cookie (HTTP ' . $status . ').');
+            return '';
+        }
+
+        $header = implode('; ', $pairs);
+        set_transient(self::ACCESS_COOKIE_TRANSIENT, $header, self::ACCESS_COOKIE_TTL);
+        self::debug('Obtained front-end access cookie.');
+        return $header;
+    }
+
+    private static function post_payload(array $payload, string $cookie) {
+        $headers = array(
+            'Content-Type' => 'application/json',
+            'X-Revalidate-Secret' => GMCC_NEXT_REVALIDATE_SECRET,
+        );
+        if ($cookie !== '') {
+            $headers['Cookie'] = $cookie;
+        }
+        return wp_remote_post(
             GMCC_NEXT_REVALIDATE_URL,
             array(
                 'timeout' => self::timeout(),
                 'blocking' => true,
-                'headers' => array(
-                    'Content-Type' => 'application/json',
-                    'X-Revalidate-Secret' => GMCC_NEXT_REVALIDATE_SECRET,
-                ),
+                'headers' => $headers,
                 'body' => wp_json_encode($payload),
             )
         );
+    }
+
+    private static function send(array $payload): void {
+        $label = self::describe($payload);
+        $response = self::post_payload($payload, self::access_cookie());
 
         if (is_wp_error($response)) {
             // A timeout here does not necessarily mean Next failed; it may still finish the refresh.
@@ -152,6 +225,21 @@ final class GMCC_Next_Revalidate {
         $status = (int) wp_remote_retrieve_response_code($response);
         $raw = (string) wp_remote_retrieve_body($response);
         $json = json_decode($raw, true);
+
+        // Next's own 401 is JSON ("Invalid token"); an HTML 401 is the password gate, so the cookie expired.
+        if ($status === 401 && !is_array($json) && self::site_password() !== '') {
+            $cookie = self::access_cookie(true);
+            if ($cookie !== '') {
+                $response = self::post_payload($payload, $cookie);
+                if (is_wp_error($response)) {
+                    self::log_error('Request error for ' . $label . ': ' . $response->get_error_message());
+                    return;
+                }
+                $status = (int) wp_remote_retrieve_response_code($response);
+                $raw = (string) wp_remote_retrieve_body($response);
+                $json = json_decode($raw, true);
+            }
+        }
 
         if ($status < 200 || $status >= 300) {
             $detail = is_array($json) && isset($json['error']) && is_string($json['error']) ? $json['error'] : substr($raw, 0, 300);

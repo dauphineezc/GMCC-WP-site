@@ -116,6 +116,7 @@ async function fetchDirectoryHeaderFromUris(
   query: string,
   uriCandidates: string[],
   selectHeader: (page: Record<string, any>) => DirectoryHeaderData | null | undefined,
+  revalidate: number,
 ) {
   for (const uri of uriCandidates) {
     try {
@@ -124,7 +125,7 @@ async function fetchDirectoryHeaderFromUris(
         { uri },
         {
           suppressGraphQLErrorLogging: true,
-          revalidate: REVALIDATE_EVENTS_SECONDS,
+          revalidate,
           tags: [WP_CACHE_TAGS.events, WP_CACHE_TAGS.pages],
         },
       );
@@ -140,6 +141,7 @@ async function fetchDirectoryHeaderFromUris(
 async function fetchDirectoryHeaderByPageName(
   query: string,
   selectHeader: (node: Record<string, any>) => DirectoryHeaderData | null | undefined,
+  revalidate: number,
 ) {
   try {
     const data = await wpFetch<{
@@ -149,7 +151,7 @@ async function fetchDirectoryHeaderByPageName(
       undefined,
       {
         suppressGraphQLErrorLogging: true,
-        revalidate: REVALIDATE_EVENTS_SECONDS,
+        revalidate,
         tags: [WP_CACHE_TAGS.events, WP_CACHE_TAGS.pages],
       },
     );
@@ -177,7 +179,10 @@ function mapLinkedHeader(
 }
 
 /** Load all /events specialty directory headers. */
-export async function fetchEventsDirectoryHeaders(): Promise<EventsDirectoryHeaderData> {
+export async function fetchEventsDirectoryHeaders(
+  options: { revalidate?: number } = {},
+): Promise<EventsDirectoryHeaderData> {
+  const revalidate = options.revalidate ?? REVALIDATE_EVENTS_SECONDS;
   const [
     bonspielsHeader,
     tripsHeader,
@@ -191,11 +196,13 @@ export async function fetchEventsDirectoryHeaders(): Promise<EventsDirectoryHead
       // Bonspiels ACF group is registered on the Tournaments WP page.
       pageUriCandidatesForSlug("tournaments"),
       (page) => normalizeSimpleHeader(page.bonspielsDirectoryPageFields),
+      revalidate,
     ),
     fetchDirectoryHeaderFromUris(
       TRIPS_DIRECTORY_HEADER_QUERY,
       pageUriCandidatesForSlug("trips"),
       (page) => normalizeSimpleHeader(page.tripsDirectoryPageFields),
+      revalidate,
     ),
     fetchDirectoryHeaderFromUris(
       TOURNAMENTS_DIRECTORY_HEADER_QUERY,
@@ -206,11 +213,13 @@ export async function fetchEventsDirectoryHeaders(): Promise<EventsDirectoryHead
           "tournamentsPageLinkLabel",
           "tournamentsPageLink",
         ),
+      revalidate,
     ),
     fetchDirectoryHeaderFromUris(
       SOCIALS_DIRECTORY_HEADER_QUERY,
       pageUriCandidatesForSlug("socials"),
       (page) => normalizeSimpleHeader(page.socialsDirectoryPageFields),
+      revalidate,
     ),
     fetchDirectoryHeaderFromUris(
       RACES_DIRECTORY_HEADER_QUERY,
@@ -221,18 +230,21 @@ export async function fetchEventsDirectoryHeaders(): Promise<EventsDirectoryHead
           "racesPageLinkLabel",
           "racesPageLink",
         ),
+      revalidate,
     ),
     (async () => {
       // Prefer post_name lookup — avoids URI/CPT collisions and stale misses.
       const byName = await fetchDirectoryHeaderByPageName(
         FOOD_DISTRIBUTIONS_BY_NAME_QUERY,
         (node) => normalizeSimpleHeader(node.foodDistributionsDirectoryPageFields),
+        revalidate,
       );
       if (byName) return byName;
       return fetchDirectoryHeaderFromUris(
         FOOD_DISTRIBUTIONS_DIRECTORY_HEADER_QUERY,
         pageUriCandidatesForSlug("food-distributions"),
         (page) => normalizeSimpleHeader(page.foodDistributionsDirectoryPageFields),
+        revalidate,
       );
     })(),
   ]);

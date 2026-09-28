@@ -9,6 +9,11 @@
 
 export const REVALIDATE_DEFAULT_SECONDS = 900; // 15m — interim until Atlas on-demand ISR is proven
 export const REVALIDATE_EVENTS_SECONDS = 900; // 15m — same window for event-facing content
+/**
+ * Client-fetched directory header API routes. Webhook path revalidation never reaches
+ * these routes' Data Cache entries, so keep the window short.
+ */
+export const REVALIDATE_DIRECTORY_HEADERS_API_SECONDS = 60;
 
 /** Always attached to every `wpFetch` so a single webhook can bust all GraphQL data. */
 export const WP_CACHE_TAG_ALL = "wp";

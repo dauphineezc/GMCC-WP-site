@@ -330,7 +330,9 @@ function normalizeGroupFitnessDirectoryData(
 /**
  * Load all /programs specialty directory headers in a single WPGraphQL POST.
  */
-export async function fetchProgramsDirectoryHeaders(): Promise<ProgramsPageACF> {
+export async function fetchProgramsDirectoryHeaders(
+  options: { revalidate?: number } = {},
+): Promise<ProgramsPageACF> {
   const data = await wpFetch<{
     aquatics?: PagesNodes<{ aquaticsDirectoryPageFields?: any }>;
     camps?: PagesNodes<{ campsDirectoryPageFields?: any }>;
@@ -350,6 +352,7 @@ export async function fetchProgramsDirectoryHeaders(): Promise<ProgramsPageACF> 
     sportsAndRecreationAlt?: PagesNodes<{ sportsAndRecreationDirectoryPageFields?: any }>;
   }>(PROGRAMS_DIRECTORY_HEADERS_QUERY, undefined, {
     tags: [WP_CACHE_TAGS.programs, WP_CACHE_TAGS.pages],
+    revalidate: options.revalidate,
   });
 
   const aquaticsRaw = firstNode(data?.aquatics)?.aquaticsDirectoryPageFields;

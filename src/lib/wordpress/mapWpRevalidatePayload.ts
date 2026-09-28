@@ -35,7 +35,49 @@ export type MappedRevalidate = {
   layout: boolean;
 };
 
-const PAGE_SLUG_MAP: Record<string, { tags: string[]; paths: string[]; layout?: boolean }> = {
+type PageRevalidateTarget = { tags: string[]; paths: string[]; layout?: boolean };
+
+/** WP pages that only hold /programs specialty header ACF (no front-end route of their own). */
+const PROGRAM_DIRECTORY_HEADER_PAGE: PageRevalidateTarget = {
+  tags: [WP_CACHE_TAGS.programs, WP_CACHE_TAGS.pages],
+  paths: ["/programs"],
+};
+
+/** WP pages that only hold /events specialty header ACF. */
+const EVENT_DIRECTORY_HEADER_PAGE: PageRevalidateTarget = {
+  tags: [WP_CACHE_TAGS.events, WP_CACHE_TAGS.pages],
+  paths: ["/events"],
+};
+
+const PAGE_SLUG_MAP: Record<string, PageRevalidateTarget> = {
+  aquatics: PROGRAM_DIRECTORY_HEADER_PAGE,
+  fitness: PROGRAM_DIRECTORY_HEADER_PAGE,
+  "sports-and-recreation": PROGRAM_DIRECTORY_HEADER_PAGE,
+  "sports-recreation": PROGRAM_DIRECTORY_HEADER_PAGE,
+  "group-fitness-classes": PROGRAM_DIRECTORY_HEADER_PAGE,
+  "group-fitness": PROGRAM_DIRECTORY_HEADER_PAGE,
+  "middle-school-athletics": PROGRAM_DIRECTORY_HEADER_PAGE,
+  silversneakers: PROGRAM_DIRECTORY_HEADER_PAGE,
+  "silver-sneakers": PROGRAM_DIRECTORY_HEADER_PAGE,
+  "renew-active-one-pass": PROGRAM_DIRECTORY_HEADER_PAGE,
+  "renew-active": PROGRAM_DIRECTORY_HEADER_PAGE,
+  community: PROGRAM_DIRECTORY_HEADER_PAGE,
+  "early-childhood": {
+    tags: [WP_CACHE_TAGS.programs, WP_CACHE_TAGS.pages],
+    paths: ["/early-childhood", "/programs"],
+  },
+  trips: EVENT_DIRECTORY_HEADER_PAGE,
+  socials: EVENT_DIRECTORY_HEADER_PAGE,
+  "food-distributions": EVENT_DIRECTORY_HEADER_PAGE,
+  // Tournaments also holds the Bonspiels header ACF group.
+  tournaments: {
+    tags: [WP_CACHE_TAGS.events, WP_CACHE_TAGS.pages],
+    paths: ["/tournaments", "/events"],
+  },
+  races: {
+    tags: [WP_CACHE_TAGS.events, WP_CACHE_TAGS.pages],
+    paths: ["/races", "/events"],
+  },
   programs: { tags: [WP_CACHE_TAGS.programs, WP_CACHE_TAGS.pages], paths: ["/programs"] },
   centers: { tags: [WP_CACHE_TAGS.centers, WP_CACHE_TAGS.pages], paths: ["/centers"] },
   membership: {

@@ -47,6 +47,15 @@ export type DirectoryHeaderVariant =
   | "tennis-lessons"
   | "community";
 
+/** WP returns `header: null` for empty ACF fields, which would override a spread-in default. */
+function withFallbackTitle<T extends DirectoryHeaderData>(
+  fallback: string,
+  fields: T | null | undefined,
+): T {
+  const wpTitle = (fields?.header ?? "").toString().trim();
+  return { ...(fields ?? ({} as T)), header: wpTitle || fallback };
+}
+
 export function DirectoryHeaderSection({
   variant,
   acf,
@@ -60,84 +69,84 @@ export function DirectoryHeaderSection({
     case "camps":
       return (
         <CampsDirectoryHeader
-          data={{ header: "Camps", ...(acf.campsDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("Camps", acf.campsDirectoryPageFields)}
           className={className}
         />
       );
     case "aquatics":
       return (
         <AquaticsDirectoryHeader
-          data={{ header: "Aquatics", ...(acf.aquaticsDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("Aquatics", acf.aquaticsDirectoryPageFields)}
           className={className}
         />
       );
     case "sports-and-recreation":
       return (
         <SportsAndRecreationDirectoryHeader
-          data={{ header: "Sports and Recreation", ...(acf.sportsAndRecreationDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("Sports and Recreation", acf.sportsAndRecreationDirectoryPageFields)}
           className={className}
         />
       );
     case "fitness":
       return (
         <FitnessDirectoryHeader
-          data={{ header: "Fitness", ...(acf.fitnessDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("Fitness", acf.fitnessDirectoryPageFields)}
           className={className}
         />
       );
     case "childcare":
       return (
         <ChildcareDirectoryHeader
-          data={{ header: "Childcare", ...(acf.childcareDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("Childcare", acf.childcareDirectoryPageFields)}
           className={className}
         />
       );
     case "group-fitness":
       return (
         <GroupFitnessDirectoryHeader
-          data={{ header: "Group Fitness", ...(acf.groupFitnessDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("Group Fitness", acf.groupFitnessDirectoryPageFields)}
           className={className}
         />
       );
     case "middle-school-athletics":
       return (
         <MiddleSchoolAthleticsDirectoryHeader
-          data={{ header: "Middle School Athletics", ...(acf.middleSchoolAthleticsDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("Middle School Athletics", acf.middleSchoolAthleticsDirectoryPageFields)}
           className={className}
         />
       );
     case "personal-training":
       return (
         <PersonalTrainingDirectoryHeader
-          data={{ header: "Personal Training", ...(acf.personalTrainingDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("Personal Training", acf.personalTrainingDirectoryPageFields)}
           className={className}
         />
       );
     case "tennis-lessons":
       return (
         <TennisLessonsDirectoryHeader
-          data={{ header: "Tennis Lessons", ...(acf.tennisLessonsDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("Tennis Lessons", acf.tennisLessonsDirectoryPageFields)}
           className={className}
         />
       );
     case "renew-active":
       return (
         <RenewActiveDirectoryHeader
-          data={{ header: "Renew Active / One Pass", ...(acf.renewActiveDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("Renew Active / One Pass", acf.renewActiveDirectoryPageFields)}
           className={className}
         />
       );
     case "silversneakers":
       return (
         <SilversneakersDirectoryHeader
-          data={{ header: "SilverSneakers", ...(acf.silversneakersDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("SilverSneakers", acf.silversneakersDirectoryPageFields)}
           className={className}
         />
       );
     case "community":
       return (
         <CommunityDirectoryHeader
-          data={{ header: "Community", ...(acf.communityDirectoryPageFields ?? {}) }}
+          data={withFallbackTitle("Community", acf.communityDirectoryPageFields)}
           className={className}
         />
       );
