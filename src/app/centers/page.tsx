@@ -30,21 +30,7 @@ const EXPLORE_CENTERS_QUERY = `
           accessibilityAmenities {
             nodes { name slug }
           }
-        }
-      }
-    }
-
-    programs(first: 500) {
-      nodes {
-        slug
-        title
-        programFields {
-          center {
-            nodes {
-              slug
-            }
-          }
-          programArea {
+          programAreas {
             nodes { name slug }
           }
         }
@@ -57,17 +43,16 @@ export default async function CentersPage() {
   const [heroPage, data] = await Promise.all([
     fetchPageWithHeroFields("centers"),
     wpFetch<any>(EXPLORE_CENTERS_QUERY, undefined, {
-      tags: [WP_CACHE_TAGS.centers, WP_CACHE_TAGS.programs],
+      tags: [WP_CACHE_TAGS.centers],
     }),
   ]);
   const centers = data?.centers?.nodes ?? [];
-  const programs = data?.programs?.nodes ?? [];
   const hero = resolvePhotoWaveHeaderProps(heroPage, "Explore our centers");
 
   return (
     <main>
       <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition} ctas={hero.ctas} />
-      <ExploreCentersClient centers={centers} programs={programs} />
+      <ExploreCentersClient centers={centers} />
     </main>
   );
 }

@@ -30,6 +30,10 @@ type JotFormEmbedProps = {
    * remeasures height after being hidden.
    */
   resizeKey?: string | number | boolean;
+  /** When true (default), the embed gets a visible frame in high contrast mode. */
+  framed?: boolean;
+  /** The form's max width (px) as set in JotForm's builder; sizes the high contrast frame. */
+  formWidth?: number;
 };
 
 declare global {
@@ -53,6 +57,8 @@ export default function JotFormEmbed( {
   height = 539,
   autoResize = true,
   resizeKey,
+  framed = true,
+  formWidth = 780,
 }: JotFormEmbedProps) {
   const resolvedFormId =
     formId === GENERAL_CONTACT_FORM_ID && formUrl
@@ -71,7 +77,10 @@ export default function JotFormEmbed( {
   }, [autoResize, resolvedIframeId, resizeKey]);
 
   return (
-    <div className={className}>
+    <div
+      className={`${framed ? "jotform-embed" : ""} ${className}`}
+      style={{ "--jotform-width": `${formWidth}px` } as React.CSSProperties}
+    >
       <iframe
         id={resolvedIframeId}
         src={embedSrc ?? undefined}

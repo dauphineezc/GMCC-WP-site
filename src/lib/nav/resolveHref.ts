@@ -53,12 +53,12 @@ function normalizeWpUrlToPath(url: string) {
     "Renew Active/One Pass": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness", headerVariant: "renew-active" }),
 
     // Sports and Recreation
-    "Sports and Recreation": "/programs?" + buildQuery({ programArea: "Basketball,Cheer and Pom,Curling,Middle School Athletics,Misc/Other Sports,Racquet Sports", headerVariant: "sports-and-recreation" }),
-    "Youth Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Basketball,Cheer and Pom,Curling,Middle School Athletics,Misc/Other Sports,Racquet Sports", audience: "youth" }),
+    "Sports and Recreation": "/programs?" + buildQuery({ programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Middle School Athletics,Misc/Other Sports,Racquet Sports", headerVariant: "sports-and-recreation" }),
+    "Youth Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Middle School Athletics,Misc/Other Sports,Racquet Sports", audience: "youth" }),
     "Youth Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Middle School Athletics,Misc/Other Sports,Racquet Sports", audience: "youth", headerVariant: "sports-and-recreation" }),
     "Middle School Athletics": "/programs?" + buildQuery({ programArea: "middle-school-athletics", headerVariant: "middle-school-athletics" }),
     "Adult Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic", programArea: "Aquatics,Basketball,Curling,Gymnastics,Misc/Other Sports,Racquet Sports,Pickleball,Tennis,Specialty Fitness,Volleyball", audience: "adult" }),   
-    "Adult Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "teen,adult,senior" }),
+    "Adult Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "adult" }),
 
     // Camps
     "Camps": "/camps",

@@ -7,11 +7,9 @@ import { CENTER_SLUG_ORDER } from "@/lib/constants";
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 
 type CenterNode = any;
-type ProgramNode = any;
 
 type Props = {
   centers: CenterNode[];
-  programs: ProgramNode[];
 };
 
 // Paste Google Maps iframe src URLs here by center slug.
@@ -42,15 +40,23 @@ const CENTER_MAP_IFRAME_SRC_BY_SLUG: Record<string, string> = {
 // Card media sizing (map or image fallback)
 const CARD_MEDIA_HEIGHT_CLASS = "h-[200px]";
 
+function googleMapsSearchUrl(title: string, address?: string | null) {
+  const flatAddress = address?.replace(/\s*\n\s*/g, ", ").trim();
+  const query = flatAddress ? `${title}, ${flatAddress}` : title;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
 function CenterCardMedia({
   slug,
   title,
+  address,
   featuredImageUrl,
   featuredImageAlt,
   objectPosition,
 }: {
   slug: string;
   title: string;
+  address?: string | null;
   featuredImageUrl?: string | null;
   featuredImageAlt?: string | null;
   objectPosition?: string | null;
@@ -62,15 +68,32 @@ function CenterCardMedia({
   if (showMap) {
     return (
       <div className={`card-bleed relative bg-neutral-100 overflow-hidden rounded-t-2xl ${CARD_MEDIA_HEIGHT_CLASS}`}>
+        {/* Non-interactive so clicks fall through to the card link; Google's own "Open in Maps" button is covered below. */}
         <iframe
           src={iframeSrc}
-          className="absolute inset-0 h-full w-full border-0"
-          allowFullScreen
+          className="pointer-events-none absolute inset-0 h-full w-full border-0"
+          tabIndex={-1}
+          aria-hidden="true"
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
           title={`Map for ${title}`}
           onError={() => setMapFailed(true)}
         />
+        <a
+          href={googleMapsSearchUrl(title, address)}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Open ${title} in Google Maps (opens in a new tab)`}
+          className="absolute left-2 top-2 z-10 inline-flex items-center gap-1.5 rounded-sm bg-white px-3 py-2 text-sm font-medium text-gmcc-navy shadow-md hover:text-gmcc-teal hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-gmcc-teal"
+        >
+          Open in Maps
+          <svg viewBox="0 0 24 24" className="h-6 w-8" aria-hidden="true">
+            <path
+              d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14V3ZM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+              fill="currentColor"
+            />
+          </svg>
+        </a>
       </div>
     );
   }
@@ -132,41 +155,7 @@ function EmailIcon() {
 }
 
 
-export default function ExploreCentersClient({ centers, programs }: Props) {
-  // Build a lookup: centerSlug -> { programs[], programAreas[] }
-  const centerDerivedData = useMemo(() => {
-    const map = new Map<string, { programs: { slug: string; title: string }[]; programAreas: string[] }>();
-
-    for (const p of programs) {
-      const pf = p?.programFields ?? {};
-      const linkedCenters = pf.center?.nodes ?? [];
-      const areas = (pf.programArea?.nodes ?? [])
-        .map((a: any) => a?.name)
-        .filter(Boolean);
-
-      for (const c of linkedCenters) {
-        if (!c?.slug) continue;
-        const entry = map.get(c.slug) ?? { programs: [], programAreas: [] };
-        const pSlug = typeof p?.slug === "string" ? p.slug : "";
-        const pTitle = typeof p?.title === "string" ? p.title : "";
-        if (pSlug && pTitle) entry.programs.push({ slug: pSlug, title: pTitle });
-        entry.programAreas.push(...areas);
-        map.set(c.slug, entry);
-      }
-    }
-
-    // de-dupe
-    for (const [slug, entry] of map.entries()) {
-      entry.programs = Array.from(
-        new Map(entry.programs.map(x => [x.slug, x])).values()
-      );
-      entry.programAreas = Array.from(new Set(entry.programAreas));
-      map.set(slug, entry);
-    }
-
-    return map;
-  }, [programs]);
-
+export default function ExploreCentersClient({ centers }: Props) {
   // Build filter option lists from data
   const amenityOptions = useMemo(() => {
     const set = new Map<string, string>(); // slug -> name
@@ -180,23 +169,22 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
 
   const programAreaOptions = useMemo(() => {
     const set = new Map<string, string>();
-    programs.forEach(p => {
-      p?.programFields?.programArea?.nodes?.forEach((t: any) => {
+    centers.forEach(c => {
+      c?.centersFields?.programAreas?.nodes?.forEach((t: any) => {
         if (t?.slug && t?.name) set.set(t.slug, t.name);
       });
     });
     return Array.from(set.entries()).map(([slug, name]) => ({ slug, name }));
-  }, [programs]);
+  }, [centers]);
 
   // Selected filters
   const [amenitiesSelected, setAmenitiesSelected] = useState<string[]>([]);
   const [areasSelected, setAreasSelected] = useState<string[]>([]);
-  const [programsSelected, setProgramsSelected] = useState<string[]>([]);
 
   // Mobile filter panel state (collapsed by default)
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(
-    () => new Set(["amenities", "programAreas", "programs"])
+    () => new Set(["amenities", "programAreas"])
   );
 
   const toggleDropdown = (key: string) => {
@@ -208,8 +196,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
     });
   };
 
-  const activeFilterCount =
-    amenitiesSelected.length + areasSelected.length + programsSelected.length;
+  const activeFilterCount = amenitiesSelected.length + areasSelected.length;
 
   // Preferred display order for centers
   const centerOrder = CENTER_SLUG_ORDER;
@@ -223,38 +210,15 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
       if (!cSlug) return false;
       const cf = c?.centersFields ?? {};
       const cAmenities = (cf.amenities?.nodes ?? []).map((t: any) => t?.slug).filter(Boolean);
-
-      const derived = centerDerivedData.get(cSlug) ?? { programs: [], programAreas: [] };
-      const cProgramAreas = derived.programAreas; // names
-      const cPrograms = derived.programs.map(p => p.slug);
+      const cProgramAreas = (cf.programAreas?.nodes ?? []).map((t: any) => t?.slug).filter(Boolean);
 
       // amenities OR
       if (amenitiesSelected.length > 0 && !amenitiesSelected.some(a => cAmenities.includes(a))) {
         return false;
       }
 
-      // program areas OR (match by slug OR by name fallback)
-      if (areasSelected.length > 0) {
-        const areasBySlug = (programs
-          .flatMap(p => p?.programFields?.programArea?.nodes ?? [])
-          .filter((t: any) => t?.slug && t?.name)
-        );
-        const areaSlugToName = new Map(areasBySlug.map((t: any) => [t.slug, t.name]));
-
-        const selectedNames = areasSelected
-          .map(s => areaSlugToName.get(s))
-          .filter(Boolean);
-
-        if (
-          !areasSelected.some(slug => selectedNames.includes(slug as any) || cProgramAreas.includes(areaSlugToName.get(slug) as any))
-        ) {
-          // simpler: just check names
-          if (!selectedNames.some(n => cProgramAreas.includes(n))) return false;
-        }
-      }
-
-      // programs OR
-      if (programsSelected.length > 0 && !programsSelected.some(p => cPrograms.includes(p))) {
+      // program areas OR
+      if (areasSelected.length > 0 && !areasSelected.some(a => cProgramAreas.includes(a))) {
         return false;
       }
 
@@ -270,7 +234,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
       const bOrder = bIndex === -1 ? centerOrder.length : bIndex;
       return aOrder - bOrder;
     });
-  }, [centers, centerDerivedData, amenitiesSelected, areasSelected, programsSelected, programs]);
+  }, [centers, amenitiesSelected, areasSelected]);
 
   const toggle = (arr: string[], value: string, setArr: (v: string[]) => void) => {
     setArr(arr.includes(value) ? arr.filter(x => x !== value) : [...arr, value]);
@@ -395,8 +359,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
               onClick={() => {
                 setAmenitiesSelected([]);
                 setAreasSelected([]);
-                setProgramsSelected([]);
-                setOpenDropdowns(new Set(["amenities", "programAreas", "programs"]));
+                setOpenDropdowns(new Set(["amenities", "programAreas"]));
               }}
               className="btn btn-secondary w-full"
             >
@@ -432,6 +395,7 @@ export default function ExploreCentersClient({ centers, programs }: Props) {
                   <CenterCardMedia
                     slug={c.slug}
                     title={c.title}
+                    address={cf.address}
                     featuredImageUrl={c?.featuredImage?.node?.sourceUrl}
                     featuredImageAlt={c?.featuredImage?.node?.altText}
                     objectPosition={mediaFocalPositionCss(c?.featuredImage?.node)}

@@ -97,7 +97,7 @@ const MEMBERSHIP_PAGE_QUERY = /* GraphQL */ `
                     description
                     ... on Amenity {
                       amenitiesFields {
-${AMENITIES_FIELDS_BLOCK}
+                        ${AMENITIES_FIELDS_BLOCK}
                       }
                     }
                   }

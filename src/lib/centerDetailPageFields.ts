@@ -16,12 +16,6 @@ export const CURLING_CENTER_SLUG = "curling-center";
 const CENTER_DETAIL_PAGE_FIELDS_BODY = `
       centerPageFields {
         testimonialHeader
-        readyToJoinSection {
-          header
-          subheader
-          cardText
-          ctaLabel
-        }
         socialIcons {
           instagram { node { ${WP_MEDIA_IMAGE_FIELDS} }}
           facebook { node { ${WP_MEDIA_IMAGE_FIELDS} }}
@@ -39,24 +33,9 @@ const CENTER_DETAIL_PAGE_FIELDS_BODY = `
             }
             icon { node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl }}
           }
-          membershipReplacementCta {
-            header
-            subheader
-            cardText
-            ctaLabel
-            ctaUrl
-          }
         }
       }
 `;
-
-export type CenterPageReadyToJoinSection = {
-  header?: string | null;
-  subheader?: string | null;
-  cardText?: string | null;
-  ctaLabel?: string | null;
-  ctaUrl?: string | null;
-};
 
 export type CenterPageHistoryItem = {
   historyItemHeader?: string | null;
@@ -82,12 +61,9 @@ export function normalizeCurlingHistoryItems(
     .filter((row) => Boolean(row.historyItemHeader || row.historyItem));
 }
 
-export type CenterPageMembershipReplacementCta = CenterPageReadyToJoinSection;
-
 export type CenterPageCurlingFields = {
   hoursReplacementStatement?: string | null;
   midlandCurlingClubLogo?: WpMediaFieldInput | null;
-  membershipReplacementCta?: CenterPageMembershipReplacementCta | null;
   historySection?: CenterPageHistorySection | null;
 };
 
@@ -147,7 +123,6 @@ export function resolveCenterSocialLinks(
 
 export type CenterDetailPageFields = {
   testimonialHeader?: string | null;
-  readyToJoinSection?: CenterPageReadyToJoinSection | null;
   socialIcons?: CenterPageSocialIcons | null;
   curlingCenterPageFields?: CenterPageCurlingFields | null;
 };

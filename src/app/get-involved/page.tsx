@@ -1,7 +1,7 @@
 // src/app/get-involved/page.tsx
 import HeaderImage from "@/components/headerImage";
-import { wpFetch } from "@/lib/wp";
-import GetInvolvedClient from "./getInvolvedClient";
+import { acfFileHref, wpFetch, type WpMediaFieldInput } from "@/lib/wp";
+import GetInvolvedClient, { type DocLink, type GetInvolvedClientFields } from "./getInvolvedClient";
 import { PAGE_HERO_FIELDS_GRAPHQL, resolvePhotoWaveHeaderProps } from "@/lib/pageHeroFields";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
@@ -16,6 +16,13 @@ query GetInvolvedPage($uri: ID!) {
     ${PAGE_HERO_FIELDS_GRAPHQL}
     getInvolvedPageFields {
       impactBlurb
+      seeImpactButton {
+        node {
+          sourceUrl
+          mediaItemUrl
+          title
+        }
+      }
 
       volunteerGroup {
         volunteerCardSummary
@@ -64,9 +71,9 @@ query GetInvolvedPage($uri: ID!) {
         }
         sponsorApplication {
           node {
-            ${WP_MEDIA_IMAGE_FIELDS}
+            sourceUrl
             mediaItemUrl
-            mediaDetails { width height }
+            title
           }
         }
         viewSponsorsPageCta {
@@ -94,6 +101,7 @@ type GetInvolvedFields = {
     heroImage?: MaybeImage;
   } | null;
   impactBlurb?: string | null;
+  seeImpactButton?: WpMediaFieldInput | null;
 
   volunteerGroup?: {
     volunteerCardSummary?: string | null;
@@ -118,13 +126,20 @@ type GetInvolvedFields = {
     sponsorCardIcon?: MaybeImage;
     sponsorLongDescription?: string | null;
     sponsorImage?: MaybeImage;
-    sponsorApplication?: MaybeImage;
+    sponsorApplication?: WpMediaFieldInput | null;
     viewSponsorsPageCta?: {
       ctaLabel?: string | null;
       cta?: string | null;
     } | null;
   } | null;
 };
+
+function fileDocLink(field: WpMediaFieldInput | null): DocLink | null {
+  const href = acfFileHref(field ?? undefined);
+  if (!href) return null;
+  const node = field && "node" in field ? field.node : null;
+  return { label: node?.title?.trim() ?? "", href };
+}
 
 export default async function GetInvolvedPage() {
   // Your page slug/uri — adjust if your WP URI differs (e.g., "/get-involved/")
@@ -137,7 +152,16 @@ export default async function GetInvolvedPage() {
     } | null;
   }>(GET_INVOLVED_PAGE_QUERY, { uri });
 
-  const fields = data?.page?.getInvolvedPageFields ?? null;
+  const raw = data?.page?.getInvolvedPageFields ?? null;
+  const fields: GetInvolvedClientFields | null = raw
+    ? {
+        ...raw,
+        seeImpactButton: fileDocLink(raw.seeImpactButton ?? null),
+        sponsorGroup: raw.sponsorGroup
+          ? { ...raw.sponsorGroup, sponsorApplication: fileDocLink(raw.sponsorGroup.sponsorApplication ?? null) }
+          : null,
+      }
+    : null;
   const heroProps = resolvePhotoWaveHeaderProps(data?.page, "Get Involved");
   return (
     <main>

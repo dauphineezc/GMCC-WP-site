@@ -4,6 +4,7 @@ import { splitLines } from "@/lib/acf";
 import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 import { wpFetch } from "@/lib/wp";
 import type { Metadata } from "next";
+import WysiwygText from "@/components/wysiwygText";
 
 // ── 2. METADATA (optional but recommended) ──────────────────────────────────
 export const metadata: Metadata = {
@@ -180,12 +181,10 @@ export default async function RegisterPage() {
 
        <section className="page-section text-center">
         {fields?.helpHeader ? (
-            <h2 className="h2">{fields.helpHeader}</h2>
+            <h2 className="h2 mb-4">{fields.helpHeader}</h2>
         ) : null}
         {fields?.helpBody ? (
-            <p className="body whitespace-pre-line text-neutral-700 mt-4">
-            {fields.helpBody}
-            </p>
+            <WysiwygText html={fields.helpBody} />
         ) : null}
 
         <div className="flex justify-center">

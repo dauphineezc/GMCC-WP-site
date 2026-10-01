@@ -28,6 +28,8 @@ const TOURNAMENTS_PAGE_QUERY = /* GraphQL */ `
           tournamentPartner4 { logo { node { ${WP_MEDIA_IMAGE_FIELDS} } } link }
         }
 
+        showFeaturedTournament
+
         featuredTournament {
           nodes {
             ... on Campaign {
@@ -212,6 +214,7 @@ type TournamentsPageFields = {
     tournamentPartner3: PartnerField;
     tournamentPartner4: PartnerField;
   };
+  showFeaturedTournament: boolean;
   featuredTournament: SimpleCampaignData | null;
   inHouseTournamentsHeader: string;
   inHouseTournamentsBody: string;
@@ -263,6 +266,7 @@ function initializeTournamentsPageFields(raw: Record<string, unknown> | null | u
       tournamentPartner3: asPartnerField(partners.tournamentPartner3),
       tournamentPartner4: asPartnerField(partners.tournamentPartner4),
     },
+    showFeaturedTournament: (f.showFeaturedTournament as boolean) ?? false,
     featuredTournament: asFeaturedTournament(f.featuredTournament),
     inHouseTournamentsHeader: asString(f.inHouseTournamentsHeader),
     inHouseTournamentsBody: asString(f.inHouseTournamentsBody),
@@ -398,7 +402,7 @@ export default async function TournamentsPage() {
       ) : null}
 
       {/* FEATURED TOURNAMENT CAMPAIGN */}
-      {fields.featuredTournament ? (
+      {fields.showFeaturedTournament && fields.featuredTournament ? (
         <section className="page-section">
           <SimpleCampaign campaign={fields.featuredTournament} />
         </section>

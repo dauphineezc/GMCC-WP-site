@@ -109,6 +109,7 @@ export default function JotFormLightboxButton({
                   height={560}
                   autoResize
                   resizeKey={open}
+                  framed={false}
                 />
               </div>
             </div>

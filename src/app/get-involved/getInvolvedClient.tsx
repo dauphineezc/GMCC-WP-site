@@ -6,7 +6,6 @@ import Tabs from "@/components/tabs";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
 import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
-import { acfFileHref } from "@/lib/wp";
 
 type WPImageNode = {
   sourceUrl?: string | null;
@@ -15,14 +14,16 @@ type WPImageNode = {
 } & MediaFocalPointFields;
 
 type MaybeImage = { node?: WPImageNode | null } | null;
+export type DocLink = { label: string; href: string };
 
-type GetInvolvedFields = {
+export type GetInvolvedClientFields = {
   heroFields?: {
     heroHeader?: string | null;
     heroSubheader?: string | null;
     heroImage?: MaybeImage;
   } | null;
   impactBlurb?: string | null;
+  seeImpactButton?: DocLink | null;
 
   volunteerGroup?: {
     volunteerCardSummary?: string | null;
@@ -38,7 +39,7 @@ type GetInvolvedFields = {
     donateLongDescription?: string | null;
     physicalDonationDescription?: string | null;
     physicalDonationList?: string | null;
-    physicalDonationWishlist?: string | null;
+    wishlistLink?: string | null;
     donationImage?: MaybeImage;
   } | null;
 
@@ -47,7 +48,7 @@ type GetInvolvedFields = {
     sponsorCardIcon?: MaybeImage;
     sponsorLongDescription?: string | null;
     sponsorImage?: MaybeImage;
-    sponsorApplication?: MaybeImage;
+    sponsorApplication?: DocLink | null;
     viewSponsorsPageCta?: {
       ctaLabel?: string | null;
       cta?: string | null;
@@ -85,11 +86,12 @@ function TextBlock({ text }: { text?: string | null }) {
   return <p className="body whitespace-pre-line">{text}</p>;
 }
 
-export default function GetInvolvedClient({ fields }: { fields: GetInvolvedFields | null }) {
+export default function GetInvolvedClient({ fields }: { fields: GetInvolvedClientFields | null }) {
   const volunteer = fields?.volunteerGroup ?? null;
   const donate = fields?.donateGroup ?? null;
   const sponsor = fields?.sponsorGroup ?? null;
-  const sponsorApplicationHref = acfFileHref(sponsor?.sponsorApplication);
+  const sponsorApplicationHref = sponsor?.sponsorApplication?.href;
+  const seeImpactHref = fields?.seeImpactButton?.href;
 
   return (
     <div className="overflow-x-clip">
@@ -143,11 +145,18 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
       {/* IMPACT BLURB */}
       <div className="stack-4 section-gap">
         <p className="body text-center whitespace-pre-line">{fields?.impactBlurb ?? ""}</p>
+        {seeImpactHref ? (
         <div className="flex justify-center">
-          <a href="/our-purpose" className="btn btn-secondary">
+          <a
+            href={seeImpactHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-secondary"
+          >
             See more of our impact
           </a>
         </div>
+        ) : null}
       </div>
 
       {/* DONATE */}
@@ -171,10 +180,10 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedField
                 <div className="body whitespace-pre-line ml-4">{donate.physicalDonationList}</div>
               ) : null}
 
-              {donate?.physicalDonationWishlist ? (
+              {donate?.wishlistLink ? (
                 <div className="pt-4">
                   <a
-                    href={donate.physicalDonationWishlist}
+                    href={donate.wishlistLink}
                     className="btn btn-secondary"
                     target="_blank"
                     rel="noopener noreferrer"

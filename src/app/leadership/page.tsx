@@ -170,7 +170,7 @@ export default async function LeadershipPage() {
                   {elts.map((staff, index) => {
                     const dotCardLink = staff.staffProfilesFields?.dotCardLink;
                     const cardClassName =
-                      "flex flex-col rounded-2xl border border-neutral-100 bg-white shadow-md overflow-hidden transition hover:-translate-y-0.5 hover:shadow-xl hover:border-neutral-300";
+                      "card card-hover flex flex-col overflow-hidden p-0";
 
                     const cardBody = (
                       <>

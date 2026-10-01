@@ -101,7 +101,7 @@ const CENTER_BY_SLUG_QUERY = `
             description
             ... on Amenity {
               amenitiesFields {
-${AMENITIES_FIELDS_BLOCK}
+                ${AMENITIES_FIELDS_BLOCK}
               }
             }
           }
@@ -165,6 +165,14 @@ ${AMENITIES_FIELDS_BLOCK}
           header
           subheader
         }
+
+        readyToJoinSection {
+        header
+        subheader
+        cardText
+        ctaLabel
+        ctaUrl
+      }
 
         featuredTestimonials {
           nodes {
@@ -425,7 +433,7 @@ export default async function CenterPage(props: CenterPageProps) {
 
   const isCurlingCenter = isCurlingCenterSlug(slug, center.slug ?? null);
   const curlingLayout = centerDetailFields?.curlingCenterPageFields;
-  const readyToJoinLayout = centerDetailFields?.readyToJoinSection;
+  const readyToJoinLayout = centerFields.readyToJoinSection ?? {};
   const testimonialHeader = centerDetailFields?.testimonialHeader;
   const hoursReplacement = coerceWpRichText(curlingLayout?.hoursReplacementStatement).trim();
   const showCurlingHoursReplacement = isCurlingCenter && hoursReplacement.length > 0;
@@ -446,34 +454,20 @@ export default async function CenterPage(props: CenterPageProps) {
   const hasTodayScheduleEmbed = hasTodayCenterScheduleEmbed(slug);
   const showTodaySection = hasTodayScheduleEmbed || isCurlingCenter || todaysEvents.length > 0;
 
-  const replacementCta = curlingLayout?.membershipReplacementCta;
-  const membershipPlansHref = `/membership?center=${encodeURIComponent(slug)}#plans`;
-
   let joinSectionHeader: string;
   let joinSectionSubheader: string;
   let joinCardText: string;
   let joinCtaLabel: string;
   let joinCtaHref: string | null;
 
-  if (isCurlingCenter) {
-    joinSectionHeader =
-      coerceWpRichText(replacementCta?.header).trim() || "Ready to join?";
-    joinSectionSubheader = coerceWpRichText(replacementCta?.subheader).trim();
-    joinCardText = coerceWpRichText(replacementCta?.cardText).trim();
-    joinCtaLabel = coerceWpRichText(replacementCta?.ctaLabel).trim() || "Learn more";
-    joinCtaHref =
-      replacementCta?.ctaUrl ??
-      null;
-  } else {
-    joinSectionHeader = (readyToJoinLayout?.header ?? "").trim() || "Ready to join?";
-    joinSectionSubheader =
-      (readyToJoinLayout?.subheader ?? "").trim() ||
-      "Join online or stop in to get started today.";
-    joinCardText =
-      (readyToJoinLayout?.cardText ?? "").trim() || "Start your membership in minutes.";
-    joinCtaLabel = (readyToJoinLayout?.ctaLabel ?? "").trim() || "Join Now";
-    joinCtaHref = membershipPlansHref;
-  }
+  joinSectionHeader = (readyToJoinLayout?.header ?? "").trim() || "Ready to join?";
+  joinSectionSubheader =
+    (readyToJoinLayout?.subheader ?? "").trim() ||
+    "Join online or stop in to get started today.";
+  joinCardText =
+    (readyToJoinLayout?.cardText ?? "").trim() || "Start your membership in minutes.";
+  joinCtaLabel = (readyToJoinLayout?.ctaLabel ?? "").trim() || "Join Now";
+  joinCtaHref = (readyToJoinLayout?.ctaUrl ?? "").trim() || "/membership"
 
   return (
     <main className="overflow-x-clip">

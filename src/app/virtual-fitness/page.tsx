@@ -151,7 +151,12 @@ export default async function VirtualFitnessPage() {
           <a href={f?.memberPortalCta?.link?.url} target={f?.memberPortalCta?.link?.target ?? undefined} className="btn btn-tertiary">
             {f?.memberPortalCta?.label}
           </a>
-          <a href={f?.scheduleCta?.link?.url} target={f?.scheduleCta?.link?.target ?? undefined} className="btn btn-secondary">
+          <a
+            href={f?.currentMonthSchedule?.file?.node?.sourceUrl ?? f?.scheduleCta?.link?.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-secondary"
+          >
             {f?.scheduleCta?.label}
           </a>
         </div>

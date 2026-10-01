@@ -17,6 +17,7 @@ import {
   LESSONS_TRAINERS_GQL,
   type WPProgram,
 } from "@/lib/programs/lessonsDirectory";
+import JotFormEmbed from "@/components/jotFormEmbed";
 
 const PERSONAL_TRAINING_PAGE_QUERY = /* GraphQL */ `
   query PersonalTrainingPage($uri: ID!, $first: Int!) {
@@ -116,70 +117,10 @@ export default async function PersonalTrainingPage() {
             <h2 className="h2 text-center text-gmcc-navy">{inquiryFormHeader}</h2>
             <p className="body mt-2 text-center text-neutral-700">{inquiryFormSubheader}</p>
 
-            <form className="card mt-6 space-y-4 bg-neutral-100" aria-label="Personal training inquiry">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label htmlFor="pt-name" className="block text-sm text-neutral-700">
-                    Name
-                  </label>
-                  <input
-                    id="pt-name"
-                    type="text"
-                    className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="pt-email" className="block text-sm text-neutral-700">
-                    Email
-                  </label>
-                  <input
-                    id="pt-email"
-                    type="email"
-                    className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                  />
-                </div>
-              </div>
+            <JotFormEmbed formUrl="https://form.jotform.com/230953126868060" formWidth={465} />
+              
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label htmlFor="pt-goal" className="block text-sm text-neutral-700">
-                    Primary goal
-                  </label>
-                  <input
-                    id="pt-goal"
-                    type="text"
-                    className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="pt-phone" className="block text-sm text-neutral-700">
-                    Phone
-                  </label>
-                  <input
-                    id="pt-phone"
-                    type="tel"
-                    className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label htmlFor="pt-message" className="block text-sm text-neutral-700">
-                  Message
-                </label>
-                <textarea
-                  id="pt-message"
-                  rows={5}
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                />
-              </div>
-
-              <div className="flex justify-center pt-2">
-                <button type="button" className="btn btn-primary min-w-36">
-                  Inquire Here
-                </button>
-              </div>
-            </form>
           </div>
         </section>
       }

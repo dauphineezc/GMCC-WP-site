@@ -12,6 +12,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { TestimonialSection, normalizeTestimonials } from "@/components/testimonials";
 import JotFormEmbed from "@/components/jotFormEmbed";
+import FeaturedTestimonialsCarousel from "@/components/featuredTestimonialsCarousel";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -242,7 +243,10 @@ export default async function CorporateMembershipsPage() {
                 })}
             </div>
             ) : null}
-            <TestimonialSection testimonials={normalizedTestimonials} />
+            <figure className="mx-auto max-w-3xl mt-12">
+              <div className="text-5xl mb-0 leading-none text-gmcc-teal/50">“</div>
+              <FeaturedTestimonialsCarousel testimonials={normalizedTestimonials} />
+            </figure>
             </section>
         ) : null}
 

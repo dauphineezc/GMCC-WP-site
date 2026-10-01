@@ -102,6 +102,11 @@ body {
 .wysiwyg :where(li + li) {
   margin-top: 0.25em;
 }
+/* Centered copy: keep markers beside the text instead of at the container edge */
+.wysiwyg:is([class*="text-center"], [class*="text-center"] *) :where(ul, ol) {
+  list-style-position: inside;
+  padding-left: 0;
+}
 .wysiwyg :where(a) {
   text-decoration: none;
 }
@@ -119,6 +124,34 @@ html[data-text-size="xlarge"] { font-size: 125%; }   /* ~20px */
 /* High contrast (lightweight default; refine later) */
 html.a11y-contrast {
   filter: contrast(1.1);
+}
+/* The contrast filter washes out soft card shadows, so give cards a visible edge instead */
+html.a11y-contrast .card {
+  @apply border-neutral-400;
+}
+html.a11y-contrast .card-hover:hover {
+  @apply border-neutral-600;
+}
+/* The form lives in a cross-origin iframe, so the frame is drawn over where JotForm renders it:
+   centered at the form's max width, inset by the 72px vertical margin JotForm adds above 768px wide */
+html.a11y-contrast .jotform-embed {
+  position: relative;
+  container-type: inline-size;
+}
+html.a11y-contrast .jotform-embed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin-inline: auto;
+  max-width: var(--jotform-width, 780px);
+  border: 2px solid var(--gmcc-navy);
+  border-radius: 12px;
+  pointer-events: none;
+}
+@container (min-width: 769px) {
+  html.a11y-contrast .jotform-embed::after {
+    inset-block: 72px;
+  }
 }
 
 /* Reduce motion */
