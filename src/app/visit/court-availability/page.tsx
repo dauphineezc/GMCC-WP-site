@@ -7,6 +7,7 @@ import {
 } from "@/lib/pageHeroFields";
 import { scheduleEmbedUrl } from "@/lib/constants";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -30,12 +31,16 @@ const faqItems = [
     id: "2",
     title: "Tennis Center",
     content: (
-      <div className="gmcc-schedule-embed mt-4">
-        <ScheduleEmbedIframe
-          src={scheduleEmbedUrl({ type: "dropin", sub: "courtSports" })}
-          title="Tennis Center court availability"
-        />
+      <div>
+        <p>Please visit Club Automation, our Tennis Center's external booking system, to view court availability.</p>
+        <Link href="https://midland.clubautomation.com/" target="_blank">Club Automation</Link>
       </div>
+      // <div className="gmcc-schedule-embed mt-4">
+      //   <ScheduleEmbedIframe
+      //     src={scheduleEmbedUrl({ type: "dropin", sub: "courtSports" })}
+      //     title="Tennis Center court availability"
+      //   />
+      // </div>
     ),
   },
   {
@@ -44,7 +49,7 @@ const faqItems = [
     content: (
       <div className="gmcc-schedule-embed mt-4">
         <ScheduleEmbedIframe
-          src={scheduleEmbedUrl({ type: "fitness", sub: "aquatics" })}
+          src={scheduleEmbedUrl({ type: "dropin", sub: "courtSports" })}
           title="Coleman Family Center court availability"
         />
       </div>
@@ -56,7 +61,7 @@ const faqItems = [
     content: (
       <div className="gmcc-schedule-embed mt-4">
         <ScheduleEmbedIframe
-          src={scheduleEmbedUrl({ type: "fitness", sub: "aquatics" })}
+          src={scheduleEmbedUrl({ type: "dropin", sub: "courtSports" })}
           title="North Family Center court availability"
         />
       </div>
