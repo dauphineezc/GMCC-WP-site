@@ -62,11 +62,11 @@ function normalizeWpUrlToPath(url: string) {
 
     // Camps
     "Camps": "/camps",
-    "Preschool Half-Day Camps": "/camps?" + buildQuery({ campType: "mini-day" }),
-    "Full Day Camps": "/camps?" + buildQuery({ campType: "full-day" }),
-    "Mini Day Camps": "/camps?" + buildQuery({ campType: "mini-day" }),
-    "Specialty/Art Camps": "/camps?" + buildQuery({ campType: "specialty-art" }),
-    "Sport/Aquatics Camps": "/camps?" + buildQuery({ campType: "sport-aquatics" }),
+    "Preschool Half-Day Camps": "/camps?" + buildQuery({ campType: "preschool" }) + "#camp-results",
+    "Full Day Camps": "/camps?" + buildQuery({ campType: "full-day" }) + "#camp-results",
+    "Mini Day Camps": "/camps?" + buildQuery({ campType: "mini-day" }) + "#camp-results",
+    "Specialty/Art Camps": "/camps?" + buildQuery({ campType: "specialty-art" }) + "#camp-results",
+    "Sport/Aquatics Camps": "/camps?" + buildQuery({ campType: "sport-aquatics" }) + "#camp-results",
 
     // Early Childhood
     "On-Site Care" : "/programs?" + buildQuery({ programArea: "Onsite Care"}),

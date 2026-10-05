@@ -49,10 +49,12 @@ export const ADP_LANDING_PAGE_URL =
  * @example scheduleEmbedUrl({ type: "dropin", sub: "aquatics" })
  */
 export function scheduleEmbedUrl(params: {
+  center: "community" | "tennis" | "coleman" | "north";
   type: "dropin" | "fitness";
   sub: "aquatics" | "courtSports" | "community";
 }): string {
   const url = new URL(SCHEDULE_EMBED_BASE_URL);
+  url.searchParams.set("center", params.center);
   url.searchParams.set("type", params.type);
   url.searchParams.set("sub", params.sub);
   return url.toString();

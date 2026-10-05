@@ -363,7 +363,7 @@ export default function CampsProgramsExplorerClient({
 
   return (
     <div
-      id="camps-results"
+      id="camp-results"
       className="mx-auto max-w-6xl scroll-mt-24 px-4 py-8 section-y stack-8 lg:scroll-mt-28"
     >
       <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">

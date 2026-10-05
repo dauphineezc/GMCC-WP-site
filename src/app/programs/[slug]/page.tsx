@@ -348,6 +348,8 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
           <AttachmentsCard attachments={p.attachments ?? []} />
 
           {/* Details card */}
+          {p.duration || p.skillLevel || p.priceFrom || centerNames.length > 0 || p.taxonomies?.session?.length > 0 && (
+            <>
           <h2 className="h2 pt-8 mb-2">Program details</h2>
           <div className="card">
             <dl className="mt-3 stack-2 body">
@@ -381,10 +383,12 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                 <div className="flex justify-between gap-3">
                   <dt className="text-neutral-500">Session(s)</dt>
                   <dd className="text-right">{p.taxonomies.session.join(", ")}</dd>
-                </div>
-              )}
-            </dl>
-          </div>
+                  </div>
+                )}
+              </dl>
+            </div>
+          </>
+          )}
 
           {/* Benefits + What to bring */}
           <div className="grid gap-6 grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(0,1fr))] pt-8">

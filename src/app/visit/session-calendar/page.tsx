@@ -7,6 +7,7 @@ import {
 import type { Metadata } from "next";
 import AttachmentsCard from "@/components/detail/attachmentsCard";
 import { acfFileHref, type AttachmentItem, type WpMediaFieldInput, type WpMediaRef } from "@/lib/wp";
+import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -142,12 +143,14 @@ export default async function SessionCalendarPage() {
 
   return (
     <main>
-      <PhotoWaveHeader
+      {/* <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
         imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}
         ctas={hero.ctas}
-      />
+      /> */}
+
+      <SolidNavyWaveHeader title={hero.title} description={hero.subheader}/>
 
       <div className="page-section stack-8">
         <p className="body text-neutral-700">

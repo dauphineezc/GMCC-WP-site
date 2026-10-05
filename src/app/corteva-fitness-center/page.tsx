@@ -4,14 +4,15 @@ import {
     resolvePhotoWaveHeaderProps,
     type WpPageWithHeroFields,
   } from "@/lib/pageHeroFields";
-import { acfFileHref, acfGalleryCarouselImages, resolveWpMediaUrl, wpFetch } from "@/lib/wp";
+import { acfFileHref, acfGalleryCarouselImages, wpFetch } from "@/lib/wp";
 import type { MediaRef } from "@/lib/acf";
 import ImageCarousel from "@/components/imageCarousel";
 import PhoneLink from "@/components/phoneLink";
 import CorporateAmenityTiles from "@/components/corporateAmenityTiles";
-import CorporateMembershipBenefits from "@/components/corporateMembershipBenefits";
 import NavyWaveSection from "@/components/navyWaveSection";
-import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
+import FeaturedTestimonialsCarousel from "@/components/featuredTestimonialsCarousel";
+import { normalizeTestimonials } from "@/components/testimonials";
+import { WP_MEDIA_IMAGE_FIELDS, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
 
 type WpImageNode = {
   sourceUrl?: string | null;
@@ -103,6 +104,39 @@ const renderScheduleFile = (url?: string, label?: string) => {
       </a>
     );
   };
+
+function LocationIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0 text-gmcc-teal" aria-hidden="true">
+      <path
+        d="M12 22c-4.2-4.9-7-8.3-7-12a7 7 0 1 1 14 0c0 3.7-2.8 7.1-7 12Zm0-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0 text-gmcc-teal" aria-hidden="true">
+      <path
+        d="M7.6 2h3.1c.6 0 1.1.4 1.2 1l.7 3.2c.1.5-.1 1-.5 1.3L10 9.5a14.4 14.4 0 0 0 4.5 4.5l2-2.1c.3-.4.8-.6 1.3-.5l3.2.7c.6.1 1 .6 1 1.2v3.1c0 .7-.6 1.3-1.3 1.3C11.6 18 6 12.4 6.3 3.3 6.3 2.6 6.9 2 7.6 2Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function EmailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-gmcc-teal" aria-hidden="true">
+      <path
+        d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
 
 const CORTEVA_FITNESS_CENTER_PAGE_QUERY = /* GraphQL */ `
 query CortevaFitnessCenterPage($uri: ID!) {
@@ -332,24 +366,10 @@ export default async function CortevaFitnessCenterPage() {
       header: step.header || `Step ${step.number}`,
       description: step.body,
     }));
-    const memberStoryTestimonial =
-      memberStory?.nodes?.find((node): node is NonNullable<typeof node> => node != null) ?? null;
-    const memberStoryImageUrl = resolveWpMediaUrl(
-      memberStoryTestimonial?.testimonialFields?.photo?.node?.sourceUrl,
-    );
-    const memberStoryObjectPosition = mediaFocalPositionCss(
-      memberStoryTestimonial?.testimonialFields?.photo?.node,
-    );
-    const memberStoryPersonName =
-      memberStoryTestimonial?.testimonialFields?.personName?.trim() ||
-      memberStoryTestimonial?.title?.trim() ||
-      "";
-    const memberStoryQuote = memberStoryTestimonial?.testimonialFields?.quote?.trim() || "";
-    const memberStoryPersonContext = memberStoryTestimonial?.testimonialFields?.personContext?.trim() || "";
-    const memberStoryPhotoAlt = memberStoryTestimonial?.testimonialFields?.photo?.node?.altText ?? "";
+    const memberStoryTestimonials = normalizeTestimonials(memberStory?.nodes ?? []);
 
     return (
-        <main>
+        <main className="overflow-x-clip">
             <PhotoWaveHeader
                 title={heroProps.title}
                 subheader={heroProps.subheader ?? null}
@@ -359,51 +379,50 @@ export default async function CortevaFitnessCenterPage() {
                 flushBottom={true}
                 waveFillClassName="text-gmcc-navy"
                 waveEdgeClassName="bg-gmcc-navy"
+                minHeight={true}
             />
 
             <NavyWaveSection
-              className="relative w-screen -ml-[calc(50vw-50%)] overflow-x-clip scroll-mt-24"
+              className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen max-w-[100vw] overflow-x-clip scroll-mt-24"
               fullBleed={false}
               topWave={false}
               bandClassName="py-10"
+              contentClassName="mx-auto max-w-6xl px-6"
             >
-              <div className="grid gap-16 items-start md:grid-cols-3">
-                <div className="stack-3 col-span-1 mb-8">
+              <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-16">
+                <div className="stack-3">
                   <h2 className="h2 mb-4 text-white">Location</h2>
                   {address ? (
-                    <p className="body text-neutral-200">{address}</p>
-                  ) : (
-                    <p className="body text-neutral-200">Location coming soon.</p>
-                  )}
-                  {address ? (
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 btn btn-tertiary"
-                    >
-                      View on Google Maps
-                    </a>
+                    <p className="flex items-start gap-2 mt-2 body text-neutral-200 hover:text-white hover:underline">
+                      <LocationIcon />
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {address}
+                      </a>
+                    </p>
                   ) : null}
                 </div>
-                <div className="stack-3 col-span-1 mb-8">
+                <div className="stack-3 md:col-start-1 lg:col-start-2 lg:row-start-1">
                   <h2 className="h2 mb-4 text-white">Contact</h2>
                   {phone ? (
-                    <PhoneLink className="body text-neutral-200 hover:text-white hover:underline" phone={phone} />
-                  ) : (
-                    <p className="body text-neutral-200">Phone coming soon.</p>
-                  )}
+                    <p className="flex items-center gap-2 body text-neutral-200 hover:text-white hover:underline">
+                      <PhoneIcon />
+                      <PhoneLink phone={phone} />
+                    </p>
+                  ) : null}
                   {email ? (
-                    <a href={`mailto:${email}`} className="body text-neutral-200 hover:text-white hover:underline">
-                      {email}
-                    </a>
-                  ) : (
-                    <p className="body text-neutral-200">Email coming soon.</p>
-                  )}
+                    <p className="flex items-center gap-2 body text-neutral-200 hover:text-white hover:underline">
+                      <EmailIcon />
+                      <a href={`mailto:${email}`}>{email}</a>
+                    </p>
+                  ) : null}
                 </div>
-                <div className="stack-3 col-span-1 mb-14 md:mb-0">
+                <div className="stack-3 md:col-start-2 md:row-start-1 md:row-span-2 lg:col-start-3 lg:row-start-1">
                   <h2 className="h2 mb-4 text-white">Hours</h2>
-                  <div className="grid grid-cols-2 items-center gap-y-1">
+                  <div className="grid w-fit grid-cols-[auto_auto] items-baseline gap-x-12">
                     <div className="flex flex-col text-left">
                       {hourRows.map((row) => (
                         <p
@@ -414,7 +433,7 @@ export default async function CortevaFitnessCenterPage() {
                         </p>
                       ))}
                     </div>
-                    <div className="flex flex-col text-right">
+                    <div className="flex flex-col text-left">
                       {hourRows.map((row) => (
                         <p key={`hours-${row.day}`} className="body text-neutral-200">
                           {row.hours}
@@ -427,8 +446,8 @@ export default async function CortevaFitnessCenterPage() {
             </NavyWaveSection>
 
             <section className="page-section stack-4">
-                {cortevaHeader ? <h2 className="h2 mb-4 text-center">{cortevaHeader}</h2> : null}
-                {cortevaDescription ? <p className="body mb-8 text-center">{cortevaDescription}</p> : null}
+                {cortevaHeader ? <h2 className="h2 mb-4">{cortevaHeader}</h2> : null}
+                {cortevaDescription ? <p className="body mb-8">{cortevaDescription}</p> : null}
                 {cortevaGalleryImages.length > 0 ? (
                   <div className="mb-8">
                     <ImageCarousel images={cortevaGalleryImages} />
@@ -481,43 +500,17 @@ export default async function CortevaFitnessCenterPage() {
               </div>
             </NavyWaveSection>
 
-            {memberStoryTestimonial ? (
-              <section className="relative mt-0">
-                <div className="mx-auto w-full">
-                  <div className="overflow-hidden bg-white">
-                    <div className="grid md:grid-cols-2">
-                      <div className="relative min-h-[280px] md:min-h-[360px]">
-                        {memberStoryImageUrl ? (
-                          <img
-                            src={memberStoryImageUrl}
-                            alt={memberStoryPhotoAlt}
-                            className="absolute inset-0 h-full w-full object-cover"
-                            style={
-                              memberStoryObjectPosition
-                                ? { objectPosition: memberStoryObjectPosition }
-                                : undefined
-                            }
-                          />
-                        ) : (
-                          <div className="absolute inset-0 w-full bg-neutral-700" />
-                        )}
-                      </div>
-                      <div className="flex flex-col justify-center p-10 md:p-14 bg-[#e6f2ef]">
-                        {memberStoryHeader ? (
-                          <h2 className="h2 text-gmcc-navy">{memberStoryHeader}</h2>
-                        ) : null}
-                        {memberStoryQuote ? (
-                          <p className="mt-8 whitespace-pre-line text-base leading-relaxed text-gmcc-navy">
-                            {memberStoryQuote}
-                          </p>
-                        ) : null}
-                        <div className="mt-8">
-                            <div className="text-sm font-bold text-gmcc-navy">{memberStoryPersonName}</div>
-                            {memberStoryPersonContext ? <div className="text-xs text-neutral-500">{memberStoryPersonContext}</div> : null}
-                        </div>
-                      </div>
-                    </div>
+            {memberStoryTestimonials.length > 0 ? (
+              <section className="page-section">
+                <div>
+                  <div className="relative text-center">
+                    {memberStoryHeader ? <h2 className="h2 text-gmcc-navy">{memberStoryHeader}</h2> : null}
                   </div>
+
+                  <figure className="mx-auto max-w-3xl">
+                    <div className="text-5xl mb-0 leading-none text-gmcc-teal/50">“</div>
+                    <FeaturedTestimonialsCarousel testimonials={memberStoryTestimonials} />
+                  </figure>
                 </div>
               </section>
             ) : null}

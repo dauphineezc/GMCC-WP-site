@@ -77,7 +77,7 @@ export default function ScheduleEmbedIframe({ src, title }: ScheduleEmbedIframeP
       ref={iframeRef}
       src={src}
       title={title}
-      className="block w-full h-[4800px] md:h-[1200px]"
+      className="block w-full h-[4800px] md:h-[800px]"
       style={{
         border: 0,
         ...(isMobile && reportedHeight ? { height: `${reportedHeight}px` } : {}),

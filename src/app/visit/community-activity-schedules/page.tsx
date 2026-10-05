@@ -7,6 +7,7 @@ import {
 } from "@/lib/pageHeroFields";
 import { scheduleEmbedUrl } from "@/lib/constants";
 import type { Metadata } from "next";
+import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -20,7 +21,7 @@ const faqItems = [
     content: (
       <div className="gmcc-schedule-embed mt-4">
         <ScheduleEmbedIframe
-          src={scheduleEmbedUrl({ type: "dropin", sub: "community" })}
+          src={scheduleEmbedUrl({ center: "community",type: "dropin", sub: "community" })}
           title="Community Center activity schedule"
         />
       </div>
@@ -34,13 +35,15 @@ export default async function CommunityActivitySchedulesPage() {
 
   return (
     <main>
-      <PhotoWaveHeader
+      {/* <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
         imageUrl={hero.imageUrl ?? "/images/CommunityActivityPhoto.png"}
         imagePosition={hero.imagePosition}
         ctas={hero.ctas}
-      />
+      /> */}
+
+      <SolidNavyWaveHeader title={hero.title} description={hero.subheader}/>
 
       <div className="page-section stack-8">
         <h3 className="text-xl text-neutral-700 mt-0 mb-4">

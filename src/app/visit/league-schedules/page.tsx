@@ -5,7 +5,7 @@ import {
 } from "@/lib/pageHeroFields";
 import { LEAGUE_SCHEDULE_EMBED_URL } from "@/lib/constants";
 import type { Metadata } from "next";
-
+import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
   return getYoastMetadata("/visit/league-schedules");
@@ -17,13 +17,16 @@ export default async function LeagueSchedulesPage() {
 
   return (
     <main>
-      <PhotoWaveHeader
+      {/* <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
         imageUrl={hero.imageUrl ?? "/images/LeaguePhoto.png"}
         imagePosition={hero.imagePosition}
         ctas={hero.ctas}
-      />
+      /> */}
+
+      <SolidNavyWaveHeader title={hero.title} description={hero.subheader}/>
+
 
       <div className="page-section stack-8">
         <h3 className="text-xl text-neutral-700 mt-0 mb-4">

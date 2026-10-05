@@ -272,6 +272,8 @@ export default async function EventPage(props: EventPageProps) {
           <AttachmentsCard attachments={attachments} />
 
           {/* Details card */}
+          {dateRangeLabels.length > 0 || f.locationOverride || f.cost || f.eventType && (
+            <>
           <h2 className="h2 pt-8 mb-2">Event details</h2>
           <div className="card">
             <dl className="mt-3 stack-2 body">
@@ -321,10 +323,12 @@ export default async function EventPage(props: EventPageProps) {
               <div className="flex justify-between gap-3">
                 <dt className="text-neutral-500">Type</dt>
                 <dd className="text-right">{f.eventType}</dd>
-              </div>
-              )}
-            </dl>
-          </div>
+                </div>
+                )}
+              </dl>
+            </div>
+            </>
+          )}
 
           {/* What to bring card */}
           {whatToBringItems.length > 0 && (

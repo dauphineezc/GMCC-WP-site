@@ -6,7 +6,7 @@ import {
 } from "@/lib/pageHeroFields";
 import { scheduleEmbedUrl } from "@/lib/constants";
 import type { Metadata } from "next";
-
+import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
   return getYoastMetadata("/visit/pool-availability");
@@ -18,13 +18,15 @@ export default async function PoolAvailabilityPage() {
 
   return (
     <main>
-      <PhotoWaveHeader
+      {/* <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
         imageUrl={hero.imageUrl ?? "/images/PoolPhoto.png"}
         imagePosition={hero.imagePosition}
         ctas={hero.ctas}
-      />
+      /> */}
+
+      <SolidNavyWaveHeader title={hero.title} description={hero.subheader}/>
 
       <div className="page-section stack-8">
         <h3 className="text-xl text-neutral-700 mt-0 mb-4">
@@ -35,7 +37,7 @@ export default async function PoolAvailabilityPage() {
 
         <div className="gmcc-schedule-embed mt-4">
           <ScheduleEmbedIframe
-            src={scheduleEmbedUrl({ type: "dropin", sub: "aquatics" })}
+            src={scheduleEmbedUrl({ center: "community", type: "dropin", sub: "aquatics" })}
             title="Community Center pool availability"
           />
         </div>
