@@ -36,17 +36,13 @@ export default function EventsSection({ events }: { events?: HomeEventCard[] | n
               aria-label={event.title || "View event"}
             >
               <div className="relative overflow-visible pr-3 pl-3 pt-3 sm:p-0">
-                <div className="overflow-hidden rounded-2xl bg-neutral-100">
+                <div className="overflow-hidden rounded-2xl bg-gmcc-navy">
+                {/* <div className="overflow-hidden rounded-2xl bg-gmcc-blue-light/30"> */}
                   {event.imageUrl ? (
                     <img
                       src={event.imageUrl}
                       alt={event.imageAlt}
-                      className="h-56 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                      style={
-                        event.objectPosition
-                          ? { objectPosition: event.objectPosition }
-                          : undefined
-                      }
+                      className="h-56 w-full object-contain transition duration-300 group-hover:scale-[1.02]"
                       loading="lazy"
                       decoding="async"
                     />

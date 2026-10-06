@@ -2,6 +2,7 @@ import { wpFetch } from "@/lib/wp";
 import { CENTER_TITLE_ORDER } from "@/lib/constants";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import PhoneLink from "@/components/phoneLink";
+import JotFormEmbed from "@/components/jotFormEmbed";
 
 function LocationIcon() {
   return (
@@ -58,145 +59,9 @@ export default async function TakeATourPage() {
         <p className="mt-4 mb-4 text-center text-lg text-neutral-700 md:text-left">{f?.tourDescription}</p>
       </section>
 
-      {/* Placeholder contact form (visual only) */}
-      <div className="relative overflow-hidden pb-8">
-          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
-            <img
-              src="/GreaterLogoBG.png"
-              alt=""
-              className="absolute left-10 bottom-0 w-58 select-none md:w-80"
-              draggable={false}
-            />
-            <img
-              src="/GreaterLogoBG.png"
-              alt=""
-              className="absolute right-10 top-0 w-58 select-none md:w-80"
-              draggable={false}
-            />
-          </div>
-
-        <div className="mx-auto max-w-6xl px-10">
-          <div className="relative mx-auto w-full rounded-2xl border border-neutral-300 bg-neutral-100 p-10 shadow-sm lg:w-[calc((3*(100%-4rem))/5+2rem)]">
-
-            <form className="mt-4 space-y-4" aria-label="Placeholder contact form">
-              <div>
-                <label htmlFor="contact-name" className="block text-sm text-neutral-700">
-                  Name
-                </label>
-                <input
-                  id="contact-name"
-                  name="name"
-                  type="text"
-                  placeholder=""
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="contact-email" className="block text-sm text-neutral-700">
-                  Email address
-                </label>
-                <input
-                  id="contact-email"
-                  name="email"
-                  type="email"
-                  placeholder=""
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="contact-center" className="block text-sm text-neutral-700">
-                  Which center are you interested in touring?
-                </label>
-                <select
-                  id="contact-center"
-                  name="center"
-                  defaultValue=""
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                >
-                  <option value="" disabled>
-                    Select a center
-                  </option>
-                  {centerOrder.map((center) => (
-                    <option key={center} value={center}>
-                      {center
-                        .split(" ")
-                        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(" ")}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label htmlFor="contact-date" className="block text-sm text-neutral-700">
-                  What days do you prefer?
-                </label>
-                <details
-                  id="contact-date"
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm text-neutral-700"
-                >
-                  <summary className="cursor-pointer list-none py-1 text-neutral-500">
-                    Select preferred days
-                  </summary>
-                  <div className="mt-2 space-y-2 pb-1">
-                    {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
-                      <label key={day} className="flex items-center gap-2">
-                        <input type="checkbox" name="date" value={day} className="h-4 w-4 accent-gmcc-teal" />
-                        <span>{day}</span>
-                      </label>
-                    ))}
-                  </div>
-                </details>
-              </div>
-
-              <div>
-                <label htmlFor="contact-time" className="block text-sm text-neutral-700">
-                  What time of day do you prefer?
-                </label>
-                <details
-                  id="contact-time"
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm text-neutral-700"
-                >
-                  <summary className="cursor-pointer list-none py-1 text-neutral-500">
-                    Select preferred times
-                  </summary>
-                  <div className="mt-2 space-y-2 pb-1">
-                    {["Morning", "Afternoon", "Evening"].map((time) => (
-                      <label key={time} className="flex items-center gap-2">
-                        <input type="checkbox" name="time" value={time} className="h-4 w-4 accent-gmcc-teal" />
-                        <span>{time}</span>
-                      </label>
-                    ))}
-                  </div>
-                </details>
-              </div>
-              </div>
-
-              <div>
-                <label htmlFor="contact-message" className="block text-sm text-neutral-700">
-                  Additional Information <span className="text-neutral-500 text-xs">(optional)</span>
-                </label>
-                <textarea
-                  id="contact-message"
-                  name="message"
-                  rows={5}
-                  className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:border-gmcc-teal"
-                />
-              </div>
-
-              <div className="pt-1 text-center">
-                <button type="button" className="btn btn-primary min-w-28">
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
+      <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 lg:-mt-32 lg:-mb-16">
+          <JotFormEmbed formUrl="https://form.jotform.com/252224900317044"  />
         </div>
-      </div>
-      {/* </section> */}
     </main>
   );
 }

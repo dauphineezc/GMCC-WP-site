@@ -73,6 +73,9 @@ export const WP_LAYOUT_ROOT_PATHS: readonly string[] = [
   "/accessibility",
 ];
 
+/** Sitemap routes refreshed on every revalidation so added/removed content appears promptly. */
+export const SITEMAP_PATHS: readonly string[] = ["/sitemap.xml", "/sitemap"];
+
 /** @deprecated Prefer WP_LAYOUT_ROOT_PATHS — kept for any remaining callers. */
 export const WP_CACHE_TAG_LAYOUT_PATHS = new Set<string>(WP_LAYOUT_ROOT_PATHS.filter((p) => p !== "/"));
 

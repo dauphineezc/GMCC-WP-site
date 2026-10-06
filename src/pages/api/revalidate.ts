@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { purgeTags } from "@wpengine/edge-cache";
 import {
   EDGE_PURGE_TAGS_BATCH_SIZE,
+  SITEMAP_PATHS,
   WP_CACHE_TAGS,
   WP_CACHE_TAG_PATHS,
   WP_CACHE_TAGS_THAT_REFRESH_LAYOUT,
@@ -197,6 +198,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       },
     });
+  }
+
+  for (const path of SITEMAP_PATHS) {
+    paths.add(path);
   }
 
   const revalidatedPaths: string[] = [];

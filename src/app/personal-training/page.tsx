@@ -115,7 +115,7 @@ export default async function PersonalTrainingPage() {
 
           <div className="relative mx-auto max-w-3xl px-6">
             <h2 className="h2 text-center text-gmcc-navy">{inquiryFormHeader}</h2>
-            <p className="body mt-2 text-center text-neutral-700">{inquiryFormSubheader}</p>
+            <p className="body mt-2 mb-4 text-center text-neutral-700">{inquiryFormSubheader}</p>
 
             <JotFormEmbed formUrl="https://form.jotform.com/230953126868060" formWidth={465} />
               
