@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { AmenityDisplay } from "@/types/amenities";
+import WysiwygText from "@/components/wysiwygText";
 
 type AmenitiesCarouselProps = {
   amenities: AmenityDisplay[];
@@ -183,9 +184,7 @@ export default function AmenitiesCarousel({ amenities, title = "Amenities" }: Am
               <h3 className="text-xl font-semibold text-neutral-900 mb-3">
                 {currentAmenity.name}
               </h3>
-              <p className="text-neutral-700 text-sm whitespace-pre-line">
-                {currentAmenity.description}
-              </p>
+              <WysiwygText html={currentAmenity.description} className="text-neutral-700 text-sm" />
             </div>
 
             {/* Close button */}

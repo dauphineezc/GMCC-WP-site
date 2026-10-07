@@ -178,7 +178,6 @@ export default async function AmenityPage(props: AmenityPageProps) {
     return html.replace(/<[^>]*>/g, "").trim();
   };
 
-  const cleanDescription = description ? stripHtml(description) : null;
   const cleanLinkLabel = af.linkLabel ? stripHtml(af.linkLabel) : null;
 
   return (
@@ -211,9 +210,9 @@ export default async function AmenityPage(props: AmenityPageProps) {
         <div className="grid gap-12 lg:grid-cols-[minmax(0,2fr)_minmax(0,2fr)]">
           {/* LEFT COLUMN: Description */}
           <div className="stack-4">
-            {cleanDescription ? (
+            {description ? (
               <article className="prose prose-sm max-w-none sm:prose-base">
-                <WysiwygText html={cleanDescription} />
+                <WysiwygText html={description} />
               </article>
             ) : null}
             {af.additionalInformation ? (

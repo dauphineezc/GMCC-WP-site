@@ -24,6 +24,10 @@ function normalizeWpUrlToPath(url: string) {
     "Our Purpose": "/about",
   };
 
+  const DONATION_PAGE: Record<string, string> = {
+    "Donate": "/get-involved#donate",
+  };
+
   const JOIN_OUR_TEAM_PAGE: Record<string, string> = {
     "Join Our Team": ADP_LANDING_PAGE_URL,
   };
@@ -145,6 +149,9 @@ function normalizeWpUrlToPath(url: string) {
     const joinOurTeamPage = JOIN_OUR_TEAM_PAGE[resolvedLabel];
     if (joinOurTeamPage) return joinOurTeamPage;
 
+    const donationPage = DONATION_PAGE[resolvedLabel];
+    if (donationPage) return donationPage;
+
     const membershipPage = MEMBERSHIP_PAGES[resolvedLabel];
     if (membershipPage) return membershipPage;
 
@@ -185,6 +192,7 @@ const ALL_LABEL_OVERRIDES: Record<string, string> = {
   ...CAREERS_PAGE,
   ...OUR_PURPOSE_PAGE,
   ...JOIN_OUR_TEAM_PAGE,
+  ...DONATION_PAGE,
   ...MEMBERSHIP_PAGES,
   ...PROGRAM_FILTER_BY_LABEL,
   ...EVENT_FILTER_BY_LABEL,

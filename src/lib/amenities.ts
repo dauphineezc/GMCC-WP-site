@@ -257,9 +257,6 @@ function mapAmenityFieldsToWithImage(
     const d = typeof description === "string" && description.trim() ? description.trim() : null;
     const a = typeof addl === "string" && addl.trim() ? addl.trim() : null;
     description = d || a || null;
-    if (description) {
-      description = description.replace(/<[^>]*>/g, "").trim() || null;
-    }
   }
 
   const row: AmenityWithImage = {

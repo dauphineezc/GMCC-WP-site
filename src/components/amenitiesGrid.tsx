@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { AmenityDisplay } from "@/types/amenities";
+import WysiwygText from "@/components/wysiwygText";
 
 
 type AmenitiesGridProps = {
@@ -172,13 +173,16 @@ export default function AmenitiesGrid({ amenities, title = "What we offer", numC
                 {selectedAmenity.name}
               </h3>
               {selectedAmenity.description ? (
-                <p className="text-neutral-700 text-sm whitespace-pre-line">
-                  {selectedAmenity.description} {selectedAmenity.relevantLink && (
-                    <a href={selectedAmenity.relevantLink} className="text-gmcc-teal hover:underline text-sm font-semibold">
-                      {selectedAmenity.linkLabel ? `${selectedAmenity.linkLabel} →` : "Learn more →"}
-                    </a>
+                <div className="text-neutral-700 text-sm">
+                  <WysiwygText html={selectedAmenity.description} />
+                  {selectedAmenity.relevantLink && (
+                    <p className="mt-3">
+                      <a href={selectedAmenity.relevantLink} className="text-gmcc-teal hover:underline text-sm font-semibold">
+                        {selectedAmenity.linkLabel ? `${selectedAmenity.linkLabel} →` : "Learn more →"}
+                      </a>
+                    </p>
                   )}
-                </p>
+                </div>
               ) : (
                 <p className="text-neutral-700 text-sm">More details coming soon for this amenity.</p>
               )}

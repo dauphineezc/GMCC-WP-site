@@ -22,25 +22,24 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ],
       "@/app/*": [
-        "src/app/*"
+        "./src/app/*"
       ],
       "@/components/*": [
-        "src/components/*"
+        "./src/components/*"
       ],
       "@/lib/*": [
-        "src/lib/*"
+        "./src/lib/*"
       ],
       "@/graphql/*": [
-        "src/graphql/*"
+        "./src/graphql/*"
       ],
       "@/types/*": [
-        "src/types/*"
+        "./src/types/*"
       ]
     }
   },

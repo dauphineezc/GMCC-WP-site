@@ -250,7 +250,7 @@ export default async function CorporateMembershipsPage() {
             </section>
         ) : null}
 
-        <section className="page-section stack-6">
+        <section id="inquire" className="page-section stack-6">
             {becomeAPartnerHeader ? <h2 className="h2 text-center">{becomeAPartnerHeader}</h2> : null}
             {becomeAPartnerSubheader ? <p className="body mx-auto max-w-6xl text-center text-base mt-4">{becomeAPartnerSubheader}</p> : null}
         </section>
