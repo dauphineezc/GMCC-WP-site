@@ -8,6 +8,7 @@ import FeaturedTestimonialsCarousel from "@/components/featuredTestimonialsCarou
 import type { NormalizedTestimonial } from "@/components/testimonials";
 import type { LessonBenefit, WPProgram } from "@/lib/programs/lessonsDirectory";
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+import WysiwygText from "@/components/wysiwygText";
 import type { DirectoryTrainer } from "./directoryHeaderShared";
 
 type Faq = { question: string; answer: string };
@@ -20,6 +21,7 @@ type LessonsDirectoryProps = {
     imagePosition?: string | null;
   };
   bodyHeader: string;
+  /** ACF WYSIWYG HTML (plain text is also accepted). */
   introBody: string;
   benefits: LessonBenefit[];
   optionsHeader: string;
@@ -129,7 +131,7 @@ export default function LessonsDirectory({
 
       <section className="page-section">
         <h2 className="h2 text-gmcc-navy">{bodyHeader}</h2>
-        <p className="body mt-4 max-w-6xl whitespace-pre-line">{introBody}</p>
+        <WysiwygText html={introBody} className="body mt-4 max-w-6xl" />
 
         {benefits.length ? (
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

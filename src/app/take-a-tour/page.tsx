@@ -59,7 +59,7 @@ export default async function TakeATourPage() {
         <p className="mt-4 mb-4 text-center text-lg text-neutral-700 md:text-left">{f?.tourDescription}</p>
       </section>
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 lg:-mt-32 lg:-mb-16">
+      <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 lg:-mt-16 lg:-mb-16">
           <JotFormEmbed formUrl="https://form.jotform.com/252224900317044"  />
         </div>
     </main>
