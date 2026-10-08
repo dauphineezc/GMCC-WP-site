@@ -190,6 +190,11 @@ export default async function EventPage(props: EventPageProps) {
     : [];
 
   const centers = (f.center?.nodes ?? []).map((c: any) => ({ title: c.title, slug: c.slug }));
+  const eventTypes: string[] = Array.isArray(f.eventType)
+    ? f.eventType.filter((t: unknown): t is string => typeof t === "string" && t.length > 0)
+    : typeof f.eventType === "string" && f.eventType
+    ? [f.eventType]
+    : [];
 
   // Resolve the schedule: for recurring events, show remaining upcoming
   // occurrences; if every occurrence has passed, fall back to the most recent.
@@ -216,7 +221,7 @@ export default async function EventPage(props: EventPageProps) {
 
         {/* Chips row - all clickable, linking to /events with filters */}
         <div className="flex flex-wrap gap-2">
-          {f.eventType?.map((ot: string) => (
+          {eventTypes.map((ot) => (
             <a 
               key={ot} 
               href={`/events?eventType=${encodeURIComponent(ot)}`}
@@ -272,7 +277,7 @@ export default async function EventPage(props: EventPageProps) {
           <AttachmentsCard attachments={attachments} />
 
           {/* Details card */}
-          {dateRangeLabels.length > 0 || f.locationOverride || f.cost || f.eventType && (
+          {(dateRangeLabels.length > 0 || f.locationOverride || centers.length > 0 || f.cost || eventTypes.length > 0) && (
             <>
           <h2 className="h2 pt-8 mb-2">Event details</h2>
           <div className="card">
@@ -319,10 +324,10 @@ export default async function EventPage(props: EventPageProps) {
               </div>
             )}
 
-            {f.eventType && (
+            {eventTypes.length > 0 && (
               <div className="flex justify-between gap-3">
                 <dt className="text-neutral-500">Type</dt>
-                <dd className="text-right">{f.eventType}</dd>
+                <dd className="text-right">{eventTypes.join(", ")}</dd>
                 </div>
                 )}
               </dl>

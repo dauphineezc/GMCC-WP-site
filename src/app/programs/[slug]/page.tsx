@@ -348,7 +348,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
           <AttachmentsCard attachments={p.attachments ?? []} />
 
           {/* Details card */}
-          {p.duration || p.skillLevel || p.priceFrom || centerNames.length > 0 || p.taxonomies?.session?.length > 0 && (
+          {(p.duration || p.skillLevel || p.priceFrom || centerNames.length > 0 || p.taxonomies?.session?.length > 0) && (
             <>
           <h2 className="h2 pt-8 mb-2">Program details</h2>
           <div className="card">
