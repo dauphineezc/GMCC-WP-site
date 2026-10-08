@@ -670,6 +670,8 @@ export default function ExploreMembershipsClient({
             {fields.financialAssistanceCtas?.applicationPdf ? (
               <a
                 href={fields.financialAssistanceCtas.applicationPdf}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="btn btn-secondary mt-8 mx-auto ml-1"
               >
                 {fields.financialAssistanceCtas.applicationCtaLabel || "Apply / Get Started"}
@@ -766,6 +768,7 @@ export default function ExploreMembershipsClient({
       {activeTab === "estimator" && (
         <div ref={estimatorRef} className="mx-auto max-w-4xl px-4 py-10 sm:py-14">
           <FinancialAidEstimator
+            applicationPdf={fields.financialAssistanceCtas?.applicationPdf}
             onClose={() => {
               setActiveTab("compare");
               setTimeout(() => {

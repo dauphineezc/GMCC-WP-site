@@ -30,11 +30,23 @@ const ELIGIBILITY: Record<string, boolean[]> = {
 
 type Props = {
   onClose?: () => void;
+  applicationPdf?: string | null;
 };
 
-export default function FinancialAidEstimator({ onClose }: Props) {
+export default function FinancialAidEstimator({ onClose, applicationPdf }: Props) {
   const [incomeIndex, setIncomeIndex] = useState<string>("");
   const [householdSize, setHouseholdSize] = useState<string>("");
+
+  const applicationLink = applicationPdf ? (
+    <a
+      className="link font-semibold text-gmcc-teal underline-offset-4 group-hover:underline"
+      href={applicationPdf}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Financial Assistance Application
+    </a>
+  ) : null;
 
   const getResult = () => {
     if (!incomeIndex || !householdSize) {
@@ -52,10 +64,12 @@ export default function FinancialAidEstimator({ onClose }: Props) {
         content: (
           <>
             You are likely eligible for financial assistance with our sliding scale program.
-            Find out exactly how much you could save by filling out the application:{" "}
-            <a className="link font-semibold text-gmcc-teal underline-offset-4 group-hover:underline" href="https://static1.squarespace.com/static/54352636e4b03176bba53234/t/67ed3211153f540535644fe6/1743598098804/Sliding+Scale+Application+Form+%26+Survey.pdf">
-              Financial Assistance Application
-            </a>
+            {applicationLink && (
+              <>
+                {" "}Find out exactly how much you could save by filling out the application:{" "}
+                {applicationLink}
+              </>
+            )}
           </>
         )
       };
@@ -64,11 +78,15 @@ export default function FinancialAidEstimator({ onClose }: Props) {
         className: "rounded-xl border border-gmcc-blue-light bg-gmcc-blue-light/10 p-4 text-sm text-gmcc-navy",
         content: (
           <>
-            You likely do not qualify for financial assistance with our sliding scale program,
-            but if you&apos;d like to confirm, please provide us with more details by submitting the application:{" "}
-            <a className="link font-semibold text-gmcc-teal underline-offset-4 group-hover:underline" href="https://static1.squarespace.com/static/54352636e4b03176bba53234/t/67ed3211153f540535644fe6/1743598098804/Sliding+Scale+Application+Form+%26+Survey.pdf">
-              Financial Assistance Application
-            </a>
+            {applicationLink ? (
+              <>
+                You likely do not qualify for financial assistance with our sliding scale program,
+                but if you&apos;d like to confirm, please provide us with more details by submitting the application:{" "}
+                {applicationLink}
+              </>
+            ) : (
+              "You likely do not qualify for financial assistance with our sliding scale program."
+            )}
           </>
         )
       };
