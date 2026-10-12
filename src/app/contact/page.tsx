@@ -143,7 +143,7 @@ export default async function ContactPage() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 lg:-mt-16 lg:-mb-16">
-          <JotFormEmbed />
+          <JotFormEmbed formUrl="https://form.jotform.com/262214795536059?inquiryTopic=General%20Question%2FComment"/>
         </div>
       </div>
 

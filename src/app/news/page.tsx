@@ -1,13 +1,12 @@
 // src/app/news/page.tsx
 import {
   fetchPageWithHeroFields,
-  resolvePhotoWaveHeaderProps,
 } from "@/lib/pageHeroFields";
 import { wpFetch } from "@/lib/wp";
 import NewsListClient, { NewsListItem } from "./newsListClient";
-import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { WP_MEDIA_IMAGE_FIELDS, mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 import { WP_CACHE_TAGS } from "@/lib/revalidate";
+import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 
 export const revalidate = 900;
 
@@ -87,12 +86,11 @@ export default async function NewsPage() {
     })
     .sort((a, b) => toDateValue(b.publishDate) - toDateValue(a.publishDate));
 
-  const hero = resolvePhotoWaveHeaderProps(heroPage, "News");
+  const hero = heroPage ?? { title: "News", subheader: "Keep up with the latest news at Greater Midland." };
 
   return (
     <main>
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}/>
-
+      <SolidNavyWaveHeader title={hero.title} description={hero.subheader} />
       {/* Page content - constrained width */}
       <div className="mx-auto max-w-6xl px-4 section-y stack-8">
         <NewsListClient items={items} />

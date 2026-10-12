@@ -1,7 +1,8 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import LoadingSpinner from "@/components/loading/loadingSpinner";
 import {
   GENERAL_CONTACT_FORM_ID,
   GENERAL_CONTACT_FORM_URL,
@@ -71,6 +72,43 @@ export default function JotFormEmbed( {
       ? `${GENERAL_CONTACT_FORM_URL}?isIframeEmbed=1`
       : `https://form.jotform.com/${resolvedFormId}?isIframeEmbed=1`;
 
+  const [loaded, setLoaded] = useState(false);
+  const frameRef = useRef<HTMLDivElement | null>(null);
+
+  // A server-rendered iframe can finish loading before hydration.
+  // Once the cross-origin form document is in place, contentDocument reads as null.
+  const setFrameRef = useCallback((frame: HTMLDivElement | null) => {
+    frameRef.current = frame;
+    if (frame?.querySelector("iframe")?.contentDocument === null) setLoaded(true);
+  }, []);
+
+  // JotForm's embed handler replaces the iframe with a copy (new src), so React's
+  // own iframe node and onLoad go stale. Track loading on the container instead.
+  // Must run before initEmbedHandler so the replacement is observed.
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+
+    function onLoad(event: Event) {
+      const iframe = event.target;
+      if (
+        iframe instanceof HTMLIFrameElement &&
+        iframe.isConnected &&
+        iframe.getAttribute("src") !== "about:blank"
+      ) {
+        setLoaded(true);
+      }
+    }
+
+    const observer = new MutationObserver(() => setLoaded(false));
+    frame.addEventListener("load", onLoad, true);
+    observer.observe(frame, { childList: true });
+    return () => {
+      frame.removeEventListener("load", onLoad, true);
+      observer.disconnect();
+    };
+  }, []);
+
   useEffect(() => {
     if (!autoResize) return;
     initEmbedHandler(resolvedIframeId);
@@ -78,25 +116,39 @@ export default function JotFormEmbed( {
 
   return (
     <div
-      className={`${framed ? "jotform-embed" : ""} ${className}`}
+      className={`relative ${framed ? "jotform-embed" : ""} ${className}`}
       style={{ "--jotform-width": `${formWidth}px` } as React.CSSProperties}
     >
-      <iframe
-        id={resolvedIframeId}
-        src={embedSrc ?? undefined}
-        allow="geolocation; microphone; camera; fullscreen; payment"
-        allowFullScreen
-        className="block w-full border-0 bg-transparent"
-        style={{
-          minWidth: "100%",
-          maxWidth: "100%",
-          height,
-          // Avoid an opaque iframe canvas when color-scheme differs from the parent.
-          colorScheme: "normal",
-        }}
-        scrolling="no"
-        {...{ allowtransparency: "true" }}
-      />
+      {loaded ? null : (
+        <div
+          role="status"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-gmcc-navy"
+        >
+          <LoadingSpinner className="h-8 w-8" />
+          <span className="text-sm font-medium tracking-wide">Loading form…</span>
+        </div>
+      )}
+      <div
+        ref={setFrameRef}
+        className={`transition-opacity ${loaded ? "opacity-100" : "opacity-0"}`}
+      >
+        <iframe
+          id={resolvedIframeId}
+          src={embedSrc ?? undefined}
+          allow="geolocation; microphone; camera; fullscreen; payment"
+          allowFullScreen
+          className="block w-full border-0 bg-transparent"
+          style={{
+            minWidth: "100%",
+            maxWidth: "100%",
+            height,
+            // Avoid an opaque iframe canvas when color-scheme differs from the parent.
+            colorScheme: "normal",
+          }}
+          scrolling="no"
+          {...{ allowtransparency: "true" }}
+        />
+      </div>
       {autoResize ? (
         <Script
           src={JOTFORM_EMBED_HANDLER}

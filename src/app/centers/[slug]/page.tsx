@@ -686,22 +686,39 @@ export default async function CenterPage(props: CenterPageProps) {
       >
         <div className="mx-auto max-w-6xl px-4">
           <div className={todaysEvents.length > 0 ? "mb-10" : "mb-6"}>
-            {isCurlingCenter ? (
-              <h2 className="h2 text-center">What&rsquo;s Happening This Week?</h2>
-            ) : (
-              <h2 className="h2 text-center">What&apos;s Happening Today?</h2>
-            )}
+            <h2 className="h2 text-center">What&rsquo;s Coming Up?</h2>
           </div>
 
           {isCurlingCenter ? (
-            <div className="mx-auto max-w-3xl">
-              <div className="gmcc-schedule-embed">
-                <AutoHeightScheduleIframe
-                  src={CURLING_WEEKLY_SCHEDULE_EMBED_URL}
-                  title="Midland Curling Club Weekly Schedule"
-                />
+            todaysEvents.length > 0 ? (
+              <div className="grid grid-cols-1 items-start gap-8 sm:grid-cols-2">
+                <div className="gmcc-schedule-embed col-span-1">
+                  <AutoHeightScheduleIframe
+                    src={CURLING_WEEKLY_SCHEDULE_EMBED_URL}
+                    title="Midland Curling Club Weekly Schedule"
+                  />
+                </div>
+
+                <div className="col-span-1 grid gap-5">
+                  {todaysEvents.map((event) => (
+                    <TodayEventCard
+                      key={`${event.id}-${event.startDatetime}`}
+                      event={event}
+                      stackUntil="lg"
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mx-auto max-w-3xl">
+                <div className="gmcc-schedule-embed">
+                  <AutoHeightScheduleIframe
+                    src={CURLING_WEEKLY_SCHEDULE_EMBED_URL}
+                    title="Midland Curling Club Weekly Schedule"
+                  />
+                </div>
+              </div>
+            )
           ) : hasTodayScheduleEmbed ? (
             todaysEvents.length > 0 ? (
               <div className="grid grid-cols-1 items-start gap-8 sm:grid-cols-2">
@@ -717,6 +734,7 @@ export default async function CenterPage(props: CenterPageProps) {
                     <TodayEventCard
                       key={`${event.id}-${event.startDatetime}`}
                       event={event}
+                      stackUntil="lg"
                     />
                   ))}
                 </div>
