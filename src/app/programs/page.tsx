@@ -1,6 +1,7 @@
 // src/app/programs/page.tsx
 import { Suspense } from "react";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
+import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import {
   fetchPageWithHeroFields,
   resolvePhotoWaveHeaderProps,
@@ -50,12 +51,13 @@ export default async function ExploreProgramsPage() {
 
   return (
     <main>
-      <PhotoWaveHeader
+      {/* <PhotoWaveHeader
         title={hero.title}
         subheader={hero.subheader}
         imageUrl={hero.imageUrl}
         imagePosition={hero.imagePosition}
-      />
+      /> */}
+      <SolidNavyWaveHeader title={hero.title} description={hero.subheader} />
       <Suspense fallback={<ProgramsLoadingSkeleton />}>
         <ExploreProgramsClient
           initialPrograms={programs}

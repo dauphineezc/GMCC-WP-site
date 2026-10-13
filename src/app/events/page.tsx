@@ -11,6 +11,7 @@ import { fetchEventsDirectoryHeaders } from "@/lib/events/fetchDirectoryHeaders"
 import ExploreEventsClient from "./exploreEventsClient";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 import { REVALIDATE_EVENTS_SECONDS, WP_CACHE_TAGS } from "@/lib/revalidate";
+import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 
 export const revalidate = 900;
 
@@ -78,7 +79,8 @@ export default async function ExploreEventsPage() {
 
   return (
     <main>
-      <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}/>
+      {/* <PhotoWaveHeader title={hero.title} subheader={hero.subheader} imageUrl={hero.imageUrl} imagePosition={hero.imagePosition}/> */}
+      <SolidNavyWaveHeader title={hero.title} description={hero.subheader} />
       <Suspense fallback={<EventsLoadingSkeleton />}>
         <ExploreEventsClient
           initialEvents={events}
