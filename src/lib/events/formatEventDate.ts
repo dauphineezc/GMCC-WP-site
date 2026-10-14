@@ -56,37 +56,29 @@ export function formatEventDate(
   const startDate = new Date(start);
   const endDate = end ? new Date(end) : null;
 
+  const timeZone = EVENT_DISPLAY_TIMEZONE;
   const dateOpts: Intl.DateTimeFormatOptions = {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone,
   };
-  const formatDate = (d: Date) => d.toLocaleDateString(undefined, dateOpts);
+  const timeOpts: Intl.DateTimeFormatOptions = {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  };
+  const formatDate = (d: Date) => d.toLocaleDateString("en-US", dateOpts);
+  const formatTime = (d: Date) => d.toLocaleTimeString("en-US", timeOpts);
+  const dayKey = (d: Date) => d.toLocaleDateString("en-CA", { timeZone });
 
   if (!endDate) {
-    const time = startDate.toLocaleTimeString(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${formatDate(startDate)} • ${time}`;
+    return `${formatDate(startDate)} • ${formatTime(startDate)}`;
   }
 
-  const sameLocalDay =
-    startDate.getFullYear() === endDate.getFullYear() &&
-    startDate.getMonth() === endDate.getMonth() &&
-    startDate.getDate() === endDate.getDate();
-
-  if (!sameLocalDay) {
+  if (dayKey(startDate) !== dayKey(endDate)) {
     return `${formatDate(startDate)}–${formatDate(endDate)}`;
   }
 
-  const startTime = startDate.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  const endTime = endDate.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${formatDate(startDate)} • ${startTime}–${endTime}`;
+  return `${formatDate(startDate)} • ${formatTime(startDate)}–${formatTime(endDate)}`;
 }

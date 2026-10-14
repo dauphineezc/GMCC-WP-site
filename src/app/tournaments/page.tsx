@@ -5,6 +5,7 @@ import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFo
 import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
+import { formatEventDate } from "@/lib/events/formatEventDate";
 import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
 import PhotoGallery from "@/components/photoGallery";
 import SimpleCampaign, { SimpleCampaignData } from "@/components/simpleCampaign";
@@ -177,27 +178,6 @@ function mapTournamentEvent(wp: TournamentEventWP, now: Date): TournamentCard {
     registrationLink: f.registrationInformation?.registrationLink ?? "",
     isPast,
   };
-}
-
-function formatTournamentDate(start?: string | null, end?: string | null): string | null {
-  if (!start) return null;
-  const startDate = new Date(start);
-  const endDate = end ? new Date(end) : null;
-  const date = startDate.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  const time = startDate.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  if (!endDate) return `${date} • ${time}`;
-  const endTime = endDate.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${date} • ${time}–${endTime}`;
 }
 
 type PartnerField = {
@@ -421,7 +401,7 @@ export default async function TournamentsPage() {
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {sortedTournaments.map((tournament) => {
               const eventHref = buildEventHref(tournament.slug, tournament.startDateTime ?? "");
-              const dateLabel = formatTournamentDate(tournament.startDateTime, tournament.endDateTime);
+              const dateLabel = formatEventDate(tournament.startDateTime, tournament.endDateTime);
 
               return (
                 <div

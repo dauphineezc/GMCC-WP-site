@@ -362,7 +362,7 @@ export default async function EventPage(props: EventPageProps) {
                   <div>
                     <a
                       href={`mailto:${f.contactEmail}`}
-                      className="text-blue-600 hover:underline"
+                      className="text-gmcc-navy hover:underline"
                     >
                       {f.contactEmail}
                     </a>
@@ -372,7 +372,7 @@ export default async function EventPage(props: EventPageProps) {
                   <div>
                     <a
                       href={`tel:${f.contactPhone}`}
-                      className="text-blue-600 hover:underline"
+                      className="text-gmcc-navy hover:underline"
                     >
                       {f.contactPhone}
                     </a>

@@ -9,6 +9,8 @@
 // filter). The "active" occurrence is the next one that hasn't ended yet, or the
 // most recent occurrence if they have all passed.
 
+import { EVENT_DISPLAY_TIMEZONE } from "@/lib/events/formatEventDate";
+
 export type EventOccurrence = { start: string | null; end: string | null };
 
 /** GraphQL selection for the eventSchedule repeater; interpolate into queries. */
@@ -20,6 +22,44 @@ export const EVENT_SCHEDULE_GRAPHQL = `
     }
   }
 `;
+
+/** Minutes `timeZone` is ahead of UTC at the given instant (e.g. -240 for EDT). */
+function zoneOffsetMinutes(utcMs: number, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(new Date(utcMs));
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return Math.round((asUtc - utcMs) / 60000);
+}
+
+/**
+ * WPGraphQL returns the ACF date/time as the editor's wall-clock time with a
+ * bogus "+00:00" offset (5 PM local comes back as "...T17:00:00+00:00").
+ * Discard the offset and re-anchor the wall-clock time in EVENT_DISPLAY_TIMEZONE
+ * so the result is a real instant, e.g. "2026-10-30T17:00:00-04:00".
+ */
+function toEventInstant(value: string): string {
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return value;
+  const [, y, mo, d, h, mi, s = "00"] = m;
+  const wallMs = Date.UTC(+y, +mo - 1, +d, +h, +mi, +s);
+  const guess = zoneOffsetMinutes(wallMs, EVENT_DISPLAY_TIMEZONE);
+  const offset = zoneOffsetMinutes(wallMs - guess * 60000, EVENT_DISPLAY_TIMEZONE);
+  const sign = offset < 0 ? "-" : "+";
+  const abs = Math.abs(offset);
+  const oh = String(Math.floor(abs / 60)).padStart(2, "0");
+  const om = String(abs % 60).padStart(2, "0");
+  return `${y}-${mo}-${d}T${h}:${mi}:${s}${sign}${oh}:${om}`;
+}
 
 function toMs(value: string | null): number {
   if (!value) return NaN;
@@ -51,8 +91,8 @@ export function parseEventSchedule(eventSchedule: unknown): EventOccurrence[] {
   for (const row of rows) {
     if (!row || typeof row !== "object") continue;
     const dt = (row as { datetime?: { startDatetime?: string | null; endDatetime?: string | null } | null }).datetime;
-    const start = typeof dt?.startDatetime === "string" && dt.startDatetime.trim() ? dt.startDatetime : null;
-    const end = typeof dt?.endDatetime === "string" && dt.endDatetime.trim() ? dt.endDatetime : null;
+    const start = typeof dt?.startDatetime === "string" && dt.startDatetime.trim() ? toEventInstant(dt.startDatetime.trim()) : null;
+    const end = typeof dt?.endDatetime === "string" && dt.endDatetime.trim() ? toEventInstant(dt.endDatetime.trim()) : null;
     if (!start && !end) continue;
     occurrences.push({ start, end });
   }

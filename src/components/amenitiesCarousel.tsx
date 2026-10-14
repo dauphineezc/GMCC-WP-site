@@ -147,7 +147,7 @@ export default function AmenitiesCarousel({ amenities, title = "Amenities" }: Am
         {hasDescription && (
           <button
             onClick={() => setShowModal(true)}
-            className="ml-2 text-blue-600 hover:underline text-xs font-normal"
+            className="ml-2 text-gmcc-navy hover:underline text-xs font-normal"
           >
             Learn more
           </button>

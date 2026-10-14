@@ -486,7 +486,7 @@ export default async function CampsPage() {
       centerHeroImage(f, cfg.imageField, cfg.label) ??
       centerImageBySlug.get(cfg.programsCenterSlug) ??
       null;
-    const href = `/camps?center=${encodeURIComponent(cfg.programsCenterSlug)}#camps-results`;
+    const href = `/camps?center=${encodeURIComponent(cfg.programsCenterSlug)}#camp-results`;
     return {
       key: cfg.programsCenterSlug,
       title: `${cfg.label} Camps`,
@@ -641,7 +641,7 @@ export default async function CampsPage() {
       ) : null}
 
 
-      <section className="page-section">
+      <section id="camp-results" className="page-section">
       {resultsHeader ? <h2 className="h2 text-gmcc-navy">{resultsHeader}</h2> : null}
       {resultsBody ? <p className="body mt-4 text-neutral-700">{resultsBody}</p> : null}
 

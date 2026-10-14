@@ -12,6 +12,7 @@ import {
 import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
 import PhotoWaveHeader from "@/components/photoWaveHeader";
 import { buildEventHref } from "@/lib/events/buildEventHref";
+import { formatEventDate } from "@/lib/events/formatEventDate";
 import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSchedule";
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import PhotoGallery from "@/components/photoGallery";
@@ -267,27 +268,6 @@ function mapRaceEvent(wp: RaceEventWP, now: Date): RaceCard {
     registrationLink: f.registrationInformation?.registrationLink ?? "",
     isPast,
   };
-}
-
-function formatRaceDate(start?: string | null, end?: string | null): string | null {
-  if (!start) return null;
-  const startDate = new Date(start);
-  const endDate = end ? new Date(end) : null;
-  const date = startDate.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  const time = startDate.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  if (!endDate) return `${date} • ${time}`;
-  const endTime = endDate.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${date} • ${time}–${endTime}`;
 }
 
 type StaffNode = {
@@ -734,7 +714,7 @@ export default async function RacesPage() {
             {sortedRaces.map((race) => {
               const eventHref = buildEventHref(race.slug, race.startDateTime ?? "");
               const resultsUrl = resultsUrlForRace(race.slug);
-              const dateLabel = formatRaceDate(race.startDateTime, race.endDateTime);
+              const dateLabel = formatEventDate(race.startDateTime, race.endDateTime);
 
               return (
                 <div
