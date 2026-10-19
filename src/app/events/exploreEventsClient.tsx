@@ -13,9 +13,12 @@ import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 import {
   EventsDirectoryHeader,
+  EVENTS_DIRECTORY_VARIANT_TITLES,
   getEventsDirectoryHeaderVariant,
   type EventsDirectoryHeaderData,
 } from "@/components/events/eventsDirectoryHeader";
+import { SITE_TITLE_SUFFIX } from "@/lib/siteTitle";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 type EventWP = any;
 type PageInfo = {
@@ -85,11 +88,14 @@ export default function ExploreEventsClient({
   initialPageInfo,
   pageSize,
   directoryHeaders,
+  defaultTitle,
 }: {
   initialEvents: EventWP[];
   initialPageInfo: PageInfo;
   pageSize: number;
   directoryHeaders: EventsDirectoryHeaderData;
+  /** Yoast title for unfiltered /events; filtered views swap in the variant name. */
+  defaultTitle?: string;
 }) {
   // Infinite scroll state
   const [loadedEvents, setLoadedEvents] = useState<EventWP[]>(initialEvents);
@@ -324,6 +330,12 @@ export default function ExploreEventsClient({
     [eventTypes],
   );
   const hasSpecializedHeader = directoryHeaderVariant !== null;
+
+  useDocumentTitle(
+    directoryHeaderVariant
+      ? `${EVENTS_DIRECTORY_VARIANT_TITLES[directoryHeaderVariant]}${SITE_TITLE_SUFFIX}`
+      : defaultTitle,
+  );
 
   const [headerAcf, setHeaderAcf] = useState<EventsDirectoryHeaderData>(directoryHeaders);
   const headerFetchAttemptedRef = useRef(false);

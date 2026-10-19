@@ -10,7 +10,10 @@ import {
   getProgramsDirectoryHeaderVariant,
   type ProgramsPageACF,
 } from "@/components/programs/programsDirectoryHeader";
+import { PROGRAMS_DIRECTORY_VARIANT_TITLES } from "@/components/programs/directoryHeaderSection";
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
+import { SITE_TITLE_SUFFIX } from "@/lib/siteTitle";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 type ProgramWP = any;
 
@@ -151,12 +154,15 @@ export default function ExploreProgramsClient({
   initialSearchParams = {},
   pageSize,
   directoryHeaderData,
+  defaultTitle,
 }: {
   initialPrograms: ProgramWP[];
   initialPageInfo: PageInfo;
   initialSearchParams?: ProgramsSearchParams;
   pageSize: number;
   directoryHeaderData: ProgramsPageACF;
+  /** Yoast title for unfiltered /programs; filtered views swap in the variant name. */
+  defaultTitle?: string;
 }) {
   // Infinite scroll state
   const [loadedPrograms, setLoadedPrograms] = useState<ProgramWP[]>(initialPrograms);
@@ -358,6 +364,12 @@ export default function ExploreProgramsClient({
     [headerSearchParams]
   );
   const hasSpecializedHeader = directoryHeaderVariant !== null;
+
+  useDocumentTitle(
+    directoryHeaderVariant
+      ? `${PROGRAMS_DIRECTORY_VARIANT_TITLES[directoryHeaderVariant]}${SITE_TITLE_SUFFIX}`
+      : defaultTitle,
+  );
 
   const [directoryAcf, setDirectoryAcf] = useState<ProgramsPageACF>(directoryHeaderData);
   const directoryHeadersLoadedRef = useRef(

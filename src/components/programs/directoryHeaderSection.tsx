@@ -47,6 +47,21 @@ export type DirectoryHeaderVariant =
   | "tennis-lessons"
   | "community";
 
+export const PROGRAMS_DIRECTORY_VARIANT_TITLES: Record<DirectoryHeaderVariant, string> = {
+  camps: "Camps",
+  aquatics: "Aquatics",
+  "sports-and-recreation": "Sports and Recreation",
+  fitness: "Fitness",
+  childcare: "Childcare",
+  "group-fitness": "Group Fitness",
+  "middle-school-athletics": "Middle School Athletics",
+  "personal-training": "Personal Training",
+  "renew-active": "Renew Active / One Pass",
+  silversneakers: "SilverSneakers",
+  "tennis-lessons": "Tennis Lessons",
+  community: "Community",
+};
+
 /** WP returns `header: null` for empty ACF fields, which would override a spread-in default. */
 function withFallbackTitle<T extends DirectoryHeaderData>(
   fallback: string,
@@ -69,84 +84,84 @@ export function DirectoryHeaderSection({
     case "camps":
       return (
         <CampsDirectoryHeader
-          data={withFallbackTitle("Camps", acf.campsDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.campsDirectoryPageFields)}
           className={className}
         />
       );
     case "aquatics":
       return (
         <AquaticsDirectoryHeader
-          data={withFallbackTitle("Aquatics", acf.aquaticsDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.aquaticsDirectoryPageFields)}
           className={className}
         />
       );
     case "sports-and-recreation":
       return (
         <SportsAndRecreationDirectoryHeader
-          data={withFallbackTitle("Sports and Recreation", acf.sportsAndRecreationDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.sportsAndRecreationDirectoryPageFields)}
           className={className}
         />
       );
     case "fitness":
       return (
         <FitnessDirectoryHeader
-          data={withFallbackTitle("Fitness", acf.fitnessDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.fitnessDirectoryPageFields)}
           className={className}
         />
       );
     case "childcare":
       return (
         <ChildcareDirectoryHeader
-          data={withFallbackTitle("Childcare", acf.childcareDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.childcareDirectoryPageFields)}
           className={className}
         />
       );
     case "group-fitness":
       return (
         <GroupFitnessDirectoryHeader
-          data={withFallbackTitle("Group Fitness", acf.groupFitnessDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.groupFitnessDirectoryPageFields)}
           className={className}
         />
       );
     case "middle-school-athletics":
       return (
         <MiddleSchoolAthleticsDirectoryHeader
-          data={withFallbackTitle("Middle School Athletics", acf.middleSchoolAthleticsDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.middleSchoolAthleticsDirectoryPageFields)}
           className={className}
         />
       );
     case "personal-training":
       return (
         <PersonalTrainingDirectoryHeader
-          data={withFallbackTitle("Personal Training", acf.personalTrainingDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.personalTrainingDirectoryPageFields)}
           className={className}
         />
       );
     case "tennis-lessons":
       return (
         <TennisLessonsDirectoryHeader
-          data={withFallbackTitle("Tennis Lessons", acf.tennisLessonsDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.tennisLessonsDirectoryPageFields)}
           className={className}
         />
       );
     case "renew-active":
       return (
         <RenewActiveDirectoryHeader
-          data={withFallbackTitle("Renew Active / One Pass", acf.renewActiveDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.renewActiveDirectoryPageFields)}
           className={className}
         />
       );
     case "silversneakers":
       return (
         <SilversneakersDirectoryHeader
-          data={withFallbackTitle("SilverSneakers", acf.silversneakersDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.silversneakersDirectoryPageFields)}
           className={className}
         />
       );
     case "community":
       return (
         <CommunityDirectoryHeader
-          data={withFallbackTitle("Community", acf.communityDirectoryPageFields)}
+          data={withFallbackTitle(PROGRAMS_DIRECTORY_VARIANT_TITLES[variant], acf.communityDirectoryPageFields)}
           className={className}
         />
       );

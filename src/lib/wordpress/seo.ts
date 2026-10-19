@@ -12,8 +12,14 @@ type SeoNode = {
   seo?: YoastSeo | null;
 } | null;
 
+/**
+ * `nodeByUri` misses pages whose URI is shadowed by a CPT archive (e.g. the
+ * "programs" and "events" pages) or whose Next.js path differs from the WP
+ * hierarchy (e.g. /visit/pool-availability → /pool-availability/ in WP), so
+ * the page-by-slug lookup is fetched alongside it as a fallback.
+ */
 const SEO_BY_URI_QUERY = `
-  query SeoByUri($uri: String!) {
+  query SeoByUri($uri: String!, $slug: String!, $hasSlug: Boolean!) {
     nodeByUri(uri: $uri) {
       ... on ContentNode {
         seo {
@@ -22,8 +28,20 @@ const SEO_BY_URI_QUERY = `
         }
       }
     }
+    pages(first: 1, where: { name: $slug }) @include(if: $hasSlug) {
+      nodes {
+        seo {
+          title
+          metaDesc
+        }
+      }
+    }
   }
 `;
+
+function lastPathSegment(pathname: string) {
+  return pathname.split("/").filter(Boolean).pop() ?? "";
+}
 
 function normalizeUri(pathname: string) {
   const path = pathname.trim() || "/";
@@ -49,14 +67,22 @@ export async function getYoastMetadata(
   );
 
   try {
-    const data = await wpFetch<{ nodeByUri?: SeoNode }>(
+    const slug = lastPathSegment(pathname);
+    const data = await wpFetch<{
+      nodeByUri?: SeoNode;
+      pages?: { nodes?: SeoNode[] } | null;
+    }>(
       SEO_BY_URI_QUERY,
-      { uri: normalizeUri(pathname) },
+      { uri: normalizeUri(pathname), slug, hasSlug: Boolean(slug) },
       { tags: [WP_CACHE_TAGS.seo] },
     );
-    const node = data?.nodeByUri;
-    const title = nonEmptyString(node?.seo?.title);
-    const description = nonEmptyString(node?.seo?.metaDesc);
+    const uriSeo = data?.nodeByUri?.seo;
+    const seo = nonEmptyString(uriSeo?.title)
+      ? uriSeo
+      : data?.pages?.nodes?.[0]?.seo ?? uriSeo;
+
+    const title = nonEmptyString(seo?.title);
+    const description = nonEmptyString(seo?.metaDesc);
 
     return {
       ...fallback,
@@ -77,4 +103,10 @@ export async function getYoastMetadata(
       },
     };
   }
+}
+
+/** Yoast `<title>` for a route as a plain string, for client components that adjust it. */
+export async function getYoastTitle(pathname: string): Promise<string | undefined> {
+  const { title } = await getYoastMetadata(pathname);
+  return typeof title === "string" ? title : undefined;
 }

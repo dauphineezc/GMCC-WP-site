@@ -31,7 +31,7 @@ const EVENT_TYPE_VARIANTS: Record<string, EventDirectoryHeaderVariant> = {
   "food distributions": "food-distributions",
 };
 
-const VARIANT_TITLES: Record<EventDirectoryHeaderVariant, string> = {
+export const EVENTS_DIRECTORY_VARIANT_TITLES: Record<EventDirectoryHeaderVariant, string> = {
   bonspiels: "Bonspiels",
   trips: "Trips",
   tournaments: "Tournaments",
@@ -71,7 +71,7 @@ export function EventsDirectoryHeader({
       data={{
         ...fromWp,
         // Prefer WP title when editors set one; otherwise keep the fallback.
-        header: (fromWp.header ?? "").trim() || VARIANT_TITLES[variant],
+        header: (fromWp.header ?? "").trim() || EVENTS_DIRECTORY_VARIANT_TITLES[variant],
       }}
     />
   );

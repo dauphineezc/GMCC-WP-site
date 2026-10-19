@@ -16,6 +16,7 @@ import PhotoWaveHeader from "@/components/photoWaveHeader";
 import NavyWaveSection from "@/components/navyWaveSection";
 import { CenterAnnouncementBar } from "@/components/announcementBar";
 import AutoHeightScheduleIframe from "@/components/schedule/autoHeightScheduleIframe";
+import ScheduleBesideEventCards from "@/components/schedule/scheduleBesideEventCards";
 import TodayEventCard from "@/components/events/todayEventCard";
 import { getCenterAnnouncement } from "@/lib/wordpress/announcements";
 import {
@@ -453,6 +454,16 @@ export default async function CenterPage(props: CenterPageProps) {
   const centerScheduleLabel = resolveCenterScheduleLabel(slug, center.title ?? "");
   const hasTodayScheduleEmbed = hasTodayCenterScheduleEmbed(slug);
   const showTodaySection = hasTodayScheduleEmbed || isCurlingCenter || todaysEvents.length > 0;
+  const upcomingEventCards = todaysEvents.slice(0, 2);
+  const showMoreEventsLink = todaysEvents.length > 2;
+  const seeMoreEventsLink = showMoreEventsLink ? (
+    <a
+      href={`/events?center=${slug}`}
+      className="block text-center text-sm font-semibold text-gmcc-navy underline hover:translate-y-[-2px] hover:text-gmcc-teal sm:text-right"
+    >
+      See More Events
+    </a>
+  ) : null;
 
   let joinSectionHeader: string;
   let joinSectionSubheader: string;
@@ -691,72 +702,67 @@ export default async function CenterPage(props: CenterPageProps) {
 
           {isCurlingCenter ? (
             todaysEvents.length > 0 ? (
-              <div className="grid grid-cols-1 items-start gap-8 sm:grid-cols-2">
-                <div className="gmcc-schedule-embed col-span-1">
-                  <AutoHeightScheduleIframe
-                    src={CURLING_WEEKLY_SCHEDULE_EMBED_URL}
-                    title="Midland Curling Club Weekly Schedule"
+              <ScheduleBesideEventCards
+                scheduleSrc={CURLING_WEEKLY_SCHEDULE_EMBED_URL}
+                scheduleTitle="Midland Curling Club Weekly Schedule"
+                eventCardCount={upcomingEventCards.length}
+                eventCards={upcomingEventCards.map((event) => (
+                  <TodayEventCard
+                    key={`${event.id}-${event.startDatetime}`}
+                    event={event}
+                    stackUntil="lg"
                   />
-                </div>
-
-                <div className="col-span-1 grid gap-5">
-                  {todaysEvents.map((event) => (
-                    <TodayEventCard
-                      key={`${event.id}-${event.startDatetime}`}
-                      event={event}
-                      stackUntil="lg"
-                    />
-                  ))}
-                </div>
-              </div>
+                ))}
+                seeMoreLink={seeMoreEventsLink}
+              />
             ) : (
               <div className="mx-auto max-w-3xl">
-                <div className="gmcc-schedule-embed">
+                <div className="gmcc-schedule-embed lg:-mb-4">
                   <AutoHeightScheduleIframe
                     src={CURLING_WEEKLY_SCHEDULE_EMBED_URL}
                     title="Midland Curling Club Weekly Schedule"
+                    maxHeightLg
                   />
                 </div>
               </div>
             )
           ) : hasTodayScheduleEmbed ? (
             todaysEvents.length > 0 ? (
-              <div className="grid grid-cols-1 items-start gap-8 sm:grid-cols-2">
-                <div className="gmcc-schedule-embed col-span-1">
-                  <AutoHeightScheduleIframe
-                    src={todayCenterScheduleEmbedUrl(slug)}
-                    title={`${centerScheduleLabel ?? center.title ?? "Center"} Today's Schedule`}
+              <ScheduleBesideEventCards
+                scheduleSrc={todayCenterScheduleEmbedUrl(slug)}
+                scheduleTitle={`${centerScheduleLabel ?? center.title ?? "Center"} Today's Schedule`}
+                eventCardCount={upcomingEventCards.length}
+                eventCards={upcomingEventCards.map((event) => (
+                  <TodayEventCard
+                    key={`${event.id}-${event.startDatetime}`}
+                    event={event}
+                    stackUntil="lg"
                   />
-                </div>
-
-                <div className="col-span-1 grid gap-5">
-                  {todaysEvents.map((event) => (
-                    <TodayEventCard
-                      key={`${event.id}-${event.startDatetime}`}
-                      event={event}
-                      stackUntil="lg"
-                    />
-                  ))}
-                </div>
-              </div>
+                ))}
+                seeMoreLink={seeMoreEventsLink}
+              />
             ) : (
               <div className="mx-auto max-w-3xl">
-                <div className="gmcc-schedule-embed">
+                <div className="gmcc-schedule-embed lg:-mb-4">
                   <AutoHeightScheduleIframe
                     src={todayCenterScheduleEmbedUrl(slug)}
                     title={`${centerScheduleLabel ?? center.title ?? ""} Today's Schedule`}
+                    maxHeightLg
                   />
                 </div>
               </div>
             )
           ) : todaysEvents.length > 0 ? (
-            <div className="mx-auto max-w-2xl grid gap-5">
-              {todaysEvents.map((event) => (
-                <TodayEventCard
-                  key={`${event.id}-${event.startDatetime}`}
-                  event={event}
-                />
-              ))}
+            <div className="mx-auto max-w-2xl">
+              <div className="grid gap-5">
+                {upcomingEventCards.map((event) => (
+                  <TodayEventCard
+                    key={`${event.id}-${event.startDatetime}`}
+                    event={event}
+                  />
+                ))}
+              </div>
+              {seeMoreEventsLink ? <div className="mt-2">{seeMoreEventsLink}</div> : null}
             </div>
           ) : null}
 

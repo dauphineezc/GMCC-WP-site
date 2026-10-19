@@ -14,6 +14,8 @@ import {
   LAZY_LOAD_PROGRAMS,
 } from "@/lib/programsListQuery";
 import { WP_CACHE_TAGS } from "@/lib/revalidate";
+import { getYoastTitle } from "@/lib/wordpress/seo";
+import { SITE_TITLE_SUFFIX } from "@/lib/siteTitle";
 import ExploreProgramsClient from "./exploreProgramsClient";
 import type { ProgramsPageACF } from "@/components/programs/programsDirectoryHeader";
 
@@ -27,7 +29,7 @@ export default async function ExploreProgramsPage() {
   // Intentionally ignore URL searchParams on the server so this route can be
   // statically cached. Specialty directory headers load on demand via
   // /api/programs/directory-headers when the client detects a variant.
-  const [heroPage, programsData] = await Promise.all([
+  const [heroPage, programsData, yoastTitle] = await Promise.all([
     fetchPageWithHeroFields("programs"),
     wpFetch<{
       programs?: {
@@ -42,6 +44,7 @@ export default async function ExploreProgramsPage() {
       },
       { tags: [WP_CACHE_TAGS.programs] },
     ),
+    getYoastTitle("/programs"),
   ]);
 
   const hero = resolvePhotoWaveHeaderProps(heroPage, "Explore our programs");
@@ -64,6 +67,7 @@ export default async function ExploreProgramsPage() {
           initialPageInfo={pageInfo}
           pageSize={PROGRAMS_PAGE_SIZE}
           directoryHeaderData={EMPTY_DIRECTORY_HEADER_DATA}
+          defaultTitle={yoastTitle ?? `Programs${SITE_TITLE_SUFFIX}`}
         />
       </Suspense>
     </main>

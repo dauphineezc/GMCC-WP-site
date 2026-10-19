@@ -122,6 +122,9 @@ const cacheTagHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Disables streaming metadata so <title> is always in the initial <head>.
+  // Otherwise on-demand renders append it after the body and the tab shows the URL until then.
+  htmlLimitedBots: /.*/,
   images: {
     remotePatterns: [
       {

@@ -12,6 +12,8 @@ import ExploreEventsClient from "./exploreEventsClient";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 import { REVALIDATE_EVENTS_SECONDS, WP_CACHE_TAGS } from "@/lib/revalidate";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
+import { getYoastTitle } from "@/lib/wordpress/seo";
+import { SITE_TITLE_SUFFIX } from "@/lib/siteTitle";
 
 export const revalidate = 900;
 
@@ -63,7 +65,7 @@ type EventsListData = {
 };
 
 export default async function ExploreEventsPage() {
-  const [heroPage, eventsData, directoryHeaders] = await Promise.all([
+  const [heroPage, eventsData, directoryHeaders, yoastTitle] = await Promise.all([
     fetchPageWithHeroFields("events"),
     wpFetch<EventsListData>(
       EVENTS_LIST_QUERY,
@@ -71,6 +73,7 @@ export default async function ExploreEventsPage() {
       { revalidate: REVALIDATE_EVENTS_SECONDS, tags: [WP_CACHE_TAGS.events] },
     ),
     fetchEventsDirectoryHeaders(),
+    getYoastTitle("/events"),
   ]);
 
   const events = eventsData?.events?.nodes ?? [];
@@ -87,6 +90,7 @@ export default async function ExploreEventsPage() {
           initialPageInfo={pageInfo}
           pageSize={PAGE_SIZE}
           directoryHeaders={directoryHeaders}
+          defaultTitle={yoastTitle ?? `Events${SITE_TITLE_SUFFIX}`}
         />
       </Suspense>
     </main>

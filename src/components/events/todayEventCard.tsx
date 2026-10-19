@@ -23,7 +23,11 @@ const LAYOUT_CLASSES = {
   },
 } as const;
 
-export default function TodayEventCard({ event, showCenter = false, stackUntil = "sm" }: TodayEventCardProps) {
+export default function TodayEventCard({
+  event,
+  showCenter = false,
+  stackUntil = "sm",
+}: TodayEventCardProps) {
   const layout = LAYOUT_CLASSES[stackUntil];
 
   return (

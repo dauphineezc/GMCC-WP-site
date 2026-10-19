@@ -10,10 +10,26 @@ type AutoHeightScheduleIframeProps = {
   id?: string;
   /** Minimum iframe height in pixels. */
   minHeight?: number;
-  /** Initial height before the embed reports its content height. Keep small so scrollHeight reflects content, not the iframe viewport. */
+  /** Initial height before the embed reports its content height. */
   defaultHeight?: number;
   /** Safety cap — ignores runaway resize feedback from the embed. */
   maxHeight?: number;
+  /**
+   * On lg+, cap auto-height at two `h-38` cards + gap-5 + 1rem shell padding
+   * + 4px. Offset shell padding with `sm:-mb-4` / `lg:-mb-4`.
+   */
+  maxHeightLg?: boolean;
+  /**
+   * On lg+, force height to that same two-card stack size. Use when bottoms
+   * must align with two event cards — the embed often reports a shorter height
+   * because it scrolls activities internally.
+   */
+  fillHeightLg?: boolean;
+  /**
+   * Max pixel height below `lg` (typically sm–md). Auto-height still applies
+   * up to this cap when set.
+   */
+  midMaxHeightPx?: number | null;
 };
 
 const SCHEDULE_EMBED_ORIGIN = new URL(SCHEDULE_EMBED_BASE_URL).origin;
@@ -42,9 +58,14 @@ export default function AutoHeightScheduleIframe({
   minHeight = 100,
   defaultHeight = 400,
   maxHeight = 1400,
+  maxHeightLg = false,
+  fillHeightLg = false,
+  midMaxHeightPx = null,
 }: AutoHeightScheduleIframeProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(defaultHeight);
+  const midMax =
+    typeof midMaxHeightPx === "number" && midMaxHeightPx > 0 ? midMaxHeightPx : null;
 
   const applyHeight = useCallback(
     (next: number) => {
@@ -70,16 +91,29 @@ export default function AutoHeightScheduleIframe({
     return () => window.removeEventListener("message", onMessage);
   }, [applyHeight]);
 
+  // Full static strings so Tailwind emits the utilities.
+  const heightClass = fillHeightLg
+    ? "h-[var(--schedule-auto-height)] lg:h-[calc(var(--spacing)*85+4px)] lg:max-h-[calc(var(--spacing)*85+4px)] lg:min-h-0"
+    : maxHeightLg
+      ? "lg:max-h-[calc(var(--spacing)*85+4px)]"
+      : "";
+
   return (
     <iframe
       ref={iframeRef}
       id={id}
       src={src}
       title={title}
-      className={`block w-full ${className}`.trim()}
+      className={`block w-full ${heightClass} ${className}`.trim()}
       style={{
-        height: `${height}px`,
-        minHeight: `${minHeight}px`,
+        ["--schedule-auto-height" as string]: `${height}px`,
+        // When fillHeightLg is on, height comes from the lg:h-[…] class — an
+        // inline height would override it and keep the iframe at the (shorter)
+        // embed-reported size.
+        ...(fillHeightLg
+          ? {}
+          : { height: `${height}px`, minHeight: `${minHeight}px` }),
+        ...(midMax != null ? { maxHeight: `${midMax}px` } : {}),
         border: 0,
         display: "block",
       }}
