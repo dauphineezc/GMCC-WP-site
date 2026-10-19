@@ -109,6 +109,7 @@ export default function ProgramsSection({
   /** Absolute track index we are scrolling toward (survives rapid clicks mid-animation). */
   const pendingAbsIndexRef = useRef<number | null>(null);
   const settleTimeoutRef = useRef<number | null>(null);
+  const scrollEndDebounceRef = useRef<number | null>(null);
   const scrollGenRef = useRef(0);
 
   const n = items.length;
@@ -204,6 +205,9 @@ export default function ProgramsSection({
    * Keep scrollLeft inside the middle copy's snap range.
    * Use the middle copy's first snap position as the band start (not raw setWidth)
    * so peek/center gutters don't push us into a clone set on load.
+   *
+   * Only call this after scrolling has settled — changing scrollLeft during
+   * touch momentum / smooth scroll makes iOS snap glitch (left-align, blank).
    */
   const normalizeLoopScroll = () => {
     if (!loopEnabled) return;
@@ -212,57 +216,31 @@ export default function ProgramsSection({
     const positions = getSnapPositions();
     if (!scroller || setWidth <= 0 || positions.length < n * 2) return;
 
-    const bandStart = positions[n];
-    const bandEnd = bandStart + setWidth;
-
-    let left = scroller.scrollLeft;
-    if (left >= bandStart && left < bandEnd) return;
-
-    while (left < bandStart) left += setWidth;
-    while (left >= bandEnd) left -= setWidth;
-
-    if (Math.abs(left - scroller.scrollLeft) < 0.5) return;
-
-    scroller.style.scrollSnapType = "none";
-    scroller.scrollLeft = left;
-    requestAnimationFrame(() => {
-      scroller.style.scrollSnapType = "";
-    });
-  };
-
-  const findNearestAbsIndex = () => {
-    const scroller = scrollerRef.current;
-    const positions = getSnapPositions();
-    if (!scroller || !positions.length) return loopEnabled ? n : 0;
-
+    // Decide which copy we are in by the NEAREST card, not an exact pixel
+    // boundary. Browsers store scrollLeft with sub-pixel / snap rounding that can
+    // sit a fraction of a pixel on either side of positions[n]; an exact compare
+    // would misfile the first card into the wrong copy.
     const current = scroller.scrollLeft;
-    let bestIdx = 0;
+    let nearest = 0;
     let bestDist = Number.POSITIVE_INFINITY;
     for (let i = 0; i < positions.length; i++) {
       const dist = Math.abs(positions[i] - current);
       if (dist < bestDist) {
         bestDist = dist;
-        bestIdx = i;
+        nearest = i;
       }
     }
-    return bestIdx;
-  };
 
-  const syncActiveIndex = () => {
-    if (!isProgrammaticScroll.current) normalizeLoopScroll();
-  };
+    let left = current;
+    if (nearest < n) left += setWidth;
+    else if (nearest >= 2 * n) left -= setWidth;
+    else return;
 
-  const clearSettleTimeout = () => {
-    if (settleTimeoutRef.current != null) {
-      window.clearTimeout(settleTimeoutRef.current);
-      settleTimeoutRef.current = null;
-    }
-  };
-
-  /** Index to step from: in-flight target if any, otherwise nearest settled snap. */
-  const getStepAbsIndex = () => {
-    if (pendingAbsIndexRef.current != null) return pendingAbsIndexRef.current;
-    return findNearestAbsIndex();
+    scroller.style.scrollSnapType = "none";
+    scroller.scrollLeft = left;
+    // Force layout so re-enabling snap does not re-animate from the old offset.
+    void scroller.offsetWidth;
+    scroller.style.scrollSnapType = "";
   };
 
   /**
@@ -275,6 +253,83 @@ export default function ProgramsSection({
     return n + logical;
   };
 
+  const findNearestAbsIndex = (mapToMiddle = true) => {
+    const scroller = scrollerRef.current;
+    const positions = getSnapPositions();
+    if (!scroller || !positions.length) return loopEnabled ? n : 0;
+
+    const current = scroller.scrollLeft;
+    let bestIdx = 0;
+    let bestDist = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < positions.length; i++) {
+      const dist = Math.abs(positions[i] - current);
+      // Prefer the middle clone when distances tie (e.g. first card at scrollLeft≈0).
+      if (dist < bestDist || (dist === bestDist && loopEnabled && i >= n && i < 2 * n)) {
+        bestDist = dist;
+        bestIdx = i;
+      }
+    }
+    return mapToMiddle ? toMiddleAbsIndex(bestIdx) : bestIdx;
+  };
+
+  const clearSettleTimeout = () => {
+    if (settleTimeoutRef.current != null) {
+      window.clearTimeout(settleTimeoutRef.current);
+      settleTimeoutRef.current = null;
+    }
+  };
+
+  const clearScrollEndDebounce = () => {
+    if (scrollEndDebounceRef.current != null) {
+      window.clearTimeout(scrollEndDebounceRef.current);
+      scrollEndDebounceRef.current = null;
+    }
+  };
+
+  /**
+   * Index to step from.
+   * - Mid-animation (rapid clicks): continue from the in-flight target.
+   * - Idle: trust what is actually on screen, never a remembered index. We first
+   *   silently move to the identical card in the middle copy so a single step
+   *   always has runway and always travels in the clicked direction.
+   */
+  const getStepAbsIndex = () => {
+    if (isProgrammaticScroll.current && pendingAbsIndexRef.current != null) {
+      return pendingAbsIndexRef.current;
+    }
+    normalizeLoopScroll();
+    const idx = findNearestAbsIndex(false);
+    pendingAbsIndexRef.current = idx;
+    return idx;
+  };
+
+  const finishProgrammaticScroll = (gen: number, targetIdx: number) => {
+    const scroller = scrollerRef.current;
+    if (!scroller || gen !== scrollGenRef.current) return;
+
+    const positions = getSnapPositions();
+    const targetLeft = Math.max(0, positions[targetIdx] ?? scroller.scrollLeft);
+
+    // Pin exactly on the target (a clone of the real card when we wrapped).
+    scroller.style.scrollSnapType = "none";
+    scroller.scrollLeft = targetLeft;
+    void scroller.offsetWidth;
+
+    // Invisible jump: the clone and its middle-copy twin look identical.
+    const middleIdx = toMiddleAbsIndex(targetIdx);
+    pendingAbsIndexRef.current = middleIdx;
+    const settled = getSnapPositions();
+    if (settled[middleIdx] != null) {
+      scroller.scrollLeft = Math.max(0, settled[middleIdx]);
+      void scroller.offsetWidth;
+    }
+
+    scroller.style.scrollSnapType = "";
+    isProgrammaticScroll.current = false;
+  };
+
+  const scrollEndCleanupRef = useRef<(() => void) | null>(null);
+
   const scrollToAbsIndex = (absIdx: number, behavior: ScrollBehavior = "smooth") => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
@@ -282,37 +337,49 @@ export default function ProgramsSection({
     const positions = getSnapPositions();
     if (!positions.length) return;
 
-    const clamped = Math.max(0, Math.min(absIdx, positions.length - 1));
-    const targetLeft = Math.max(0, positions[clamped]);
-    const gen = ++scrollGenRef.current;
-
     clearSettleTimeout();
-    pendingAbsIndexRef.current = clamped;
+    clearScrollEndDebounce();
+    scrollEndCleanupRef.current?.();
+    scrollEndCleanupRef.current = null;
+
+    const gen = ++scrollGenRef.current;
     isProgrammaticScroll.current = true;
-    // Disable snap while we animate so native snap can't settle 1px off and clip a border.
+
+    // Always animate straight to the requested card in the direction of travel.
+    // At the ends of the middle copy that card is a clone in an outer copy
+    // (identical to its middle twin); we jump back to the middle after it lands.
+    const targetIdx = Math.max(0, Math.min(absIdx, positions.length - 1));
+    const targetLeft = Math.max(0, positions[targetIdx]);
+
+    pendingAbsIndexRef.current = targetIdx;
     scroller.style.scrollSnapType = "none";
     scroller.scrollTo({ left: targetLeft, behavior });
 
-    const settleMs = behavior === "smooth" ? 450 : 0;
+    if (behavior === "auto") {
+      finishProgrammaticScroll(gen, targetIdx);
+      return;
+    }
+
+    const cleanup = () => {
+      scroller.removeEventListener("scrollend", onScrollEnd);
+      clearSettleTimeout();
+      scrollEndCleanupRef.current = null;
+    };
+
+    const onScrollEnd = () => {
+      // Ignore early scrollend events (e.g. from a cancelled animation).
+      if (Math.abs(scroller.scrollLeft - targetLeft) > 2) return;
+      cleanup();
+      finishProgrammaticScroll(gen, targetIdx);
+    };
+    scroller.addEventListener("scrollend", onScrollEnd);
+    scrollEndCleanupRef.current = cleanup;
+
+    // Fallback when scrollend is missing or never fires (older WebKit).
     settleTimeoutRef.current = window.setTimeout(() => {
-      settleTimeoutRef.current = null;
-      // A newer click superseded this animation.
-      if (gen !== scrollGenRef.current) return;
-
-      // Pin to the exact snap target, then normalize the loop band.
-      scroller.scrollLeft = targetLeft;
-      normalizeLoopScroll();
-
-      const middleIdx = toMiddleAbsIndex(clamped);
-      pendingAbsIndexRef.current = middleIdx;
-      const settled = getSnapPositions();
-      if (settled[middleIdx] != null) {
-        scroller.scrollLeft = Math.max(0, settled[middleIdx]);
-      }
-
-      scroller.style.scrollSnapType = "";
-      isProgrammaticScroll.current = false;
-    }, settleMs);
+      cleanup();
+      finishProgrammaticScroll(gen, targetIdx);
+    }, 700);
   };
 
   const canNavigate = loopEnabled;
@@ -362,25 +429,46 @@ export default function ProgramsSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [n, loopEnabled, layout.cols, layout.cardW, layout.peekGutter]);
 
-  // Normalize when the user crosses a copy boundary.
+  // Normalize only after user scrolling settles. Jumping mid-momentum (especially
+  // on iOS) is what left-aligns the first card and blanks the track on wrap.
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
+    const settleUserScroll = () => {
+      if (isProgrammaticScroll.current || isDraggingRef.current) return;
+      normalizeLoopScroll();
+      // Keep pending in sync with where the user actually landed.
+      pendingAbsIndexRef.current = findNearestAbsIndex();
+    };
+
     const onScroll = () => {
-      if (!isProgrammaticScroll.current) syncActiveIndex();
+      if (isProgrammaticScroll.current) return;
+      clearScrollEndDebounce();
+      scrollEndDebounceRef.current = window.setTimeout(() => {
+        scrollEndDebounceRef.current = null;
+        settleUserScroll();
+      }, 120);
+    };
+
+    const onScrollEnd = () => {
+      clearScrollEndDebounce();
+      settleUserScroll();
     };
 
     scroller.addEventListener("scroll", onScroll, { passive: true });
-    syncActiveIndex();
+    scroller.addEventListener("scrollend", onScrollEnd);
+    settleUserScroll();
 
-    const raf = requestAnimationFrame(() => syncActiveIndex());
-    const timeout = window.setTimeout(() => syncActiveIndex(), 60);
+    const raf = requestAnimationFrame(() => settleUserScroll());
+    const timeout = window.setTimeout(() => settleUserScroll(), 60);
 
     return () => {
       scroller.removeEventListener("scroll", onScroll);
+      scroller.removeEventListener("scrollend", onScrollEnd);
       cancelAnimationFrame(raf);
       window.clearTimeout(timeout);
+      clearScrollEndDebounce();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackItems.length, loopEnabled, layout.cols, layout.cardW, layout.peekGutter]);
@@ -426,11 +514,12 @@ export default function ProgramsSection({
 
       // Re-enabling snap alone does not settle mid-card after a free drag.
       if (didDragRef.current) {
-        scrollToAbsIndex(findNearestAbsIndex(), "smooth");
+        // Raw (unmapped) index so the settle animation is a short nudge, not a set-width trip.
+        scrollToAbsIndex(findNearestAbsIndex(false), "smooth");
       } else {
         normalizeLoopScroll();
+        pendingAbsIndexRef.current = findNearestAbsIndex();
         scroller.style.scrollSnapType = "";
-        syncActiveIndex();
       }
 
       // Clear after click-capture phase has a chance to run.

@@ -47,6 +47,37 @@ function looksLikeHtml(s: string): boolean {
   return /<[a-z][\s\S]*>/i.test(s);
 }
 
+/** Bullet / dash markers often pasted into Text Area fields before they become WYSIWYG. */
+const PLAIN_BULLET_RE = /^[\u2022\u2023\u25E6\u2043\u2219•·‣▪▸►\-\*]\s+/;
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/**
+ * Turn plain-text lines that start with bullet characters into a real `<ul>`,
+ * so wrapped lines get a hanging indent via list CSS (not flush under the marker).
+ */
+function plainTextBulletsToHtml(text: string): string | null {
+  const lines = text.split(/\r?\n/);
+  const items: string[] = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (items.length) continue; // ignore blank lines inside a list block
+      return null;
+    }
+    if (!PLAIN_BULLET_RE.test(trimmed)) return null;
+    items.push(escapeHtml(trimmed.replace(PLAIN_BULLET_RE, "").trim()));
+  }
+  if (items.length < 2) return null;
+  return `<ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>`;
+}
+
 /** Allow http(s), mailto, tel, hash, and relative paths; reject other schemes. */
 function safeHref(raw: string | undefined): string | null {
   if (!raw) return null;
@@ -76,8 +107,12 @@ export default function WysiwygText({
   html: unknown;
   className?: string;
 }) {
-  const trimmed = asWysiwyg(html);
-  if (!trimmed) return null;
+  const raw = asWysiwyg(html);
+  if (!raw) return null;
+
+  // Text Area leftovers (• / - lines) → real list HTML so hanging indent CSS applies.
+  const trimmed =
+    !looksLikeHtml(raw) ? plainTextBulletsToHtml(raw) ?? raw : raw;
 
   if (!looksLikeHtml(trimmed)) {
     return (

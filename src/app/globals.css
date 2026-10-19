@@ -91,13 +91,19 @@ body {
 }
 .wysiwyg :where(ul, ol) {
   margin: 0.5em 0;
-  padding-left: 1.25em;
+  padding-left: 1.5em;
+  /* outside = hanging indent: wrapped lines align with text, not the marker */
+  list-style-position: outside;
 }
 .wysiwyg :where(ul) {
-  list-style: disc;
+  list-style-type: disc;
 }
 .wysiwyg :where(ol) {
-  list-style: decimal;
+  list-style-type: decimal;
+}
+.wysiwyg :where(li) {
+  display: list-item;
+  padding-left: 0.25em;
 }
 .wysiwyg :where(li + li) {
   margin-top: 0.25em;
@@ -105,6 +111,9 @@ body {
 /* Centered copy: keep markers beside the text instead of at the container edge */
 .wysiwyg:is([class*="text-center"], [class*="text-center"] *) :where(ul, ol) {
   list-style-position: inside;
+  padding-left: 0;
+}
+.wysiwyg:is([class*="text-center"], [class*="text-center"] *) :where(li) {
   padding-left: 0;
 }
 .wysiwyg :where(a) {

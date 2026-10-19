@@ -89,7 +89,7 @@ export default function ScheduleBesideEventCards({
         />
       </div>
 
-      <div ref={cardsRef} className="grid gap-5 self-start px-4 sm:row-start-1 sm:px-0">
+      <div ref={cardsRef} className="grid gap-5 self-start px-3 sm:row-start-1 sm:px-0">
         {eventCards}
       </div>
 

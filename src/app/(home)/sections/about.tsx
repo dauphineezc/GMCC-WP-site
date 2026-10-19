@@ -15,7 +15,7 @@ export default function AboutSection({
   return (
     <section className="relative -mt-15 bg-gmcc-navy px-4 pb-50">
 
-      <div className="relative z-20 mx-auto max-w-6xl pb-20 md:pb-24">
+      <div className="relative z-20 mx-auto max-w-6xl md:pb-24">
 
       <div className="flex flex-col text-center items-center">
         <h2 className="h2 text-white">{heading}</h2>
@@ -37,7 +37,7 @@ export default function AboutSection({
           <img
             src="/LineArt.png"
             alt=""
-            className="absolute bottom-[140px] left-1/2 w-full max-w-[1440px] -translate-x-1/2 px-8 select-none opacity-100"
+            className="absolute md:bottom-[140px] bottom-[100px] left-1/2 w-full max-w-[1440px] -translate-x-1/2 px-8 select-none opacity-100"
             draggable={false}
           />
         </div>

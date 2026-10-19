@@ -673,7 +673,7 @@ export default async function CenterPage(props: CenterPageProps) {
       {centerAnnouncement ? <CenterAnnouncementBar centerSlug={slug} /> : null}
 
       {midlandCurlingClubLogo ? (
-          <div className="flex justify-center mb-[-1rem]">
+          <div className="flex justify-center mb-6 md:mb-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={midlandCurlingClubLogo.url}

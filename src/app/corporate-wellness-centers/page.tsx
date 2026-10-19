@@ -48,11 +48,6 @@ const CORPORATE_WELLNESS_PAGE_EXTRA_FIELDS = /* GraphQL */ `
         }
       }
     }
-
-    corporatePartners {
-      logo { node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl } }
-      pageLink
-    }
   }
 `;
 
@@ -163,46 +158,7 @@ export default async function CorporateWellnessCentersPage() {
           <p className="body mx-auto max-w-6xl text-center text-sm mt-4 italic mb-8">
             <span className="font-semibold uppercase text-gmcc-navy text-sm">Please note:</span>{" "}
             {employeeRequirementDisclaimer}
-            <Link href="/centers" className="text-gmcc-teal text-sm hover:underline">click here</Link>{" "}
           </p>
-        ) : null}
-        
-        {partnerLogoNodes.length > 0 ? (
-          <div className="mx-auto mt-2 mb-8 grid w-full max-w-6xl grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-            {partnerLogoNodes.map((logo, index) => {
-              const alt = logo.altText?.trim() || `Corporate partner logo ${index + 1}`;
-              const key = `${logo.resolvedUrl}-${index}`;
-              const cellClass =
-                "flex h-20 items-center justify-center rounded-lg border border-neutral-200 bg-white p-0";
-              const image = (
-                <Image
-                  src={logo.resolvedUrl}
-                  alt={alt}
-                  width={180}
-                  height={72}
-                  className="h-full w-full object-contain"
-                />
-              );
-              if (logo.pageLink) {
-                const external = /^https?:\/\//i.test(logo.pageLink);
-                return (
-                  <a
-                    key={key}
-                    href={logo.pageLink}
-                    className={`${cellClass} text-inherit no-underline transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gmcc-teal`}
-                    {...(external ? { target: "_blank" as const, rel: "noopener noreferrer" } : {})}
-                  >
-                    {image}
-                  </a>
-                );
-              }
-              return (
-                <div key={key} className={cellClass}>
-                  {image}
-                </div>
-              );
-            })}
-          </div>
         ) : null}
 
         <div className="stack-8">
@@ -268,9 +224,7 @@ export default async function CorporateWellnessCentersPage() {
                     {galleryImages.length > 0 ? (
                       <ImageCarousel images={galleryImages} />
                     ) : (
-                      <div className="flex min-h-60 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-500">
-                        Photos coming soon.
-                      </div>
+                      null
                     )}
                   </div>
                 </div>

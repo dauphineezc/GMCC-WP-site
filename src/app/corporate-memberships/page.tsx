@@ -70,7 +70,6 @@ query CorporateMembershipsPage($uri: ID!) {
 
       corporatePartners {
         logo { node { ${WP_MEDIA_IMAGE_FIELDS} mediaItemUrl } }
-        pageLink
       }
     }   
   }
@@ -220,21 +219,6 @@ export default async function CorporateMembershipsPage() {
                             className="h-full w-full object-contain"
                         />
                     );
-                    if (logo.pageLink) {
-                        const external = isExternalHref(logo.pageLink);
-                        return (
-                            <a
-                                key={key}
-                                href={logo.pageLink}
-                                className={`${cellClass} text-inherit no-underline transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gmcc-teal`}
-                                {...(external
-                                    ? { target: "_blank" as const, rel: "noopener noreferrer" }
-                                    : {})}
-                            >
-                                {image}
-                            </a>
-                        );
-                    }
                     return (
                         <div key={key} className={cellClass}>
                             {image}

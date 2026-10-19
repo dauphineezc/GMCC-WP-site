@@ -13,6 +13,7 @@ import NavyWaveSection from "@/components/navyWaveSection";
 import FeaturedTestimonialsCarousel from "@/components/featuredTestimonialsCarousel";
 import { normalizeTestimonials } from "@/components/testimonials";
 import { WP_MEDIA_IMAGE_FIELDS, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
+import WysiwygText from "@/components/wysiwygText";
 
 type WpImageNode = {
   sourceUrl?: string | null;
@@ -549,13 +550,8 @@ export default async function CortevaFitnessCenterPage() {
 
             {membershipEligibilityHeader && membershipEligibilityBody ? (
               <section className="mx-auto max-w-2xl px-4 pt-6 pb-16">
-                <h2 className="h2 text-center">{membershipEligibilityHeader}</h2>
-                <ul className="body mt-8">
-                  {membershipEligibilityBody.split('\n').map((b: string, i: number) => (
-                    <li key={i} className="list-disc pl-2 pb-2 marker:text-gmcc-navy">{b}</li>
-                  ))}
-                </ul>
-                <p className="text-sm mt-4 pl-2 text-start text-neutral-700 italic">* Eligible family members include spouse and/or dependents age 14-25.</p>
+                <h2 className="h2 text-center mb-8">{membershipEligibilityHeader}</h2>
+                <WysiwygText html={membershipEligibilityBody} />
               </section>
             ) : null}
 

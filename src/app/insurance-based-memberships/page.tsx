@@ -266,7 +266,7 @@ export default async function InsuranceBasedMembershipsPage() {
         {/* SilverSneakers classes link */}
         {ssClassesUrl && renewClassesUrl ? (
           <section className="page-section">
-            <div className="flex flex-col grid-cols-2 gap-6 sm:flex-row sm:items-center sm:justify-between text-center">
+            <div className="flex flex-col grid-cols-2 gap-6 sm:flex-row sm:items-center sm:justify-between text-center mt-[-1.5rem]">
               <div className="col-span-1 card bg-gmcc-blue-light/30 p-8 text-center">
                 <h2 className="h3">SilverSneakers Classes</h2>
                 <p className="small mt-1">
@@ -290,8 +290,8 @@ export default async function InsuranceBasedMembershipsPage() {
         ) : null}
 
         {/* Contact */}
-          <section>
-            <div className="mx-auto max-w-6xl px-4 mt-18 mb-8 text-center">
+          <section className="mt-14 mb-[-1rem]">
+            <div className="mx-auto max-w-6xl px-4 text-center">
               <h2 className="h2">
                 {fields?.contactHeader}
               </h2>
