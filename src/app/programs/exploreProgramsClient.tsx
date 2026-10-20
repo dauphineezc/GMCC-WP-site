@@ -14,6 +14,10 @@ import { PROGRAMS_DIRECTORY_VARIANT_TITLES } from "@/components/programs/directo
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 import { SITE_TITLE_SUFFIX } from "@/lib/siteTitle";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
+import {
+  formatAudienceOptionLabel,
+  sortAudiencesByAge,
+} from "@/lib/audienceAgeRange";
 
 type ProgramWP = any;
 
@@ -37,7 +41,7 @@ export type ProgramCard = {
   offeringType: string[];
   skillLevel: string[];
   membershipRequirements: { slug: string; name: string }[];
-  audience: { slug: string; name: string }[];
+  audience: { slug: string; name: string; description?: string | null }[];
   centers: { slug: string; title: string }[];
   programAreas: { slug: string; name: string }[];
   badge: ProgramBadge;
@@ -132,6 +136,7 @@ export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
     audience: f.audience?.nodes?.map((n: any) => ({
       slug: n?.slug,
       name: n?.name,
+      description: n?.description ?? null,
     })).filter((x: any) => x?.slug && x?.name) ?? [],
     centers,
     programAreas,
@@ -282,11 +287,13 @@ export default function ExploreProgramsClient({
   }, [all]);
 
   const audienceOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    all.forEach(p => p.audience.forEach((a: any) => map.set(a.slug, a.name)));
-    return Array.from(map.entries())
-      .map(([slug, name]) => ({ slug, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const map = new Map<string, { slug: string; name: string; description?: string | null }>();
+    all.forEach(p =>
+      p.audience.forEach((a) => {
+        if (!map.has(a.slug)) map.set(a.slug, a);
+      }),
+    );
+    return sortAudiencesByAge(Array.from(map.values()));
   }, [all]);
 
   // --- Read URL search params ---
@@ -935,7 +942,7 @@ export default function ExploreProgramsClient({
                       onChange={() => setAudienceFromUser(toggle(audience, a.slug))}
                       className="cursor-pointer"
                     />
-                    <span>{a.name}</span>
+                    <span>{formatAudienceOptionLabel(a)}</span>
                   </label>
                 ))}
               </div>

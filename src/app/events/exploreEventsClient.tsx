@@ -19,6 +19,10 @@ import {
 } from "@/components/events/eventsDirectoryHeader";
 import { SITE_TITLE_SUFFIX } from "@/lib/siteTitle";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
+import {
+  formatAudienceOptionLabel,
+  sortAudiencesByAge,
+} from "@/lib/audienceAgeRange";
 
 type EventWP = any;
 type PageInfo = {
@@ -36,7 +40,7 @@ type EventCard = {
     heroAlt: string;
     objectPosition?: string;
     centers: { slug: string; title: string }[];
-    audience: { slug: string; name: string }[];
+    audience: { slug: string; name: string; description?: string | null }[];
     eventType: string[];
   };
   
@@ -63,7 +67,8 @@ type EventCard = {
         f.audience?.nodes?.map((a: any) => ({
           slug: a.slug,
           name: a.name,
-        })) ?? [],
+          description: a.description ?? null,
+        })).filter((a: any) => a.slug && a.name) ?? [],
         eventType: toStringArray(f.eventType),
     };
   }  
@@ -172,11 +177,13 @@ export default function ExploreEventsClient({
   const searchParams = useAppSearchParams();
 
   const audienceOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    all.forEach(e => e.audience.forEach(a => map.set(a.slug, a.name)));
-    return Array.from(map.entries())
-      .map(([slug, name]) => ({ slug, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const map = new Map<string, { slug: string; name: string; description?: string | null }>();
+    all.forEach(e =>
+      e.audience.forEach((a) => {
+        if (!map.has(a.slug)) map.set(a.slug, a);
+      }),
+    );
+    return sortAudiencesByAge(Array.from(map.values()));
   }, [all]);
   
   const eventTypeOptions = useMemo(() => {
@@ -578,7 +585,7 @@ export default function ExploreEventsClient({
                             onChange={() => setAudience(toggle(audience, a.slug))}
                             className="cursor-pointer"
                         />
-                        <span>{a.name}</span>
+                        <span>{formatAudienceOptionLabel(a)}</span>
                         </label>
                     ))}
                     </div>

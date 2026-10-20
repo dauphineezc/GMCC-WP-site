@@ -67,7 +67,7 @@ const EVENT_BY_SLUG_QUERY = `
           nodes { name slug }
         }
         audience {
-          nodes { name slug }
+          nodes { name slug description }
         }
         session {
           nodes { name slug }

@@ -41,7 +41,7 @@ export const PROGRAMS_LIST_QUERY = /* GraphQL */ `
           offeringType
           skillLevel
           priceFrom
-          audience { nodes { name slug } }
+          audience { nodes { name slug description } }
           campType { nodes { name slug } }
           center {
             nodes {

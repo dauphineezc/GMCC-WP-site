@@ -25,7 +25,7 @@ const QUERY = `
           offeringType
           skillLevel
           priceFrom
-          audience { nodes { name slug } }
+          audience { nodes { name slug description } }
           campType { nodes { name slug } }
           center {
             nodes {

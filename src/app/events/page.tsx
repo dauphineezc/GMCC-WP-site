@@ -48,6 +48,7 @@ const EVENTS_LIST_QUERY = `
             nodes {
               name
               slug
+              description
             }
           }
           eventType

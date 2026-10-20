@@ -11,66 +11,9 @@ import WysiwygText from "@/components/wysiwygText";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
 import { WP_CACHE_TAGS } from "@/lib/revalidate";
+import { resolveAgeChipLabels } from "@/lib/audienceAgeRange";
 
 export const revalidate = 900;
-
-/** Map age range to audience slug(s) for filtering */
-type AgeRangeValue = string | number | null | undefined;
-
-function ageRangeHasMonths(value: AgeRangeValue): boolean {
-  return typeof value === "string" && value.toLowerCase().includes("months");
-}
-
-function parseAgeNumber(value: AgeRangeValue): number | null {
-  if (value == null || value === "") return null;
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
-    if (ageRangeHasMonths(value)) return 0;
-    const parsed = Number.parseFloat(value.replace(/[^\d.]/g, ""));
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
-}
-
-function getAudienceSlugFromAgeRange(min: AgeRangeValue, max: AgeRangeValue): string | null {
-  if (ageRangeHasMonths(min) || ageRangeHasMonths(max)) return "youth";
-  return getAudienceSlugFromAge(parseAgeNumber(min), parseAgeNumber(max));
-}
-
-function formatAgeRangeLabel(min: AgeRangeValue, max: AgeRangeValue): string {
-  const hasMin = min != null && min !== "";
-  const hasMax = max != null && max !== "";
-  if (hasMin && hasMax) return `Ages ${min}–${max}`;
-  if (hasMin) return `Ages ${min}+`;
-  if (hasMax) return `Ages up to ${max}`;
-  return "";
-}
-
-function hasAgeRangeData(ageRange: { min?: AgeRangeValue; max?: AgeRangeValue } | null | undefined): boolean {
-  if (!ageRange) return false;
-  return (ageRange.min != null && ageRange.min !== "") || (ageRange.max != null && ageRange.max !== "");
-}
-
-function getAudienceSlugFromAge(min: number | null, max: number | null): string | null {
-  // If no age data, can't determine audience
-  if (min == null && max == null) return null;
-  
-  const ageMin = min ?? 0;
-  const ageMax = max ?? 100;
-  
-  // Determine primary audience based on age range
-  // These slugs should match your WordPress audience taxonomy
-  if (ageMax <= 12) return "youth";
-  if (ageMin >= 13 && ageMax <= 17) return "teen";
-  if (ageMin >= 18 && ageMax <= 64) return "adult";
-  if (ageMin >= 55 || ageMin >= 50) return "senior";
-  
-  // Default for mixed/general ages - use youth if it includes children
-  if (ageMin < 13) return "youth";
-  if (ageMin >= 13 && ageMin < 18) return "teen";
-  
-  return "adult";
-}
 
 const PROGRAM_BY_SLUG_QUERY = `
   query ProgramBySlug($slug: ID!) {
@@ -116,7 +59,7 @@ const PROGRAM_BY_SLUG_QUERY = `
           nodes { name slug }
         }
         audience {
-          nodes { name slug }
+          nodes { name slug description }
         }
         session {
           nodes { name slug }
@@ -283,21 +226,33 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
               </a>
             ))}
 
-          {/* Age range - link to audience filter based on age mapping */}
-          {hasAgeRangeData(p.ageRange) && (() => {
-            const audienceSlug = getAudienceSlugFromAgeRange(p.ageRange.min, p.ageRange.max);
-            const ageLabel = formatAgeRangeLabel(p.ageRange.min, p.ageRange.max);
-            return audienceSlug ? (
-              <a 
-                href={`/programs?audience=${encodeURIComponent(audienceSlug)}`}
-                className="badge badge-green hover:opacity-80 transition-opacity"
-              >
-                {ageLabel}
-              </a>
-            ) : (
-              <span className="badge badge-green">
-                {ageLabel}
-              </span>
+          {/* Age range: prefer ACF min/max; else audience taxonomy description */}
+          {(() => {
+            const audiences = wp.programFields?.audience?.nodes ?? [];
+            const ageLabels = resolveAgeChipLabels(p.ageRange, audiences);
+            if (!ageLabels.length) return null;
+
+            const audienceSlugs = audiences
+              .map((a: { slug?: string | null }) => a?.slug)
+              .filter((slug: string | null | undefined): slug is string => Boolean(slug));
+            const href = audienceSlugs.length
+              ? `/programs?audience=${encodeURIComponent(audienceSlugs.join(","))}`
+              : null;
+
+            return ageLabels.map((ageLabel) =>
+              href ? (
+                <a
+                  key={ageLabel}
+                  href={href}
+                  className="badge badge-green hover:opacity-80 transition-opacity"
+                >
+                  {ageLabel}
+                </a>
+              ) : (
+                <span key={ageLabel} className="badge badge-green">
+                  {ageLabel}
+                </span>
+              ),
             );
           })()}
 
@@ -322,7 +277,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             </a>
           ))}
           
-          {/* Audience - need slugs, so extract from raw data */}
+          {/* Audience */}
           {wp.programFields?.audience?.nodes?.map((aud: any) => (
             <a 
               key={aud.slug} 
