@@ -649,7 +649,7 @@ export default async function VisitPage() {
                   ) : null}
                 </div>
                 <div>
-                  <h3 className="h3">{opt.title}</h3>
+                  <h3 className="h3 mt-[-4px]">{opt.title}</h3>
                 </div>
                 {opt.description ? <p className="body">{opt.description}</p> : null}
                 {opt.howToGetIt ? (

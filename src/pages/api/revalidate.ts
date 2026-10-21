@@ -16,6 +16,8 @@ import { wpFetch } from "@/lib/wp";
 
 type RevalidateBody = WpRevalidateWebhookBody;
 
+const REVALIDATE_CONCURRENCY = 4;
+
 const CENTER_SLUGS_QUERY = /* GraphQL */ `
   query RevalidateCenterSlugs {
     centers(first: 100) {
@@ -218,14 +220,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  for (const path of paths) {
-    try {
-      await res.revalidate(path);
-      revalidatedPaths.push(path);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      errors.push(`${path}: ${message}`);
+  // Each res.revalidate renders the page (several WP GraphQL calls). An event save now covers ~15
+  // paths (listings, detail, every center), so refresh a few at a time to stay inside the
+  // WordPress plugin's request timeout.
+  const succeeded = new Set<string>();
+  const pending = [...paths];
+
+  async function revalidateWorker() {
+    for (let path = pending.shift(); path !== undefined; path = pending.shift()) {
+      try {
+        await res.revalidate(path);
+        succeeded.add(path);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        errors.push(`${path}: ${message}`);
+      }
     }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(REVALIDATE_CONCURRENCY, pending.length) }, revalidateWorker),
+  );
+  for (const path of paths) {
+    if (succeeded.has(path)) revalidatedPaths.push(path);
   }
 
   if (errors.length > 0 && revalidatedPaths.length === 0) {

@@ -199,6 +199,9 @@ export function mapWpRevalidatePayload(
       if (slug && !postType.includes("accessibility")) {
         paths.add(`/amenities/${slug}`);
       }
+      // Center pages show their amenities (fetched with the amenities tag); an edit may also
+      // add or remove an amenity from any center.
+      allCenterDetails = true;
       break;
 
     case "event":

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: GMCC Next.js On-Demand Revalidate
  * Description: Notifies the Next.js front end when content changes.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Requires PHP: 7.4
  * Author: Greater Midland
  *
@@ -10,7 +10,7 @@
  * define('GMCC_NEXT_REVALIDATE_URL', 'https://YOUR-NEXT-HOST/api/revalidate');
  * define('GMCC_NEXT_REVALIDATE_SECRET', 'same-value-as-Next-REVALIDATE_SECRET');
  * Optional:
- * define('GMCC_NEXT_REVALIDATE_TIMEOUT', 15); // seconds to wait for Next per request
+ * define('GMCC_NEXT_REVALIDATE_TIMEOUT', 30); // seconds to wait for Next per request (30 is the default)
  * define('GMCC_NEXT_REVALIDATE_DEBUG', true); // also log successes and skips
  * define('GMCC_NEXT_REVALIDATE_SITE_PASSWORD', '…'); // front end behind Headless Platform password protection
  *
@@ -30,7 +30,8 @@ if (defined('GMCC_NEXT_REVALIDATE_LOADED')) {
 define('GMCC_NEXT_REVALIDATE_LOADED', true);
 
 final class GMCC_Next_Revalidate {
-    const DEFAULT_TIMEOUT = 15;
+    // An event save makes Next re-render ~15 pages (listings, detail, every center), which can take 15s+.
+    const DEFAULT_TIMEOUT = 30;
     const ACCESS_COOKIE_TRANSIENT = 'gmcc_next_revalidate_access_cookie';
     // The platform's access cookie lasts 24 hours; refresh a little early.
     const ACCESS_COOKIE_TTL = 20 * HOUR_IN_SECONDS;
@@ -41,8 +42,12 @@ final class GMCC_Next_Revalidate {
 
     private static $queued = array();
     private static $was_published = array();
+    /** Event slug and schedule as they were before an update, so their old URLs refresh too. */
+    private static $previous_event = array();
 
     public static function init(): void {
+        // Fires before WordPress and ACF write the new values, so meta read here is still the old state.
+        add_action('pre_post_update', array(__CLASS__, 'on_pre_post_update'), 10, 2);
         add_action('transition_post_status', array(__CLASS__, 'on_transition_status'), 10, 3);
         add_action('save_post', array(__CLASS__, 'on_save_post'), 20, 3);
         add_action('before_delete_post', array(__CLASS__, 'on_delete_post'), 10, 1);
@@ -121,6 +126,10 @@ final class GMCC_Next_Revalidate {
 
         // Release the editor's HTTP response before waiting on Next (PHP-FPM / LiteSpeed).
         ignore_user_abort(true);
+        // The editor is no longer waiting, so allow the Next requests to finish past the usual PHP limit.
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(120);
+        }
         if (function_exists('fastcgi_finish_request')) {
             fastcgi_finish_request();
         } elseif (function_exists('litespeed_finish_request')) {
@@ -304,12 +313,7 @@ final class GMCC_Next_Revalidate {
             'slug' => $post->post_name,
             'action' => $post->post_status === 'publish' ? ($update ? 'update' : 'create') : 'unpublish',
         );
-        if ($post->post_type === 'event') {
-            $start = self::guess_event_start($post_id);
-            if ($start !== '') {
-                $payload['event_start'] = $start;
-            }
-        }
+        self::attach_event_fields($payload, $post_id, $post->post_type, $post->post_name);
         self::enqueue($payload);
     }
 
@@ -319,7 +323,9 @@ final class GMCC_Next_Revalidate {
         if (!$post instanceof WP_Post || wp_is_post_revision($post_id) || $post->post_status !== 'publish' || !self::is_tracked_post_type($post->post_type)) {
             return;
         }
-        self::enqueue(array('post_type' => $post->post_type, 'slug' => $post->post_name, 'action' => 'delete'));
+        $payload = array('post_type' => $post->post_type, 'slug' => $post->post_name, 'action' => 'delete');
+        self::attach_event_fields($payload, $post_id, $post->post_type, $post->post_name);
+        self::enqueue($payload);
     }
 
     public static function on_untrash_post(int $post_id): void {
@@ -327,7 +333,100 @@ final class GMCC_Next_Revalidate {
         if (!$post instanceof WP_Post || !self::is_tracked_post_type($post->post_type)) {
             return;
         }
-        self::enqueue(array('post_type' => $post->post_type, 'slug' => $post->post_name, 'action' => 'untrash'));
+        $payload = array('post_type' => $post->post_type, 'slug' => $post->post_name, 'action' => 'untrash');
+        self::attach_event_fields($payload, $post_id, $post->post_type, $post->post_name);
+        self::enqueue($payload);
+    }
+
+    public static function on_pre_post_update(int $post_id, $data): void {
+        if (!self::configured() || get_post_type($post_id) !== 'event') {
+            return;
+        }
+        $old = get_post($post_id);
+        self::$previous_event[$post_id] = array(
+            'slug' => $old instanceof WP_Post ? (string) $old->post_name : '',
+            'occurrences' => self::collect_event_occurrences($post_id),
+        );
+    }
+
+    /**
+     * Event detail pages live at /events/{yyyy}/{mm}/{slug}, so send that path (one per occurrence date).
+     * The previous slug and dates are included too, so a renamed or rescheduled event doesn't leave its
+     * old URL stale. Center pages are handled by the Next endpoint, which refreshes every /centers/{slug}
+     * on any event change (an edit may also move an event between centers).
+     */
+    private static function attach_event_fields(array &$payload, int $post_id, string $post_type, string $slug): void {
+        if ($post_type !== 'event') {
+            return;
+        }
+        $previous = isset(self::$previous_event[$post_id])
+            ? self::$previous_event[$post_id]
+            : array('slug' => '', 'occurrences' => array());
+
+        $occurrences = self::collect_event_occurrences($post_id);
+        if (empty($occurrences)) {
+            self::debug('No event schedule found for event #' . $post_id . ' (' . $slug . '); detail page path not sent.');
+        } else {
+            $active = self::pick_active_event_start($occurrences);
+            if ($active !== '') {
+                $payload['event_start'] = $active;
+            }
+        }
+
+        $paths = array_values(array_unique(array_merge(
+            self::event_detail_paths($slug, $occurrences),
+            self::event_detail_paths($previous['slug'], $previous['occurrences'])
+        )));
+        if (!empty($paths)) {
+            $payload['paths'] = $paths;
+        }
+    }
+
+    /**
+     * Raw (unformatted) ACF value: get_field() would apply the field's display format
+     * (e.g. "10/30/2026 5:00 pm"), but we need the stored value. Also looks inside a group field.
+     *
+     * @param list<string> $names
+     * @return mixed|null
+     */
+    private static function acf_value(int $post_id, array $names) {
+        if (!function_exists('get_field')) {
+            return null;
+        }
+        foreach ($names as $name) {
+            $value = get_field($name, $post_id, false);
+            if ($value !== null && $value !== '' && $value !== false && $value !== array()) {
+                return $value;
+            }
+        }
+        foreach (array('event_fields', 'eventFields') as $group) {
+            $values = get_field($group, $post_id, false);
+            if (!is_array($values)) {
+                continue;
+            }
+            foreach ($names as $name) {
+                if (isset($values[$name]) && $values[$name] !== '' && $values[$name] !== array()) {
+                    return $values[$name];
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Normalize a stored/formatted date to start with YYYY-MM-DD, or '' if it can't be understood. */
+    private static function normalize_datetime(string $raw): string {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $raw)) {
+            return $raw;
+        }
+        if (preg_match('/^(\d{4})(\d{2})(\d{2})(?:\D|$)/', $raw, $m)) {
+            return $m[1] . '-' . $m[2] . '-' . $m[3];
+        }
+        $ts = strtotime($raw);
+        return $ts === false ? '' : gmdate('Y-m-d H:i:s', $ts);
     }
 
     public static function on_term_change(int $term_id, int $tt_id, string $taxonomy): void {
@@ -354,27 +453,158 @@ final class GMCC_Next_Revalidate {
         self::enqueue(array('object_type' => 'nav_menu', 'action' => 'menu_update'));
     }
 
-    private static function guess_event_start(int $post_id): string {
-        foreach (array('event_schedule_start_date', 'start_date', 'event_start', 'eventStart') as $key) {
-            $value = get_post_meta($post_id, $key, true);
-            if (is_string($value) && $value !== '') {
-                return $value;
-            }
+    /**
+     * Read ACF eventSchedule repeater rows.
+     * GraphQL shape: eventSchedule { datetime { startDatetime endDatetime } }
+     * PHP/ACF typically uses snake_case field names.
+     *
+     * @return array<int, array{start: string, end: string}>
+     */
+    private static function collect_event_occurrences(int $post_id): array {
+        $rows = array();
+
+        $value = self::acf_value($post_id, array('event_schedule', 'eventSchedule'));
+        if (is_array($value)) {
+            $rows = $value;
         }
-        $schedule = get_post_meta($post_id, 'event_schedule', true);
-        if (is_array($schedule)) {
-            foreach ($schedule as $row) {
-                if (!is_array($row)) {
-                    continue;
-                }
-                foreach (array('start_date', 'startDate', 'date') as $key) {
-                    if (!empty($row[$key]) && is_string($row[$key])) {
-                        return $row[$key];
+
+        if ($rows === array()) {
+            $meta = get_post_meta($post_id, 'event_schedule', true);
+            if (is_array($meta)) {
+                $rows = $meta;
+            } elseif (is_numeric($meta) && (int) $meta > 0) {
+                // ACF stores repeater length in event_schedule and values in indexed meta keys.
+                for ($i = 0; $i < (int) $meta; $i++) {
+                    $start = get_post_meta($post_id, "event_schedule_{$i}_datetime_start_datetime", true);
+                    $end = get_post_meta($post_id, "event_schedule_{$i}_datetime_end_datetime", true);
+                    if (!is_string($start) || $start === '') {
+                        $start = get_post_meta($post_id, "event_schedule_{$i}_start_datetime", true);
                     }
+                    if (!is_string($end) || $end === '') {
+                        $end = get_post_meta($post_id, "event_schedule_{$i}_end_datetime", true);
+                    }
+                    $rows[] = array(
+                        'datetime' => array(
+                            'start_datetime' => is_string($start) ? $start : '',
+                            'end_datetime' => is_string($end) ? $end : '',
+                        ),
+                    );
                 }
             }
         }
-        return '';
+
+        $occurrences = array();
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $pair = self::occurrence_from_row($row);
+            if ($pair['start'] === '' && $pair['end'] === '') {
+                continue;
+            }
+            $occurrences[] = $pair;
+        }
+
+        if (empty($occurrences)) {
+            // Legacy single-field fallbacks.
+            foreach (array('event_schedule_start_date', 'start_date', 'event_start', 'eventStart') as $key) {
+                $value = get_post_meta($post_id, $key, true);
+                $start = is_string($value) ? self::normalize_datetime($value) : '';
+                if ($start !== '') {
+                    $occurrences[] = array('start' => $start, 'end' => '');
+                    break;
+                }
+            }
+        }
+
+        usort(
+            $occurrences,
+            static function (array $a, array $b): int {
+                return self::occurrence_start_ts($a) <=> self::occurrence_start_ts($b);
+            }
+        );
+
+        return $occurrences;
+    }
+
+    /** @return array{start: string, end: string} */
+    private static function occurrence_from_row(array $row): array {
+        $dt = (isset($row['datetime']) && is_array($row['datetime'])) ? $row['datetime'] : $row;
+        $start = '';
+        $end = '';
+        foreach (array('start_datetime', 'startDatetime', 'start_date', 'startDate', 'date') as $key) {
+            if (!empty($dt[$key]) && is_string($dt[$key])) {
+                $start = $dt[$key];
+                break;
+            }
+        }
+        foreach (array('end_datetime', 'endDatetime', 'end_date', 'endDate') as $key) {
+            if (!empty($dt[$key]) && is_string($dt[$key])) {
+                $end = $dt[$key];
+                break;
+            }
+        }
+        return array('start' => self::normalize_datetime($start), 'end' => self::normalize_datetime($end));
+    }
+
+    /** @param array{start: string, end: string} $occurrence */
+    private static function occurrence_start_ts(array $occurrence): int {
+        $raw = $occurrence['start'] !== '' ? $occurrence['start'] : $occurrence['end'];
+        if ($raw === '') {
+            return 0;
+        }
+        $ts = strtotime($raw);
+        return $ts === false ? 0 : $ts;
+    }
+
+    /** @param array{start: string, end: string} $occurrence */
+    private static function occurrence_end_ts(array $occurrence): int {
+        $raw = $occurrence['end'] !== '' ? $occurrence['end'] : $occurrence['start'];
+        if ($raw === '') {
+            return 0;
+        }
+        $ts = strtotime($raw);
+        return $ts === false ? 0 : $ts;
+    }
+
+    /**
+     * Match Next getEventDateInfo: next occurrence that has not ended, else the last one.
+     *
+     * @param array<int, array{start: string, end: string}> $occurrences
+     */
+    private static function pick_active_event_start(array $occurrences): string {
+        if (empty($occurrences)) {
+            return '';
+        }
+        $now = time();
+        foreach ($occurrences as $occurrence) {
+            if (self::occurrence_end_ts($occurrence) >= $now) {
+                return $occurrence['start'] !== '' ? $occurrence['start'] : $occurrence['end'];
+            }
+        }
+        $last = $occurrences[count($occurrences) - 1];
+        return $last['start'] !== '' ? $last['start'] : $last['end'];
+    }
+
+    /**
+     * Detail URL for each occurrence date (the site builds /events/{yyyy}/{mm}/{slug} from the start date).
+     * Dates are already normalized to YYYY-MM-DD... by collect_event_occurrences().
+     *
+     * @param array<int, array{start: string, end: string}> $occurrences
+     * @return list<string>
+     */
+    private static function event_detail_paths(string $slug, array $occurrences): array {
+        if ($slug === '') {
+            return array();
+        }
+        $paths = array();
+        foreach ($occurrences as $occurrence) {
+            $raw = $occurrence['start'] !== '' ? $occurrence['start'] : $occurrence['end'];
+            if (preg_match('/^(\d{4})-(\d{2})/', $raw, $m)) {
+                $paths[] = '/events/' . $m[1] . '/' . $m[2] . '/' . $slug;
+            }
+        }
+        return array_values(array_unique($paths));
     }
 }
 
