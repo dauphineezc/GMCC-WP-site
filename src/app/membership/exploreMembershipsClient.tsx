@@ -8,6 +8,7 @@ import {
   useRef,
   useCallback,
   useEffect,
+  useLayoutEffect,
 } from "react";
 import { useAppSearchParams } from "@/lib/appNavigation";
 import FinancialAidEstimator from "@/components/financialAidEstimator";
@@ -191,6 +192,8 @@ export default function ExploreMembershipsClient({
   const membershipsRef = useRef<HTMLDivElement>(null);
   const plansSectionRef = useRef<HTMLElement | null>(null);
   const estimatorRef = useRef<HTMLDivElement>(null);
+  /** Viewport Y of #plans before a center change; restored so amenities height shifts don't jump the page (esp. mobile). */
+  const pendingPlansAnchorTop = useRef<number | null>(null);
 
   /** Deep link: /membership?center=tennis-center#plans */
   const centerParam = searchParams.get("center");
@@ -203,6 +206,28 @@ export default function ExploreMembershipsClient({
       : undefined;
     if (match) setActiveCenter(match.slug);
   }
+
+  const selectCenterFromPlans = useCallback(
+    (slug: string) => {
+      if (slug === activeCenter) return;
+      const anchor = plansSectionRef.current ?? membershipsRef.current;
+      pendingPlansAnchorTop.current = anchor?.getBoundingClientRect().top ?? null;
+      setActiveCenter(slug);
+    },
+    [activeCenter],
+  );
+
+  // Keep #plans visually anchored when amenities (above) change height with the center.
+  // Desktop browsers usually do this via CSS scroll anchoring; mobile often does not.
+  useLayoutEffect(() => {
+    const topBefore = pendingPlansAnchorTop.current;
+    if (topBefore == null) return;
+    pendingPlansAnchorTop.current = null;
+    const el = plansSectionRef.current ?? membershipsRef.current;
+    if (!el) return;
+    const delta = el.getBoundingClientRect().top - topBefore;
+    if (Math.abs(delta) > 0.5) window.scrollBy(0, delta);
+  }, [activeCenter]);
 
   /**
    * App Router often does not scroll to `#plans` on client navigations.
@@ -532,7 +557,7 @@ export default function ExploreMembershipsClient({
                     key={c.slug}
                     type="button"
                     onClick={() => {
-                      setActiveCenter(c.slug);
+                      selectCenterFromPlans(c.slug);
                     }}
                     className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
                       activeCenter === c.slug

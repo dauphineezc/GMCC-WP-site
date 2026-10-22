@@ -45,7 +45,6 @@ export type ProgramCard = {
   centers: { slug: string; title: string }[];
   programAreas: { slug: string; name: string }[];
   badge: ProgramBadge;
-  isSpecialtyFitnessClass: boolean;
   registrationLink: string | null;
   priceFrom: number | null;
   campTypes: { slug: string; name: string }[];
@@ -63,12 +62,18 @@ function isSilverSneakersProgramArea(areas: { slug: string }[]): boolean {
   });
 }
 
+function isSpecialtyFitnessProgramArea(areas: { slug: string }[]): boolean {
+  return areas.some((area) => {
+    const slug = area.slug?.toLowerCase() ?? "";
+    return slug === "specialty-fitness";
+  });
+}
+
 function resolveProgramBadge(
   programAreas: { slug: string }[],
-  isSpecialtyRaw: unknown,
 ): ProgramBadge {
   if (isSilverSneakersProgramArea(programAreas)) return "silversneakers";
-  if (normalizeAcfBoolean(isSpecialtyRaw)) return "specialty";
+  if (isSpecialtyFitnessProgramArea(programAreas)) return "specialty";
   return null;
 }
 
@@ -115,7 +120,6 @@ export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
       name: n?.name,
     })).filter((x: any) => x?.slug && x?.name) ?? [];
 
-  const isSpecialtyFitnessClass = normalizeAcfBoolean(f.isSpecialtyFitnessClass);
   const heroNode = hero ?? galleryHero;
   const objectPosition = mediaFocalPositionCss(heroNode);
 
@@ -147,8 +151,7 @@ export function mapProgramForExplorer(wp: ProgramWP): ProgramCard {
       name: n?.name,
     })).filter((x: any) => x?.slug && x?.name) ?? [],
 
-    badge: resolveProgramBadge(programAreas, f.isSpecialtyFitnessClass),
-    isSpecialtyFitnessClass,
+    badge: resolveProgramBadge(programAreas),
     registrationLink: f.registrationInformation?.registrationLink ?? null,
   };
 }
@@ -1027,7 +1030,7 @@ export default function ExploreProgramsClient({
               <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
                 {(() => {
                   const isGroupFitness = p.programAreas.some(a => a.slug === "group-fitness");
-                  const isSpecialty = p.badge === "specialty" || p.badge === "silversneakers";
+                  const isSpecialty = p.badge === "specialty";
                   const showQuickRegister = isGroupFitness && !isSpecialty && p.registrationLink;
                   return showQuickRegister ? (
                     <a

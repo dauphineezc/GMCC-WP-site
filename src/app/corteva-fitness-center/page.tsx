@@ -70,18 +70,64 @@ const renderScheduleFile = (url?: string, label?: string) => {
     );
 
     if (isPdf) {
+      const title = label || "PDF document";
+      const openLabel = label?.toLowerCase().includes("pdf")
+        ? `Open ${label}`
+        : label
+          ? `Open ${label} PDF`
+          : "Open PDF";
+
       return (
         <div className="space-y-3">
-          <div className="overflow-hidden bg-white p-8">
+          {/* Desktop: inline preview works; mobile browsers shrink PDFs in iframes */}
+          <div className="hidden overflow-hidden bg-white p-4 md:block md:p-8">
             <iframe
-              src={url}
-              title={label ? `${label} schedule PDF` : "Schedule PDF"}
+              src={`${url}#toolbar=1&navpanes=0`}
+              title={title}
               className="h-[720px] w-full"
             />
           </div>
-          {/* <a href={url} target="_blank" rel="noopener noreferrer" className="text-gmcc-teal underline">
-            Open PDF in new tab
-          </a> */}
+
+          {/* Mobile: open in a new tab so the native PDF viewer can zoom */}
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center gap-4 border border-neutral-200 bg-white px-6 py-10 text-center md:hidden"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-12 w-12 text-gmcc-teal"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M7 3.75h6.75L19 9v11.25A1.5 1.5 0 0 1 17.5 21.75h-11A1.5 1.5 0 0 1 5 20.25V5.25A1.5 1.5 0 0 1 6.5 3.75Z"
+              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 3.75V9H19" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 14.25h7.5M8.25 17.25h5" />
+            </svg>
+            <div>
+              <p className="font-semibold text-gmcc-navy">{label || "PDF"}</p>
+              <p className="mt-1 text-sm text-neutral-600">Tap to view and zoom</p>
+            </div>
+            <span className="btn btn-primary">{openLabel}</span>
+          </a>
+
+          <div className="hidden text-center md:block">
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gmcc-teal underline"
+            >
+              Open PDF in new tab
+            </a>
+          </div>
         </div>
       );
     }

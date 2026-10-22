@@ -183,9 +183,9 @@ export default function HeroSection({
             {/* Dark overlay */}
             <div className="pointer-events-none absolute inset-0 z-10 bg-black/40" />
 
-            {/* Copy — top-aligned on mobile so subhead/CTAs clear the bottom wave */}
-            <div className="absolute inset-0 z-20 flex items-end">
-              <div className="w-full px-8 md:px-12 pb-[16rem]">
+            {/* Copy — bottom-anchored; pt acts as a ceiling so large a11y text never clips under the top chrome */}
+            <div className="absolute inset-0 z-20 flex flex-col justify-end pt-20 md:pt-24">
+              <div className="min-h-0 w-full overflow-y-auto px-8 pb-[16rem] md:px-12">
                 <div className="max-w-2xl text-white">
                   <h1 className="text-5xl font-semibold tracking-tight md:text-7xl">
                     {headline}
