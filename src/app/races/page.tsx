@@ -123,6 +123,14 @@ const RACES_PAGE_QUERY = /* GraphQL */ `
               title
             }
           }
+          sponsorRsvpFormLabel
+          sponsorRsvpForm {
+            node {
+            sourceUrl
+              mediaItemUrl
+              title
+            }
+          }
         }
 
         previousRacesHeader
@@ -332,6 +340,8 @@ type RacesPageFields = {
     cta: string;
     sponsorshipPdfLabel: string;
     sponsorshipPdf: MediaFieldInput;
+    sponsorRsvpFormLabel: string;
+    sponsorRsvpForm: MediaFieldInput;
   };
   previousRacesHeader: string;
   previousRacesBody: string;
@@ -439,6 +449,8 @@ function initializeRacesPageFields(raw: Record<string, unknown> | null | undefin
       cta: asString(sponsorCard.cta),
       sponsorshipPdfLabel: asString(sponsorCard.sponsorshipPdfLabel),
       sponsorshipPdf: (sponsorCard.sponsorshipPdf as MediaFieldInput) ?? null,
+      sponsorRsvpFormLabel: asString(sponsorCard.sponsorRsvpFormLabel),
+      sponsorRsvpForm: (sponsorCard.sponsorRsvpForm as MediaFieldInput) ?? null,
     },
     previousRacesHeader: asString(f.previousRacesHeader),
     previousRacesBody: asString(f.previousRacesBody),
@@ -892,6 +904,16 @@ export default async function RacesPage() {
                       className="btn btn-secondary"
                     >
                       {fields.sponsorCard.sponsorshipPdfLabel}
+                    </a>
+                  ) : null}
+                  {fields.sponsorCard.sponsorRsvpForm ? (
+                    <a
+                      href={acfFileHref(fields.sponsorCard.sponsorRsvpForm)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-secondary"
+                    >
+                      {fields.sponsorCard.sponsorRsvpFormLabel}
                     </a>
                   ) : null}
                 </div>

@@ -525,7 +525,7 @@ export default function ExploreEventsClient({
 
                 {openDropdowns.has("date") && (
                     <div className="space-y-2 pt-2 pb-2">
-                    <label className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900">
                         <input
                         type="radio"
                         name="dateFilter"
@@ -534,7 +534,7 @@ export default function ExploreEventsClient({
                         />
                         <span>Upcoming</span>
                     </label>
-                    <label className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900">
                         <input
                         type="radio"
                         name="dateFilter"
@@ -543,7 +543,7 @@ export default function ExploreEventsClient({
                         />
                         <span>Past</span>
                     </label>
-                    <label className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900">
                         <input
                         type="radio"
                         name="dateFilter"
@@ -582,7 +582,7 @@ export default function ExploreEventsClient({
                 {openDropdowns.has("eventType") && (
                     <div className="space-y-1 pt-2 pb-2">
                     {eventTypeOptions.map((t) => (
-                        <label key={t} className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                        <label key={t} className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900">
                         <input
                             type="checkbox"
                             checked={eventTypes.includes(t)}
@@ -622,7 +622,7 @@ export default function ExploreEventsClient({
                 {openDropdowns.has("centers") && (
                     <div className="space-y-1 pt-2 pb-2">
                     {centerOptions.map((c) => (
-                        <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                        <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900">
                         <input
                             type="checkbox"
                             checked={centers.includes(c.slug)}
@@ -662,7 +662,7 @@ export default function ExploreEventsClient({
                 {openDropdowns.has("audience") && (
                     <div className="space-y-1 pt-2 pb-2">
                     {audienceOptions.map((a) => (
-                        <label key={a.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                        <label key={a.slug} className="flex items-center gap-2 text-sm cursor-pointer text-gmcc-grey-dark hover:text-neutral-900">
                         <input
                             type="checkbox"
                             checked={audience.includes(a.slug)}
@@ -685,7 +685,7 @@ export default function ExploreEventsClient({
                     setEventTypes([]);
                     setCenters([]);
                     setDateFilter("upcoming");
-                    setOpenDropdowns(new Set());
+                    setOpenDropdowns(new Set(["date"]));
                 }}
                 >
                 Clear filters

@@ -285,6 +285,7 @@ export default function Navbar({
               width={220}
               height={96}
               className={`w-auto transition-all duration-300 ${isScrolled ? "h-10 xl:h-12" : "h-16 xl:h-[96px]"}`}
+              style={{ width: "auto" }}
               priority
             />
           </Link>
