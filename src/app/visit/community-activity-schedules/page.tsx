@@ -8,11 +8,30 @@ import {
 import { scheduleEmbedUrl } from "@/lib/constants";
 import type { Metadata } from "next";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
+import WysiwygText from "@/components/wysiwygText";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
   return getYoastMetadata("/visit/community-activity-schedules");
 }
+
+const COMMUNITY_ACTIVITY_SCHEDULES_EXTRA_FIELDS = `
+  communityActivitySchedulesPageFields {
+    header
+    description
+    calendarInstructions
+  }
+`;
+
+type CommunityActivitySchedulesPageFields = {
+  header?: string | null;
+  description?: string | null;
+  calendarInstructions?: string | null;
+};
+
+type CommunityActivitySchedulesExtra = {
+  communityActivitySchedulesPageFields?: CommunityActivitySchedulesPageFields | null;
+};
 
 const faqItems = [
   {
@@ -21,7 +40,7 @@ const faqItems = [
     content: (
       <div className="gmcc-schedule-embed mt-4">
         <ScheduleEmbedIframe
-          src={scheduleEmbedUrl({ center: "community",type: "dropin", sub: "community" })}
+          src={scheduleEmbedUrl({ center: "community", type: "dropin", sub: "community" })}
           title="Community Center activity schedule"
         />
       </div>
@@ -30,8 +49,16 @@ const faqItems = [
 ];
 
 export default async function CommunityActivitySchedulesPage() {
-  const page = await fetchPageWithHeroFields("community-activity-schedules");
+  const page = await fetchPageWithHeroFields<CommunityActivitySchedulesExtra>(
+    "community-activity-schedules",
+    COMMUNITY_ACTIVITY_SCHEDULES_EXTRA_FIELDS,
+  );
   const hero = resolvePhotoWaveHeaderProps(page, "Community Activity Schedules");
+  const fields = page?.communityActivitySchedulesPageFields;
+
+  const header = fields?.header?.trim() || null;
+  const description = fields?.description?.trim() || null;
+  const calendarInstructions = fields?.calendarInstructions?.trim() || null;
 
   return (
     <main>
@@ -43,15 +70,12 @@ export default async function CommunityActivitySchedulesPage() {
         ctas={hero.ctas}
       /> */}
 
-      <SolidNavyWaveHeader title={hero.title} description={hero.subheader}/>
+      <SolidNavyWaveHeader title={hero.title} description={hero.subheader} />
 
       <div className="page-section stack-8">
-        <h3 className="text-xl text-neutral-700 mt-0 mb-4">
-          Make new friends and learn new skills by participating in a community activity.
-          Free for members; $7 per non-member participant. View the schedules for all community
-          activities at the Community Center below.
-        </h3>
-        <p className="text-neutral-700 text-sm mt-8 mb-4">Click on an activity for more information.</p>
+        {header ? <h1 className="h1">{header}</h1> : null}
+        {description ? <WysiwygText html={description} /> : null}
+        {calendarInstructions ? <p className="body">{calendarInstructions}</p> : null}
 
         <Accordion items={faqItems} allowMultiple={false} defaultOpenIds={["1"]} />
       </div>

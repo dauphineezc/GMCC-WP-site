@@ -6,14 +6,42 @@ import {
 import { LEAGUE_SCHEDULE_EMBED_URL } from "@/lib/constants";
 import type { Metadata } from "next";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
+import WysiwygText from "@/components/wysiwygText";
+
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
   return getYoastMetadata("/visit/league-schedules");
 }
 
+const LEAGUE_SCHEDULES_EXTRA_FIELDS = `
+  leagueSchedulesPageFields {
+    header
+    description
+    lmsInstructions
+  }
+`;
+
+type LeagueSchedulesPageFields = {
+  header?: string | null;
+  description?: string | null;
+  lmsInstructions?: string | null;
+};
+
+type LeagueSchedulesExtra = {
+  leagueSchedulesPageFields?: LeagueSchedulesPageFields | null;
+};
+
 export default async function LeagueSchedulesPage() {
-  const page = await fetchPageWithHeroFields("league-schedules");
+  const page = await fetchPageWithHeroFields<LeagueSchedulesExtra>(
+    "league-schedules",
+    LEAGUE_SCHEDULES_EXTRA_FIELDS,
+  );
   const hero = resolvePhotoWaveHeaderProps(page, "League Schedules");
+  const fields = page?.leagueSchedulesPageFields;
+
+  const header = fields?.header?.trim() || null;
+  const description = fields?.description?.trim() || null;
+  const lmsInstructions = fields?.lmsInstructions?.trim() || null;
 
   return (
     <main>
@@ -25,18 +53,12 @@ export default async function LeagueSchedulesPage() {
         ctas={hero.ctas}
       /> */}
 
-      <SolidNavyWaveHeader title={hero.title} description={hero.subheader}/>
-
+      <SolidNavyWaveHeader title={hero.title} description={hero.subheader} />
 
       <div className="page-section stack-8">
-        <h3 className="text-xl text-neutral-700 mt-0 mb-4">
-          Need to check the schedule for a league you&apos;re playing in, or want to watch a thrilling
-          game? View the schedules for all in-house leagues (including basketball, volleyball, and more)
-          below.
-        </h3>
-        <p className="text-neutral-700 text-xl mt-0 mb-8">
-          Select the league you&apos;re interested in to view the schedule.
-        </p>
+        {header ? <h1 className="h1">{header}</h1> : null}
+        {description ? <WysiwygText html={description} /> : null}
+        {lmsInstructions ? <p className="body">{lmsInstructions}</p> : null}
 
         <div className="gmcc-schedule-embed mt-4">
           <iframe

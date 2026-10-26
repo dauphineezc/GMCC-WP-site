@@ -325,7 +325,8 @@ export default function CampsProgramsExplorerClient({
     }
     if (!scrollResultsAfterPageButtonRef.current) return;
     scrollResultsAfterPageButtonRef.current = false;
-    const el = document.getElementById("camps-results");
+    // Scroll to the card grid (not #camp-results) so title/filters don't push the first card off-screen on mobile.
+    const el = document.getElementById("camp-results-cards");
     if (!el) return;
     const active = document.activeElement;
     if (active instanceof HTMLElement && el.contains(active)) {
@@ -340,15 +341,15 @@ export default function CampsProgramsExplorerClient({
   const activeFilterCount = centers.length + campTypes.length + (search.trim() ? 1 : 0);
 
   /**
-   * Deep-link scroll only for browse-by-center cards (`?center=…#camps-results`).
-   * Not `?center=` alone, not `#camps-results` alone — avoids jumping on normal /camps visits.
+   * Deep-link scroll only for browse-by-center cards (`?center=…#camp-results`).
+   * Not `?center=` alone, not `#camp-results` alone — avoids jumping on normal /camps visits.
    * Strip the hash after scrolling so filter-driven `searchParams` updates do not re-scroll.
    */
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (window.location.hash !== "#camps-results") return;
+    if (window.location.hash !== "#camp-results") return;
     if (!searchParams.get("center")) return;
-    const el = document.getElementById("camps-results");
+    const el = document.getElementById("camp-results");
     if (!el) return;
     const id = window.requestAnimationFrame(() => {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -362,10 +363,7 @@ export default function CampsProgramsExplorerClient({
   const rangeEnd = filtered.length === 0 ? 0 : Math.min(safePage * CAMPS_RESULTS_PER_PAGE, filtered.length);
 
   return (
-    <div
-      id="camp-results"
-      className="mx-auto max-w-6xl scroll-mt-24 px-4 py-8 section-y stack-8 lg:scroll-mt-28"
-    >
+    <div className="mx-auto max-w-6xl px-4 py-8 section-y stack-8">
       <section className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="card h-fit lg:sticky lg:top-18">
           <button
@@ -532,7 +530,10 @@ export default function CampsProgramsExplorerClient({
             </div>
           ) : null}
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            id="camp-results-cards"
+            className="grid scroll-mt-24 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:scroll-mt-28"
+          >
             {pagedResults.map((p) => (
               <a
                 key={p.slug}

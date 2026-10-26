@@ -641,7 +641,7 @@ export default async function CampsPage() {
       ) : null}
 
 
-      <section id="camp-results" className="page-section">
+      <section id="camp-results" className="page-section scroll-mt-24 lg:scroll-mt-28">
       {resultsHeader ? <h2 className="h2 text-gmcc-navy">{resultsHeader}</h2> : null}
       {resultsBody ? <p className="body mt-4 text-neutral-700">{resultsBody}</p> : null}
 

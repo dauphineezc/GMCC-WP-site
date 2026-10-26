@@ -9,6 +9,7 @@ import { scheduleEmbedUrl } from "@/lib/constants";
 import type { Metadata } from "next";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
 import Link from "next/link";
+import WysiwygText from "@/components/wysiwygText";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -113,13 +114,13 @@ export default async function GroupFitnessSchedulesPage() {
   const fields = page?.groupFitnessSchedulesPageFields;
 
   const header =
-    fields?.header?.trim() || "Group Fitness Schedules";
+    fields?.header?.trim() || null;
   const description =
     fields?.description?.trim() ||
-    "Choose from a variety of group fitness classes to fit your schedule, goals, and interests. View the schedules for all group fitness classes below.";
+    null;
   const calendarInstructions =
     fields?.calendarInstructions?.trim() ||
-    "Click on a class for more information and to register.";
+    null;
 
   return (
     <main>
@@ -133,9 +134,9 @@ export default async function GroupFitnessSchedulesPage() {
       <SolidNavyWaveHeader title={hero.title} description={hero.subheader}/>
 
       <div className="page-section stack-8">
-        <h1 className="h1">{header}</h1>
-        <h3 className="text-xl text-neutral-700 mt-0 mb-4 whitespace-pre-line">{description}</h3>
-        <p className="body">{calendarInstructions}</p>
+        {header ? <h1 className="h1">{header}</h1> : null}
+        {description ? <WysiwygText html={description} /> : null}
+        {calendarInstructions ? <p className="body">{calendarInstructions}</p> : null}
 
         <Accordion
           items={faqItems}

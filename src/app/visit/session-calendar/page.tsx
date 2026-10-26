@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import AttachmentsCard from "@/components/detail/attachmentsCard";
 import { acfFileHref, type AttachmentItem, type WpMediaFieldInput, type WpMediaRef } from "@/lib/wp";
 import SolidNavyWaveHeader from "@/components/solidNavyWaveHeader";
+import WysiwygText from "@/components/wysiwygText";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -16,6 +17,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const SESSION_CALENDAR_EXTRA_FIELDS = `
   sessionCalendarPageFields {
+    header
+    description
+    calendarInstructions
     communityCenterSessionCalendar
     communityCenterSessionBrochure { node { sourceUrl mediaItemUrl title } }
     tennisCenterSessionCalendar
@@ -28,6 +32,9 @@ const SESSION_CALENDAR_EXTRA_FIELDS = `
 `;
 
 type SessionCalendarPageFields = {
+  header?: string | null;
+  description?: string | null;
+  calendarInstructions?: string | null;
   communityCenterSessionCalendar?: string | null;
   communityCenterSessionBrochure?: WpMediaFieldInput | null;
   tennisCenterSessionCalendar?: string | null;
@@ -135,6 +142,10 @@ export default async function SessionCalendarPage() {
   const hero = resolvePhotoWaveHeaderProps(page, "Session Calendar");
   const fields = page?.sessionCalendarPageFields;
 
+  const header = fields?.header?.trim() || null;
+  const description = fields?.description?.trim() || null;
+  const calendarInstructions = fields?.calendarInstructions?.trim() || null;
+
   const accordionItems = CENTER_SCHEDULE_SECTIONS.map(({ id, title, field, brochureField }) => ({
     id,
     title,
@@ -150,12 +161,12 @@ export default async function SessionCalendarPage() {
         ctas={hero.ctas}
       /> */}
 
-      <SolidNavyWaveHeader title={hero.title} description={hero.subheader}/>
+      <SolidNavyWaveHeader title={hero.title} description={hero.subheader} />
 
       <div className="page-section stack-8">
-        <p className="body text-neutral-700">
-          Click on a center to view the session calendar.
-        </p>
+        {header ? <h1 className="h1">{header}</h1> : null}
+        {description ? <WysiwygText html={description} /> : null}
+        {calendarInstructions ? <p className="body">{calendarInstructions}</p> : null}
 
         <Accordion items={accordionItems} allowMultiple={false} defaultOpenIds={[]} />
       </div>

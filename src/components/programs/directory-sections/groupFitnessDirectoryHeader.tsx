@@ -17,26 +17,26 @@ export function GroupFitnessDirectoryHeader({
   return (
     <div className={className}>
       <DirectoryHeaderShell data={safe} />
-      <DropInCareSection
+      {/* <DropInCareSection
         fields={{
           dropInCareHeader: safe.dropInCareHeader ?? "",
           dropInCareDescription: safe.dropInCareDescription ?? "",
-          childwatchCard: safe.childwatchCard ?? {
-            header: "",
-            body: "",
-            ctaLabel: "",
-            ctaHref: "",
-            icon: { src: "", alt: "" },
-          },
-          theZoneCard: safe.theZoneCard ?? {
-            header: "",
-            body: "",
-            ctaLabel: "",
-            ctaHref: "",
-            icon: { src: "", alt: "" },
-          },
+          // childwatchCard: safe.childwatchCard ?? {
+          //   header: "",
+          //   body: "",
+          //   ctaLabel: "",
+          //   ctaHref: "",
+          //   icon: { src: "", alt: "" },
+          // },
+          // theZoneCard: safe.theZoneCard ?? {
+          //   header: "",
+          //   body: "",
+          //   ctaLabel: "",
+          //   ctaHref: "",
+          //   icon: { src: "", alt: "" },
+          // },
         }}
-      />
+      /> */}
     </div>
   );
 }

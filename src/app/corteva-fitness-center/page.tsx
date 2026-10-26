@@ -133,14 +133,36 @@ const renderScheduleFile = (url?: string, label?: string) => {
     }
 
     if (isImage) {
+      const alt = label || "Membership tiers";
+
       return (
         <div className="space-y-3">
-          <div className="overflow-hidden bg-white p-8">
-            <img src={url} alt={label ? `${label} schedule` : "Schedule"} className="h-auto w-full object-contain" />
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block overflow-hidden bg-white p-2"
+            aria-label={`View in full screen: ${alt}`}
+          >
+            <img
+              src={url}
+              alt={alt}
+              className="h-auto w-full object-contain transition-opacity group-hover:opacity-95"
+            />
+            <p className="mt-3 text-center text-sm text-neutral-600 md:hidden">
+              Tap to view in a new tab
+            </p>
+          </a>
+          <div className="hidden text-center md:block">
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 text-center text-sm text-neutral-600"
+            >
+              Click to view in a new tab
+            </a>
           </div>
-          {/* <a href={url} target="_blank" rel="noopener noreferrer" className="text-gmcc-teal underline">
-            Open file in new tab
-          </a> */}
         </div>
       );
     }

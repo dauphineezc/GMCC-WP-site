@@ -44,18 +44,20 @@ function normalizeWpUrlToPath(url: string) {
   // headerVariant is captured client-side then immediately stripped from the
   // address bar, so it never stays visible. Use it whenever the filter set
   // would otherwise resolve to the wrong specialized header.
-  const PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
+  const AQUATICS_PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
     // Aquatics
     "Aquatics": "/programs?" + buildQuery({ programArea: "Aquatics" }),
     "Youth Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "youth,early-years" }),
     "Adult Swim Lessons": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Aquatics", audience: "adult" }),
-
+  };
+  const FITNESS_PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
     // Fitness
     "Fitness": "/programs?" + buildQuery({ offeringType: "Class,Drop-In,Lessons/Training", programArea: "Aquatics,Group Fitness,Personal Training,SilverSneakers,Walking", headerVariant: "fitness" }),
     "Group Fitness Classes": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness", headerVariant: "group-fitness" }),
     "SilverSneakers": "/programs?" + buildQuery({ offeringType: "Class", programArea: "SilverSneakers,Group Fitness", headerVariant: "silversneakers" }),
     "Renew Active/One Pass": "/programs?" + buildQuery({ offeringType: "Class", programArea: "Group Fitness", headerVariant: "renew-active" }),
-
+  };
+  const SPORTS_AND_RECREATION_PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
     // Sports and Recreation
     "Sports and Recreation": "/programs?" + buildQuery({ programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Middle School Athletics,Misc/Other Sports,Racquet Sports", headerVariant: "sports-and-recreation" }),
     "Youth Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic,Lessons/Training", programArea: "Aquatics,Basketball,Cheer and Pom,Curling,Middle School Athletics,Misc/Other Sports,Racquet Sports", audience: "youth,early-years" }),
@@ -63,22 +65,34 @@ function normalizeWpUrlToPath(url: string) {
     "Middle School Athletics": "/programs?" + buildQuery({ programArea: "middle-school-athletics", headerVariant: "middle-school-athletics" }),
     "Adult Classes and Clinics": "/programs?" + buildQuery({ offeringType: "Class,Clinic", programArea: "Aquatics,Basketball,Curling,Gymnastics,Misc/Other Sports,Racquet Sports,Pickleball,Tennis,Specialty Fitness,Volleyball", audience: "adult" }),   
     "Adult Sports Leagues": "/programs?" + buildQuery({ offeringType: "League/Team", programArea: "Basketball,Cheer and Pom,Curling,Misc/Other Sports,Racquet Sports", audience: "adult" }),
-
+  };
+  const CAMP_PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
     // Camps
     "Camps": "/camps",
-    "Preschool Half-Day Camps": "/camps?" + buildQuery({ campType: "preschool" }) + "#camp-results",
-    "Full Day Camps": "/camps?" + buildQuery({ campType: "full-day" }) + "#camp-results",
-    "Mini Day Camps": "/camps?" + buildQuery({ campType: "mini-day" }) + "#camp-results",
-    "Specialty/Art Camps": "/camps?" + buildQuery({ campType: "specialty-art" }) + "#camp-results",
-    "Sport/Aquatics Camps": "/camps?" + buildQuery({ campType: "sport-aquatics" }) + "#camp-results",
-
+    "Preschool": "/camps?" + buildQuery({ campType: "preschool" }) + "#camp-results",
+    "Full Day": "/camps?" + buildQuery({ campType: "full-day" }) + "#camp-results",
+    "Mini Day": "/camps?" + buildQuery({ campType: "mini-day" }) + "#camp-results",
+    "Specialty/Art": "/camps?" + buildQuery({ campType: "specialty-art" }) + "#camp-results",
+    "Dance/Gymnastics": "/camps?" + buildQuery({ campType: "dance-tumbling" }) + "#camp-results",
+    "Sport/Aquatics": "/camps?" + buildQuery({ campType: "sports-aquatics" }) + "#camp-results",
+  };
+  const EARLY_CHILDHOOD_PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
     // Early Childhood
-    "On-Site Care" : "/programs?" + buildQuery({ programArea: "Onsite Care"}),
-    "Before/After School Care" : "/programs?" + buildQuery({ programArea: "Before/After School"}),
+    "Infant/Toddler Care" : "/programs?" + buildQuery({ programArea: "Infant/Toddler Care"}),
+    "Out of School Time" : "/programs?" + buildQuery({ programArea: "Out of School Time"}),
     "Preschool" : "/programs?" + buildQuery({ programArea: "Preschool"}),
-
+  };
+  const COMMUNITY_PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
     // Community
     "Community": "/programs?" + buildQuery({ programArea: "Community Partners", headerVariant: "community" }),
+  };
+  const PROGRAM_FILTER_BY_LABEL: Record<string, string> = {
+    ...AQUATICS_PROGRAM_FILTER_BY_LABEL,
+    ...FITNESS_PROGRAM_FILTER_BY_LABEL,
+    ...SPORTS_AND_RECREATION_PROGRAM_FILTER_BY_LABEL,
+    ...CAMP_PROGRAM_FILTER_BY_LABEL,
+    ...EARLY_CHILDHOOD_PROGRAM_FILTER_BY_LABEL,
+    ...COMMUNITY_PROGRAM_FILTER_BY_LABEL,
   };
 
   // Unique program pages that link to specific pages

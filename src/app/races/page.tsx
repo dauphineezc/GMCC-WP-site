@@ -561,16 +561,19 @@ export default async function RacesPage() {
       <section className="py-4">
         <div className="mx-auto grid max-w-6xl gap-6 px-6 md:grid-cols-2">
           <article className="relative card card-hover bg-gmcc-blue-light/30 overflow-hidden p-8">
-          {/* icon */}
-          {fields.scheduleCard.cardIcon?.node?.sourceUrl ? (
-            <img
-              src={fields.scheduleCard.cardIcon.node.sourceUrl}
-              alt={fields.scheduleCard.cardIcon.node.altText ?? "Schedule icon"}
-              aria-hidden
-              className="pointer-events-none absolute left-6 top-6 h-14 w-14"
-            />
-          ) : null}
-            {fields.scheduleCard.header ? <h2 className="h2 text-center pt-4">{fields.scheduleCard.header}</h2> : null}
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+              {fields.scheduleCard.cardIcon?.node?.sourceUrl ? (
+                <img
+                  src={fields.scheduleCard.cardIcon.node.sourceUrl}
+                  alt={fields.scheduleCard.cardIcon.node.altText ?? "Schedule icon"}
+                  aria-hidden
+                  className="h-14 w-14 shrink-0"
+                />
+              ) : null}
+              {fields.scheduleCard.header ? (
+                <h2 className="h2 text-center">{fields.scheduleCard.header}</h2>
+              ) : null}
+            </div>
             {fields.scheduleCard.subheader ? (
               <p className="body mt-2 leading-6 text-neutral-700 text-center">{fields.scheduleCard.subheader}</p>
             ) : null}
@@ -590,16 +593,19 @@ export default async function RacesPage() {
           </article>
 
           <article className="relative card card-hover bg-gmcc-blue-light/30 overflow-hidden p-8">
-            {/* icon */}
-            {fields.connectCard.cardIcon?.node?.sourceUrl ? (
-              <img
-                src={fields.connectCard.cardIcon.node.sourceUrl}
-                alt={fields.connectCard.cardIcon.node.altText ?? "Connect icon"}
-                aria-hidden
-                className="pointer-events-none absolute left-6 top-6 h-14 w-14"
-              />
-            ) : null}
-            {fields.connectCard.header ? <h2 className="h2 text-center pt-4">{fields.connectCard.header}</h2> : null}
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+              {fields.connectCard.cardIcon?.node?.sourceUrl ? (
+                <img
+                  src={fields.connectCard.cardIcon.node.sourceUrl}
+                  alt={fields.connectCard.cardIcon.node.altText ?? "Connect icon"}
+                  aria-hidden
+                  className="h-14 w-14 shrink-0"
+                />
+              ) : null}
+              {fields.connectCard.header ? (
+                <h2 className="h2 text-center">{fields.connectCard.header}</h2>
+              ) : null}
+            </div>
             {fields.connectCard.subheader ? (
               <p className="body mt-2 leading-6 text-neutral-700 text-center">{fields.connectCard.subheader}</p>
             ) : null}

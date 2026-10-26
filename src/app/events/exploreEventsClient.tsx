@@ -624,10 +624,10 @@ export default function ExploreEventsClient({
                 <a
                   key={e.slug}
                   href={buildEventHref(e.slug, e.displayStart ?? "")}
-                  className="group card card-hover card-link overflow-hidden h-[380px] flex flex-col"
+                  className="group card card-hover card-link relative flex flex-col overflow-hidden"
                 >
                   {/* Full-bleed image */}
-                  <div className="card-bleed relative aspect-[16/9] bg-neutral-100">
+                  <div className="card-bleed relative aspect-[16/9] shrink-0 bg-neutral-100">
                     {e.heroUrl && (
                       <img
                         src={e.heroUrl}
@@ -645,26 +645,30 @@ export default function ExploreEventsClient({
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
                   </div>
 
-                  <div className="flex flex-1 flex-col min-h-0 mt-5">
-                    <h3 className="font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-1">
-                        {e.title}
+                  {/* Same body stack as program cards, plus a reserved date-pill row */}
+                  <div className="mt-5 flex min-h-0 flex-1 flex-col">
+                    <h3 className="shrink-0 font-heading text-lg font-medium leading-normal text-neutral-900 group-hover:text-gmcc-teal line-clamp-1">
+                      {e.title}
                     </h3>
 
-                    {(e.displayStart || e.displayEnd) && (
-                    <span className="mt-2 badge badge-green w-fit">
-                        {formatEventDate(e.displayStart, e.displayEnd)}
-                    </span>
-                    )}
+                    {/* Always reserve date-pill height so cards stay even when some lack a schedule */}
+                    <div className="mt-2 flex min-h-[1.625rem] shrink-0 items-center">
+                      {(e.displayStart || e.displayEnd) ? (
+                        <span className="badge badge-green w-fit">
+                          {formatEventDate(e.displayStart, e.displayEnd)}
+                        </span>
+                      ) : null}
+                    </div>
 
                     <CentersBadgesOneLine centers={e.centers} />
 
                     {e.summary && (
-                    <p className="mt-3 text-xs leading-6 text-neutral-600 line-clamp-3">
+                      <p className="mb-3 mt-3 line-clamp-3 text-xs leading-6 text-neutral-600">
                         {e.summary}
-                    </p>
+                      </p>
                     )}
 
-                    <div className="mt-auto flex items-center justify-end border-t border-neutral-100 pt-4">
+                    <div className="mt-auto flex shrink-0 items-center justify-end border-t border-neutral-100 pt-4">
                       <span className="text-sm font-semibold text-gmcc-navy underline-offset-4 group-hover:underline">
                         View →
                       </span>
