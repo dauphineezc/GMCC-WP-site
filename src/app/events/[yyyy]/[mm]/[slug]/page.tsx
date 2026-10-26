@@ -235,7 +235,7 @@ export default async function EventPage(props: EventPageProps) {
             centers.map((c: { title: string; slug: string }) => (
               <a 
                 key={c.slug} 
-                href={`/centers/${c.slug}`} 
+                href={`/events?center=${encodeURIComponent(c.slug)}`} 
                 className="badge badge-teal hover:opacity-80 transition-opacity"
               >
                 {c.title}

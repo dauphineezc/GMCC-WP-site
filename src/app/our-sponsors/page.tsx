@@ -45,7 +45,9 @@ export default async function OurSponsorsPage() {
 
   const hero = resolvePhotoWaveHeaderProps(data?.page, "Our Sponsors");
   const pageFields = data?.page?.ourSponsorsPageFields ?? null;
-  const sponsors = normalizeSponsors(data?.sponsors?.nodes ?? []);
+  const sponsors = normalizeSponsors(data?.sponsors?.nodes ?? []).filter(
+    (s) => s.tier === "10000+",
+  );
   const becomeASponsor = pageFields?.becomeASponsor ?? null;
   const becomeASponsorPhotoPosition = mediaFocalPositionCss(
     becomeASponsor?.photo?.node,
@@ -75,7 +77,39 @@ export default async function OurSponsorsPage() {
       {/* Sponsors grid */}
       {sponsors.length > 0 && (
         <section className="page-section">
-          <SponsorsGrid sponsors={sponsors} />
+          <div className="flex flex-wrap items-center justify-center gap-24">
+        {sponsors.map((sponsor) => {
+          const img = (
+            <img
+              src={sponsor.logoUrl}
+              alt={sponsor.logoAlt || sponsor.name || "Sponsor"}
+              className="max-h-36 max-w-[280px] w-auto object-contain"
+              loading="lazy"
+              decoding="async"
+            />
+          );
+          return sponsor.link ? (
+            <a
+              key={sponsor.name || sponsor.logoUrl}
+              href={sponsor.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={sponsor.name || undefined}
+              className="flex items-center transition-opacity hover:scale-105"
+            >
+              {img}
+            </a>
+          ) : (
+            <div
+              key={sponsor.name || sponsor.logoUrl}
+              title={sponsor.name || undefined}
+              className="flex items-center"
+            >
+              {img}
+            </div>
+          );
+        })}
+        </div>
         </section>
       )}
 

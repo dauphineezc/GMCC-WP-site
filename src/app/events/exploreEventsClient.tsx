@@ -185,6 +185,23 @@ export default function ExploreEventsClient({
     );
     return sortAudiencesByAge(Array.from(map.values()));
   }, [all]);
+
+  const centerOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    all.forEach((e) => e.centers.forEach((c) => map.set(c.slug, c.title)));
+    // Keep deep-linked centers visible even when no matching events are loaded yet.
+    const fromUrl = searchParams.get("center");
+    if (fromUrl) {
+      fromUrl.split(",").forEach((val) => {
+        const trimmed = val.trim();
+        if (!trimmed || map.has(trimmed)) return;
+        map.set(trimmed, trimmed);
+      });
+    }
+    return Array.from(map.entries())
+      .map(([slug, title]) => ({ slug, title }))
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }, [all, searchParams]);
   
   const eventTypeOptions = useMemo(() => {
     const s = new Set<string>();
@@ -207,6 +224,7 @@ export default function ExploreEventsClient({
   const initialFilters = useMemo(() => {
     const audienceParam = searchParams.get("audience");
     const eventTypeParam = searchParams.get("eventType");
+    const centerParam = searchParams.get("center");
 
     // audience param can be comma-separated slugs
     const audienceSlugs: string[] = [];
@@ -233,15 +251,33 @@ export default function ExploreEventsClient({
       });
     }
 
+    // center param - slug or title, comma-separated
+    const centerSlugs: string[] = [];
+    if (centerParam) {
+      centerParam.split(",").forEach((val) => {
+        const trimmed = val.trim();
+        if (!trimmed) return;
+        const match = centerOptions.find(
+          (c) =>
+            c.slug === trimmed ||
+            c.title.toLowerCase() === trimmed.toLowerCase(),
+        );
+        if (match) centerSlugs.push(match.slug);
+        else centerSlugs.push(trimmed);
+      });
+    }
+
     return {
       audience: audienceSlugs,
       eventTypes: eventTypeValues,
+      centers: centerSlugs,
     };
-  }, [searchParams, audienceOptions, eventTypeOptions]);
+  }, [searchParams, audienceOptions, eventTypeOptions, centerOptions]);
 
   const [search, setSearch] = useState("");
   const [audience, setAudience] = useState<string[]>(initialFilters.audience);
   const [eventTypes, setEventTypes] = useState<string[]>(initialFilters.eventTypes);
+  const [centers, setCenters] = useState<string[]>(initialFilters.centers);
   const [dateFilter, setDateFilter] = useState<"upcoming" | "past" | "all">("upcoming");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -249,11 +285,13 @@ export default function ExploreEventsClient({
   useEffect(() => {
     setAudience(initialFilters.audience);
     setEventTypes(initialFilters.eventTypes);
+    setCenters(initialFilters.centers);
     
     // Auto-open dropdowns that have active filters
     const toOpen = new Set<string>(["date"]);
     if (initialFilters.audience.length) toOpen.add("audience");
     if (initialFilters.eventTypes.length) toOpen.add("eventType");
+    if (initialFilters.centers.length) toOpen.add("centers");
     if (toOpen.size > 1) setOpenDropdowns(toOpen);
   }, [initialFilters]);
   
@@ -263,6 +301,7 @@ export default function ExploreEventsClient({
     const toOpen = new Set<string>(["date"]);
     if (initialFilters.audience.length) toOpen.add("audience");
     if (initialFilters.eventTypes.length) toOpen.add("eventType");
+    if (initialFilters.centers.length) toOpen.add("centers");
     return toOpen;
   });
   
@@ -313,6 +352,11 @@ export default function ExploreEventsClient({
           if (!e.eventType.some(t => eventTypes.includes(t))) return false;
         }
 
+        // centers
+        if (centers.length) {
+          if (!e.centers.some((c) => centers.includes(c.slug))) return false;
+        }
+
         // date: an event is "upcoming" until its last occurrence ends
         if (dateFilter === "upcoming" && e.hasSchedule && e.isPast) return false;
         if (dateFilter === "past" && (!e.hasSchedule || !e.isPast)) return false;
@@ -330,7 +374,7 @@ export default function ExploreEventsClient({
     return [...list].sort((a, b) =>
       dateFilter === "past" ? startKey(b) - startKey(a) : startKey(a) - startKey(b)
     );
-  }, [all, search, audience, eventTypes, dateFilter]);
+  }, [all, search, audience, eventTypes, centers, dateFilter]);
 
   const directoryHeaderVariant = useMemo(
     () => getEventsDirectoryHeaderVariant(eventTypes),
@@ -407,8 +451,8 @@ export default function ExploreEventsClient({
             <>
               <h1 className="h1">Event directory</h1>
               <p className="body">
-                Browse all events and filter by type and age group. View past
-                events to get a sense of what we offer year-round.
+                Browse all events and filter by type, center, and age group. View
+                past events to get a sense of what we offer year-round.
               </p>
             </>
           )}
@@ -427,9 +471,9 @@ export default function ExploreEventsClient({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
                 Filters
-                {(audience.length + eventTypes.length + (dateFilter !== "upcoming" ? 1 : 0)) > 0 && (
+                {(audience.length + eventTypes.length + centers.length + (dateFilter !== "upcoming" ? 1 : 0)) > 0 && (
                     <span className="badge badge-teal ml-1">
-                    {audience.length + eventTypes.length + (dateFilter !== "upcoming" ? 1 : 0)}
+                    {audience.length + eventTypes.length + centers.length + (dateFilter !== "upcoming" ? 1 : 0)}
                     </span>
                 )}
                 </span>
@@ -552,6 +596,46 @@ export default function ExploreEventsClient({
                 )}
                 </div>
 
+                {/* Center */}
+                <div className="border-b border-neutral-200 pb-2">
+                <button
+                    type="button"
+                    onClick={() => toggleDropdown("centers")}
+                    className="w-full flex items-center justify-between text-sm font-medium py-2 hover:text-neutral-900"
+                >
+                    <span>
+                    <label className="text-base text-gmcc-navy">Center</label>
+                    {centers.length > 0 && (
+                        <span className="ml-2 text-xs text-neutral-500">({centers.length})</span>
+                    )}
+                    </span>
+                    <svg
+                    className={`w-4 h-4 transition-transform ${openDropdowns.has("centers") ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                {openDropdowns.has("centers") && (
+                    <div className="space-y-1 pt-2 pb-2">
+                    {centerOptions.map((c) => (
+                        <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:text-neutral-900">
+                        <input
+                            type="checkbox"
+                            checked={centers.includes(c.slug)}
+                            onChange={() => setCenters(toggle(centers, c.slug))}
+                            className="cursor-pointer"
+                        />
+                        <span>{c.title}</span>
+                        </label>
+                    ))}
+                    </div>
+                )}
+                </div>
+
                 {/* Audience */}
                 <div className="border-b border-neutral-200 pb-2">
                 <button
@@ -599,6 +683,7 @@ export default function ExploreEventsClient({
                     setSearch("");
                     setAudience([]);
                     setEventTypes([]);
+                    setCenters([]);
                     setDateFilter("upcoming");
                     setOpenDropdowns(new Set());
                 }}

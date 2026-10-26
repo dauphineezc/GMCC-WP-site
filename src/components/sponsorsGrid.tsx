@@ -20,8 +20,22 @@ function extractSponsorFromNode(node: unknown): Sponsor | null {
     logoUrl,
     logoAlt: (logoNode?.altText ?? "").trim(),
     link: typeof fields.link === "string" && fields.link.trim() ? fields.link.trim() : null,
-    tier: typeof fields.tier === "string" && fields.tier.trim() ? fields.tier.trim() : null,
+    tier: normalizeSponsorTier(fields.tier),
   };
+}
+
+/** ACF may return tier as a string or a single-item array via WPGraphQL. */
+function normalizeSponsorTier(raw: unknown): string | null {
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    return trimmed || null;
+  }
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      if (typeof item === "string" && item.trim()) return item.trim();
+    }
+  }
+  return null;
 }
 
 /**
