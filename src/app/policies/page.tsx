@@ -10,7 +10,6 @@ import {
   type WpMediaRef,
 } from "@/lib/wp";
 import JotFormLightboxButton from "@/components/jotFormLightboxButton";
-import JotFormEmbed from "@/components/jotFormEmbed";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { getYoastMetadata } = await import("@/lib/wordpress/seo");
@@ -112,7 +111,53 @@ export default async function PoliciesPage() {
       Boolean(policy?.policyName?.trim() || policy?.policyBody?.trim() || policy?.policyFileVersion),
   );
 
-  const accordionItems = policyItems.map((policy: PolicyItem, index: number) => ({
+  const gmccPolicies = policyItems.filter((policy: PolicyItem) => policy.policyName?.includes("Community Center"));
+  const gmtcPolicies = policyItems.filter((policy: PolicyItem) => policy.policyName?.includes("Tennis Center"));
+  const gmcfcPolicies = policyItems.filter((policy: PolicyItem) => policy.policyName?.includes("Coleman Family Center"));
+  const gmnfcPolicies = policyItems.filter((policy: PolicyItem) => policy.policyName?.includes("North Family Center"));
+  const gmcurlcPolicies = policyItems.filter((policy: PolicyItem) => policy.policyName?.includes("Curling Center"));
+  
+  const organizationWidePolicies = policyItems.filter((policy: PolicyItem) =>
+    ![
+      ...gmccPolicies,
+      ...gmtcPolicies,
+      ...gmcfcPolicies,
+      ...gmnfcPolicies,
+      ...gmcurlcPolicies,
+    ].includes(policy),
+  );
+
+  const accordionItems = organizationWidePolicies.map((policy: PolicyItem, index: number) => ({
+    id: `policy-${index}`,
+    title: policy.policyName?.trim() || `Policy ${index + 1}`,
+    content: renderPolicyContent(policy),
+  }));
+
+  const gmccAccordionItems = gmccPolicies.map((policy: PolicyItem, index: number) => ({
+    id: `policy-${index}`,
+    title: policy.policyName?.trim() || `Policy ${index + 1}`,
+    content: renderPolicyContent(policy),
+  }));
+
+  const gmtcAccordionItems = gmtcPolicies.map((policy: PolicyItem, index: number) => ({
+    id: `policy-${index}`,
+    title: policy.policyName?.trim() || `Policy ${index + 1}`,
+    content: renderPolicyContent(policy),
+  }));
+  
+  const gmcfcAccordionItems = gmcfcPolicies.map((policy: PolicyItem, index: number) => ({
+    id: `policy-${index}`,
+    title: policy.policyName?.trim() || `Policy ${index + 1}`,
+    content: renderPolicyContent(policy),
+  }));
+
+  const gmnfcAccordionItems = gmnfcPolicies.map((policy: PolicyItem, index: number) => ({
+    id: `policy-${index}`,
+    title: policy.policyName?.trim() || `Policy ${index + 1}`,
+    content: renderPolicyContent(policy),
+  }));
+
+  const gmcurlcAccordionItems = gmcurlcPolicies.map((policy: PolicyItem, index: number) => ({
     id: `policy-${index}`,
     title: policy.policyName?.trim() || `Policy ${index + 1}`,
     content: renderPolicyContent(policy),
@@ -122,51 +167,77 @@ export default async function PoliciesPage() {
     <main>
       <SolidNavyWaveHeader title={fields?.heroHeader} description={fields?.heroSubheader} />
 
-      <section className="page-section stack-8">
+      <section className="page-section">
         {fields?.introductionHeader ? (
-          <h2 className="h2 text-center">{fields.introductionHeader}</h2>
+          <h2 className="h2 text-center mb-8">{fields.introductionHeader}</h2>
         ) : null}
         {fields?.introductionBody ? (
-          <p className="body whitespace-pre-line text-neutral-700 text-center mx-auto max-w-3xl">
+          <p className="body whitespace-pre-line text-neutral-700 text-center mx-auto max-w-3xl mb-12">
             {fields.introductionBody}
           </p>
         ) : null}
 
         {accordionItems.length > 0 ? (
-          <Accordion items={accordionItems} allowMultiple={false} defaultOpenIds={[]} />
+          <>
+            <h2 className="eyebrow mb-4">Organization-Wide Policies</h2>
+            <Accordion items={accordionItems} allowMultiple={false} defaultOpenIds={[]} />
+          </>
         ) : null}
       </section>
 
-      {/* CONTACT CTA */}
-      {(fields?.contactHeader || fields?.contactSubheader) && (
-        <section className="page-section text-center">
-          {fields?.contactHeader ? <h2 className="h2 text-gmcc-navy">{fields.contactHeader}</h2> : null}
-          {fields?.contactSubheader ? (
-            <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.contactSubheader}</p>
-          ) : null}
-        </section>
-      )}
+      {gmccAccordionItems.length > 0 ? (
+        <>
+        <section className="page-section">
+          <h2 className="eyebrow mb-4">Community Center Policies</h2>
+          <Accordion items={gmccAccordionItems} allowMultiple={false} defaultOpenIds={[]} />
+          </section>
+        </>
+      ) : null}
 
-      <div className="relative overflow-hidden -mt-0 pb-8">
-        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
-          <img
-            src="/GreaterLogoBG.png"
-            alt=""
-            className="absolute left-15 bottom-30 w-0 select-none lg:w-100"
-            draggable={false}
-          />
-          <img
-            src="/GreaterLogoBG.png"
-            alt=""
-            className="absolute right-15 top-30 w-0 select-none lg:w-100"
-            draggable={false}
-          />
-        </div>
+      {gmtcAccordionItems.length > 0 ? (
+        <>
+        <section className="page-section">
+          <h2 className="eyebrow mb-4">Tennis Center Policies</h2>
+          <Accordion items={gmtcAccordionItems} allowMultiple={false} defaultOpenIds={[]} />
+          </section>
+        </>
+      ) : null}
 
-        <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 lg:-mt-16 lg:-mb-16">
-            <JotFormEmbed formId="262285543716058"/>
-        </div>
-      </div>
+      {gmcfcAccordionItems.length > 0 ? (
+        <>
+        <section className="page-section">
+          <h2 className="eyebrow mb-4">Coleman Family Center Policies</h2>
+          <Accordion items={gmcfcAccordionItems} allowMultiple={false} defaultOpenIds={[]} />
+          </section>
+        </>
+      ) : null}
+
+      {gmnfcAccordionItems.length > 0 ? (
+        <>
+        <section className="page-section">
+          <h2 className="eyebrow mb-4">North Family Center Policies</h2>
+          <Accordion items={gmnfcAccordionItems} allowMultiple={false} defaultOpenIds={[]} />
+          </section>
+        </>
+      ) : null}
+
+      {gmcurlcAccordionItems.length > 0 ? (
+        <>
+        <section className="page-section">
+          <h2 className="eyebrow mb-4">Curling Center Policies</h2>
+          <Accordion items={gmcurlcAccordionItems} allowMultiple={false} defaultOpenIds={[]} />
+          </section>
+        </>
+      ) : null}
+
+      {/* CONTACT SECTION */}
+      <section className="page-section text-center">
+        <h2 className="h2 text-gmcc-navy">{fields?.contactHeader}</h2>
+        {fields?.contactSubheader ? (
+          <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields?.contactSubheader}</p>
+        ) : null}
+        <JotFormLightboxButton />
+      </section>
     </main>
   );
 }

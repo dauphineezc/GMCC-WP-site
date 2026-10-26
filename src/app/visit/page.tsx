@@ -20,6 +20,7 @@ import TodayEventsGrid from "@/components/events/todayEventsGrid";
 import { TODAY_ALL_CENTERS_SCHEDULE_EMBED_URL } from "@/lib/constants";
 import JotFormLightboxButton from "@/components/jotFormLightboxButton";
 import { fetchTodaysEvents } from "@/lib/events/todayEvents";
+import WysiwygText from "@/components/wysiwygText";
 export const revalidate = 900;
 
 // ─── GraphQL fields ───────────────────────────────────────────────────────────
@@ -341,10 +342,10 @@ const CATEGORY_COLORS = [
 ] as const;
 
 const ACCESS_BADGE_CLASSES = [
+  "badge-grey",
   "badge-blue",
   "badge-teal",
   "badge-green",
-  "badge-neutral",
 ] as const;
 
 const SAMPLE_DAY_THEMES = [
@@ -686,16 +687,12 @@ export default async function VisitPage() {
 
           <div className="body mt-12 text-center">
             {contactPrompt ? (
-              <p className="text-neutral-200">{contactPrompt}</p>
-            ) : (
-              <p>
-                Questions about access?{" "}
-                <Link href="/contact" className="link text-gmcc-teal">
-                  Contact us
-                </Link>{" "}
-                or ask at the Welcome Desk at any center.
-              </p>
-            )}
+              <WysiwygText
+                html={contactPrompt}
+                bgColor="navy"
+                className="text-neutral-300"
+              />
+            ) : null}
           </div>
         </NavyWaveSection>
       )}

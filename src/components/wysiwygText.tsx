@@ -103,9 +103,11 @@ function hasUnderlineStyle(style: string | undefined): boolean {
 export default function WysiwygText({
   html,
   className = "",
+  bgColor = "white",
 }: {
   html: unknown;
   className?: string;
+  bgColor?: "white" | "navy";
 }) {
   const raw = asWysiwyg(html);
   if (!raw) return null;
@@ -174,10 +176,14 @@ export default function WysiwygText({
             href,
             targetAttr === "_blank" || targetAttr === "_self" ? targetAttr : undefined,
           );
+          const linkClassName =
+            bgColor === "navy"
+              ? "font-semibold text-gmcc-teal no-underline hover:text-gmcc-teal/70 hover:no-underline"
+              : "font-semibold text-gmcc-teal no-underline hover:text-gmcc-navy hover:no-underline";
           return (
             <a
               href={href}
-              className="font-semibold text-gmcc-teal no-underline hover:text-gmcc-navy hover:no-underline"
+              className={linkClassName}
               {...(newTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             >
               {kids}

@@ -458,10 +458,10 @@ export default function CurlingHistoryTimeline({
                 "absolute top-1/2 z-[2] -translate-x-1/2",
                 isMd
                   ? [
-                      "-translate-y-[3rem] touch-none transition-transform duration-150",
+                      "-translate-y-[3.25rem] touch-none transition-transform duration-150",
                       isStoneDragging ? "scale-110 cursor-grabbing" : "scale-100 cursor-grab",
                     ].join(" ")
-                  : "pointer-events-none -translate-y-[2rem]",
+                  : "pointer-events-none -translate-y-[1.75rem]",
               ].join(" ")}
               style={{
                 left: `${fraction * 100}%`,

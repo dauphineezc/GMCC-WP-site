@@ -91,7 +91,7 @@ export function DirectoryHeaderShell({
       className={`w-full ${className}`}
     >
       <div className="bg-white stack-4">
-        {header ? <h1 className="h1">{header}</h1> : null}
+        {header ? <h2 className="h1">{header}</h2> : null}
         {body ? <WysiwygText html={body} className="body" /> : null}
         {redirectLabel && redirectUrl ? <a href={redirectUrl} className="text-sm font-semibold text-gmcc-teal hover:text-gmcc-navy block pb-2">{redirectLabel}</a> : null}
 
