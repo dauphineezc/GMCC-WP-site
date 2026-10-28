@@ -43,6 +43,8 @@ const INSURANCE_BASED_MEMBERSHIPS_QUERY = `
           }
         }
 
+        checkEligibilityStatement
+
         insuranceBasedMembershipBenefits
 
         contactHeader
@@ -83,6 +85,8 @@ type InsuranceBasedMembershipsData = {
         renewActiveOnePassApplication?: string | null;
         renewActiveOnePassImage?: { node?: MediaNode | null } | null;
       } | null;
+
+      checkEligibilityStatement?: string | null;
 
       insuranceBasedMembershipBenefits?: string | null;
 
@@ -232,7 +236,7 @@ export default async function InsuranceBasedMembershipsPage() {
           <div className="flex items-end justify-between gap-4">
             <h2 className="h2">Insurance-based memberships</h2>
             <p className="small max-w-lg text-right">
-              Apply online using the links below. Eligibility varies by provider.
+              {fields?.checkEligibilityStatement ?? null}
             </p>
           </div>
 

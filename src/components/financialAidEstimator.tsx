@@ -60,7 +60,7 @@ export default function FinancialAidEstimator({ onClose, applicationPdf }: Props
 
     if (ok) {
       return {
-        className: "rounded-xl border border-gmcc-green bg-gmcc-green/10 p-4 text-sm text-gmcc-navy",
+        className: "rounded-xl border border-[#A7F3D0] bg-[#ECFDF5] p-4 text-sm text-[#065F46]",
         content: (
           <>
             You are likely eligible for financial assistance with our sliding scale program.
@@ -75,7 +75,7 @@ export default function FinancialAidEstimator({ onClose, applicationPdf }: Props
       };
     } else {
       return {
-        className: "rounded-xl border border-gmcc-blue-light bg-gmcc-blue-light/10 p-4 text-sm text-gmcc-navy",
+        className: "rounded-xl border border-[#FDE68A] bg-[#FFFBEB] p-4 text-sm text-[#7C2D12]",
         content: (
           <>
             {applicationLink ? (

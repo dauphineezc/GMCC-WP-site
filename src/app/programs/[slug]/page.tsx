@@ -7,6 +7,7 @@ import { TestimonialSection, normalizeTestimonials } from "@/components/testimon
 import AttachmentsCard from "@/components/detail/attachmentsCard";
 import DetailGalleryCarousel from "@/components/detail/detailGalleryCarousel";
 import RegistrationSidebar from "@/components/detail/registrationSidebar";
+import InstructorsList from "@/components/detail/instructorsList";
 import WysiwygText from "@/components/wysiwygText";
 import { getYoastMetadata } from "@/lib/wordpress/seo";
 import { WP_MEDIA_IMAGE_FIELDS } from "@/lib/mediaFocalPoint";
@@ -38,9 +39,19 @@ const PROGRAM_BY_SLUG_QUERY = `
         developmentalAssets
         whatToBring
         instructors {
-          edges {
-            node {
-              id
+          nodes {
+            ... on StaffProfile {
+              title
+              featuredImage {
+                node {
+                  ${WP_MEDIA_IMAGE_FIELDS}
+                }
+              }
+              staffProfilesFields {
+                title
+                bio
+                dotCardLink
+              }
             }
           }
         }
@@ -256,37 +267,42 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             );
           })()}
 
-          {/* Skill level - clickable */}
-          {p.skillLevel && (
-            <a 
-              href={`/programs?skillLevel=${encodeURIComponent(p.skillLevel)}`}
+          {/* Skill levels - one badge each, same color, link to directory filter */}
+          {p.skillLevel?.map((level: string) => (
+            <a
+              key={level}
+              href={`/programs?skillLevel=${encodeURIComponent(level)}`}
               className="badge badge-neutral hover:opacity-80 transition-opacity"
             >
-              Level: {p.skillLevel}
+              Level: {level}
             </a>
+          ))}
+
+          {/* Program areas - one badge each, same color, link to directory filter */}
+          {wp.programFields?.programArea?.nodes?.map((area: { name?: string; slug?: string }) =>
+            area?.slug ? (
+              <a
+                key={area.slug}
+                href={`/programs?programArea=${encodeURIComponent(area.slug)}`}
+                className="badge badge-blue hover:opacity-80 transition-opacity"
+              >
+                {area.name}
+              </a>
+            ) : null,
           )}
 
-          {/* Program areas - need slugs, so extract from raw data */}
-          {wp.programFields?.programArea?.nodes?.map((area: any) => (
-            <a 
-              key={area.slug} 
-              href={`/programs?programArea=${encodeURIComponent(area.name)}`}
-              className="badge badge-blue hover:opacity-80 transition-opacity"
-            >
-              {area.name}
-            </a>
-          ))}
-          
-          {/* Audience */}
-          {wp.programFields?.audience?.nodes?.map((aud: any) => (
-            <a 
-              key={aud.slug} 
-              href={`/programs?audience=${encodeURIComponent(aud.slug)}`}
-              className="badge badge-grey hover:opacity-80 transition-opacity"
-            >
-              {aud.name}
-            </a>
-          ))}
+          {/* Audience - one badge each, same color, link to directory filter */}
+          {wp.programFields?.audience?.nodes?.map((aud: { name?: string; slug?: string }) =>
+            aud?.slug ? (
+              <a
+                key={aud.slug}
+                href={`/programs?audience=${encodeURIComponent(aud.slug)}`}
+                className="badge badge-grey hover:opacity-80 transition-opacity"
+              >
+                {aud.name}
+              </a>
+            ) : null,
+          )}
         </div>
 
 
@@ -303,7 +319,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
           <AttachmentsCard attachments={p.attachments ?? []} />
 
           {/* Details card */}
-          {(p.duration || p.skillLevel || p.priceFrom || centerNames.length > 0 || p.taxonomies?.session?.length > 0) && (
+          {(p.duration || p.skillLevel?.length > 0 || p.priceFrom || centerNames.length > 0 || p.taxonomies?.session?.length > 0) && (
             <>
           <h2 className="h2 pt-8 mb-2">Program details</h2>
           <div className="card">
@@ -314,10 +330,10 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                   <dd className="text-right">{p.duration}</dd>
                 </div>
               )}
-              {p.skillLevel && (
+              {p.skillLevel?.length > 0 && (
                 <div className="flex justify-between gap-3">
                   <dt className="text-neutral-500">Level</dt>
-                  <dd className="text-right">{p.skillLevel}</dd>
+                  <dd className="text-right">{p.skillLevel.join(", ")}</dd>
                 </div>
               )}
               {p.priceFrom != null && (
@@ -401,16 +417,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
 
           {/* Instructors (optional) */}
           {p.instructors?.length > 0 && (
-            <div>
-              <h2 className="h2 pt-8 mb-3">Instructors</h2>
-              <div>
-                  <ul className="stack-2 body">
-                    {p.instructors.map((name: string, i: number) => (
-                      <li key={i}>• {name}</li>
-                    ))}
-                  </ul>
-                </div>
-            </div>
+            <InstructorsList instructors={p.instructors} />
           )}
 
         {wp.programFields?.testimonials?.nodes?.length > 0 && (

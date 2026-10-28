@@ -284,8 +284,10 @@ export default function Navbar({
               alt="Greater Midland"
               width={220}
               height={96}
-              className={`w-auto transition-all duration-300 ${isScrolled ? "h-10 xl:h-12" : "h-16 xl:h-[96px]"}`}
-              style={{ width: "auto" }}
+              className={`w-auto transition-all duration-300 ${
+                isScrolled ? "max-h-10 xl:max-h-12" : "max-h-16 xl:max-h-[96px]"
+              }`}
+              style={{ width: "auto", height: "auto" }}
               priority
             />
           </Link>

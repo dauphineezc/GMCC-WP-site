@@ -84,13 +84,43 @@ export function mapProgram(wp: any) {
     longDescription: f.longDescription ?? "",
     offeringType: Array.isArray(f.offeringType) ? f.offeringType : [],
     ageRange: f.ageRange ?? null,
-    skillLevel: Array.isArray(f.skillLevel) ? f.skillLevel[0] : f.skillLevel ?? "",
+    skillLevel: Array.isArray(f.skillLevel)
+      ? f.skillLevel.filter(Boolean)
+      : f.skillLevel
+        ? [f.skillLevel]
+        : [],
     duration: f.duration ?? "",
     priceFrom: typeof f.priceFrom === "number" ? f.priceFrom : null,
     whatToBring: splitLines(f.whatToBring),
     benefits: splitLines(f.benefits),
     developmentalAssets: splitLines(f.developmentalAssets),
-    instructors: splitLines(f.instructors),
+    instructors: (f.instructors?.nodes ?? [])
+      .map((n: any) => {
+        if (!n?.title) return null;
+        const photoNode = n.featuredImage?.node;
+        const objectPosition = mediaFocalPositionCss(photoNode);
+        const fields = n.staffProfilesFields ?? {};
+        return {
+          name: n.title as string,
+          jobTitle: (fields.title as string | null | undefined) ?? null,
+          bio: (fields.bio as string | null | undefined) ?? null,
+          dotCardLink: (fields.dotCardLink as string | null | undefined) ?? null,
+          photo: photoNode?.sourceUrl
+            ? {
+                url: photoNode.sourceUrl as string,
+                alt: (photoNode.altText as string | null | undefined) ?? "",
+                ...(objectPosition ? { objectPosition } : {}),
+              }
+            : null,
+        };
+      })
+      .filter(Boolean) as {
+        name: string;
+        jobTitle: string | null;
+        bio: string | null;
+        dotCardLink: string | null;
+        photo: { url: string; alt: string; objectPosition?: string } | null;
+      }[],
     registrationSystem: f.registrationSystem ?? [],
     externalSchedule: f.externalSchedule ?? null,
     attachments: attachments,
