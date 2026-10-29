@@ -270,6 +270,7 @@ export default function ExploreMembershipsClient({
         return {
           name: a.name,
           slug: a.slug,
+          isFeatured: a.isFeatured ?? false,
           description: a.description ?? null,
           relevantLink: a.relevantLink ?? null,
           linkLabel: a.linkLabel ?? null,

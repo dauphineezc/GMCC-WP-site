@@ -246,7 +246,7 @@ export default async function InsuranceBasedMembershipsPage() {
               description={silver?.silversneakersDescription ?? ""}
               image={silverImg}
               ctaUrl={silver?.silversneakersApplication ?? undefined}
-              ctaLabel="Apply / Get started"
+              ctaLabel="Check Eligibility"
             />
 
             <InfoCard
@@ -254,7 +254,7 @@ export default async function InsuranceBasedMembershipsPage() {
               description={renew?.renewActiveOnePassDescription ?? ""}
               image={renewImg}
               ctaUrl={renew?.renewActiveOnePassApplication ?? undefined}
-              ctaLabel="Apply / Get started"
+              ctaLabel="Check Eligibility"
             />
           </div>
         </section>
