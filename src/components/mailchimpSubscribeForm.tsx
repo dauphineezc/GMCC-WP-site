@@ -6,7 +6,7 @@ const AUDIENCES = {
   },
   tennis: {
     action:
-      "https://greatermidland.us4.list-manage.com/subscribe/post?u=895ea5254c3627bd89b7156c5&id=4ab80043ad&f_id=009a0ce3f0",
+      "https://greatermidland.us4.list-manage.com/subscribe/post?u=895ea5254c3627bd89b7156c5&id=4ab80043ad&f_id=00860ce3f0",
     honeypot: "b_895ea5254c3627bd89b7156c5_4ab80043ad",
   },
 } as const;
