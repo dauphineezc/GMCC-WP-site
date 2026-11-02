@@ -831,13 +831,13 @@ export default async function CenterPage(props: CenterPageProps) {
       </section>
 
       {showNewsletterSignUp ? (
-        <section className="page-section-wide text-center mt-[-4rem] md:mt-[-5rem]">
-          <div className="card bg-gmcc-navy">
+        <section className="page-section text-center mt-[-4rem] md:mt-[-5rem] md:mb-[-2rem]">
+          <div className="card bg-gmcc-navy max-w-2xl mx-auto">
             <div className="col-span-1">
-              {newsletterHeader ? <h3 className="h3 mb-2 text-white">{newsletterHeader}</h3> : null}
+              {newsletterHeader ? <h3 className="h3 mt-4 mb-2 text-white">{newsletterHeader}</h3> : null}
               {newsletterSubheader ? <p className="text-sm mb-4 mx-8 text-neutral-200">{newsletterSubheader}</p> : null}
             </div>
-            <div className="relative col-span-1 mx-auto w-full sm:max-w-md">
+            <div className="relative col-span-1 mx-auto w-full sm:max-w-md mb-4">
               <MailchimpSubscribeForm
                 idPrefix={`center-newsletter-${slug}`}
                 audience={audienceForCenterSlug(slug)}
