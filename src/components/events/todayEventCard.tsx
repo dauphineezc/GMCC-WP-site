@@ -11,12 +11,15 @@ type TodayEventCardProps = {
 const LAYOUT_CLASSES = {
   sm: {
     card: "sm:h-38",
+    /** Extra height for the center eyebrow; visit cards sit below the calendar. */
+    cardWithCenter: "sm:h-44",
     grid: "sm:h-full sm:grid-cols-2",
     text: "sm:py-4 sm:pl-4 sm:pr-2",
     image: "sm:order-none sm:aspect-auto sm:h-full sm:rounded-r-2xl",
   },
   lg: {
     card: "lg:h-38",
+    cardWithCenter: "lg:h-44",
     grid: "lg:h-full lg:grid-cols-2",
     text: "lg:py-4 lg:pl-4 lg:pr-2",
     image: "lg:order-none lg:aspect-auto lg:h-full lg:rounded-r-2xl",
@@ -29,11 +32,12 @@ export default function TodayEventCard({
   stackUntil = "sm",
 }: TodayEventCardProps) {
   const layout = LAYOUT_CLASSES[stackUntil];
+  const cardHeight = showCenter ? layout.cardWithCenter : layout.card;
 
   return (
     <Link
       href={event.href}
-      className={`group card card-hover card-link overflow-hidden border-l-4 border-l-gmcc-teal bg-gmcc-blue-light/30 p-0 ${layout.card}`}
+      className={`group card card-hover card-link overflow-hidden border-l-4 border-l-gmcc-teal bg-gmcc-blue-light/30 p-0 ${cardHeight}`}
     >
       <div className={`grid grid-cols-1 ${layout.grid}`}>
         <div className={`col-span-1 flex min-h-0 min-w-0 flex-col overflow-hidden p-4 ${layout.text}`}>

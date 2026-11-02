@@ -180,7 +180,7 @@ export default function LessonsDirectory({
         </div>
 
         {faqs.length > 0 ? (
-        <div className="mx-auto mt-16 max-w-3xl px-0">
+        <div className="mx-auto mt-16 max-w-3xl px-6">
           <h2 className="h2 mb-8 text-center text-white">FAQs</h2>
             <Accordion
             variant="onDark"

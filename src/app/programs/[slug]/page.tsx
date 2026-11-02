@@ -449,7 +449,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
           <a
             key={p.slug}
             href={`/programs/${p.slug}`}
-            className="group card card-hover card-link overflow-hidden h-[380px] flex flex-col"
+            className="group card card-hover card-link overflow-hidden h-auto sm:h-[380px] flex flex-col"
           >
             {/* Full-bleed image */}
             <div className="card-bleed relative aspect-[16/9] bg-neutral-100">

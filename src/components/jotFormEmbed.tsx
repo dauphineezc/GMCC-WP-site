@@ -12,6 +12,9 @@ import { getJotFormEmbedSrc, getJotFormIdFromUrl } from "@/lib/jotform";
 const JOTFORM_EMBED_HANDLER =
   "https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js";
 
+/** Extra iframe height so the form card's radius + shadow aren't clipped. */
+const JOTFORM_HEIGHT_BUFFER_PX = 24;
+
 type JotFormEmbedProps = {
   formId?: string;
   /** Full JotForm URL (preserves prefill query params). Takes precedence over formId. */
@@ -112,6 +115,44 @@ export default function JotFormEmbed( {
   useEffect(() => {
     if (!autoResize) return;
     initEmbedHandler(resolvedIframeId);
+  }, [autoResize, resolvedIframeId, resizeKey]);
+
+  // JotForm's resize handler often undersizes by a few pixels, clipping the
+  // card's bottom radius/shadow. Re-apply a small buffer whenever it sets height.
+  useEffect(() => {
+    if (!autoResize) return;
+    const frame = frameRef.current;
+    if (!frame) return;
+    const container = frame;
+
+    function applyHeightBuffer(iframe: HTMLIFrameElement) {
+      const raw = iframe.style.height;
+      if (!raw.endsWith("px")) return;
+      const next = Number.parseFloat(raw);
+      if (!Number.isFinite(next)) return;
+
+      const buffered = Number.parseFloat(iframe.dataset.jfBufferedHeight ?? "");
+      if (buffered === next) return;
+
+      const withBuffer = next + JOTFORM_HEIGHT_BUFFER_PX;
+      iframe.dataset.jfBufferedHeight = String(withBuffer);
+      iframe.style.height = `${withBuffer}px`;
+    }
+
+    function scan() {
+      const iframe = container.querySelector("iframe");
+      if (iframe) applyHeightBuffer(iframe);
+    }
+
+    scan();
+    const observer = new MutationObserver(scan);
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style"],
+    });
+    return () => observer.disconnect();
   }, [autoResize, resolvedIframeId, resizeKey]);
 
   return (

@@ -219,7 +219,7 @@ export default async function VirtualFitnessPage() {
         {f?.howSectionFormText ? <p className="mt-4 leading-relaxed text-neutral-700">{f?.howSectionFormText}</p> : null}
       </section>
 
-      <div className="relative overflow-hidden -mt-0 pb-8">
+      <div className="relative overflow-x-clip -mt-0 pb-8">
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
           <img
             src="/GreaterLogoBG.png"

@@ -17,6 +17,7 @@ import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSche
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import PhotoGallery from "@/components/photoGallery";
 import NavyWaveSection from "@/components/navyWaveSection";
+import WysiwygText from "@/components/wysiwygText";
 
 const RACES_PAGE_QUERY = /* GraphQL */ `
   query RacesPage($uri: ID!) {
@@ -845,9 +846,7 @@ export default async function RacesPage() {
                     <h2 className="h2 text-gmcc-navy">{fields.sponsorCard.header}</h2>
                   ) : null}
                   {fields.sponsorCard.body ? (
-                    <p className="body mt-4 mb-2 whitespace-pre-line text-neutral-700">
-                      {fields.sponsorCard.body}
-                    </p>
+                      <WysiwygText html={fields.sponsorCard.body} className="mt-4 mb-2 text-neutral-700" />
                   ) : null}
                 </div>
               ) : null}
@@ -929,9 +928,7 @@ export default async function RacesPage() {
                     <h2 className="h2 text-gmcc-navy">{fields.volunteerCard.header}</h2>
                   ) : null}
                   {fields.volunteerCard.body ? (
-                    <p className="body mt-4 mb-2 whitespace-pre-line text-neutral-700">
-                      {fields.volunteerCard.body}
-                    </p>
+                    <WysiwygText html={fields.volunteerCard.body} className="mt-4 mb-2 text-neutral-700" />
                   ) : null}
                 </div>
               ) : null}
@@ -1004,7 +1001,24 @@ export default async function RacesPage() {
               <h2 className="h2">{fields.previousRacesHeader}</h2>
             ) : null}
             {fields.previousRacesBody ? (
-              <p className="body mt-3 whitespace-pre-line text-neutral-700">{fields.previousRacesBody}</p>
+              <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.previousRacesBody}</p>
+            ) : null}
+
+            {fields.dowRunWalkResults || fields.triKidsTryResults || fields.runTheRiverResults || fields.loonsPennantRaceResults ? (
+              <div className="mt-8 mb-10 flex flex-wrap gap-4">
+                {fields.dowRunWalkResults ? (
+                  <a href={fields.dowRunWalkResults} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">Dow RunWalk Results</a>
+                ) : null}
+                {fields.loonsPennantRaceResults ? (
+                  <a href={fields.loonsPennantRaceResults} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">Great Lakes Loons Pennant Race Results</a>
+                ) : null}
+                {fields.runTheRiverResults ? (
+                  <a href={fields.runTheRiverResults} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">Run the River Results</a>
+                ) : null}
+                {fields.triKidsTryResults ? (
+                  <a href={fields.triKidsTryResults} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">Tri-Kids-Try Results</a>
+                ) : null}
+              </div>
             ) : null}
 
             {galleryPhotos.length ? (

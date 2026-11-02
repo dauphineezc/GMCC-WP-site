@@ -97,28 +97,33 @@ export default async function PersonalTrainingPage() {
       testimonialsHeader={f?.testimonialsHeader ?? "Testimonials"}
       testimonials={normalizeTestimonials(f?.testimonials?.nodes ?? [])}
       bottomSection={
-        <section className="page-section relative overflow-hidden mb-12">
-          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-20">
-            <img
-              src="/GreaterLogoBG.png"
-              alt=""
-              className="absolute bottom-0 left-8 w-56 select-none md:w-72"
-              draggable={false}
-            />
-            <img
-              src="/GreaterLogoBG.png"
-              alt=""
-              className="absolute right-8 top-0 w-56 select-none md:w-72"
-              draggable={false}
-            />
-          </div>
-
-          <div className="relative mx-auto max-w-3xl px-6">
+        <>
+          <section className="page-section">
             <h2 className="h2 text-center text-gmcc-navy">{inquiryFormHeader}</h2>
-            <p className="body mt-2 mb-4 text-center text-neutral-700">{inquiryFormSubheader}</p>
-            <JotFormEmbed formUrl="https://form.jotform.com/262793795382070" formWidth={465} />
+            <p className="body mt-2 text-center text-neutral-700">{inquiryFormSubheader}</p>
+          </section>
+
+          <div className="relative overflow-x-clip -mt-0 pb-8 mb-12">
+            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
+              <img
+                src="/GreaterLogoBG.png"
+                alt=""
+                className="absolute left-15 bottom-30 w-0 select-none lg:w-100"
+                draggable={false}
+              />
+              <img
+                src="/GreaterLogoBG.png"
+                alt=""
+                className="absolute right-15 top-30 w-0 select-none lg:w-100"
+                draggable={false}
+              />
+            </div>
+
+            <div className="relative z-10 mx-auto max-w-3xl px-6 md:px-10 lg:-mb-16">
+              <JotFormEmbed formUrl="https://form.jotform.com/262793795382070" formWidth={465} />
+            </div>
           </div>
-        </section>
+        </>
       }
     />
   );
