@@ -3,7 +3,6 @@ import { cache } from "react";
 import { wpFetch } from "../wp";
 import { WP_CACHE_TAGS } from "@/lib/revalidate";
 import { ADP_LANDING_PAGE_URL } from "@/lib/constants";
-import { isExternalHref } from "@/lib/acf";
 
 export type FooterNavItem = {
   id: string;
@@ -32,14 +31,38 @@ const FOOTER_NAV_QUERY = /* GraphQL */ `
   }
 `;
 
+/** WordPress / site hosts whose absolute URLs should become relative paths. */
+function isSameSiteHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return (
+    host === "gmccsandbo1dev.wpenginepowered.com" ||
+    host.endsWith(".wpenginepowered.com") ||
+    host === "greatermidland.org" ||
+    host.endsWith(".greatermidland.org")
+  );
+}
+
 function normalizeFooterHref(url: string): string {
-  if (isExternalHref(url)) return url.trim();
+  if (url.startsWith("/")) {
+    return url.replace(/\/$/, "") || "/";
+  }
+
   try {
     const u = new URL(url);
-    return u.pathname;
+    if (isSameSiteHost(u.hostname)) {
+      const path = u.pathname.replace(/\/$/, "") || "/";
+      return u.search ? `${path}${u.search}` : path;
+    }
+    // Truly external (e.g. ADP) — keep the full URL
+    return url.trim();
   } catch {
-    return url.startsWith("/") ? url : `/${url}`;
+    return `/${url}`.replace(/\/$/, "") || "/";
   }
+}
+
+function isCareersLabel(label: string): boolean {
+  const normalized = label.trim().toLowerCase();
+  return normalized === "join our team" || normalized === "careers";
 }
 
 export const getFooterNav = cache(async (): Promise<FooterNavItem[]> => {
@@ -50,11 +73,12 @@ export const getFooterNav = cache(async (): Promise<FooterNavItem[]> => {
   const nodes = data.menu?.menuItems?.nodes ?? [];
 
   return nodes.map((item) => {
-    const isJoinOurTeam = item.label.trim().toLowerCase() === "join our team";
     return {
       id: item.id,
       label: item.label,
-      href: isJoinOurTeam ? ADP_LANDING_PAGE_URL : normalizeFooterHref(item.url),
+      href: isCareersLabel(item.label)
+        ? ADP_LANDING_PAGE_URL
+        : normalizeFooterHref(item.url),
     };
   });
 });
