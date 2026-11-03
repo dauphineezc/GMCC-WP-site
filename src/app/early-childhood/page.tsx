@@ -21,6 +21,7 @@ import {
   centerTabsForEce,
   type TextCardFields,
 } from "./earlyChildhoodPageFields";
+import WysiwygText from "@/components/wysiwygText";
 
 const EARLY_CHILDHOOD_PAGE_QUERY = /* GraphQL */ `
   query EarlyChildhoodPage($uri: ID!) {
@@ -246,11 +247,11 @@ export default async function EarlyChildhoodPage() {
         <section className="page-section-wide text-center">
           <div className="rounded-2xl bg-gmcc-navy px-8 py-10 shadow-sm">
             {fields.financialAssistanceHeader ? <h2 className="h2 text-white">{fields.financialAssistanceHeader}</h2> : null}
-            <p className="eyebrow mt-6 text-gmcc-green-light">
+            <p className="eyebrow mt-4 text-gmcc-green-light">
                 {fields.financialAssistanceSubheader || "Need help covering membership costs?"}
             </p>
             {fields.financialAssistanceBody ? (
-              <p className="body mt-6 whitespace-pre-line text-neutral-200">{fields.financialAssistanceBody}</p>
+              <WysiwygText html={fields.financialAssistanceBody} className="mt-4 text-white/80" />
             ) : null}
           </div>
         </section>
@@ -287,7 +288,7 @@ export default async function EarlyChildhoodPage() {
                 items={fields.faqs.map((item) => ({
                   id: item.question,
                   title: item.question,
-                  content: <p className="body text-white/80">{item.answer}</p>,
+                  content: <WysiwygText html={item.answer} bgColor="navy" className="text-white/80"/>,
                 }))}
                 allowMultiple
               />
