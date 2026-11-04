@@ -112,9 +112,9 @@ function normalizeWpUrlToPath(url: string) {
     "Early Childhood" : "/early-childhood",
     "Drop-In Child Watch" : "/amenities/childwatch",
 
-    "Driver's Training": "https://gmcc-stage-1.greatermidland.org/programs/drivers-education",
-    "Tax Aide Program": "https://gmcc-stage-1.greatermidland.org/programs/tax-aid-program",
-    "Food, Clothes, & Hygiene Pantries": "https://gmcc-stage-1.greatermidland.org/amenities/food-clothing-hygiene-pantries",
+    "Driver's Training": "/programs/drivers-education",
+    "Tax Aide Program": "/programs/tax-aid-program",
+    "Food, Clothes, & Hygiene Pantries": "/amenities/food-clothing-hygiene-pantries",
   };
 
   // Event filter rules (label-based for navbar items)

@@ -37,26 +37,31 @@ const UTILITY_MENU_QUERY = /* GraphQL */ `
   }
 `;
 
-// WordPress site domain - URLs on this domain get converted to paths
-const WP_DOMAIN = "gmccsandbo1dev.wpenginepowered.com";
+/** WordPress / site hosts whose absolute URLs should become relative paths. */
+function isSameSiteHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return (
+    host === "gmccsandbo1dev.wpenginepowered.com" ||
+    host.endsWith(".wpenginepowered.com") ||
+    host === "greatermidland.org" ||
+    host.endsWith(".greatermidland.org")
+  );
+}
 
 function normalizeHref(urlOrPath: string): string {
-  // If it's already a relative path, clean it up
   if (urlOrPath.startsWith("/")) {
     return urlOrPath.replace(/\/$/, "") || "/";
   }
 
-  // Try parsing as URL
   try {
     const u = new URL(urlOrPath);
-    // If it's our WP domain, extract just the path
-    if (u.hostname === WP_DOMAIN) {
-      return u.pathname.replace(/\/$/, "") || "/";
+    if (isSameSiteHost(u.hostname)) {
+      const path = u.pathname.replace(/\/$/, "") || "/";
+      return u.search ? `${path}${u.search}` : path;
     }
-    // External URL - keep the full URL
-    return urlOrPath;
+    // Truly external (e.g. ADP) — keep the full URL
+    return urlOrPath.trim();
   } catch {
-    // Not a valid URL, treat as path
     return `/${urlOrPath}`.replace(/\/$/, "") || "/";
   }
 }
