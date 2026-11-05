@@ -490,7 +490,7 @@ export default async function RacesPage() {
     }>(RACES_PAGE_QUERY, { uri: "/races" }),
     wpFetch<{ events?: { nodes?: RaceEventWP[] | null } | null }>(
       RACE_EVENTS_QUERY,
-      { first: 20 },
+      { first: 100 },
     ),
   ]);
 
@@ -554,18 +554,38 @@ export default async function RacesPage() {
     });
   const sortedRaces = [...upcomingRaces, ...pastRaces];
 
-  // Map race slug to results URL from page fields
+  // Stable race identity → results URL from page fields.
+  // Keys are name fragments that stay constant year to year; slugs may add
+  // prefixes/suffixes (e.g. great-lakes-loons-pennant-race-2027).
   const raceResultsMap: Record<string, string> = {
     "dow-run-walk": fields.dowRunWalkResults,
     "tri-kids-try": fields.triKidsTryResults,
     "run-the-river": fields.runTheRiverResults,
     "loons-pennant-race": fields.loonsPennantRaceResults,
   };
-  function resultsUrlForRace(slug: string): string {
-    // Try exact match first, then partial-match any key that appears in slug
-    if (raceResultsMap[slug]) return raceResultsMap[slug];
-    const matched = Object.entries(raceResultsMap).find(([key]) => slug.includes(key) || key.includes(slug));
-    return matched ? matched[1] : "";
+  function normalizeRaceIdentity(value: string): string {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/['']/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .replace(/-\d{4}$/, "");
+  }
+  function resultsUrlForRace(slug: string, title = ""): string {
+    const candidates = [slug, title]
+      .map(normalizeRaceIdentity)
+      .filter(Boolean);
+    for (const candidate of candidates) {
+      if (raceResultsMap[candidate]) return raceResultsMap[candidate];
+    }
+    // Prefer the longest key so overlapping fragments don't steal the match
+    const keysByLength = Object.keys(raceResultsMap).sort((a, b) => b.length - a.length);
+    for (const candidate of candidates) {
+      const key = keysByLength.find((k) => candidate.includes(k) || k.includes(candidate));
+      if (key && raceResultsMap[key]) return raceResultsMap[key];
+    }
+    return "";
   }
 
   return (
@@ -732,7 +752,7 @@ export default async function RacesPage() {
           <div className={`mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ${fields.racesHeader || fields.racesSubheader ? "" : ""}`}>
             {sortedRaces.map((race) => {
               const eventHref = buildEventHref(race.slug, race.startDateTime ?? "");
-              const resultsUrl = resultsUrlForRace(race.slug);
+              const resultsUrl = resultsUrlForRace(race.slug, race.title);
               const dateLabel = formatEventDate(race.startDateTime, race.endDateTime);
 
               return (
