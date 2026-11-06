@@ -17,6 +17,7 @@ import { EVENT_SCHEDULE_GRAPHQL, getEventDateInfo } from "@/lib/events/eventSche
 import CentersBadgesOneLine from "@/components/centersBadgesOneLine";
 import PhotoGallery from "@/components/photoGallery";
 import NavyWaveSection from "@/components/navyWaveSection";
+import RaceResultsButton, { type RaceResultLink } from "@/components/raceResultsButton";
 import WysiwygText from "@/components/wysiwygText";
 
 const RACES_PAGE_QUERY = /* GraphQL */ `
@@ -73,10 +74,10 @@ const RACES_PAGE_QUERY = /* GraphQL */ `
         
         racesHeader
         racesSubheader
-        dowRunWalkResults
-        triKidsTryResults
-        runTheRiverResults
-        loonsPennantRaceResults
+        dowRunwalkResults { label link }
+        triKidsTryResults { label link }
+        runTheRiverResults { label link }
+        loonsPennantRaceResults { label link }
 
         volunteerCard {
           header
@@ -320,10 +321,10 @@ type RacesPageFields = {
   };
   racesHeader: string;
   racesSubheader: string;
-  dowRunWalkResults: string;
-  triKidsTryResults: string;
-  runTheRiverResults: string;
-  loonsPennantRaceResults: string;
+  dowRunwalkResults: RaceResultLink[];
+  triKidsTryResults: RaceResultLink[];
+  runTheRiverResults: RaceResultLink[];
+  loonsPennantRaceResults: RaceResultLink[];
   volunteerCard: {
     header: string;
     body: string;
@@ -368,6 +369,17 @@ type RacesPageFields = {
   contactSubheader: string;
   raceDirectorContact: ContactField;
 };
+
+function asRaceResultLinks(value: unknown): RaceResultLink[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const record = row as { label?: unknown; link?: unknown };
+    const href = asString(record.link);
+    if (!href) return [];
+    return [{ label: asString(record.label), href }];
+  });
+}
 
 function asContactField(value: unknown): ContactField {
   if (!value || typeof value !== "object") return { nodes: [] };
@@ -429,10 +441,10 @@ function initializeRacesPageFields(raw: Record<string, unknown> | null | undefin
     },
     racesHeader: asString(f.racesHeader),
     racesSubheader: asString(f.racesSubheader),
-    dowRunWalkResults: asString(f.dowRunWalkResults),
-    triKidsTryResults: asString(f.triKidsTryResults),
-    runTheRiverResults: asString(f.runTheRiverResults),
-    loonsPennantRaceResults: asString(f.loonsPennantRaceResults),
+    dowRunwalkResults: asRaceResultLinks(f.dowRunwalkResults),
+    triKidsTryResults: asRaceResultLinks(f.triKidsTryResults),
+    runTheRiverResults: asRaceResultLinks(f.runTheRiverResults),
+    loonsPennantRaceResults: asRaceResultLinks(f.loonsPennantRaceResults),
     volunteerCard: {
       header: asString(volunteerCard.header),
       body: asString(volunteerCard.body),
@@ -554,11 +566,11 @@ export default async function RacesPage() {
     });
   const sortedRaces = [...upcomingRaces, ...pastRaces];
 
-  // Stable race identity → results URL from page fields.
+  // Stable race identity → results links from page fields.
   // Keys are name fragments that stay constant year to year; slugs may add
   // prefixes/suffixes (e.g. great-lakes-loons-pennant-race-2027).
-  const raceResultsMap: Record<string, string> = {
-    "dow-run-walk": fields.dowRunWalkResults,
+  const raceResultsMap: Record<string, RaceResultLink[]> = {
+    "dow-run-walk": fields.dowRunwalkResults,
     "tri-kids-try": fields.triKidsTryResults,
     "run-the-river": fields.runTheRiverResults,
     "loons-pennant-race": fields.loonsPennantRaceResults,
@@ -572,21 +584,28 @@ export default async function RacesPage() {
       .replace(/^-+|-+$/g, "")
       .replace(/-\d{4}$/, "");
   }
-  function resultsUrlForRace(slug: string, title = ""): string {
+  function resultsForRace(slug: string, title = ""): RaceResultLink[] {
     const candidates = [slug, title]
       .map(normalizeRaceIdentity)
       .filter(Boolean);
     for (const candidate of candidates) {
-      if (raceResultsMap[candidate]) return raceResultsMap[candidate];
+      if (raceResultsMap[candidate]?.length) return raceResultsMap[candidate];
     }
     // Prefer the longest key so overlapping fragments don't steal the match
     const keysByLength = Object.keys(raceResultsMap).sort((a, b) => b.length - a.length);
     for (const candidate of candidates) {
       const key = keysByLength.find((k) => candidate.includes(k) || k.includes(candidate));
-      if (key && raceResultsMap[key]) return raceResultsMap[key];
+      if (key && raceResultsMap[key]?.length) return raceResultsMap[key];
     }
-    return "";
+    return [];
   }
+
+  const previousRaceResultButtons = [
+    { label: "Dow RunWalk Results", links: fields.dowRunwalkResults },
+    { label: "Great Lakes Loons Pennant Race Results", links: fields.loonsPennantRaceResults },
+    { label: "Run the River Results", links: fields.runTheRiverResults },
+    { label: "Tri-Kids-Try Results", links: fields.triKidsTryResults },
+  ].filter((button) => button.links.length > 0);
 
   return (
     <main className="overflow-x-clip">
@@ -752,7 +771,7 @@ export default async function RacesPage() {
           <div className={`mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ${fields.racesHeader || fields.racesSubheader ? "" : ""}`}>
             {sortedRaces.map((race) => {
               const eventHref = buildEventHref(race.slug, race.startDateTime ?? "");
-              const resultsUrl = resultsUrlForRace(race.slug, race.title);
+              const resultsLinks = resultsForRace(race.slug, race.title);
               const dateLabel = formatEventDate(race.startDateTime, race.endDateTime);
 
               return (
@@ -809,15 +828,13 @@ export default async function RacesPage() {
                     {/* Footer actions */}
                     <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-4">
                       {race.isPast ? (
-                        resultsUrl ? (
-                          <a
-                            href={resultsUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        resultsLinks.length ? (
+                          <RaceResultsButton
+                            buttonLabel="View results"
+                            links={resultsLinks}
+                            dialogTitle={`${race.title} results`}
                             className="relative z-10 btn btn-secondary text-xs px-3 py-1.5"
-                          >
-                            View results
-                          </a>
+                          />
                         ) : (
                           <span />
                         )
@@ -1024,20 +1041,15 @@ export default async function RacesPage() {
               <p className="body mt-4 whitespace-pre-line text-neutral-700">{fields.previousRacesBody}</p>
             ) : null}
 
-            {fields.dowRunWalkResults || fields.triKidsTryResults || fields.runTheRiverResults || fields.loonsPennantRaceResults ? (
+            {previousRaceResultButtons.length ? (
               <div className="mt-8 mb-10 flex flex-wrap gap-4">
-                {fields.dowRunWalkResults ? (
-                  <a href={fields.dowRunWalkResults} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">Dow RunWalk Results</a>
-                ) : null}
-                {fields.loonsPennantRaceResults ? (
-                  <a href={fields.loonsPennantRaceResults} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">Great Lakes Loons Pennant Race Results</a>
-                ) : null}
-                {fields.runTheRiverResults ? (
-                  <a href={fields.runTheRiverResults} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">Run the River Results</a>
-                ) : null}
-                {fields.triKidsTryResults ? (
-                  <a href={fields.triKidsTryResults} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">Tri-Kids-Try Results</a>
-                ) : null}
+                {previousRaceResultButtons.map((button) => (
+                  <RaceResultsButton
+                    key={button.label}
+                    buttonLabel={button.label}
+                    links={button.links}
+                  />
+                ))}
               </div>
             ) : null}
 
