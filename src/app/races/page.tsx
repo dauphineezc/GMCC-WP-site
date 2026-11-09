@@ -602,9 +602,9 @@ export default async function RacesPage() {
 
   const previousRaceResultButtons = [
     { label: "Dow RunWalk Results", links: fields.dowRunwalkResults },
-    { label: "Great Lakes Loons Pennant Race Results", links: fields.loonsPennantRaceResults },
-    { label: "Run the River Results", links: fields.runTheRiverResults },
     { label: "Tri-Kids-Try Results", links: fields.triKidsTryResults },
+    { label: "Run the River Results", links: fields.runTheRiverResults },
+    { label: "Great Lakes Loons Pennant Race Results", links: fields.loonsPennantRaceResults },
   ].filter((button) => button.links.length > 0);
 
   return (

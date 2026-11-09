@@ -364,7 +364,7 @@ export default async function AboutPage() {
         {/* Clip media only — wave must hang below to seal the white join */}
         <div className="absolute inset-0 overflow-hidden" aria-hidden>
           <div
-            className="absolute inset-0 bg-neutral-900"
+            className="absolute inset-0 bg-gmcc-navy"
             style={
               annualBgUrl
                 ? {
