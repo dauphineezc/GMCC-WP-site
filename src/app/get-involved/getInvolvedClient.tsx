@@ -344,7 +344,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedClien
               ) : null}
 
               {donate?.wishlistLink ? (
-                <div className="pt-4">
+                <div className="flex justify-center pt-4">
                   <a
                     href={donate.wishlistLink}
                     className="btn btn-secondary"
@@ -427,31 +427,27 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedClien
                 <div className="stack-3">
                     <WysiwygText html={sponsor?.sponsorLongDescription} />
 
-                    <div className="flex justify-center gap-4 mt-4">
+                    <div className="flex flex-wrap justify-center gap-4 mt-4">
                       {sponsorApplicationHref ? (
-                      <div>
-                          <a
+                        <a
                           href={sponsorApplicationHref}
-                          className="btn btn-primary"
+                          className="btn btn-primary whitespace-nowrap"
                           target="_blank"
                           rel="noopener noreferrer"
-                          >
-                          Apply to sponsor
-                          </a>
-                      </div>
+                        >
+                          Sponsor a race
+                        </a>
                       ) : null}
 
                       {sponsor?.viewSponsorsPageCta?.cta ? (
-                        <div>
-                          <a
+                        <a
                           href={sponsor.viewSponsorsPageCta.cta}
-                          className="btn btn-secondary"
+                          className="btn btn-secondary whitespace-nowrap"
                           target="_blank"
                           rel="noopener noreferrer"
-                          >
+                        >
                           {sponsor.viewSponsorsPageCta.ctaLabel}
-                          </a>
-                        </div>
+                        </a>
                       ) : null}
                     </div>
                 </div>

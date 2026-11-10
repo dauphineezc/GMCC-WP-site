@@ -515,12 +515,6 @@ export default function CampsProgramsExplorerClient({
             </p>
           </div>
 
-          {isBuildingDirectory ? (
-            <p className="body rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-neutral-700">
-              Loading full program list for accurate filters and pagination…
-            </p>
-          ) : null}
-
           {loadError ? (
             <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
               {loadError}

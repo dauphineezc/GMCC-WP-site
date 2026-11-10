@@ -627,7 +627,7 @@ export default async function VisitPage() {
             </p>
           ) : null}
 
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-8 sm:grid-cols-1 xl:grid-cols-3">
             {accessOptions.map((opt) => (
               <div key={opt.title} className="card flex flex-col gap-4">
                 <div className="flex items-start justify-between">
@@ -690,7 +690,7 @@ export default async function VisitPage() {
               <WysiwygText
                 html={contactPrompt}
                 bgColor="navy"
-                className="text-neutral-300"
+                className="text-neutral-200"
               />
             ) : null}
           </div>
