@@ -1,11 +1,22 @@
 /**
  * Badge / summary line for event start/end.
- * Same calendar day: "Sep 20, 2026 • 9:30 AM–10:30 AM"
+ * Same calendar day: "Sep 20, 2026 • 9:30 am–10:30 am"
  * Multiple days: "Sep 20, 2026–Sep 26, 2026" (no times; avoids implying same-day times)
  */
 
 /** Fixed timezone for event date badges (matches GMCC service area). */
 export const EVENT_DISPLAY_TIMEZONE = "America/Detroit";
+
+/** "8:00 am" / "9:30 pm" — lowercase meridiem with a space after the time. */
+function formatClockTime(date: Date, timeZone: string): string {
+  return date
+    .toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone,
+    })
+    .replace(/\s(AM|PM)\b/g, (_, period: string) => ` ${period.toLowerCase()}`);
+}
 
 /** Day/month badge for home page event cards — uses a fixed timezone for SSR stability. */
 export function formatEventBadgeDate(iso?: string | null): { day: string; month: string } {
@@ -27,24 +38,19 @@ export function formatEventTimeRange(
 ): string | null {
   if (!start) return null;
 
-  const timeOpts: Intl.DateTimeFormatOptions = {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone,
-  };
   const startDate = new Date(start);
   if (Number.isNaN(startDate.getTime())) return null;
 
   if (!end) {
-    return startDate.toLocaleTimeString("en-US", timeOpts);
+    return formatClockTime(startDate, timeZone);
   }
 
   const endDate = new Date(end);
   if (Number.isNaN(endDate.getTime())) {
-    return startDate.toLocaleTimeString("en-US", timeOpts);
+    return formatClockTime(startDate, timeZone);
   }
 
-  return `${startDate.toLocaleTimeString("en-US", timeOpts)} – ${endDate.toLocaleTimeString("en-US", timeOpts)}`;
+  return `${formatClockTime(startDate, timeZone)} – ${formatClockTime(endDate, timeZone)}`;
 }
 
 export function formatEventDate(
@@ -63,22 +69,16 @@ export function formatEventDate(
     year: "numeric",
     timeZone,
   };
-  const timeOpts: Intl.DateTimeFormatOptions = {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone,
-  };
   const formatDate = (d: Date) => d.toLocaleDateString("en-US", dateOpts);
-  const formatTime = (d: Date) => d.toLocaleTimeString("en-US", timeOpts);
   const dayKey = (d: Date) => d.toLocaleDateString("en-CA", { timeZone });
 
   if (!endDate) {
-    return `${formatDate(startDate)} • ${formatTime(startDate)}`;
+    return `${formatDate(startDate)} • ${formatClockTime(startDate, timeZone)}`;
   }
 
   if (dayKey(startDate) !== dayKey(endDate)) {
     return `${formatDate(startDate)}–${formatDate(endDate)}`;
   }
 
-  return `${formatDate(startDate)} • ${formatTime(startDate)}–${formatTime(endDate)}`;
+  return `${formatDate(startDate)} • ${formatClockTime(startDate, timeZone)}–${formatClockTime(endDate, timeZone)}`;
 }
