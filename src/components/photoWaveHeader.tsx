@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import HashAwareLink from "@/components/hashAwareLink";
 import { WAVE_BLEED_CLIP_CLASS, WAVE_SVG_BLEED_CLASS, WaveEdgeBar } from "@/components/waveSeam";
 import type { MediaFocalPointFields } from "@/lib/mediaFocalPoint";
 
@@ -134,13 +134,13 @@ export default function PhotoWaveHeader({
           <div className="mt-6 mb-0 flex flex-wrap items-center gap-3 md:mb-12">
             {childrenBeforeCtas ? children : null}
             {ctas?.map((cta) => (
-              <Link
+              <HashAwareLink
                 key={cta.url}
                 href={cta.url}
                 className={cta.variant === "secondary" ? "btn btn-secondary" : "btn btn-tertiary"}
               >
                 {cta.label}
-              </Link>
+              </HashAwareLink>
             ))}
             {!childrenBeforeCtas ? children : null}
           </div>

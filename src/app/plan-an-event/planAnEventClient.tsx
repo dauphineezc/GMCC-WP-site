@@ -9,6 +9,7 @@ import { acfGalleryPhotoNodes } from "@/lib/wp";
 import { mediaFocalPositionCss } from "@/lib/mediaFocalPoint";
 import JotFormLink from "@/components/jotFormLink";
 import JotFormLightboxButton from "@/components/jotFormLightboxButton";
+import { handleSamePageHashClick } from "@/lib/samePageHashClick";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ function SectionCard({ card, href }: { card: SectionCardData | null; href?: stri
       )}
       <div className="flex flex-wrap items-center justify-center">
         {card.buttonLabel && (
-          <a href={href ?? "#"} className="btn btn-primary">
+          <a href={href ?? "#"} className="btn btn-primary" onClick={handleSamePageHashClick}>
             {card.buttonLabel}
           </a>
         )}
@@ -312,7 +313,7 @@ function CenterPartyPackageCard({
       <article className="card flex flex-col gap-4 border-0 bg-white">
         <h3 className="h2 text-2xl">{centerLabel}</h3>
         <p className="body text-gmcc-grey-dark">No party package details available for this center yet.</p>
-        <a href="#contact" className="btn btn-primary self-start mt-auto">
+        <a href="#contact" className="btn btn-primary self-start mt-auto" onClick={handleSamePageHashClick}>
           Contact Us
         </a>
       </article>

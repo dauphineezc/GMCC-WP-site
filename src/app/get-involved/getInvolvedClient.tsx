@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import NavyWaveSection from "@/components/navyWaveSection";
 import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
+import { handleSamePageHashClick } from "@/lib/samePageHashClick";
 import WysiwygText from "@/components/wysiwygText";
 
 const GIVE_GREATER_FORM_URL = "https://www.zeffy.com/donation-form/give-greater";
@@ -271,7 +272,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedClien
           <p className="body text-center flex-grow whitespace-pre-line">
             {volunteer?.volunteerCardSummary ?? ""}
           </p>
-          <a href="#volunteer" className="btn btn-primary mx-auto">
+          <a href="#volunteer" className="btn btn-primary mx-auto" onClick={handleSamePageHashClick}>
             Volunteer
           </a>
         </div>
@@ -285,7 +286,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedClien
           <p className="body text-center flex-grow whitespace-pre-line">
             {donate?.donateCardSummary ?? ""}
           </p>
-          <a href="#donate" className="btn btn-primary mx-auto">
+          <a href="#donate" className="btn btn-primary mx-auto" onClick={handleSamePageHashClick}>
             Donate
           </a>
         </div>
@@ -299,7 +300,7 @@ export default function GetInvolvedClient({ fields }: { fields: GetInvolvedClien
           <p className="body text-center flex-grow whitespace-pre-line">
             {sponsor?.sponsorCardSummary ?? ""}
           </p>
-          <a href="#sponsor" className="btn btn-primary mx-auto">
+          <a href="#sponsor" className="btn btn-primary mx-auto" onClick={handleSamePageHashClick}>
             Sponsor
           </a>
         </div>

@@ -12,6 +12,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { mediaFocalPositionCss, type MediaFocalPointFields } from "@/lib/mediaFocalPoint";
 import { resolveWpMediaUrl } from "@/lib/wp";
+import { handleSamePageHashClick } from "@/lib/samePageHashClick";
 
 type WPImageNode = {
   sourceUrl?: string | null;
@@ -196,13 +197,21 @@ export default function HeroSection({
 
                   <div className="mt-6 flex flex-wrap gap-3">
                     {primaryCta?.url ? (
-                      <a href={primaryCta.url} className="btn btn-tertiary">
+                      <a
+                        href={primaryCta.url}
+                        className="btn btn-tertiary"
+                        onClick={handleSamePageHashClick}
+                      >
                         {primaryCta.title || "Learn more"}
                       </a>
                     ) : null}
 
                     {secondaryCta?.url ? (
-                      <a href={secondaryCta.url} className="btn btn-secondary">
+                      <a
+                        href={secondaryCta.url}
+                        className="btn btn-secondary"
+                        onClick={handleSamePageHashClick}
+                      >
                         {secondaryCta.title}
                       </a>
                     ) : null}
