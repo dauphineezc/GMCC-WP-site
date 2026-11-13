@@ -141,6 +141,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "wp.greatermidland.org",
+        port: "",
+        pathname: "/wp-content/uploads/**",
+      },
+      {
+        protocol: "https",
         hostname: "i.vimeocdn.com",
         port: "",
         pathname: "/video/**",
